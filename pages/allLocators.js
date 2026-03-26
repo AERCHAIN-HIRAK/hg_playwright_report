@@ -159,7 +159,7 @@ exports.intakeCreate_Locators = {
     intakePotentialSuppliers: '[id="JqM1yJvyR1ixPrDg2Yuy9"]', // CSS
     intakeNotes: '[id="oDcMliqQXAsp6gG5zQM6N"]', // CSS
 
-    intakeSubmit: "//button[text()='Submit']", // xpath
+    intakeSubmit: "//button[text()='Submitt']", // xpath added xtra t 
     intakeProceed: "(//button[@type='submit'])[2]", // xpath
     intakePurAsignDropdown: "(//button[@aria-haspopup='dialog'])[17]", // xpath
     intakepurAsignOpt: '[data-value="Aerchain NSE Admin"]', // CSS

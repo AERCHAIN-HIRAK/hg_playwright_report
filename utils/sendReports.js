@@ -4,10 +4,10 @@ dotenv.config();
 import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
-import axios from "axios"; // ✅ ADD THIS
+import axios from "axios";
 
 // 👇 Slack Webhook
-const WEBHOOK_URL = process.env.SLACK_WEBHOOK
+const WEBHOOK_URL = process.env.SLACK_WEBHOOK;
 
 export async function sendReport() {
 
@@ -22,21 +22,30 @@ export async function sendReport() {
     let passed = 0;
     let failed = 0;
 
+    let failedTests = [];
+
+    // ✅ FIXED LOGIC (Playwright result parsing)
     report.suites.forEach(suite => {
       suite.specs.forEach(spec => {
         spec.tests.forEach(test => {
+
+          const result = test.results[test.results.length - 1]; // ✅ latest result
+
           total++;
-          if (test.status === "expected") {
+
+          if (result.status === "passed") {
             passed++;
           } else {
             failed++;
+            failedTests.push(spec.title);
           }
+
         });
       });
     });
 
     const summary = `Total: ${total} | Passed: ${passed} | Failed: ${failed}`;
-    const date = new Date().toLocaleString(); // ✅ ADD DATE
+    const date = new Date().toLocaleString();
 
     // ================= EMAIL =================
     const transporter = nodemailer.createTransport({
@@ -66,12 +75,17 @@ export async function sendReport() {
 
     // ================= SLACK =================
 
-    // 🔗 TEMP link (replace later with hosted URL)
     const reportUrl = "https://aerchain-hirak.github.io/hg_playwright_report/";
 
-    // 👥 Replace with real Slack user IDs
     const user1 = "<@U026PKJJHC6>";
-    // const user2 = "<@USER_ID_2>";
+
+    // ✅ Format failed tests
+    let failedText = "";
+    if (failedTests.length > 0) {
+      failedText = failedTests
+        .map((test, index) => `Test Case ${index + 1} - ${test}`)
+        .join("\n");
+    }
 
     const slackMessage = {
       text: `
@@ -79,13 +93,14 @@ export async function sendReport() {
 
 ${user1} 
 
-
 📅 *Execution Time:* ${date}
 
 📊 *Summary:*
 • Total: ${total}
 • Passed: ${passed} ✅
 • Failed: ${failed} ❌
+
+${failedText ? `\n❌ *Failed Test Cases:*\n${failedText}\n` : ""}
 
 🔗 *View Report:* ${reportUrl}
 `
