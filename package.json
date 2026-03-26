@@ -4,8 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "npx playwright test",
-    "test:report": "npx playwright test || true && node utils/sendReports.js",
-    "test:slack": "npx playwright test || true && node utils/sendReports.js"
+    "test:slack": "npx playwright test || true && node utils/sendReports.js",
+    "test:full": "rm -rf docs && mkdir docs && rm -rf test-results playwright-report && npx playwright test || true && cp -r playwright-report/* docs/ && git add . && git commit -m 'update report' || echo 'No changes' && git push && node utils/sendReports.js"
   },
   "keywords": [],
   "author": "",

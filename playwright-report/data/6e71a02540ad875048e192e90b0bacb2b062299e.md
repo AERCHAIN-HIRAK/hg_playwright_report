@@ -1,0 +1,555 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - region "Notifications (F8)":
+      - list
+    - region "Notifications alt+T"
+    - generic [ref=e4]:
+      - banner [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e7]:
+            - link "Logo" [ref=e9] [cursor=pointer]:
+              - /url: /intakes/create
+              - img "Logo" [ref=e10]
+            - tablist [ref=e12]:
+              - link "Home" [ref=e13] [cursor=pointer]:
+                - /url: https://nse-capp-uat.aerchain.io/home
+                - tab "Home" [ref=e14]:
+                  - img
+                  - text: Home
+              - link "CXO CXO" [ref=e15] [cursor=pointer]:
+                - /url: /cxos
+                - tab "CXO CXO" [ref=e16]:
+                  - img "CXO" [ref=e17]
+                  - text: CXO
+              - link "Intakes Intake" [ref=e18] [cursor=pointer]:
+                - /url: /intakes
+                - tab "Intakes Intake" [selected] [ref=e19]:
+                  - img "Intakes" [ref=e20]
+                  - text: Intake
+              - tab "Sourcing" [ref=e21] [cursor=pointer]:
+                - img
+                - text: Sourcing
+          - generic [ref=e22]:
+            - generic [ref=e24] [cursor=pointer]:
+              - img "Aiera Logo" [ref=e25]
+              - generic [ref=e26]: Ask Aiera
+            - button "Open Settings" [ref=e27] [cursor=pointer]:
+              - img [ref=e28]
+            - button "Open Notifications" [ref=e31] [cursor=pointer]:
+              - button [ref=e32]:
+                - img [ref=e33]
+              - generic [ref=e36]: 99+
+            - img "National Stock Exchange" [ref=e39] [cursor=pointer]
+      - main [ref=e41]:
+        - generic [ref=e42]:
+          - generic [ref=e43]:
+            - generic [ref=e44]:
+              - button [ref=e46] [cursor=pointer]:
+                - img
+              - generic [ref=e47]: New Intake request
+              - combobox [ref=e49] [cursor=pointer]:
+                - img [ref=e50]
+                - generic: NSEF Intakes
+                - img [ref=e52]
+            - generic [ref=e54]:
+              - generic [ref=e55]:
+                - button "AI Polish" [ref=e56] [cursor=pointer]:
+                  - img
+                  - text: AI Polish
+                - button "Bulk Upload" [ref=e57] [cursor=pointer]
+                - button [ref=e59] [cursor=pointer]:
+                  - img
+              - button "Cancel" [ref=e60] [cursor=pointer]
+              - button "Submit" [ref=e61] [cursor=pointer]
+          - generic [ref=e65]:
+            - generic [ref=e67]:
+              - generic [ref=e68]:
+                - textbox "Title of the document goes here" [ref=e70]: HIRAK AUTOMATION INTAKE
+                - textbox "Summary of the document" [ref=e72]: AUTOMATION SUMMARY
+              - generic [ref=e73]:
+                - button [ref=e74] [cursor=pointer]:
+                  - img
+                - button [ref=e75] [cursor=pointer]:
+                  - img
+            - generic [ref=e76]:
+              - generic [ref=e77]:
+                - generic [ref=e79]:
+                  - button [ref=e81] [cursor=pointer]:
+                    - img
+                  - button [expanded] [ref=e83] [cursor=pointer]:
+                    - button [ref=e84]:
+                      - img
+                  - textbox "Section Title" [ref=e86]: Header Details
+                  - generic [ref=e87]:
+                    - button [ref=e88] [cursor=pointer]:
+                      - img
+                    - generic:
+                      - generic:
+                        - combobox [disabled]:
+                          - generic: General
+                      - button
+                      - button [disabled]
+                - generic [ref=e92]:
+                  - generic [ref=e93]:
+                    - button "Department" [ref=e94] [cursor=pointer]:
+                      - generic [ref=e95]:
+                        - generic [ref=e97]:
+                          - button [ref=e99]:
+                            - img
+                          - generic [ref=e100]:
+                            - generic [ref=e101]: Department
+                            - img [ref=e102]
+                        - combobox [ref=e107]:
+                          - generic "Premises" [ref=e109]
+                          - img [ref=e110]
+                          - img [ref=e113]
+                    - button "Expense Nature (for approval triggers)" [ref=e115] [cursor=pointer]:
+                      - generic [ref=e116]:
+                        - generic [ref=e118]:
+                          - button [ref=e120]:
+                            - img
+                          - generic [ref=e121]:
+                            - generic [ref=e122]: Expense Nature (for approval triggers)
+                            - img [ref=e123]
+                        - combobox [ref=e128]:
+                          - generic "Capex" [ref=e130]
+                          - img [ref=e131]
+                          - img [ref=e134]
+                    - button "Currency" [ref=e136] [cursor=pointer]:
+                      - generic [ref=e137]:
+                        - generic [ref=e139]:
+                          - button [ref=e141]:
+                            - img
+                          - generic [ref=e142]:
+                            - generic [ref=e143]: Currency
+                            - img [ref=e144]
+                        - combobox [ref=e148]:
+                          - generic "INR - Indian Rupee" [ref=e150]
+                          - img [ref=e151]
+                          - img [ref=e154]
+                    - button "Function" [ref=e157] [cursor=pointer]:
+                      - generic [ref=e158]:
+                        - generic [ref=e160]:
+                          - button [ref=e162]:
+                            - img
+                          - generic [ref=e163]:
+                            - generic [ref=e164]: Function
+                            - img [ref=e165]
+                        - combobox [ref=e170]:
+                          - generic "Non - IT" [ref=e172]
+                          - img [ref=e173]
+                          - img [ref=e176]
+                    - button "Vertical" [ref=e178] [cursor=pointer]:
+                      - generic [ref=e179]:
+                        - generic [ref=e181]:
+                          - button [ref=e183]:
+                            - img
+                          - generic [ref=e185]: Vertical
+                        - combobox [ref=e188]:
+                          - generic "ADM" [ref=e190]
+                          - img [ref=e191]
+                          - img [ref=e194]
+                    - button "Project Name" [ref=e196] [cursor=pointer]:
+                      - generic [ref=e197]:
+                        - generic [ref=e199]:
+                          - button [ref=e201]:
+                            - img
+                          - generic [ref=e202]:
+                            - generic [ref=e203]: Project Name
+                            - img [ref=e204]
+                        - combobox [ref=e209]:
+                          - generic "Consumable" [ref=e211]
+                          - img [ref=e212]
+                          - img [ref=e215]
+                    - button "Nature of Expense (mapped to budget)" [ref=e217] [cursor=pointer]:
+                      - generic [ref=e218]:
+                        - generic [ref=e220]:
+                          - button [ref=e222]:
+                            - img
+                          - generic [ref=e223]:
+                            - generic [ref=e224]: Nature of Expense (mapped to budget)
+                            - img [ref=e225]
+                        - combobox [ref=e230]:
+                          - generic "Opex" [ref=e232]
+                          - img [ref=e233]
+                          - img [ref=e236]
+                    - button "GL Account" [ref=e238] [cursor=pointer]:
+                      - generic [ref=e239]:
+                        - generic [ref=e241]:
+                          - button [ref=e243]:
+                            - img
+                          - generic [ref=e244]:
+                            - generic [ref=e245]: GL Account
+                            - img [ref=e246]
+                        - combobox [ref=e251]:
+                          - generic "Computer Systems - Others" [ref=e253]
+                          - img [ref=e254]
+                          - img [ref=e257]
+                    - button "Profit Center" [ref=e259] [cursor=pointer]:
+                      - generic [ref=e260]:
+                        - generic [ref=e262]:
+                          - button [ref=e264]:
+                            - img
+                          - generic [ref=e265]:
+                            - generic [ref=e266]: Profit Center
+                            - img [ref=e267]
+                        - combobox [ref=e272]:
+                          - generic "CO LOCATION SERVICES-1303" [ref=e274]
+                          - img [ref=e275]
+                          - img [ref=e278]
+                    - button "Cost Center" [ref=e280] [cursor=pointer]:
+                      - generic [ref=e281]:
+                        - generic [ref=e283]:
+                          - button [ref=e285]:
+                            - img
+                          - generic [ref=e286]:
+                            - generic [ref=e287]: Cost Center
+                            - img [ref=e288]
+                        - combobox [ref=e293]:
+                          - generic "CORPORATE COMMUNICATIONS - 7" [ref=e295]
+                          - img [ref=e296]
+                          - img [ref=e299]
+                    - button "SEBI Categorization" [ref=e301] [cursor=pointer]:
+                      - generic [ref=e302]:
+                        - generic [ref=e304]:
+                          - button [ref=e306]:
+                            - img
+                          - generic [ref=e307]:
+                            - generic [ref=e308]: SEBI Categorization
+                            - img [ref=e309]
+                        - combobox [ref=e314]:
+                          - generic "NSEIL-Default" [ref=e316]
+                          - img [ref=e317]
+                          - img [ref=e320]
+                    - button "Sub Segment" [ref=e322] [cursor=pointer]:
+                      - generic [ref=e323]:
+                        - generic [ref=e325]:
+                          - button [ref=e327]:
+                            - img
+                          - generic [ref=e328]:
+                            - generic [ref=e329]: Sub Segment
+                            - img [ref=e330]
+                        - combobox [ref=e335]:
+                          - generic "NSEIL-Advance - Cash or Kind" [ref=e337]
+                          - img [ref=e338]
+                          - img [ref=e341]
+                    - button "Project Category" [ref=e343] [cursor=pointer]:
+                      - generic [ref=e344]:
+                        - generic [ref=e346]:
+                          - button [ref=e348]:
+                            - img
+                          - generic [ref=e349]:
+                            - generic [ref=e350]: Project Category
+                            - img [ref=e351]
+                        - combobox [ref=e356]:
+                          - generic "Default" [ref=e358]
+                          - img [ref=e359]
+                          - img [ref=e362]
+                    - button "BRF No." [ref=e364] [cursor=pointer]:
+                      - generic [ref=e365]:
+                        - generic [ref=e367]:
+                          - button [ref=e369]:
+                            - img
+                          - generic [ref=e371]: BRF No.
+                        - combobox [ref=e373]:
+                          - generic [ref=e375]: Select budget item
+                          - img [ref=e376]
+                    - button "CXO Type" [ref=e378] [cursor=pointer]:
+                      - generic [ref=e379]:
+                        - generic [ref=e381]:
+                          - button [ref=e383]:
+                            - img
+                          - generic [ref=e384]:
+                            - generic [ref=e385]: CXO Type
+                            - img [ref=e386]
+                        - combobox [ref=e391]:
+                          - generic "New" [ref=e393]
+                          - img [ref=e394]
+                          - img [ref=e397]
+                    - button "CXO Transaction" [ref=e399] [cursor=pointer]:
+                      - generic [ref=e400]:
+                        - generic [ref=e402]:
+                          - button [ref=e404]:
+                            - img
+                          - generic [ref=e405]:
+                            - generic [ref=e406]: CXO Transaction
+                            - img [ref=e407]
+                        - combobox [ref=e413]:
+                          - generic "CXO-NSEI-26-26" [ref=e415]
+                          - img [ref=e416]
+                          - img [ref=e419]
+                    - button "Add Field" [ref=e422] [cursor=pointer]:
+                      - img
+                      - text: Add Field
+                  - status [ref=e423]
+              - generic [ref=e424]:
+                - generic [ref=e426]:
+                  - button [ref=e428] [cursor=pointer]:
+                    - img
+                  - button [expanded] [ref=e430] [cursor=pointer]:
+                    - button [ref=e431]:
+                      - img
+                  - textbox "Section Title" [ref=e433]: CXO Value
+                  - generic [ref=e434]:
+                    - button [ref=e435] [cursor=pointer]:
+                      - img
+                    - generic:
+                      - generic:
+                        - combobox:
+                          - generic: General
+                      - button
+                      - button
+                - generic [ref=e439]:
+                  - generic [ref=e440]:
+                    - button "CXO Value 6,00,000" [ref=e441] [cursor=pointer]:
+                      - generic [ref=e442]:
+                        - generic [ref=e443]:
+                          - generic [ref=e444]:
+                            - button [ref=e446]:
+                              - img
+                            - generic [ref=e447]:
+                              - generic [ref=e448]: CXO Value
+                              - button "View dependent fields" [ref=e449]:
+                                - img
+                          - button [ref=e450]:
+                            - img
+                        - textbox "Enter a number" [disabled] [ref=e453]: 6,00,000
+                    - button "Total ₹ 6,00,000" [ref=e455] [cursor=pointer]:
+                      - generic [ref=e456]:
+                        - generic [ref=e457]:
+                          - generic [ref=e458]:
+                            - button [ref=e460]:
+                              - img
+                            - generic [ref=e461]:
+                              - generic [ref=e462]: Total
+                              - button "View dependent fields" [ref=e463]:
+                                - img
+                          - button [ref=e464]:
+                            - img
+                        - generic [ref=e466]:
+                          - generic [ref=e467]: ₹
+                          - textbox "Enter a number" [disabled] [ref=e468]: 6,00,000
+                    - button "Add Field" [ref=e471] [cursor=pointer]:
+                      - img
+                      - text: Add Field
+                  - status [ref=e472]
+              - generic [ref=e473]:
+                - generic [ref=e475]:
+                  - button [ref=e477] [cursor=pointer]:
+                    - img
+                  - button [expanded] [ref=e479] [cursor=pointer]:
+                    - button [ref=e480]:
+                      - img
+                  - textbox "Section Title" [ref=e482]: Item Details
+                  - generic [ref=e483]:
+                    - button [ref=e484] [cursor=pointer]:
+                      - img
+                    - generic:
+                      - generic:
+                        - combobox [disabled]:
+                          - generic: Commercial
+                      - button
+                      - button [disabled]
+                - generic [ref=e489]:
+                  - generic [ref=e491]:
+                    - generic [ref=e496]: "#"
+                    - generic [ref=e497]:
+                      - button "Item Name" [ref=e499] [cursor=pointer]:
+                        - generic [ref=e500]:
+                          - img [ref=e501]
+                          - generic [ref=e507]: Item Name
+                          - img [ref=e508]
+                      - button "Description" [ref=e513] [cursor=pointer]:
+                        - generic [ref=e514]:
+                          - img [ref=e515]
+                          - generic [ref=e518]: Description
+                      - button "Qty" [ref=e521] [cursor=pointer]:
+                        - generic [ref=e522]:
+                          - img [ref=e523]
+                          - generic [ref=e527]: Qty
+                          - img [ref=e528]
+                      - button "Unit Of Measurement" [ref=e533] [cursor=pointer]:
+                        - generic [ref=e534]:
+                          - img [ref=e535]
+                          - generic [ref=e541]: Unit Of Measurement
+                          - img [ref=e542]
+                      - button "DeliveryAddress" [ref=e547] [cursor=pointer]:
+                        - generic [ref=e548]:
+                          - img [ref=e549]
+                          - generic [ref=e555]: DeliveryAddress
+                          - img [ref=e556]
+                      - button "BillingAddress" [ref=e561] [cursor=pointer]:
+                        - generic [ref=e562]:
+                          - img [ref=e563]
+                          - generic [ref=e569]: BillingAddress
+                          - img [ref=e570]
+                      - button "Suggested Price" [ref=e575] [cursor=pointer]:
+                        - generic [ref=e576]:
+                          - img [ref=e577]
+                          - generic [ref=e581]: Suggested Price
+                          - img [ref=e582]
+                      - button "Amount" [ref=e587] [cursor=pointer]:
+                        - generic [ref=e588]:
+                          - img [ref=e589]
+                          - generic [ref=e593]: Amount
+                          - img [ref=e595]
+                      - button "Remarks" [ref=e600] [cursor=pointer]:
+                        - generic [ref=e601]:
+                          - img [ref=e602]
+                          - generic [ref=e605]: Remarks
+                      - button "OEM" [ref=e608] [cursor=pointer]:
+                        - generic [ref=e609]:
+                          - img [ref=e610]
+                          - generic [ref=e613]: OEM
+                      - button "Technical Specification (if applicable)" [ref=e616] [cursor=pointer]:
+                        - generic [ref=e617]:
+                          - img [ref=e618]
+                          - generic [ref=e621]: Technical Specification (if applicable)
+                      - button "Rational if any" [ref=e624] [cursor=pointer]:
+                        - generic [ref=e625]:
+                          - img [ref=e626]
+                          - generic [ref=e629]: Rational if any
+                      - button "HSN" [ref=e632] [cursor=pointer]:
+                        - generic [ref=e633]:
+                          - img [ref=e634]
+                          - generic [ref=e638]: HSN
+                      - button "BRF approved value" [ref=e641] [cursor=pointer]:
+                        - generic [ref=e642]:
+                          - img [ref=e643]
+                          - generic [ref=e647]: BRF approved value
+                      - button "BRF Avl. value as on date" [ref=e650] [cursor=pointer]:
+                        - generic [ref=e651]:
+                          - img [ref=e652]
+                          - generic [ref=e656]: BRF Avl. value as on date
+                      - button "Annual spend for which approval is sought" [ref=e659] [cursor=pointer]:
+                        - generic [ref=e660]:
+                          - img [ref=e661]
+                          - generic [ref=e664]: Annual spend for which approval is sought
+                      - button "BRF value available as on date after utilization" [ref=e667] [cursor=pointer]:
+                        - generic [ref=e668]:
+                          - img [ref=e669]
+                          - generic [ref=e673]: BRF value available as on date after utilization
+                      - button "Supplier" [ref=e676] [cursor=pointer]:
+                        - generic [ref=e677]:
+                          - img [ref=e678]
+                          - generic [ref=e681]: Supplier
+                      - button "Attachments" [ref=e684] [cursor=pointer]:
+                        - generic [ref=e685]:
+                          - img [ref=e686]
+                          - generic [ref=e689]: Attachments
+                    - button [ref=e694] [cursor=pointer]:
+                      - img
+                  - status [ref=e695]
+                  - generic [ref=e697]:
+                    - generic [ref=e698]:
+                      - generic [ref=e702]: "1"
+                      - generic [ref=e703]:
+                        - generic [ref=e707] [cursor=pointer]: HG test prod 01
+                        - generic [ref=e711] [cursor=pointer]: Automation Description
+                        - generic [ref=e715] [cursor=pointer]: "100"
+                        - generic [ref=e719] [cursor=pointer]: BALE
+                        - generic [ref=e723] [cursor=pointer]: Agartala
+                        - generic [ref=e727] [cursor=pointer]: Agartala
+                        - generic [ref=e731] [cursor=pointer]: 2,000
+                        - generic [ref=e735]: 2,00,000
+                      - button [ref=e761] [cursor=pointer]:
+                        - img
+                    - generic [ref=e762]:
+                      - generic [ref=e766]: "2"
+                      - generic [ref=e767]:
+                        - generic [ref=e771] [cursor=pointer]: HG test ref
+                        - generic [ref=e775] [cursor=pointer]: Automation Description
+                        - generic [ref=e779] [cursor=pointer]: "100"
+                        - generic [ref=e783] [cursor=pointer]: BOTTLES
+                        - generic [ref=e787] [cursor=pointer]: Agartala
+                        - generic [ref=e791] [cursor=pointer]: Agartala
+                        - generic [ref=e795] [cursor=pointer]: 4,000
+                        - generic [ref=e799]: 4,00,000
+                      - button [ref=e825] [cursor=pointer]:
+                        - img
+                  - button "Add new row" [ref=e827] [cursor=pointer]:
+                    - img [ref=e828]
+                    - generic [ref=e829]: Add row
+              - generic [ref=e830]:
+                - generic [ref=e832]:
+                  - button [ref=e834] [cursor=pointer]:
+                    - img
+                  - button [expanded] [ref=e836] [cursor=pointer]:
+                    - button [ref=e837]:
+                      - img
+                  - textbox "Section Title" [ref=e839]: Suggested Suppliers
+                  - generic [ref=e840]:
+                    - button [ref=e841] [cursor=pointer]:
+                      - img
+                    - generic:
+                      - generic:
+                        - combobox:
+                          - generic: General
+                      - button
+                      - button
+                - generic [ref=e845]:
+                  - generic [ref=e846]:
+                    - button "Potential Suppliers Hirak Automation Supplier" [ref=e847] [cursor=pointer]:
+                      - generic [ref=e848]:
+                        - generic [ref=e849]:
+                          - generic [ref=e850]:
+                            - button [ref=e852]:
+                              - img
+                            - generic [ref=e854]: Potential Suppliers
+                          - button [ref=e855]:
+                            - img
+                        - textbox "Enter text" [ref=e859]: Hirak Automation Supplier
+                    - button "Add Field" [ref=e862] [cursor=pointer]:
+                      - img
+                      - text: Add Field
+                  - status [ref=e863]
+              - generic [ref=e864]:
+                - generic [ref=e866]:
+                  - button [ref=e868] [cursor=pointer]:
+                    - img
+                  - button [expanded] [ref=e870] [cursor=pointer]:
+                    - button [ref=e871]:
+                      - img
+                  - textbox "Section Title" [ref=e873]: Attachments and Notes
+                  - generic [ref=e874]:
+                    - button [ref=e875] [cursor=pointer]:
+                      - img
+                    - generic:
+                      - generic:
+                        - combobox:
+                          - generic: General
+                      - button
+                      - button
+                - generic [ref=e879]:
+                  - generic [ref=e880]:
+                    - button "Notes Hirak Automation notes" [ref=e881] [cursor=pointer]:
+                      - generic [ref=e882]:
+                        - generic [ref=e883]:
+                          - generic [ref=e884]:
+                            - button [ref=e886]:
+                              - img
+                            - generic [ref=e888]: Notes
+                          - button [ref=e889]:
+                            - img
+                        - textbox "Enter text" [active] [ref=e893]: Hirak Automation notes
+                    - button "Applicable Attachments Upload" [ref=e895] [cursor=pointer]:
+                      - generic [ref=e896]:
+                        - generic [ref=e897]:
+                          - generic [ref=e898]:
+                            - button [ref=e900]:
+                              - img
+                            - generic [ref=e902]: Applicable Attachments
+                          - button [ref=e903]:
+                            - img
+                        - generic [ref=e907]:
+                          - img [ref=e908]
+                          - generic [ref=e911]: Upload
+                    - button "Add Field" [ref=e914] [cursor=pointer]:
+                      - img
+                      - text: Add Field
+                  - status [ref=e915]
+  - textbox "Enter a number" [ref=e919]: 4,000
+```

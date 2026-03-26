@@ -24,25 +24,40 @@ export async function sendReport() {
 
     let failedTests = [];
 
-    // ✅ FIXED LOGIC (Playwright result parsing)
-    report.suites.forEach(suite => {
-      suite.specs.forEach(spec => {
-        spec.tests.forEach(test => {
+    // ✅ FIX: Recursive parsing for nested suites
+    function parseSuites(suites) {
+      suites.forEach(suite => {
 
-          const result = test.results[test.results.length - 1]; // ✅ latest result
+        // handle specs
+        if (suite.specs) {
+          suite.specs.forEach(spec => {
+            spec.tests.forEach(test => {
 
-          total++;
+              const result = test.results[test.results.length - 1];
 
-          if (result.status === "passed") {
-            passed++;
-          } else {
-            failed++;
-            failedTests.push(spec.title);
-          }
+              total++;
 
-        });
+              if (result.status === "passed") {
+                passed++;
+              } else {
+                failed++;
+                failedTests.push(spec.title);
+              }
+
+            });
+          });
+        }
+
+        // 🔥 handle nested suites (VERY IMPORTANT)
+        if (suite.suites) {
+          parseSuites(suite.suites);
+        }
+
       });
-    });
+    }
+
+    // 👉 call recursive function
+    parseSuites(report.suites);
 
     const summary = `Total: ${total} | Passed: ${passed} | Failed: ${failed}`;
     const date = new Date().toLocaleString();
