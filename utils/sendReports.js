@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
@@ -64,7 +67,7 @@ export async function sendReport() {
     // ================= SLACK =================
 
     // 🔗 TEMP link (replace later with hosted URL)
-    const reportUrl = "http://localhost:9323";
+    const reportUrl = "https://aerchain-hirak.github.io/hg_playwright_report/";
 
     // 👥 Replace with real Slack user IDs
     const user1 = "<@U026PKJJHC6>";
