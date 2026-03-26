@@ -16,22 +16,22 @@ test.describe('Aerchain - NSE', () => {
 
         await page.setViewportSize({ width: 1800, height: 720 });
 
-        await NSEIntakeCreate.takeScreenshot('NSE_Intake_Dashboard');
+        // await NSEIntakeCreate.takeScreenshot('NSE_Intake_Dashboard');
 
         await NSEIntakeCreate.clickIntakeTab();
         await NSEIntakeCreate.assertIntakeTab();
 
-        await NSEIntakeCreate.takeScreenshot('NSE_Intake_Listing');
+        // await NSEIntakeCreate.takeScreenshot('NSE_Intake_Listing');
 
         await NSEIntakeCreate.clickIntakeCreateButton();
         await NSEIntakeCreate.assertIntakeCreatePage();
 
-        await NSEIntakeCreate.takeScreenshot('NSE_Intake_Create');
+        // await NSEIntakeCreate.takeScreenshot('NSE_Intake_Create');
 
         await NSEIntakeCreate.closeAskAieraBar();
         await NSEIntakeCreate.expandAllSections();
 
-        await NSEIntakeCreate.takeScreenshot('NSE_Intake_Create_Expanded');
+        // await NSEIntakeCreate.takeScreenshot('NSE_Intake_Create_Expanded');
 
         await NSEIntakeCreate.typeIntakeTitle(data);
         await NSEIntakeCreate.typeIntakeSummary(data);
@@ -73,15 +73,15 @@ test.describe('Aerchain - NSE', () => {
         await NSEIntakeCreate.typeIntakePotentialSuppliers(data);
         await NSEIntakeCreate.typeIntakeNotes(data);
 
-        await NSEIntakeCreate.takeScreenshot('NSE_All_Data_Filled');
+        // await NSEIntakeCreate.takeScreenshot('NSE_All_Data_Filled');
 
         await NSEIntakeCreate.clickIntakeSubmitButton();
 
-        await NSEIntakeCreate.takeScreenshot('NSE_Approval_Popup');
+        // await NSEIntakeCreate.takeScreenshot('NSE_Approval_Popup');
 
         await NSEIntakeCreate.clickIntakeProceed();
 
-        await NSEIntakeCreate.takeScreenshot('NSE_Purchaser_Popup');
+        // await NSEIntakeCreate.takeScreenshot('NSE_Purchaser_Popup');
 
         await NSEIntakeCreate.clickIntakePurAsignDropdown();
         await NSEIntakeCreate.clickIntakePurAsignOpt();
@@ -91,7 +91,7 @@ test.describe('Aerchain - NSE', () => {
         await NSEIntakeCreate.assertIntakeOverviewPage();
         await NSEIntakeCreate.assertIntakeDetailsAreDisplayedCorrect(data);
 
-        await NSEIntakeCreate.takeScreenshot('NSE_Overview_Page');
+        // await NSEIntakeCreate.takeScreenshot('NSE_Overview_Page');
 
     });
 
