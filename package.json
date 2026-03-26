@@ -1,0 +1,21 @@
+{
+  "name": "aerchain-e2e-playwrite",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:report": "npx playwright test || true && node utils/sendReports.js",
+    "test:slack": "npx playwright test || true && node utils/sendReports.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  },
+  "dependencies": {
+    "axios": "^1.13.6",
+    "nodemailer": "^8.0.4"
+  }
+}

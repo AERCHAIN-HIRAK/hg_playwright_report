@@ -1,0 +1,16 @@
+{
+
+    "title":"HIRAK AUTOMATION INTAKE",
+    "summary":"AUTOMATION SUMMARY",
+    "department":"Premises",
+    "currency":"INR",
+    "CXOtransaction":"26-26",
+    "itemName":"HG",
+    "itemDesc":"Automation Description",
+    "itemQty":"100",
+    "itemSuggestedPrice":"2000",
+    "itemSuggestedPrice1":"4000",
+    "potentialSuppliers":"Hirak Automation Supplier",
+    "notes":"Hirak Automation notes"
+
+}
