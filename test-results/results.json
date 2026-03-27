@@ -99,12 +99,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 13000,
+                  "duration": 9319,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-27T12:15:40.156Z",
+                  "startTime": "2026-03-27T12:17:35.616Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -134,7 +134,7 @@
           "specs": [
             {
               "title": "Intake Create @Positive",
-              "ok": false,
+              "ok": true,
               "tags": [
                 "Positive"
               ],
@@ -149,50 +149,18 @@
                     {
                       "workerIndex": 1,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 30227,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/home/mayur/Desktop/Aerchain E2E Playwrite/pages/actions.js",
-                            "column": 69,
-                            "line": 357
-                          },
-                          "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('//button[text()=\\'Submitt\\']')\u001b[22m\n\n\n\u001b[90m   at \u001b[39m../pages/actions.js:357\n\n\u001b[0m \u001b[90m 355 |\u001b[39m     \u001b[36masync\u001b[39m clickIntakeSubmitButton() {\n \u001b[90m 356 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 357 |\u001b[39m         \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mpage\u001b[33m.\u001b[39mlocator(intakeCreate_Locators\u001b[33m.\u001b[39mintakeSubmit)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                                                     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 358 |\u001b[39m\n \u001b[90m 359 |\u001b[39m     }\n \u001b[90m 360 |\u001b[39m\u001b[0m\n\u001b[2m    at intakeCreateActions.clickIntakeSubmitButton (/home/mayur/Desktop/Aerchain E2E Playwrite/pages/actions.js:357:69)\u001b[22m\n\u001b[2m    at /home/mayur/Desktop/Aerchain E2E Playwrite/tests/testSuiteNSE.spec.js:78:31\u001b[22m"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 27539,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-27T12:15:54.078Z",
+                      "startTime": "2026-03-27T12:17:45.836Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/mayur/Desktop/Aerchain E2E Playwrite/test-results/testSuiteNSE-Aerchain---NSE-Intake-Create-Positive-tests/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/home/mayur/Desktop/Aerchain E2E Playwrite/test-results/testSuiteNSE-Aerchain---NSE-Intake-Create-Positive-tests/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/mayur/Desktop/Aerchain E2E Playwrite/test-results/testSuiteNSE-Aerchain---NSE-Intake-Create-Positive-tests/error-context.md"
-                        }
-                      ]
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "cef6597abdde4ca9aa52-d5e720019a393b22d50b",
@@ -207,11 +175,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-03-27T12:15:39.484Z",
-    "duration": 45056.498,
-    "expected": 1,
+    "startTime": "2026-03-27T12:17:34.919Z",
+    "duration": 38693.845,
+    "expected": 2,
     "skipped": 0,
-    "unexpected": 1,
+    "unexpected": 0,
     "flaky": 0
   }
 }
