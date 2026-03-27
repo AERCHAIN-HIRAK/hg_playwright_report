@@ -99,12 +99,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 10677,
+                  "duration": 13000,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-27T12:00:11.607Z",
+                  "startTime": "2026-03-27T12:15:40.156Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -150,7 +150,7 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "timedOut",
-                      "duration": 30215,
+                      "duration": 30227,
                       "error": {
                         "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
                         "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
@@ -171,7 +171,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-27T12:00:23.405Z",
+                      "startTime": "2026-03-27T12:15:54.078Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -207,8 +207,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-03-27T12:00:10.835Z",
-    "duration": 43034.384999999995,
+    "startTime": "2026-03-27T12:15:39.484Z",
+    "duration": 45056.498,
     "expected": 1,
     "skipped": 0,
     "unexpected": 1,
