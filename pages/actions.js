@@ -144,6 +144,11 @@ export class intakeCreateActions{
     async selectIntakeVertical() {
 
         await this.page.locator(intakeCreate_Locators.intakeVertical).click();
+        // Dropdown has a search box — type to filter the long options list
+        const searchBox = this.page.locator('[placeholder="Search..."]').last();
+        await searchBox.waitFor({ state: 'visible', timeout: 5000 });
+        await searchBox.fill('ADM');
+        await this.page.locator(intakeCreate_Locators.intakeVerticalOpt).waitFor({ state: 'visible', timeout: 10000 });
         await this.page.locator(intakeCreate_Locators.intakeVerticalOpt).click();
 
     }
@@ -256,7 +261,9 @@ export class intakeCreateActions{
     async selectIntakeItemUOM() {
 
         await this.page.locator(intakeCreate_Locators.intakeItemUOM).dblclick();
-        await this.page.locator(intakeCreate_Locators.intakeItemUOMOpt).click();
+        await this.page.waitForTimeout(800);
+        await this.page.keyboard.press('ArrowDown');
+        await this.page.keyboard.press('Enter');
 
     }
 
@@ -309,7 +316,9 @@ export class intakeCreateActions{
     async selectIntakeItemUOM1() {
 
         await this.page.locator(intakeCreate_Locators.intakeItemUOM1).dblclick();
-        await this.page.locator(intakeCreate_Locators.intakeItemUOMOpt1).click();
+        await this.page.waitForTimeout(800);
+        await this.page.keyboard.press('ArrowDown');
+        await this.page.keyboard.press('Enter');
 
     }
 

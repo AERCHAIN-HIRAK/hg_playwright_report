@@ -1,0 +1,54 @@
+{
+    "baseUrl": "https://nse-capp-v4-uat.aerchain.io",
+    "listingUrl": "https://nse-capp-v4-uat.aerchain.io/intakes",
+
+    "statusCards": {
+        "draft":           "Draft",
+        "awaitingActions": "Awaiting Actions",
+        "activeReleased":  "Active/Released",
+        "completed":       "Completed/Successful",
+        "cancelled":       "Cancelled/Rejected"
+    },
+
+    "tabs": {
+        "all":                    "All",
+        "myPendingApproval":      "My Pending Approval",
+        "pendingBuyerAcceptance": "Pending Buyer Acceptance",
+        "pendingBuyerToProcess":  "Pending Buyer to process",
+        "buyerAssignment":        "Buyer assignment logic"
+    },
+
+    "search": {
+        "valid": {
+            "byCodePartial":    "INT-NSEI",
+            "byCodeExact":      "INT-NSEI-26-1514",
+            "bySubjectPartial": "Non-Fin",
+            "bySubjectExact":   "Non-Fin Test",
+            "caseUpper":        "NON-FIN TEST",
+            "caseLower":        "non-fin test"
+        },
+        "invalid": {
+            "nonExistent":  "XXXXXX_NONEXISTENT_99999",
+            "emptySpaces":  "   ",
+            "sqlInjection": "' OR '1'='1",
+            "xssPayload":   "<script>alert('xss')</script>",
+            "longString":   "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "specialChars": "!@#$%^&*()",
+            "unicodeChars": "αβγδ日本語"
+        }
+    },
+
+    "filter": {
+        "createdBy":        "Aerchain NSE Admin",
+        "status":           "Processed",
+        "invalidUser":      "ZZZZ_NO_SUCH_USER_9999"
+    },
+
+    "sortableColumns": ["Code", "Subject", "Date", "Status"],
+
+    "expectedUrlPatterns": {
+        "listing": "/intakes",
+        "create":  "/intakes/create",
+        "detail":  "/intakes/"
+    }
+}

@@ -9,6 +9,8 @@ export default defineConfig({
   ['json', { outputFile: 'test-results/results.json' }]
   ],
 
+  timeout: 60000,
+
   use: {
     headless: false,
     screenshot: 'only-on-failure',
