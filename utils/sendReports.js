@@ -93,7 +93,7 @@ export async function sendReport() {
     const reportUrl = "https://aerchain-hirak.github.io/hg_playwright_report/";
 
     const user1 = "<@U026PKJJHC6>";
-    const user2 = "<@U02463GT9QV>"
+    const user2 = "<@U02DHMS34G6>" // 
 
     // ✅ Format failed tests
     let failedText = "";
