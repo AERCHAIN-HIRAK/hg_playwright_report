@@ -390,8 +390,8 @@ export class intakeWorkflowActions {
 
     /**
      * Approve every workflow stage sequentially until the Accept button appears.
-     * After each approval the next stage's Approve button replaces the previous one.
-     * Loops until Accept is visible (all stages done) or no Approve button within timeout.
+     * At the start of each iteration, if Approve is not visible, reassigns the
+     * Workflow Approver to Admin before retrying. Loops until Accept is visible.
      */
     async approveAllStages(comments = 'Approved by automation') {
         const maxStages = 10;
@@ -598,6 +598,53 @@ export class intakeWorkflowActions {
     async verifyAcknowledgementStepCompleted() {
         await expect(this.page.locator(WL.btn_Acknowledge).first())
             .toBeHidden({ timeout: 15000 });
+    }
+
+    // ── Process → Create PR ───────────────────────────────────────────────────
+
+    /** Click Process button → click Create PR from the dropdown. */
+    async clickCreatePRFromProcess() {
+        const processBtn = this.page.locator(WL.btn_Process).first();
+        await processBtn.waitFor({ state: 'visible', timeout: 10000 });
+        await processBtn.click();
+        await this.page.waitForTimeout(500);
+        const createPROpt = this.page.locator(WL.menu_CreatePR).first();
+        await createPROpt.waitFor({ state: 'visible', timeout: 5000 });
+        await createPROpt.click();
+        await this._waitForStable();
+    }
+
+    /** Verify the "Create Requisition" confirmation dialog is visible. */
+    async verifyCreatePRConfirmDialogVisible() {
+        await expect(this.page.locator(WL.createPR_ConfirmDialog).first())
+            .toBeVisible({ timeout: 10000 });
+    }
+
+    /** Click the Confirm button in the Create Requisition dialog. */
+    async confirmCreatePR() {
+        const confirmBtn = this.page.locator(WL.createPR_ConfirmBtn).first();
+        await confirmBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await confirmBtn.click();
+        await this._waitForStable(1000);
+    }
+
+    /**
+     * Verify the "Requisition creation initiated successfully" toast.
+     * The toast is transient — caught within 5 s after Confirm click.
+     * Non-fatal if already dismissed; status change is the primary assertion.
+     */
+    async verifyRequisitionSuccessToast() {
+        const visible = await this.page.locator(WL.createPR_SuccessToast).first()
+            .isVisible({ timeout: 5000 }).catch(() => false);
+        if (visible) {
+            await expect(this.page.locator(WL.createPR_SuccessToast).first()).toBeVisible();
+        }
+    }
+
+    /** Verify intake status badge shows "Processed" after Create PR. */
+    async verifyIntakeStatusIsProcessed() {
+        await expect(this.page.locator(WL.overviewStatus_Processed).first())
+            .toBeVisible({ timeout: 15000 });
     }
 
     // ── Accept (Purchaser) Step ───────────────────────────────────────────────

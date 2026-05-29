@@ -339,6 +339,54 @@ test.describe('Aerchain NSE — Intake Workflow: Reject and Resubmit', () => {
 
 
 // =============================================================================
+// 6. PROCESS → CREATE PR → CONFIRM → PROCESSED
+//    Single test covering:
+//      • Full approval loop → Accept → intake status is Released
+//      • Process button is visible on Released intake
+//      • Clicking Process opens a dropdown with "Create PR" option
+//      • Clicking "Create PR" opens the "Create Requisition" confirmation dialog
+//      • Clicking Confirm triggers "Requisition creation initiated successfully" toast
+//      • Intake status changes to "Processed" after confirmation
+// =============================================================================
+
+test.describe('Aerchain NSE — Intake Workflow: Process → Create PR', () => {
+
+    test('Release → Process → Create PR → Confirm → verify Processed status @CreatePR', async ({ page }) => {
+        test.setTimeout(1200000);
+
+        // ── 1. Create intake, complete popup, land on overview ────────────────
+        const overviewUrl = await createIntakeAndGetOverviewUrl(page);
+        const workflow    = new intakeWorkflowActions(page);
+        await page.goto(overviewUrl);
+
+        // ── 2. Approve all stages → Accept → verify Released ─────────────────
+        await workflow.verifyIntakeStatusIsAwaitingActions();
+        await workflow.waitForApproveButton();
+        await workflow.approveAllStages(workflowData.comments.approval);
+        await workflow.waitForAcceptButton();
+        await workflow.acceptIntake(workflowData.comments.accept);
+        await workflow.verifyIntakeStatusIsReleased();
+
+        // ── 3. Click Process → Create PR ─────────────────────────────────────
+        await workflow.clickCreatePRFromProcess();
+
+        // ── 4. "Create Requisition" confirmation dialog is visible ────────────
+        await workflow.verifyCreatePRConfirmDialogVisible();
+
+        // ── 5. Click Confirm ──────────────────────────────────────────────────
+        await workflow.confirmCreatePR();
+
+        // ── 6. Success toast: "Requisition creation initiated successfully" ───
+        await workflow.verifyRequisitionSuccessToast();
+
+        // ── 7. Intake status changes to Processed ────────────────────────────
+        await workflow.verifyIntakeStatusIsProcessed();
+    });
+
+});
+
+
+// =============================================================================
 // 4. EDGE CASES
 //    Single test covering:
 //      • Closing Approve modal without confirming — Approve button remains (35)

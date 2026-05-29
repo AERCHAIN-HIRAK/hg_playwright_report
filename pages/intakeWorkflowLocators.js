@@ -77,6 +77,17 @@ exports.intakeWorkflow_Locators = {
     menu_WorkflowStages:            "//*[@role='menuitem'][normalize-space()='Workflow Stages']",
     menu_Edit:                      "//*[@role='menuitem'][normalize-space()='Edit']",
 
+    // ── Process dropdown (visible when intake is Released) ───────────────────
+    btn_Process:                    "//button[normalize-space(text())='Process']",
+    menu_CreatePR:                  "//*[@role='menuitem'][normalize-space()='Create PR']",
+    // Create Requisition confirmation dialog
+    createPR_ConfirmDialog:         "//*[contains(normalize-space(),'Create Requisition')]",
+    createPR_ConfirmBtn:            "//button[normalize-space(text())='Confirm']",
+    // Success toast — transient; caught within a short window after Confirm click
+    createPR_SuccessToast:          "//*[contains(normalize-space(),'Requisition') and (contains(normalize-space(),'success') or contains(normalize-space(),'initiated'))]",
+    // Overview status after Create PR
+    overviewStatus_Processed:       "//*[normalize-space(text())='Processed' and not(ancestor::table) and not(ancestor::nav)]",
+
     // ── Workflow Stages dialog ────────────────────────────────────────────────
     // Opens via More → Workflow Stages. Shows all workflow instances (Workflow 1, Workflow 2…)
     // each with a status badge (Active / Pending / Rejected / Skipped).
