@@ -24,7 +24,7 @@ exports.intakeListing_Locators = {
     tab_MyPendingApproval:          '//button[@data-slot="tabs-trigger"][contains(normalize-space(),"My Pending Approval")]',
     tab_PendingBuyerAcceptance:     '//button[@data-slot="tabs-trigger"][contains(normalize-space(),"Pending Buyer Acceptance")]',
     tab_PendingBuyerToProcess:      '//button[@data-slot="tabs-trigger"][contains(normalize-space(),"Pending Buyer to process")]',
-    tab_BuyerAssignment:            '//button[@data-slot="tabs-trigger"][contains(normalize-space(),"Buyer assignment")]',
+    tab_Draft:                      '//button[@data-slot="tabs-trigger"][contains(normalize-space(),"Draft")]',
     activeTab:                      '//button[@data-slot="tabs-trigger"][@data-state="active"]',
 
     // ── Toolbar ───────────────────────────────────────────────────────────────

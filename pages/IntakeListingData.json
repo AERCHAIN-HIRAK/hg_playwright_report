@@ -15,7 +15,7 @@
         "myPendingApproval":      "My Pending Approval",
         "pendingBuyerAcceptance": "Pending Buyer Acceptance",
         "pendingBuyerToProcess":  "Pending Buyer to process",
-        "buyerAssignment":        "Buyer assignment logic"
+        "draft":                  "Draft"
     },
 
     "search": {

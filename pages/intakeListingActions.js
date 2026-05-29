@@ -33,7 +33,7 @@ export class intakeListingActions {
             'My Pending Approval':        L.tab_MyPendingApproval,
             'Pending Buyer Acceptance':   L.tab_PendingBuyerAcceptance,
             'Pending Buyer to process':   L.tab_PendingBuyerToProcess,
-            'Buyer assignment logic':     L.tab_BuyerAssignment,
+            'Draft':                      L.tab_Draft,
         };
         return map[tabName] || L.tab_All;
     }
@@ -147,7 +147,7 @@ export class intakeListingActions {
     async verifyAllTabsVisible() {
         const tabs = [
             L.tab_All, L.tab_MyPendingApproval,
-            L.tab_PendingBuyerAcceptance, L.tab_PendingBuyerToProcess, L.tab_BuyerAssignment,
+            L.tab_PendingBuyerAcceptance, L.tab_PendingBuyerToProcess, L.tab_Draft,
         ];
         for (const t of tabs) {
             await expect(this.page.locator(t).filter({ visible: true }).first()).toBeVisible();
@@ -207,6 +207,8 @@ export class intakeListingActions {
     }
 
     async selectFilterOption(optionText) {
+        // Wait for options to populate before attempting to click
+        await this.page.locator(L.filterPopup_Option).first().waitFor({ state: 'visible', timeout: 10000 });
         await this.page.locator('//div[@data-radix-popper-content-wrapper]')
             .getByText(optionText, { exact: true })
             .click();

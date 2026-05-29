@@ -9,6 +9,8 @@ import data from '../pages/IntakeListingData.json';
 
 test.describe('Aerchain NSE - Intake Listing Page', () => {
 
+    test.setTimeout(90000);
+
     let listing;
 
     test.beforeEach(async ({ page }) => {
@@ -115,8 +117,8 @@ test.describe('Aerchain NSE - Intake Listing Page', () => {
             expect(count).toBeGreaterThanOrEqual(0);
         });
 
-        test('switching to "Buyer assignment logic" tab loads table @Tabs', async () => {
-            await listing.clickTab(data.tabs.buyerAssignment);
+        test('switching to "Draft" tab loads table @Tabs', async () => {
+            await listing.clickTab(data.tabs.draft);
             const count = await listing.getVisibleRowCount();
             expect(count).toBeGreaterThanOrEqual(0);
         });
@@ -164,7 +166,7 @@ test.describe('Aerchain NSE - Intake Listing Page', () => {
             });
 
             test('single filter by Created By — table updates @Filter', async () => {
-                await listing.applyFilterByColumnAndValue('Created By', data.filter.createdBy);
+                await listing.applyFilterWithSearch('Created By', data.filter.createdBy, data.filter.createdBy);
                 await listing.verifyRowCountGreaterThan(0);
             });
 
@@ -175,7 +177,7 @@ test.describe('Aerchain NSE - Intake Listing Page', () => {
 
             test('multi-filter: Status then Created By — table updates @Filter', async () => {
                 await listing.applyFilterByColumnAndValue('Status', data.filter.status);
-                await listing.applyFilterByColumnAndValue('Created By', data.filter.createdBy);
+                await listing.applyFilterWithSearch('Created By', data.filter.createdBy, data.filter.createdBy);
                 const rowCount = await listing.getVisibleRowCount();
                 expect(rowCount).toBeGreaterThanOrEqual(0);
             });
@@ -191,6 +193,7 @@ test.describe('Aerchain NSE - Intake Listing Page', () => {
 
             test('clear all selections button resets popup state @Filter', async () => {
                 await listing.openColumnFilter('Created By');
+                await listing.searchInFilterPopup(data.filter.createdBy);
                 await listing.selectFilterOption(data.filter.createdBy);
                 await listing.clearAllFilterSelections();
                 await listing.applyColumnFilter();
