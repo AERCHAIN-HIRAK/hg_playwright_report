@@ -4,3 +4,6 @@ test-results/
 .env
 auth.json
 screenshots/
+.claude/
+.playwright-mcp/
+skills-lock.json
