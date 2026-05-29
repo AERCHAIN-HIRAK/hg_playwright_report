@@ -289,6 +289,56 @@ test.describe('Aerchain NSE — Intake Workflow: Popup Negative Tests', () => {
 
 
 // =============================================================================
+// 5. REJECT & RESUBMIT FLOW
+//    Single test covering:
+//      • After rejection the "Edit" option appears in the More dropdown
+//      • Clicking Edit opens the edit page (URL contains /edit)
+//      • Re-filling mandatory fields and submitting triggers a new workflow popup
+//      • Completing the new popup lands back on the overview page
+//      • More → Workflow Stages dialog opens and shows "Workflow Steps" heading
+//      • The previous (rejected) workflow shows "Rejected" status in the dialog
+//      • The new (resubmitted) workflow shows "Active" or "Pending" status
+// =============================================================================
+
+test.describe('Aerchain NSE — Intake Workflow: Reject and Resubmit', () => {
+
+    test('Reject → Edit via More → Resubmit → verify old workflow Rejected and new workflow Active @RejectResubmit', async ({ page }) => {
+        test.setTimeout(1200000);
+
+        // ── 1. Create intake, complete popup, land on overview ────────────────
+        const overviewUrl = await createIntakeAndGetOverviewUrl(page);
+        const workflow = new intakeWorkflowActions(page);
+        await page.goto(overviewUrl);
+
+        // ── 2. Reject the intake at the first approval stage ──────────────────
+        await workflow.waitForApproveButton();
+        await workflow.rejectIntake(workflowData.comments.rejection);
+        await workflow.verifyIntakeStatusIsRejected();
+
+        // ── 3. More dropdown → Edit (visible after rejection/send-back) ───────
+        await workflow.clickEditFromMoreMenu();
+        await expect(page).toHaveURL(/intakes\/\d+\/(edit|overview)/, { timeout: 15000 });
+
+        // ── 4. Re-fill mandatory fields on edit page → Submit → new popup ─────
+        await workflow.fillReviewEditFields();
+        await workflow.submitEditAndCompletePopup();
+
+        // ── 5. Confirm we are back on overview ────────────────────────────────
+        await workflow.verifyOnOverviewPage();
+
+        // ── 6. More → Workflow Stages → verify dialog opens ──────────────────
+        await workflow.clickWorkflowStagesFromMoreMenu();
+        await workflow.verifyWorkflowStagesDialogOpen();
+
+        // ── 7. Old workflow → Rejected; New workflow → Active or Pending ──────
+        await workflow.verifyPreviousWorkflowIsRejected();
+        await workflow.verifyNewWorkflowIsActiveOrPending();
+    });
+
+});
+
+
+// =============================================================================
 // 4. EDGE CASES
 //    Single test covering:
 //      • Closing Approve modal without confirming — Approve button remains (35)

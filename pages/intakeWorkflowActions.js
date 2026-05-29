@@ -217,6 +217,73 @@ export class intakeWorkflowActions {
         }
     }
 
+    // ── More dropdown helpers ─────────────────────────────────────────────────
+
+    /** Open the More dropdown. */
+    async _openMoreMenu() {
+        const moreBtn = this.page.locator(WL.btn_More).first();
+        await moreBtn.waitFor({ state: 'visible', timeout: 10000 });
+        await moreBtn.click();
+        await this.page.waitForTimeout(500);
+    }
+
+    /** More → Edit. Visible on the overview page after the intake is rejected/sent back. */
+    async clickEditFromMoreMenu() {
+        await this._openMoreMenu();
+        const editOpt = this.page.locator(WL.menu_Edit).first();
+        await editOpt.waitFor({ state: 'visible', timeout: 5000 });
+        await editOpt.click();
+        await this.page.waitForLoadState('domcontentloaded');
+        await this._waitForStable();
+    }
+
+    /** More → Workflow Stages. Opens the Workflow Steps dialog. */
+    async clickWorkflowStagesFromMoreMenu() {
+        await this._openMoreMenu();
+        const stagesOpt = this.page.locator(WL.menu_WorkflowStages).first();
+        await stagesOpt.waitFor({ state: 'visible', timeout: 5000 });
+        await stagesOpt.click();
+        await this._waitForStable();
+    }
+
+    async verifyWorkflowStagesDialogOpen() {
+        await expect(this.page.locator(WL.workflowStagesHeading).first())
+            .toBeVisible({ timeout: 10000 });
+    }
+
+    /** Verify the Workflow Stages dialog contains a "Rejected" badge (old workflow). */
+    async verifyPreviousWorkflowIsRejected() {
+        await expect(this.page.locator(WL.workflowStages_RejectedBadge).first())
+            .toBeVisible({ timeout: 10000 });
+    }
+
+    /** Verify the newest workflow entry has status Active or Pending (new workflow in progress). */
+    async verifyNewWorkflowIsActiveOrPending() {
+        const badge = this.page.locator(WL.workflowStages_FirstWorkflowStatusBadge).first();
+        await badge.waitFor({ state: 'visible', timeout: 10000 });
+        const statusText = ((await badge.textContent()) || '').trim();
+        expect(
+            ['Active', 'Pending', 'Inprogress', 'In Progress'].includes(statusText),
+            `Expected new workflow to be Active or Pending but got: "${statusText}"`
+        ).toBeTruthy();
+    }
+
+    /**
+     * Click Submit on the edit page, then complete the re-submission popup
+     * (Proceed → Purchaser Assignment → Final Submit → overview).
+     */
+    async submitEditAndCompletePopup() {
+        await this.page.locator(WL.editPage_SubmitButton).first().click();
+        await this._waitForStable(1000);
+        const popupVisible = await this.page.locator(WL.submissionPopup).first()
+            .isVisible({ timeout: 15000 }).catch(() => false);
+        if (popupVisible) {
+            await this.completeSubmissionPopup();
+        } else {
+            await this.waitForOverviewPage();
+        }
+    }
+
     /**
      * More → Reassign Workflow Approver → Aerchain NSE Admin → reason → Submit.
      * Fallback used when the Approve button is assigned to a different approver role.

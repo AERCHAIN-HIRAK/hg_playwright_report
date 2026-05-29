@@ -74,6 +74,18 @@ exports.intakeWorkflow_Locators = {
     // ── More dropdown (top-right toolbar on overview page) ────────────────────
     btn_More:                       "//button[normalize-space(text())='More']",
     menu_ReassignWorkflowApprover:  "//*[@role='menuitem'][contains(normalize-space(),'Reassign Workflow Approver')] | //button[contains(normalize-space(),'Reassign Workflow Approver')] | //li[contains(normalize-space(),'Reassign Workflow Approver')]",
+    menu_WorkflowStages:            "//*[@role='menuitem'][normalize-space()='Workflow Stages']",
+    menu_Edit:                      "//*[@role='menuitem'][normalize-space()='Edit']",
+
+    // ── Workflow Stages dialog ────────────────────────────────────────────────
+    // Opens via More → Workflow Stages. Shows all workflow instances (Workflow 1, Workflow 2…)
+    // each with a status badge (Active / Pending / Rejected / Skipped).
+    workflowStagesHeading:          "//*[@role='dialog']//*[normalize-space(text())='Workflow Steps']",
+    // Workflow-level status badge — tiny pill next to "Workflow N" header.
+    // Class pattern confirmed from live DOM: text-[10.5px] px-[7px] py-[3.5px]
+    workflowStages_RejectedBadge:   "//*[@role='dialog']//*[normalize-space(text())='Rejected' and contains(@class,'text-[10.5px]') and contains(@class,'px-[7px]')]",
+    // First workflow entry (newest) — its status badge is the first px-[7px] pill in the dialog
+    workflowStages_FirstWorkflowStatusBadge: "(//*[@role='dialog']//*[contains(@class,'text-[10.5px]') and contains(@class,'px-[7px]') and contains(@class,'py-[3.5px]')])[1]",
 
     // ── Reassign User dialog ──────────────────────────────────────────────────
     reassign_UserDropdown:          "(//*[@role='dialog']//button[@aria-haspopup='dialog'])[1]",
