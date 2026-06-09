@@ -1040,6 +1040,173 @@ export class intakeCreateActions{
         await this.page.locator(intakeCreate_Locators.intakeItemSuggPriceField).fill(data.itemSuggestedPrice1, { timeout: 15000 });
     }
 
+    // ── Shared helper: single-click cell → search → select exact option ──────
+    async _fillGridCellWithOption(locatorStr, searchText, optionText, label) {
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(300);
+        const el = this.page.locator(locatorStr).first();
+        await el.scrollIntoViewIfNeeded().catch(() => {});
+        await el.click({ force: true });
+        await this.page.waitForTimeout(600);
+        // Type in the search input that appears after clicking
+        const searchInput = this.page.locator('input[placeholder*="Search" i], .ant-select-search__field, input.ant-select-selection-search-input').first();
+        if (await searchInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await searchInput.fill(searchText);
+        } else {
+            await this.page.keyboard.type(searchText);
+        }
+        await this.page.waitForTimeout(600);
+        // Find the option — collect ALL matches, pick the LAST visible one.
+        // Dropdown portals render at the end of <body>, so the last match is in the dropdown,
+        // not an already-selected value earlier in the page.
+        const selected = await this.page.evaluate((text) => {
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+            let node;
+            const matches = [];
+            while ((node = walker.nextNode())) {
+                if (node.textContent.trim() === text && node.parentElement.offsetParent !== null) {
+                    matches.push(node.parentElement);
+                }
+            }
+            if (matches.length === 0) return false;
+            // Use the LAST match — it's the dropdown option (portal renders at end of body)
+            let el = matches[matches.length - 1];
+            for (let i = 0; i < 5 && el && el !== document.body; i++) {
+                if (el.tagName === 'LI' || el.getAttribute('role') === 'option' ||
+                    el.getAttribute('role') === 'listitem' ||
+                    (el.className && (el.className.includes('option') || el.className.includes('item')))) {
+                    el.click();
+                    return true;
+                }
+                el = el.parentElement;
+            }
+            matches[matches.length - 1].click();
+            return true;
+        }, optionText);
+        if (!selected) {
+            throw new Error(`Option "${optionText}" not found in dropdown`);
+        }
+        console.log(`[Intake] ${label} = ${optionText}`);
+    }
+
+    // ── Find a cell in the Item Details table by column header name and row index ─
+    async _getItemDetailCell(colHeaderText, rowIndex) {
+        // Find the th with the given text, get its column position, then find the td at that position
+        const colPos = await this.page.evaluate((headerText) => {
+            const allHeaders = Array.from(document.querySelectorAll('th'));
+            const th = allHeaders.find(h => h.textContent.trim().includes(headerText));
+            if (!th) return -1;
+            const siblings = Array.from(th.parentElement.querySelectorAll('th'));
+            return siblings.indexOf(th) + 1; // 1-based for nth-child
+        }, colHeaderText);
+        if (colPos < 0) return null;
+        // rowIndex is 1-based data row
+        return this.page.locator(`tbody tr:nth-child(${rowIndex}) td:nth-child(${colPos}), tbody tr:nth-of-type(${rowIndex}) td:nth-of-type(${colPos})`).first();
+    }
+
+    // ── Row 1 — Vertical → "Legal" ────────────────────────────────────────────
+    async selectIntakeItemLineVertical() {
+        await this._fillGridCellWithOption(intakeCreate_Locators.intakeItemLineVertical, 'Legal', 'Legal', 'Row1 Vertical');
+    }
+
+    // ── Row 1 — BRF No. → "DONT TOUCH" (fill AFTER Vertical) ───────────────
+    async selectIntakeItemLineBRFNo() {
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(400);
+        // Use bounding rect to find BRF No. cell — immune to DOM structure and index drift
+        const clicked = await this.page.evaluate(({ headerText, rowIdx }) => {
+            const txtWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+            let hNode;
+            while ((hNode = txtWalker.nextNode())) {
+                if (hNode.textContent.trim() === headerText && hNode.parentElement.offsetParent !== null) break;
+            }
+            if (!hNode) return false;
+            const hMid = (() => { const r = hNode.parentElement.getBoundingClientRect(); return (r.left + r.right) / 2; })();
+            const cpDivs = Array.from(document.querySelectorAll('div[class*="outline-primary"]'))
+                .filter(d => {
+                    if (!d.offsetParent) return false;
+                    const r = d.getBoundingClientRect();
+                    return Math.abs((r.left + r.right) / 2 - hMid) < 25;
+                });
+            if (!cpDivs[rowIdx - 1]) return false;
+            cpDivs[rowIdx - 1].click();
+            return true;
+        }, { headerText: 'BRF No.', rowIdx: 1 });
+        if (!clicked) { console.log('[Intake] Row1 BRF No. cell not found'); return; }
+        await this.page.waitForTimeout(600);
+        const selected = await this.page.evaluate((text) => {
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+            let node;
+            while ((node = walker.nextNode())) {
+                if (node.textContent.trim() === text && node.parentElement.offsetParent !== null) {
+                    let el = node.parentElement;
+                    for (let i = 0; i < 5 && el && el !== document.body; i++) {
+                        if (el.tagName === 'LI' || el.getAttribute('role') === 'option' ||
+                            (el.className && (el.className.includes('option') || el.className.includes('item')))) {
+                            el.click(); return true;
+                        }
+                        el = el.parentElement;
+                    }
+                    node.parentElement.click(); return true;
+                }
+            }
+            return false;
+        }, 'DONT TOUCH');
+        if (selected) console.log('[Intake] Row1 BRF No. = DONT TOUCH');
+        else console.log('[Intake] Row1 BRF No.: DONT TOUCH option not found');
+    }
+
+    // ── Row 2 — Vertical → "Legal" ────────────────────────────────────────────
+    async selectIntakeItemLineVertical1() {
+        await this._fillGridCellWithOption(intakeCreate_Locators.intakeItemLineVertical1, 'Legal', 'Legal', 'Row2 Vertical');
+    }
+
+    // ── Row 2 — BRF No. [41] → "DONT TOUCH" (fill AFTER Vertical) ──────────
+    async selectIntakeItemLineBRFNo1() {
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(400);
+        const clicked = await this.page.evaluate(({ headerText, rowIdx }) => {
+            const txtWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+            let hNode;
+            while ((hNode = txtWalker.nextNode())) {
+                if (hNode.textContent.trim() === headerText && hNode.parentElement.offsetParent !== null) break;
+            }
+            if (!hNode) return false;
+            const hMid = (() => { const r = hNode.parentElement.getBoundingClientRect(); return (r.left + r.right) / 2; })();
+            const cpDivs = Array.from(document.querySelectorAll('div[class*="outline-primary"]'))
+                .filter(d => {
+                    if (!d.offsetParent) return false;
+                    const r = d.getBoundingClientRect();
+                    return Math.abs((r.left + r.right) / 2 - hMid) < 25;
+                });
+            if (!cpDivs[rowIdx - 1]) return false;
+            cpDivs[rowIdx - 1].click();
+            return true;
+        }, { headerText: 'BRF No.', rowIdx: 2 });
+        if (!clicked) { console.log('[Intake] Row2 BRF No. cell not found'); return; }
+        await this.page.waitForTimeout(600);
+        const selected = await this.page.evaluate((text) => {
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+            let node;
+            while ((node = walker.nextNode())) {
+                if (node.textContent.trim() === text && node.parentElement.offsetParent !== null) {
+                    let el = node.parentElement;
+                    for (let i = 0; i < 5 && el && el !== document.body; i++) {
+                        if (el.tagName === 'LI' || el.getAttribute('role') === 'option' ||
+                            (el.className && (el.className.includes('option') || el.className.includes('item')))) {
+                            el.click(); return true;
+                        }
+                        el = el.parentElement;
+                    }
+                    node.parentElement.click(); return true;
+                }
+            }
+            return false;
+        }, 'DONT TOUCH');
+        if (selected) console.log('[Intake] Row2 BRF No. = DONT TOUCH');
+        else console.log('[Intake] Row2 BRF No.: DONT TOUCH option not found');
+    }
+
     async typeIntakePotentialSuppliers(data) {
 
         await this.page.locator(intakeCreate_Locators.intakePotentialSuppliers).fill(data.potentialSuppliers);

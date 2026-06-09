@@ -72,14 +72,15 @@ exports.intakeWorkflow_Locators = {
     modal_AcceptConfirm:            "(//button[normalize-space(text())='Accept'])[2]",
 
     // ── More dropdown (top-right toolbar on overview page) ────────────────────
-    btn_More:                       "//button[normalize-space(text())='More']",
+    btn_More:                       "//button[normalize-space(.)='More' or normalize-space(text())='More']",
     menu_ReassignWorkflowApprover:  "//*[@role='menuitem'][contains(normalize-space(),'Reassign Workflow Approver')] | //button[contains(normalize-space(),'Reassign Workflow Approver')] | //li[contains(normalize-space(),'Reassign Workflow Approver')]",
     menu_WorkflowStages:            "//*[@role='menuitem'][normalize-space()='Workflow Stages']",
     menu_Edit:                      "//*[@role='menuitem'][normalize-space()='Edit']",
 
     // ── Process dropdown (visible when intake is Released) ───────────────────
-    btn_Process:                    "//button[normalize-space(text())='Process']",
+    btn_Process:                    "//button[normalize-space(.)='Process' or normalize-space(text())='Process']",
     menu_CreatePR:                  "//*[@role='menuitem'][normalize-space()='Create PR']",
+    menu_SendForSourcing:           "//*[@role='menuitem'][contains(normalize-space(),'Send for Sourcing')] | //*[@role='menuitem'][contains(normalize-space(),'Send For Sourcing')] | //*[@role='menuitem'][contains(normalize-space(),'Sourcing')]",
     // Create Requisition confirmation dialog
     createPR_ConfirmDialog:         "//*[contains(normalize-space(),'Create Requisition')]",
     createPR_ConfirmBtn:            "//button[normalize-space(text())='Confirm']",
@@ -110,5 +111,75 @@ exports.intakeWorkflow_Locators = {
     timeline_ActiveStep:            '//*[contains(@class,"active") and (contains(@class,"step") or contains(@class,"stage"))]',
     timeline_CompletedStep:         '//*[(contains(@class,"complete") or contains(@class,"done")) and (contains(@class,"step") or contains(@class,"stage"))]',
     timeline_PendingStep:           '//*[contains(@class,"pending") and (contains(@class,"step") or contains(@class,"stage"))]',
+
+    // ── Transaction Tab (on Intake overview page) ─────────────────────────────
+    tab_Transaction:                "//button[@data-slot='tabs-trigger'][contains(normalize-space(),'Transaction')] | //button[@role='tab'][contains(normalize-space(),'Transaction')]",
+
+    // First Requisition/PR link in Transaction tab table
+    transactionTab_FirstPRLink:     "(//a[contains(@href,'requisition')])[1]",
+
+    // ── Purchase Requisition (PR) page ────────────────────────────────────────
+    pr_EditButton:                  '[alt="Edit"]',
+    // Ant Design wraps button text in <span> — use normalize-space() not normalize-space(text())
+    pr_SubmitButton:                "//button[normalize-space()='Submit']",
+    // PR Value — scoped to visible card/div elements only, excludes script/style tags
+    pr_ValueField:                  "(//*[self::div or self::span or self::p][contains(normalize-space(),'₹') and string-length(normalize-space()) < 30 and not(ancestor::script) and not(ancestor::style)])[1]",
+
+    // PR Edit form — mandatory field helpers (Ant Design selects + date picker)
+    pr_EntityTest2Select:           "(//*[contains(normalize-space(text()),'Entity Test 2')]/following::div[contains(@class,'ant-select')])[1]",
+    pr_CompanySelect:               "(//*[contains(normalize-space(text()),'Company') and not(contains(normalize-space(text()),'Contact'))]/following::div[contains(@class,'ant-select')])[1]",
+    pr_DeliveryDateInput:           "(//*[contains(normalize-space(text()),'Expected Delivery Date') or contains(normalize-space(text()),'Delivery Date')]/following::input)[1]",
+    pr_AntSelectOption:             ".ant-select-item-option-content",
+
+    // PR status badges — similar pattern to intake status
+    pr_StatusSubmitted:             "//*[contains(normalize-space(),'Submitted') and not(ancestor::table) and not(ancestor::nav)]",
+    pr_StatusPendingProcessCalc:    "//*[contains(normalize-space(),'Pending Process Calculation') and not(ancestor::table) and not(ancestor::nav)]",
+
+    // ── PR More dropdown options ───────────────────────────────────────────────
+    pr_Menu_ProcessCalculation:     "//*[@role='menuitem'][contains(normalize-space(),'Process Calculation')]",
+
+    // ── Process tab inside PR ─────────────────────────────────────────────────
+    pr_Tab_Process:                 "//button[@data-slot='tabs-trigger'][contains(normalize-space(),'Process')] | //button[@role='tab'][contains(normalize-space(),'Process')]",
+
+    // ── Convert to dropdown (on Process tab — MUI Autocomplete) ──────────────
+    // Click the autocomplete input, not the outer label div (pointer events intercepted)
+    pr_ConvertToInput:              'input[placeholder*="convert" i], input[placeholder*="Select convert" i]',
+    pr_ConvertTo_BulkPO:            "//li[@role='option'][contains(normalize-space(),'Bulk PO')] | //div[@role='option'][contains(normalize-space(),'Bulk PO')] | //*[@role='menuitem'][contains(normalize-space(),'Bulk PO')]",
+
+    // ── Bulk PO — supplier column cells (AG Grid col-id="supplier") ───────────
+    // Index [1] is the header row — data rows start at [2]
+    bulkPO_SupplierCells:           "//div[@col-id='supplier'][position()>1]",
+    bulkPO_SupplierSearch:          'input[placeholder*="Search" i], input[placeholder*="Supplier" i], .ant-select-search__field, input.ant-select-selection-search-input',
+    // MUI Autocomplete option — index 1 = "HG HF Test 001" (index 0 is typically "No supplier" or blank)
+    bulkPO_SupplierOption:          'li[role="option"][id$="-option-1"], li[role="option"]:has-text("HG HF Test 001")',
+    // Price value cell — populated after supplier selection
+    bulkPO_PriceCell:               "//td[contains(normalize-space(),'₹') or contains(normalize-space(),'INR')] | (//input[@placeholder='Enter a number' or @type='number'])[1]",
+
+    // ── Convert button (finalises Bulk PO → creates PRC) ─────────────────────
+    bulkPO_ConvertBtn:              "//button[normalize-space(.)='Convert' or normalize-space(text())='Convert']",
+
+    // ── Order Builder / PO Approvals page ────────────────────────────────────
+    orderBuilder_Heading:           "//*[contains(normalize-space(),'Order Builder') or contains(normalize-space(),'Order builder') or contains(normalize-space(),'PO Approval')]",
+
+    // ── PRC mandatory fields & submit ─────────────────────────────────────────
+    prc_CompanyField:               '[id="Company"]',
+    prc_PaymentTermsField:          '[id="Payment Terms"]',
+    prc_SubmitButton:               "(//span[@class='MuiButton-label'])[3]",
+
+    // ── PRC status: Converted ─────────────────────────────────────────────────
+    prc_StatusConverted:            "//*[(normalize-space(text())='Converted' or (contains(normalize-space(),'Converted') and (contains(@class,'badge') or contains(@class,'status') or contains(@class,'chip')))) and not(ancestor::table) and not(ancestor::nav)]",
+
+    // ── Requisition Conversion view ───────────────────────────────────────────
+    reqConversion_Section:          "//*[contains(normalize-space(),'Requisition Conversion') or contains(normalize-space(),'Conversion View')]",
+    reqConversion_SplitRows:        "//*[contains(@class,'split-row') or contains(@data-testid,'split') or (contains(normalize-space(),'Split') and (ancestor::*[contains(normalize-space(),'Requisition Conversion')]))]",
+    reqConversion_PO1:              "//*[normalize-space(text())='PO(1)' or normalize-space(text())='PO (1)' or (contains(normalize-space(),'PO') and contains(normalize-space(),'(1)'))]",
+    reqConversion_POCodeLink:       "//a[contains(@href,'/purchase-orders/') or contains(@href,'/orders/') or contains(@href,'/po/')]",
+
+    // ── Quote Requests (RFX) page ─────────────────────────────────────────────
+    // Template selector on the quote-requests page — shows current template name
+    rfx_TemplateSelector:           "//*[contains(normalize-space(),'NSEF RFX') or contains(normalize-space(),'Default RFX') or contains(normalize-space(),'Template')]//ancestor-or-self::*[@role='combobox' or contains(@class,'select') or contains(@class,'dropdown')][1] | //button[contains(normalize-space(),'NSEF RFX')] | //div[contains(normalize-space(),'NSEF RFX') and contains(@class,'select')]",
+    rfx_TemplateOption_DefaultRFX:  "//*[contains(normalize-space(),'Default RFX')][@role='option' or contains(@class,'option') or contains(@class,'item')]",
+    // Expand icon button after template change
+    rfx_ExpandButton:               "//div[@class='flex w-full']//div[@class='flex gap-[7px]']//button[@class='inline-flex items-center justify-center gap-[7px] whitespace-nowrap text-[12.25px] font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 font-sans hover:bg-accent hover:text-accent-foreground transition-shadow active:shadow-[inset_0_0_0_1000px_rgba(0,0,0,0.05)] rounded-[7px] h-[21px] w-[21px]']",
 
 };

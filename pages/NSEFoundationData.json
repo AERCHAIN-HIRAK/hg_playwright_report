@@ -1,0 +1,53 @@
+{
+    "loginUrl": "https://nse-capp-v4-uat.aerchain.io",
+    "authUrl": "https://nse-auth-uat.aerchain.io/capp/login",
+
+    "login": {
+        "email":    "nsefsupport@demo.com",
+        "password": "12345"
+    },
+
+    "potentialSuppliers": "1",
+
+    "cxo": {
+        "title":               "HIRAK AUTOMATION NSEF CXO",
+        "summary":             "Automation test summary",
+        "department":          "Premises",
+        "function":            "Legal",
+        "currency":            "INR - Indian Rupee",
+        "cxoType":             "Non-Financial",
+        "transactionFlowType": "PO Based",
+        "expenseNature":       "Non-CSR Process",
+        "startDate":           "2026-06-10",
+        "endDate":             "2026-12-31",
+        "typeOfProcurement":   "Non-Technology",
+        "financialYear":       "2026-27",
+        "existingApplications":      "No",
+        "businessOrCompliance":      "Business Requirement",
+        "minimumCommitmentPeriod":   "12",
+        "cloudExposure":             "No",
+        "meitYVendors":              "No",
+        "detailsOtherAgency":        "1",
+        "sebiOutsourcingCircular":   "No",
+        "nseDataTransfer":           "Yes",
+        "natureOfDataShared":        "1",
+        "rpwdCompliance":            "No"
+    },
+
+    "lineItem": {
+        "name":                "Name 1",
+        "quantity":            "100",
+        "suggestedPrice":      "2000",
+        "projectName":         "NA",
+        "vertical":            "Legal",
+        "glAccount":           "NA",
+        "profitCenter":        "NA",
+        "costCenter":          "NA",
+        "sebiCategorization":  "NA",
+        "subSegment":          "NA",
+        "projectCategory":     "NA",
+        "natureOfExpense":     "Opex"
+    },
+
+    "expectedBrfValue": "Dont Touch"
+}

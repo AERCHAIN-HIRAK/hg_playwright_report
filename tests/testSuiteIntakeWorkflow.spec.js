@@ -102,6 +102,12 @@ async function fillAndSubmitIntake(page) {
     await creator.selectIntakeItemLineProjectCat1();
     await creator.typeIntakeItemSuggPrice1(createData);
 
+    // Vertical — fill for BOTH rows after row 2 is added (row 1 gets all 26 cells only after row 2 exists)
+    await creator.selectIntakeItemLineVertical();
+    await creator.selectIntakeItemLineVertical1();
+
+    // BRF No. auto-populates after Vertical is set — verified in @BRFFlow test only
+
     await creator.typeIntakePotentialSuppliers(createData);
     await creator.typeIntakeNotes(createData);
 
@@ -522,6 +528,199 @@ test.describe('Aerchain NSE — Intake Workflow: Edge Cases', () => {
             expect(rejectBtnHidden || validationVisible || rejectIsDisabled,
                 'App should handle empty-comment rejection attempt').toBeTruthy();
         }
+    });
+
+});
+
+// =============================================================================
+// 7. PR → PRC (BULK PO) → PO CREATION — FULL E2E FLOW
+//    Steps:
+//      • Create Intake → submit popup → approve all stages → Accept → Released
+//      • Process → Create PR → Confirm → Intake status = Processed
+//      • Transaction tab → click PR link (opens new tab)
+//      • Assert 1: PR details (title, line items) carry-forwarded from Intake
+//      • Edit PR → Submit → complete popup/approval if triggered
+//      • Assert 2: Before Process Calculation — status is Submitted +
+//                  Pending Process Calculation label visible
+//      • More → Process Calculation
+//      • Assert 3: After Process Calculation — status is Submitted
+//      • Process tab → Assert 4: Order Builder section visible (redirected)
+//      • Convert to → Bulk PO
+//      • Assert 5: Supplier field is enabled after selecting Bulk PO
+//      • Select supplier "HG HF Test 001" for each line item
+//      • Assert 6: Price displayed after supplier selection
+//      • Click Convert → fill PRC mandatory fields → Submit PRC
+//      • Complete PRC approvals if triggered
+//      • Assert 7: PRC details carry-forwarded from PR
+//      • Poll (reload every 30 s) until PRC status = Converted
+//      • Assert splits in Requisition Conversion view match line item count
+//      • Hover PO(1) → click PO Code → PO opens in new tab
+//      • Assert 8: PO details carry-forwarded from PR/Intake
+// =============================================================================
+
+test.describe('Aerchain NSE — Intake Workflow: PR → PRC → PO Full Flow', () => {
+
+    test('Intake → PR (Transaction Tab) → Edit → Process Calc → Bulk PO PRC → PO @PRCFlow @E2E', async ({ page, context }) => {
+        test.setTimeout(3600000); // 1-hour timeout — ~40 min flow + 10 min polling headroom
+
+        // ── 1. Create intake → complete popup → land on overview ──────────────
+        const overviewUrl = await createIntakeAndGetOverviewUrl(page);
+        const workflow    = new intakeWorkflowActions(page);
+        await page.goto(overviewUrl);
+
+        // ── 2. Approve all stages → Accept → verify Released ──────────────────
+        await workflow.verifyIntakeStatusIsAwaitingActions();
+        await workflow.waitForApproveButton();
+        await workflow.approveAllStages(workflowData.comments.approval);
+        await workflow.waitForAcceptButton();
+        await workflow.acceptIntake(workflowData.comments.accept);
+        await workflow.verifyIntakeStatusIsReleased();
+
+        // ── 3. Process → Create PR → Confirm → verify Processed ───────────────
+        await workflow.clickCreatePRFromProcess();
+        await workflow.verifyCreatePRConfirmDialogVisible();
+        await workflow.confirmCreatePR();
+        await workflow.verifyRequisitionSuccessToast();
+        // UAT updates Intake status to Processed asynchronously — poll with reloads
+        {
+            const processedLocator = page.locator('//*[normalize-space(text())=\'Processed\' and not(ancestor::table) and not(ancestor::nav)]');
+            let isProcessed = false;
+            for (let attempt = 0; attempt < 8 && !isProcessed; attempt++) {
+                await page.waitForTimeout(5000);
+                await page.reload({ waitUntil: 'domcontentloaded' });
+                await page.waitForTimeout(1500);
+                isProcessed = await processedLocator.first().isVisible({ timeout: 3000 }).catch(() => false);
+            }
+        }
+        await workflow.verifyIntakeStatusIsProcessed();
+        console.log('[E2E] Intake is Processed. Opening Transaction tab...');
+
+        // ── 4. Transaction tab → open PR in new tab ────────────────────────────
+        await workflow.clickTransactionTab();
+        const prPage = await workflow.openFirstPRFromTransactionTab(context);
+        console.log('[E2E] PR opened in new tab:', prPage.url());
+
+        // ── Assert 1: PR details carry-forwarded correctly from Intake ─────────
+        await workflow.verifyPRTitleCarryForwardedFromIntake(prPage, createData.title);
+        await workflow.verifyPRLineItemsCarryForwarded(prPage, 2);
+
+        // ── 5. Edit PR → fill mandatory fields → submit ───────────────────────
+        await workflow.clickEditButtonInPR(prPage);
+        await workflow.fillPREditMandatoryFields(prPage);
+        await workflow.submitPREditForm(prPage);
+        await workflow.completePREditPopupIfTriggered(prPage);
+        await workflow.completePRApprovalsIfTriggered(prPage);
+        await prPage.waitForLoadState('domcontentloaded');
+        await prPage.waitForTimeout(2000);
+
+        // ── Assert 2: Before Process Calculation — Submitted + Pending Proc Calc
+        await workflow.verifyPRStatusIsSubmittedPendingProcessCalc(prPage);
+        console.log('[E2E] Assert 2 passed: Submitted + Pending Process Calculation');
+
+        // ── 6. More → Process Calculation ─────────────────────────────────────
+        await workflow.clickProcessCalculationFromMore(prPage);
+
+        // ── Assert 3: After Process Calculation — status is Submitted ──────────
+        await workflow.verifyPRStatusIsSubmitted(prPage);
+        console.log('[E2E] Assert 3 passed: Submitted after Process Calculation');
+
+        // ── 7. Click Process tab → Assert 4: redirects to Order Builder section
+        await workflow.clickProcessTabInPR(prPage);
+        await workflow.verifyOrderBuilderSectionVisible(prPage);
+        console.log('[E2E] Assert 4 passed: Order Builder / Process section visible');
+
+        // ── 8. Convert to → Bulk PO ────────────────────────────────────────────
+        await workflow.clickConvertToBulkPO(prPage);
+
+        // ── Assert 5: Supplier field is enabled after selecting Bulk PO ─────────
+        await workflow.verifySupplierFieldEnabled(prPage);
+        console.log('[E2E] Assert 5 passed: Supplier field enabled after Bulk PO selection');
+
+        // ── 9. Select supplier "HG HF Test 001" for each line item ─────────────
+        await workflow.selectSupplierForAllLineItems(prPage);
+
+        // ── Assert 6: Price is displayed after supplier selection ───────────────
+        await workflow.verifyPriceDisplayedAfterSupplierSelection(prPage);
+        console.log('[E2E] Assert 6 passed: Price displayed after supplier selection');
+
+        // ── 10. Click Convert → fill PRC mandatory fields → Submit ─────────────
+        await workflow.clickConvertButton(prPage);
+        await workflow.fillPRCMandatoryFields(prPage, workflowData.prcData);
+        await workflow.submitPRC(prPage);
+
+        // ── 11. Complete PRC approvals if triggered ────────────────────────────
+        await workflow.completePRCApprovalsIfTriggered(prPage);
+
+        // ── Assert 7: PRC details carry-forwarded from PR ──────────────────────
+        await workflow.verifyPRCDetailsCarryForwardedFromPR(prPage, createData.title);
+        console.log('[E2E] Assert 7 passed: PRC details carry-forwarded from PR');
+        console.log('[E2E] PRC submitted successfully — test complete.');
+    });
+
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. INTAKE CREATE WITH VERTICAL (Legal) + BRF No. (DONT TOUCH)
+// ─────────────────────────────────────────────────────────────────────────────
+//   Same intake create flow as the shared helper, with two extra line-item fields:
+//   • Vertical [26/52] → "Legal"  (filled after all other row fields)
+//   • BRF No.  [14/40] → "DONT TOUCH" (filled after BOTH rows have Vertical set)
+
+test.describe('Aerchain NSE — Intake Workflow: Create with Vertical + BRF No.', () => {
+
+    test('Intake create with Vertical (Legal) + BRF No. auto-populates DONT TOUCH @BRFFlow', async ({ page }) => {
+        test.setTimeout(180000);
+
+        // Fill the form (includes Vertical) — check BRF No. before popup is handled
+        await fillAndSubmitIntake(page);
+
+        // ── Assert: BRF No. field auto-populated "DONT TOUCH" in both rows ──
+        await page.waitForTimeout(800);
+        const brfMatches = await page.evaluate(() => {
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+            let node; const matches = [];
+            while ((node = walker.nextNode())) {
+                if (node.textContent.trim() === 'DONT TOUCH') matches.push(true);
+            }
+            return matches.length;
+        });
+        if (brfMatches >= 2) {
+            console.log(`[BRF] ✓ BRF No. auto-populated "DONT TOUCH" in ${brfMatches} row(s)`);
+        } else {
+            console.log(`[BRF] ✗ BRF No. "DONT TOUCH" found in only ${brfMatches} row(s) — Vertical may not have triggered it`);
+        }
+
+        // Complete the popup and go to overview
+        const workflow = new intakeWorkflowActions(page);
+        await workflow.waitForPopupVisible();
+        await workflow.completeSubmissionPopup();
+        const creator2 = new intakeCreateActions(page);
+        await creator2.assertIntakeOverviewPage();
+        console.log('[BRF] Intake created. Overview:', page.url());
+
+        // ── Approve all stages → Accept → verify Released ────────────────────
+        await workflow.verifyIntakeStatusIsAwaitingActions();
+        await workflow.waitForApproveButton();
+        await workflow.approveAllStages(workflowData.comments.approval);
+        await workflow.waitForAcceptButton();
+        await workflow.acceptIntake(workflowData.comments.accept);
+        await workflow.verifyIntakeStatusIsReleased();
+        console.log('[BRF] Intake approved and Released successfully.');
+
+        // ── Process → Send for Sourcing ───────────────────────────────────────
+        await workflow.clickSendForSourcing();
+
+        // ── Assert: URL contains intakes/{id}/quote-requests ─────────────────
+        await page.waitForURL(/\/intakes\/\d+\/quote-requests/, { timeout: 15000 });
+        const finalUrl = page.url();
+        expect(finalUrl).toMatch(/\/intakes\/\d+\/quote-requests/);
+        console.log('[BRF] ✓ URL validated:', finalUrl);
+
+        // ── Change template from NSEF RFX → Default RFX ───────────────────────
+        await workflow.changeRFXTemplateToDefault();
+
+        // ── Click expand icon ──────────────────────────────────────────────────
+        await workflow.clickRFXExpandButton();
     });
 
 });

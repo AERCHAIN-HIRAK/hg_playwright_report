@@ -287,6 +287,18 @@ exports.intakeCreate_Locators = {
     intakeItemLineProjectCatOpt1: "(//div[@role='option'])[1]",
     intakeItemSuggPrice1: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[41]', // xpath — Suggested Price row 2 [15]+26
 
+    // ── Vertical and BRF No. line-item fields ────────────────────────────────
+    // Row 1: Vertical = [26], BRF No. = [14]
+    intakeItemLineVertical:     '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[26]',
+    intakeItemLineVerticalOpt:  '[title="Legal"]',
+    intakeItemLineBRFNo:        '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[15]',
+    intakeItemLineBRFNoOpt:     '[title="DONT TOUCH"]',
+    // Row 2: Vertical = [52], BRF No. = [41]
+    intakeItemLineVertical1:    '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[52]',
+    intakeItemLineVerticalOpt1: '[title="Legal"]',
+    intakeItemLineBRFNo1:       '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[41]',
+    intakeItemLineBRFNoOpt1:    '[title="DONT TOUCH"]',
+
     intakePotentialSuppliers: '[id="JqM1yJvyR1ixPrDg2Yuy9"]', // CSS
     intakeNotes: '[id="oDcMliqQXAsp6gG5zQM6N"]', // CSS
 

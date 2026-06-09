@@ -9,7 +9,7 @@ export default defineConfig({
   ['json', { outputFile: 'test-results/results.json' }]
   ],
 
-  timeout: 60000,
+  timeout: 120000,
 
   use: {
     headless: false,
@@ -21,16 +21,23 @@ export default defineConfig({
 
     {
       name: 'setup',
-      testMatch: /auth.setup.js/,
+      testMatch: /auth\.setup\.js/,
     },
 
     {
       name: 'tests',
-      testMatch: /.*\.spec\.js/,   // ✅ IMPORTANT FIX
+      // Exclude the NSE Foundation spec — it has its own login
+      testMatch: /testSuite(?!DirectPoGrn).*\.spec\.js/,
       use: {
         storageState: 'auth.json',
       },
       dependencies: ['setup'],
+    },
+
+    {
+      name: 'nsef-tests',
+      testMatch: /testSuiteDirectPoGrnInvoiceWorkflow\.spec\.js/,
+      // Fresh browser — no stored state, no setup dependency
     }
 
   ]

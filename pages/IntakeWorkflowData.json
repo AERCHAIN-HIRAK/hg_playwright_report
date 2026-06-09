@@ -36,5 +36,18 @@
     "urlPatterns": {
         "overview":   "/overview",
         "editReview": "/edit"
+    },
+
+    "supplier": "HG HF Test 001",
+
+    "prcData": {
+        "deliveryDate":  "2026-09-30",
+        "price":         "100",
+        "comments":      "PRC submitted by Hirak automation suite"
+    },
+
+    "prComments": {
+        "edit":     "PR edit completed by Hirak automation suite",
+        "approval": "PR approved by Hirak automation suite"
     }
 }
