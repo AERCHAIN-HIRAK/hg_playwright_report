@@ -11,6 +11,25 @@ import data from '../pages/NSEFoundationData.json';
 // Clear inherited storageState so we do a fresh login for this user
 test.use({ storageState: undefined });
 
+// ── Shared helper: login + navigate to Intake create page ────────────────────
+async function loginAndOpenIntakeCreate(page) {
+    const a = new NSEFoundationActions(page);
+    await page.setViewportSize({ width: 1800, height: 900 });
+
+    await a.navigateToApp(data);
+    await a.fillLoginEmail(data);
+    await a.clickLoginContinue();
+    await a.fillLoginPassword(data);
+    await a.clickLoginSubmit();
+    await a.assertLoggedIn();
+
+    await a.clickIntakeTab();
+    await a.clickCreateIntake();
+    await a.assertIntakeCreatePage();
+
+    return a;
+}
+
 // ── Shared helper: login + navigate to CXO create page ───────────────────────
 async function loginAndOpenCxoCreate(page) {
     const a = new NSEFoundationActions(page);
@@ -38,6 +57,7 @@ async function loginAndOpenCxoCreate(page) {
 test.describe('CXO → Direct PO → GRN → Invoice Workflow', () => {
 
     test('Create CXO with all mandatory fields → verify BRF auto-populate → Submit @CXO @Smoke', async ({ page }) => {
+        test.setTimeout(300000); // 5 min — covers create + 4 approval stages + save
 
         const a = await loginAndOpenCxoCreate(page);
 
@@ -74,6 +94,12 @@ test.describe('CXO → Direct PO → GRN → Invoice Workflow', () => {
         await a.fillNatureOfDataShared(data);
         await a.selectRpwdCompliance(data);
 
+        // Purchase Business Case mandatory fields
+        await a.fillDetailsOfItemsServices(data);
+        await a.fillNecessityOfPurchase(data);
+        await a.selectEmergencyProcurement(data);
+        await a.fillDeliveryTimeline(data);
+
         // Step 12: Add Row in Item Details
         await a.clickAddRow();                          // Step 12: Add row
 
@@ -100,9 +126,66 @@ test.describe('CXO → Direct PO → GRN → Invoice Workflow', () => {
         // Step 25: Submit
         await a.clickSubmit();
         await a.assertCxoSubmittedSuccessfully();
-
         await a.takeScreenshot('cxo_submitted');
 
+        // Step 26: Approve through all workflow stages until Released
+        await a.approveAllStages('Approved by automation');
+        await a.assertCxoStatusReleased();
+        await a.takeScreenshot('cxo_released');
+
+        // Step 27: Save CXO code for use in Direct PO / GRN / Invoice steps
+        await a.saveCxoCode();
+
+    });
+
+    test('Create Intake → fill all details → Submit → approve until Released @Intake @Smoke', async ({ page }) => {
+        test.setTimeout(300000); // 5 min — covers create + popup + approvals
+
+        const a = await loginAndOpenIntakeCreate(page);
+
+        // Initial setup
+        await a.closeAskAieraIfVisible();
+        await a.expandIntakeSections();
+
+        // Header Details
+        await a.fillIntakeTitle(data);
+        await a.fillIntakeSummary(data);
+        await a.selectIntakeCompany1();               // First Company dropdown
+        await a.selectIntakeCompany2();               // Second Company dropdown
+        await a.selectIntakeDepartment(data);         // Premises
+        await a.selectIntakeExpenseNatureApproval(data); // Non-CSR Process
+        await a.selectIntakeCurrency(data);           // INR
+        await a.selectIntakeFunction(data);           // Legal
+        await a.selectIntakeVertical(data);           // Legal
+        await a.selectIntakeProjectName();            // first available option
+        await a.selectIntakeNatureOfExpense(data);    // Opex
+        await a.selectIntakeGLAccount();              // first available option
+        await a.selectIntakeProfitCenter();           // first available option
+        await a.selectIntakeCostCenter();             // first available option
+        await a.selectIntakeSEBICategorization();     // first available option
+        await a.selectIntakeSubSegment();             // first available option
+        await a.selectIntakeProjectCategory();        // first available option
+        await a.selectIntakeCXOType(data);            // Non-Financial
+        await a.selectIntakeCXOTransaction(data);     // Link to saved CXO
+        await a.assertIntakeBRFAutoPopulated();       // BRF No. header → "Dont Touch"
+
+        // Line Item — Add row → Manpower (T&M) → assert EA in UOM → Qty/Address/Price
+        await a.addIntakeLineRow();
+        await a.fillIntakeLineItem(data);
+
+        await a.fillIntakePotentialSuppliers(data);
+
+        await a.takeScreenshot('intake_before_submit');
+
+        // Submit → handle popup
+        await a.submitIntake();
+        await a.completeIntakeSubmissionPopup();
+        await a.takeScreenshot('intake_submitted');
+
+        // Approve all stages until Released
+        await a.approveIntakeUntilReleased(data, 'Approved by automation');
+        await a.assertIntakeStatusReleased();
+        await a.takeScreenshot('intake_released');
     });
 
 });

@@ -66,6 +66,7 @@ Playwright is configured with two projects in `playwright.config.js`:
 After tests complete, `utils/sendReports.js` reads `test-results/results.json`, parses pass/fail counts and failed test names, then:
 - Sends an HTML report via Gmail (Nodemailer)
 - Posts a formatted summary to a Slack channel via webhook (Axios)
+
 - Links to the GitHub Pages report at `https://aerchain-hirak.github.io/hg_playwright_report/`
 
 The `test:full` script automates the full cycle: delete old artifacts → run tests → copy report into `docs/` → `git commit && git push` → send notifications.

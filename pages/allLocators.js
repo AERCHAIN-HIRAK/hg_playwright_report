@@ -112,20 +112,39 @@ exports.intakeCreate_Locators = {
     intakeEntityTest2: "(//*[contains(normalize-space(text()),'Entity Test')]/following::button[@role='combobox'])[1]",
     intakeEntityTest2Opt: "(//div[@role='option'])[1]", // xpath — select first available option
 
+    // Two "Company" dropdowns in Header Details — both select first available option
+    // Use Nth Company label → first combobox following it (avoids counting all comboboxes after label 1)
+    intakeCompany1: "((//*[normalize-space(text())='Company'])[1]/following::button[@role='combobox'])[1]",
+    intakeCompany2: "((//*[normalize-space(text())='Company'])[2]/following::button[@role='combobox'])[1]",
+    intakeCompanyOpt: "(//div[@role='option'])[1]",
+
     intakeDepartment: "(//*[contains(normalize-space(text()),'Department')]/following::button[@role='combobox'])[1]",
     intakeDepartmentSearch: '[placeholder="Search..."]', // CSS
     intakeDepartmentOpt: '[title="Premises"]', // CSS — keep in sync with IntakeCreateData.json "department"
 
-    // "Expense Nature" (new template label) / "Nature of Expense" (old label) — same field
-    intakeNatureOfExpense: "(//*[contains(normalize-space(text()),'Expense Nature') or contains(normalize-space(text()),'Nature of Expense')]/following::button[@role='combobox'])[1]",
-    intakeNatureOfExpenseOpt: "(//div[@role='option'])[1]", // fallback; action uses data-driven title selector
+    // "Expense Nature (for approval triggers)" — approval-trigger field, appears between Department and Currency
+    // Use text() (direct text node) NOT . (descendants) to avoid matching ancestor containers
+    intakeExpenseNatureApproval: "(//*[contains(normalize-space(text()),'Expense Nature') and contains(normalize-space(text()),'approval')]/following::button[@role='combobox'])[1]",
+    intakeExpenseNatureApprovalOpt: "(//*[@role='option'])[1]",
+
+    // "BRF No." header field — auto-populates after CXO Transaction is selected
+    intakeBRFNo: "(//*[normalize-space(text())='BRF No.']/following::button[@role='combobox'])[1]",
+
+    // "Nature of expense (budget level)" — use text() (direct text) to avoid matching ancestor containers
+    intakeNatureOfExpense: "(//*[contains(normalize-space(text()),'Nature of expense') and not(contains(normalize-space(text()),'approval'))]/following::button[@role='combobox'])[1]",
+    intakeNatureOfExpenseOpt: "(//*[@role='option'])[1]", // fallback; action uses data-driven title selector
 
     intakeCurrency: "(//*[contains(normalize-space(text()),'Currency')]/following::button[@role='combobox'])[1]",
     intakeCurrencySearch: '[placeholder="Search..."]', // CSS
     intakeCurrencyOpt: '[title="INR - Indian Rupee"]', // CSS
 
-    // "Function" (new template label) / "Vertical" (old label) — same field
-    intakeVertical: "(//*[contains(normalize-space(text()),'Function') or contains(normalize-space(text()),'Vertical')]/following::button[@role='combobox'])[1]",
+    // "Function" — comes before Vertical in header details
+    intakeFunction: "(//*[normalize-space(text())='Function']/following::button[@role='combobox'])[1]",
+    intakeFunctionSearch: '[placeholder="Search..."]',
+    intakeFunctionOpt: '[title="Legal"]',
+
+    // "Vertical" — specifically the Vertical field (NOT the "Function" field which comes before it)
+    intakeVertical: "(//*[normalize-space(text())='Vertical']/following::button[@role='combobox'])[1]",
     intakeVerticalOpt: '[title="Non - IT"]', // CSS — keep in sync with IntakeCreateData.json "vertical"
 
     intakeCXOtype: "(//*[contains(normalize-space(text()),'CXO Type')]/following::button[@role='combobox'])[1]",
@@ -222,13 +241,13 @@ exports.intakeCreate_Locators = {
     intakeItemNameOpt: '[title="HG test prod 01"]', // CSS
     intakeItemDesc: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[1]', // xpath — same cell as Product Name (inline description)
     intakeItemDescField: '[id="description"]', // CSS
-    intakeItemQty: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[2]', // xpath
+    intakeItemQty: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[2]', // xpath — [1]=ItemName,[2]=Description,[3]=Qty
     intakeItemQtyField: '(//input[@placeholder="Enter a number"])[3]', // xpath
-    intakeItemUOM: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[3]', // xpath
+    intakeItemUOM: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[4]', // xpath — [4]=UOM (auto-populated, do NOT click)
     intakeItemUOMOpt: "(//*[@role='option'])[1]", // xpath - first available option (any element type)
-    intakeItemDelAdd: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[4]', // xpath
+    intakeItemDelAdd: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[4]', // xpath — [5]=DeliveryAddress
     intakeItemDelAddOpt: "(//div[@role='option'])[1]", // xpath - first available option
-    intakeItemBilAdd: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[5]', // xpath
+    intakeItemBilAdd: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[5]', // xpath — [6]=BillingAddress
     intakeItemBilAddOpt: "(//div[@role='option'])[1]", // xpath - first available option
     // NEW columns in this template (required per row) — confirmed via screenshots:
     // [6] = Project Name dropdown,  [7] = Nature of Expense dropdown,
@@ -251,7 +270,7 @@ exports.intakeCreate_Locators = {
     intakeItemLineSubSegOpt: "(//div[@role='option'])[1]",
     intakeItemLineProjectCat: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[13]', // xpath — Project Category (row-level)
     intakeItemLineProjectCatOpt: "(//div[@role='option'])[1]",
-    intakeItemSuggPrice: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[15]', // xpath — Suggested Price "I" col (row 1 col 15)
+    intakeItemSuggPrice: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[7]', // xpath — [1]=Name,[2]=Desc,[3]=Qty,[4]=UOM,[5]=DelAdd,[6]=BilAdd,[7]=SuggPrice
     intakeItemSuggPriceField: '(//input[@placeholder="Enter a number"])[3]', // xpath
 
     // ── Item Details grid — Row 2 ─────────────────────────────────────────────
@@ -288,26 +307,26 @@ exports.intakeCreate_Locators = {
     intakeItemSuggPrice1: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[41]', // xpath — Suggested Price row 2 [15]+26
 
     // ── Vertical and BRF No. line-item fields ────────────────────────────────
-    // Row 1: Vertical = [26], BRF No. = [14]
+    // Row 1: Vertical = [26], BRF No. = [14], Suggested Price = [15]
     intakeItemLineVertical:     '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[26]',
     intakeItemLineVerticalOpt:  '[title="Legal"]',
-    intakeItemLineBRFNo:        '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[15]',
+    intakeItemLineBRFNo:        '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[14]',
     intakeItemLineBRFNoOpt:     '[title="DONT TOUCH"]',
-    // Row 2: Vertical = [52], BRF No. = [41]
+    // Row 2: Vertical = [52], BRF No. = [40], Suggested Price = [41]
     intakeItemLineVertical1:    '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[52]',
     intakeItemLineVerticalOpt1: '[title="Legal"]',
-    intakeItemLineBRFNo1:       '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[41]',
+    intakeItemLineBRFNo1:       '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[40]',
     intakeItemLineBRFNoOpt1:    '[title="DONT TOUCH"]',
 
-    intakePotentialSuppliers: '[id="JqM1yJvyR1ixPrDg2Yuy9"]', // CSS
+    intakePotentialSuppliers: "(//*[normalize-space(text())='Potential Suppliers']/following::input[@placeholder='Enter text'])[1]", // xpath — label-relative
     intakeNotes: '[id="oDcMliqQXAsp6gG5zQM6N"]', // CSS
 
-    intakeSubmit: "//button[text()='Submit']", // xpath — main form submit
+    intakeSubmit: "//button[normalize-space()='Submit']", // xpath — main form submit
     // Proceed button inside the popup (Workflow Summary step)
     intakeProceed: "//*[@role='dialog']//button[@type='submit' or contains(normalize-space(),'Proceed')][1]", // xpath — dialog-scoped
     // Purchaser assignment dropdown inside the popup dialog (first aria-haspopup button in dialog)
     intakePurAsignDropdown: "(//*[@role='dialog']//button[@aria-haspopup='dialog'])[1]", // xpath — dialog-scoped
-    intakepurAsignOpt: '[data-value="Aerchain NSE Admin"]', // CSS — user option in people-picker
+    intakepurAsignOpt: '[data-value="NSEF Support Admin"]', // CSS — user option in people-picker
     // Final Submit button inside the popup dialog
     intakeFinalSubmit: "//*[@role='dialog']//button[normalize-space(text())='Submit']", // xpath — dialog-scoped
 
