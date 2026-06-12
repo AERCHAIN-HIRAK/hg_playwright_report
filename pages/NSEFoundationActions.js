@@ -540,13 +540,32 @@ export class NSEFoundationActions {
 
     async approveAllStages(comments = 'Approved by automation') {
         const maxStages = 10;
+        const maxReloads = 5;
         for (let i = 0; i < maxStages; i++) {
+            // Wait for the Approve button — if it doesn't show within 4s the page
+            // state is stale (button exists in real UI), so reload and retry
             const approveBtn = this.page.locator("//button[normalize-space(text())='Approve']").first();
-            const visible = await approveBtn.waitFor({ state: 'visible', timeout: 10000 })
-                .then(() => true).catch(() => false);
+            let visible = false;
+            for (let attempt = 0; attempt <= maxReloads; attempt++) {
+                visible = await approveBtn.waitFor({ state: 'visible', timeout: 4000 })
+                    .then(() => true).catch(() => false);
+                if (visible) break;
+
+                // If status already moved to Released, no button is expected — stop retrying
+                const released = await this.page.locator(
+                    '//*[(contains(normalize-space(),"Active") or contains(normalize-space(),"Released")) and not(ancestor::table) and not(ancestor::nav)]'
+                ).first().isVisible({ timeout: 1000 }).catch(() => false);
+                if (released) break;
+
+                if (attempt < maxReloads) {
+                    console.log(`[CXO] Approve button not visible for 4s at stage ${i + 1} — reloading (${attempt + 1}/${maxReloads})...`);
+                    await this.page.reload({ waitUntil: 'domcontentloaded' });
+                    await this.page.waitForTimeout(2000);
+                }
+            }
 
             if (!visible) {
-                console.log(`[CXO] Approve button not visible at stage ${i + 1} — stopping.`);
+                console.log(`[CXO] Approve button not visible at stage ${i + 1} after ${maxReloads} reloads — stopping.`);
                 break;
             }
 
@@ -1279,6 +1298,35 @@ export class NSEFoundationActions {
         ).first()).toBeVisible({ timeout: 20000 });
     }
 
+    // ── Save Intake code for downstream steps ────────────────────────────────
+
+    async saveIntakeCode() {
+        const url = this.page.url();
+
+        const bodyText = await this.page.locator('body').textContent() ?? '';
+        const codeMatch = bodyText.match(/INT[A-Z0-9\-]*\d+/i);
+        const intakeCode = codeMatch ? codeMatch[0].trim() : null;
+
+        const urlMatch = url.match(/\/intakes\/([^\/\?#]+)/);
+        const intakeId = urlMatch ? urlMatch[1] : null;
+
+        const displayCode = intakeCode || intakeId || 'unknown';
+
+        console.log(`[Intake] Saving Intake code: ${displayCode}  |  URL: ${url}`);
+
+        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        current.savedIntake = {
+            code: displayCode,
+            id:   intakeId,
+            url:  url,
+        };
+        fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
+
+        console.log(`[Intake] Saved to NSEFoundationData.json → savedIntake.code = "${displayCode}"`);
+        return displayCode;
+    }
+
     // ── Save CXO code for downstream steps ───────────────────────────────────
 
     async saveCxoCode() {
@@ -1307,6 +1355,655 @@ export class NSEFoundationActions {
         fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
 
         console.log(`[CXO] Saved to NSEFoundationData.json → savedCxo.code = "${displayCode}"`);
+        return displayCode;
+    }
+
+    // ── Intake Listing → open saved Intake → Process → Send for Sourcing ─────
+
+    // Reads savedIntake.code fresh from disk (the imported data object is stale
+    // when the create test ran earlier in the same session and rewrote the JSON)
+    getSavedIntakeCode() {
+        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        const code = current.savedIntake?.code;
+        if (!code || code === 'unknown') {
+            throw new Error('No savedIntake.code in NSEFoundationData.json — run the Intake create test first.');
+        }
+        return code;
+    }
+
+    // Reads savedSourcingEvent fresh from disk (same staleness reason as above)
+    getSavedSourcingEvent() {
+        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        const saved = current.savedSourcingEvent;
+        if (!saved?.code || saved.code === 'unknown') {
+            throw new Error('No savedSourcingEvent.code in NSEFoundationData.json — run the Sourcing event test first.');
+        }
+        return saved;
+    }
+
+    async openSavedIntakeFromListing() {
+        const code = this.getSavedIntakeCode();
+        console.log(`[Intake] Searching listing for saved intake: ${code}`);
+
+        // Reveal the hidden search input, search for the code
+        const searchInput = this.page.locator(L.intakeListingSearchInput);
+        if (!(await searchInput.isVisible({ timeout: 2000 }).catch(() => false))) {
+            await this.page.locator(L.intakeListingSearchIcon).first().click();
+            await searchInput.waitFor({ state: 'visible', timeout: 5000 });
+        }
+        await searchInput.fill(code);
+        await searchInput.press('Enter');
+        await this.page.waitForTimeout(2000);
+
+        // Click the row whose Code column matches
+        const row = this.page.locator(`xpath=${L.intakeRowByCode(code)}`).first();
+        await row.waitFor({ state: 'visible', timeout: 15000 });
+        const codeLink = row.locator('td:first-child a').first();
+        if (await codeLink.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await codeLink.click();
+        } else {
+            await row.locator('td').first().click();
+        }
+
+        await this.page.waitForURL(/\/intakes\/[^\/]+/, { timeout: 15000 });
+        await this.page.waitForLoadState('domcontentloaded');
+        console.log(`[Intake] Opened intake ${code} → ${this.page.url()}`);
+        return code;
+    }
+
+    async clickIntakeProcess() {
+        const btn = this.page.locator(L.intakeProcessBtn).first();
+        await btn.waitFor({ state: 'visible', timeout: 20000 });
+        await btn.click();
+        console.log('[Intake] Clicked Process button');
+        await this.page.waitForTimeout(1500);
+    }
+
+    async clickSendForSourcing() {
+        const option = this.page.locator(L.intakeSendForSourcingOption).first();
+        await option.waitFor({ state: 'visible', timeout: 15000 });
+        await option.click();
+        console.log('[Intake] Clicked Send for Sourcing');
+        await this.page.waitForTimeout(2000);
+    }
+
+    // ── New Sourcing Event page ───────────────────────────────────────────────
+
+    async expandSourcingSections() {
+        const btn = this.page.locator(`xpath=${L.sourcingExpandAllBtn}`);
+        await btn.waitFor({ state: 'visible', timeout: 15000 });
+        await btn.click();
+        console.log('[Sourcing] Expanded all sections');
+        await this.page.waitForTimeout(1000);
+    }
+
+    // ── Sourcing Event — Event Information fields ─────────────────────────────
+
+    async selectSourcingPaymentTerms() {
+        const trigger = this.page.locator(`xpath=${L.sourcingPaymentTerms}`).first();
+        await trigger.scrollIntoViewIfNeeded();
+        let selected = false;
+        while (!selected) {
+            await this._openDropdown(trigger, { hasSearch: false });
+            const opt = this.page.locator('[role="option"]').first();
+            await opt.waitFor({ state: 'visible', timeout: 15000 });
+            const optText = (await opt.textContent() ?? '').trim();
+            await opt.click();
+            await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
+            try { await expect(trigger).toContainText(optText, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+        }
+        console.log('[Sourcing] Payment Terms selected');
+    }
+
+    async fillSourcingExpectedDeliveryDate(data) {
+        const trigger = this.page.locator(`xpath=${L.sourcingExpectedDeliveryDate}`).first();
+        await trigger.scrollIntoViewIfNeeded();
+        await trigger.click();
+        await this._pickDate(data.sourcing.expectedDeliveryDate);
+        console.log('[Sourcing] Expected Delivery Date filled');
+    }
+
+    async fillSourcingCommercialBidDueDate(data) {
+        const trigger = this.page.locator(`xpath=${L.sourcingCommercialBidDueDate}`).first();
+        await trigger.scrollIntoViewIfNeeded();
+        await trigger.click();
+        await this._pickDate(data.sourcing.commercialBidDueDate);
+        console.log('[Sourcing] Commercial Bid Due Date filled');
+    }
+
+    async fillSourcingTechnicalBidDueDate(data) {
+        const trigger = this.page.locator(`xpath=${L.sourcingTechnicalBidDueDate}`).first();
+        await trigger.scrollIntoViewIfNeeded();
+        await trigger.click();
+        await this._pickDate(data.sourcing.technicalBidDueDate);
+        console.log('[Sourcing] Technical Bid Due Date filled');
+    }
+
+    // ── Sourcing Event — Supplier Selection ───────────────────────────────────
+
+    async addSourcingSupplier(data) {
+        const addBtn = this.page.locator(`xpath=${L.sourcingAddSupplierBtn}`).first();
+        await addBtn.scrollIntoViewIfNeeded();
+        await addBtn.click();
+
+        // Popup → search for the supplier
+        const search = this.page.locator(`xpath=${L.sourcingSupplierSearch}`).first();
+        await search.waitFor({ state: 'visible', timeout: 10000 });
+        await search.fill(data.sourcing.supplierSearch);
+        await this.page.waitForTimeout(1500);
+
+        // Select the displayed option
+        const option = this.page.locator(`xpath=${L.sourcingSupplierOption(data.sourcing.supplierSearch)}`).first();
+        await option.waitFor({ state: 'visible', timeout: 10000 });
+        await option.click();
+
+        // Submit inside the popup
+        const submit = this.page.locator(`xpath=${L.sourcingSupplierPopupSubmit}`).first();
+        await submit.waitFor({ state: 'visible', timeout: 10000 });
+        await submit.click();
+        console.log(`[Sourcing] Supplier "${data.sourcing.supplierSearch}" added`);
+        await this.page.waitForTimeout(1500);
+    }
+
+    async submitSourcingEvent() {
+        const btn = this.page.locator(`xpath=${L.sourcingSubmitBtn}`).first();
+        await btn.scrollIntoViewIfNeeded();
+        await btn.click();
+        console.log('[Sourcing] Clicked Submit');
+
+        // "Process Request" confirmation modal → Submit
+        const confirmBtn = this.page.locator(`xpath=//div[@role='dialog']//button[normalize-space(.)='Submit']`).first();
+        await confirmBtn.waitFor({ state: 'visible', timeout: 15000 });
+        await confirmBtn.click();
+        console.log('[Sourcing] Confirmed Process Request popup');
+        await this.page.waitForTimeout(3000);
+    }
+
+    // ── Quote Request (RFX) — navigation ──────────────────────────────────────
+
+    async hoverSourcingTab() {
+        const tab = this.page.locator(`xpath=${L.sourcingNavTab}`).first();
+        await tab.waitFor({ state: 'visible', timeout: 15000 });
+        await tab.hover();
+        await this.page.waitForTimeout(800);
+    }
+
+    async clickQuoteRequestMenu() {
+        const item = this.page.locator(`xpath=${L.quoteRequestMenuItem}`).first();
+        await item.waitFor({ state: 'visible', timeout: 10000 });
+        await item.click();
+        await this.page.waitForURL(/\/quote-requests/, { timeout: 15000 });
+        // Listing shows a "Checking permissions..." loader before rendering
+        await this.page.locator('table').first().waitFor({ state: 'visible', timeout: 60000 });
+        console.log('[Quote] On Quote Request listing page');
+    }
+
+    async openSavedSourcingEventFromListing() {
+        const { code } = this.getSavedSourcingEvent();
+        console.log(`[Quote] Searching quote requests for: ${code}`);
+
+        const searchInput = this.page.locator(`xpath=${L.quoteRequestSearchInput}`).first();
+        await searchInput.waitFor({ state: 'visible', timeout: 15000 });
+        await searchInput.fill(code);
+        await searchInput.press('Enter');
+        await this.page.waitForTimeout(2000);
+
+        // Click the matching row
+        const row = this.page.locator(`xpath=${L.quoteRequestRowByCode(code)}`).first();
+        await row.waitFor({ state: 'visible', timeout: 15000 });
+        const link = row.locator('a').first();
+        if (await link.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await link.click();
+        } else {
+            await row.locator('td').first().click();
+        }
+
+        await this.page.waitForURL(/\/quote-requests\/[^\/]+/, { timeout: 15000 });
+        await this.page.waitForLoadState('domcontentloaded');
+        console.log(`[Quote] Opened sourcing event ${code} → ${this.page.url()}`);
+        return code;
+    }
+
+    // ── RFX — Submit Commercial Quote ─────────────────────────────────────────
+
+    async clickSupplierSubmitQuote() {
+        const btn = this.page.locator(`xpath=${L.rfxSubmitQuoteBtn}`).first();
+        await btn.waitFor({ state: 'visible', timeout: 20000 });
+        await btn.scrollIntoViewIfNeeded();
+        await btn.click();
+        console.log('[Quote] Clicked Submit Quote on supplier');
+        await this.page.waitForTimeout(800);
+    }
+
+    async clickCommercialQuoteOption() {
+        const opt = this.page.locator(`xpath=${L.rfxCommercialQuoteOption}`).first();
+        await opt.waitFor({ state: 'visible', timeout: 10000 });
+        await opt.click();
+        console.log('[Quote] Selected Commercial Quote');
+        await this.page.waitForTimeout(2500);
+    }
+
+    async selectQuotePreferredCurrency(data) {
+        const trigger = this.page.locator(`xpath=${L.quotePreferredCurrency}`).first();
+        await trigger.waitFor({ state: 'visible', timeout: 20000 });
+        await trigger.scrollIntoViewIfNeeded();
+        let selected = false;
+        while (!selected) {
+            await trigger.click();
+            await this.page.waitForTimeout(500);
+            // Some currency dropdowns have a search box, some don't
+            const searchBox = this.page.locator('[placeholder="Search..."]').last();
+            if (await searchBox.isVisible({ timeout: 1500 }).catch(() => false)) {
+                await searchBox.fill(data.sourcing.preferredCurrency);
+                await this.page.waitForTimeout(400);
+            }
+            const opt = this.page.locator(`xpath=//div[@role='option'][contains(normalize-space(.),'${data.sourcing.preferredCurrency}')]`).first();
+            if (!(await opt.isVisible({ timeout: 3000 }).catch(() => false))) {
+                await this.page.keyboard.press('Escape');
+                await this.page.waitForTimeout(300);
+                continue;
+            }
+            await opt.click();
+            await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
+            try { await expect(trigger).toContainText(data.sourcing.preferredCurrency, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+        }
+        console.log(`[Quote] Preferred Currency set to ${data.sourcing.preferredCurrency}`);
+    }
+
+    async fillQuoteUnitRate(data) {
+        // Editable cell in the quote item grid — click to activate, then type.
+        // Verify the value actually landed; retry if the grid swallowed the input.
+        const cell = this.page.locator(L.quoteUnitRateCell).first();
+        await cell.waitFor({ state: 'visible', timeout: 15000 });
+        await cell.scrollIntoViewIfNeeded();
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await cell.click();
+            await this.page.waitForTimeout(500);
+            await this.page.keyboard.type(data.sourcing.unitRate);
+            await this.page.keyboard.press('Tab');
+            await this.page.waitForTimeout(800);
+
+            const cellText = (await cell.textContent() ?? '').replace(/[,\s]/g, '');
+            if (cellText.includes(data.sourcing.unitRate)) {
+                console.log(`[Quote] Unit Rate filled: ${data.sourcing.unitRate}`);
+                return;
+            }
+            console.log(`[Quote] Unit Rate not registered (cell shows "${cellText}") — retrying...`);
+        }
+        throw new Error(`Unit Rate "${data.sourcing.unitRate}" was not entered into the quote grid`);
+    }
+
+    async submitQuote() {
+        const btn = this.page.locator(`xpath=${L.quoteSubmitBtn}`).first();
+        await btn.scrollIntoViewIfNeeded();
+        await btn.click();
+        console.log('[Quote] Clicked Submit Quote');
+
+        // Confirmation popup, if any
+        const confirmBtn = this.page.locator(`xpath=//div[@role='dialog']//button[contains(normalize-space(.),'Submit') or normalize-space(.)='Confirm' or normalize-space(.)='Yes']`).first();
+        if (await confirmBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+            await confirmBtn.click();
+            console.log('[Quote] Confirmed quote submission popup');
+        }
+
+        // Wait for the quote form to actually close (submission processed and
+        // navigated back to the RFX view) before any status checks/reloads —
+        // reloading the form mid-submission cancels it
+        const formBtn = this.page.locator(`xpath=${L.quoteSubmitBtn}`).first();
+        await formBtn.waitFor({ state: 'hidden', timeout: 45000 })
+            .then(() => console.log('[Quote] Quote form closed — submission processed'))
+            .catch(() => console.log('[Quote] Quote form still open after 45s'));
+        await this.page.waitForTimeout(2000);
+    }
+
+    async assertSourcingStatusQuoted() {
+        // Status may need a reload to reflect
+        for (let i = 0; i < 4; i++) {
+            const quoted = await this.page.locator(`xpath=${L.quotedStatusBadge}`).first()
+                .isVisible({ timeout: 5000 }).catch(() => false);
+            if (quoted) {
+                console.log('[Quote] Sourcing status is Quoted');
+                return;
+            }
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.waitForTimeout(2000);
+        }
+        await expect(this.page.locator(`xpath=${L.quotedStatusBadge}`).first()).toBeVisible({ timeout: 10000 });
+    }
+
+    // ── RFX — More → Foreclose ────────────────────────────────────────────────
+
+    async forecloseRfx(data) {
+        // More dropdown
+        const moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
+        await moreBtn.waitFor({ state: 'visible', timeout: 20000 });
+        await moreBtn.click();
+        await this.page.waitForTimeout(800);
+
+        // Foreclose option — absent when the RFX is already foreclosed (re-runs)
+        const foreclose = this.page.locator(`xpath=${L.rfxForecloseOption}`).first();
+        if (!(await foreclose.isVisible({ timeout: 10000 }).catch(() => false))) {
+            console.log('[Award] Foreclose option not available — already foreclosed, skipping.');
+            await this.page.keyboard.press('Escape');
+            await this.page.waitForTimeout(500);
+            return;
+        }
+        await foreclose.click();
+        console.log('[Award] Clicked Foreclose');
+        await this.page.waitForTimeout(1000);
+
+        // Reason → Submit
+        const reason = this.page.locator(`xpath=${L.rfxForecloseReasonField}`).first();
+        await reason.waitFor({ state: 'visible', timeout: 10000 });
+        await reason.fill(data.sourcing.forecloseReason);
+
+        const submit = this.page.locator(`xpath=${L.rfxForecloseSubmitBtn}`).first();
+        await submit.waitFor({ state: 'visible', timeout: 10000 });
+        await submit.click();
+        console.log('[Award] Foreclose submitted');
+        await this.page.waitForTimeout(3000);
+    }
+
+    // ── RFX — Award flow ──────────────────────────────────────────────────────
+
+    async clickAnalysisTab() {
+        // The Analysis tab content can hang on its loading spinner — wait for
+        // the Award button to render, reloading and re-clicking the tab if stuck
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const tab = this.page.locator(`xpath=${L.rfxAnalysisTab}`).first();
+            await tab.waitFor({ state: 'visible', timeout: 20000 });
+            await tab.click();
+            await this.page.waitForTimeout(2000);
+
+            const rendered = await this.page.locator(`xpath=${L.rfxAwardBtn}`).first()
+                .waitFor({ state: 'visible', timeout: 30000 })
+                .then(() => true).catch(() => false);
+            if (rendered) {
+                console.log('[Award] On Analysis tab');
+                return;
+            }
+            console.log(`[Award] Analysis tab stuck loading — reloading (${attempt + 1}/3)...`);
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.waitForTimeout(3000);
+        }
+        throw new Error('Analysis tab content did not load (Award button never appeared)');
+    }
+
+    async clickAwardButton() {
+        const btn = this.page.locator(`xpath=${L.rfxAwardBtn}`).first();
+        await btn.waitFor({ state: 'visible', timeout: 20000 });
+        await btn.click();
+        console.log('[Award] Clicked Award');
+        await this.page.waitForTimeout(2000);
+    }
+
+    async fillAllocatedQuantity() {
+        // Read the Pending Awarded Quantity from the table, type it into the
+        // Allocated Quantity cell (grid-style: click → type → Tab → verify)
+        const pendingCell = this.page.locator(L.awardPendingQtyCell).first();
+        await pendingCell.waitFor({ state: 'visible', timeout: 15000 });
+        const pendingText = (await pendingCell.textContent() ?? '').trim();
+        const qty = String(parseFloat(pendingText.replace(/[^\d.]/g, '')));
+        console.log(`[Award] Pending Awarded Quantity: "${pendingText}" → entering ${qty}`);
+
+        const cell = this.page.locator(L.awardAllocatedQtyCell).first();
+        await cell.scrollIntoViewIfNeeded();
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await cell.click();
+            await this.page.waitForTimeout(500);
+            await this.page.keyboard.type(qty);
+            await this.page.keyboard.press('Tab');
+            await this.page.waitForTimeout(800);
+
+            const cellText = (await cell.textContent() ?? '').replace(/[,\s]/g, '');
+            if (cellText.includes(qty)) {
+                console.log(`[Award] Allocated quantity filled: ${qty}`);
+                return;
+            }
+            console.log(`[Award] Allocated qty not registered (cell shows "${cellText}") — retrying...`);
+        }
+        throw new Error('Allocated Quantity was not entered into the award grid');
+    }
+
+    async submitWorkflowSummary() {
+        const btn = this.page.locator(`xpath=${L.workflowSummarySubmitBtn}`).first();
+        await btn.waitFor({ state: 'visible', timeout: 15000 });
+        await btn.click();
+        console.log('[Award] Workflow Summary submitted');
+        await this.page.waitForTimeout(3000);
+    }
+
+    async _approveAwardOnce(comments) {
+        const approveBtn = this.page.locator("//button[normalize-space(text())='Approve']").first();
+        await approveBtn.click();
+        const commentsField = this.page.locator('[placeholder="Enter your comments..."]');
+        if (await commentsField.isVisible({ timeout: 5000 }).catch(() => false)) {
+            await commentsField.fill(comments);
+            await this.page.locator("(//button[normalize-space(text())='Approve'])[2]").click();
+        }
+        await this.page.waitForTimeout(2000);
+        await this.page.reload({ waitUntil: 'domcontentloaded' });
+        await this.page.waitForTimeout(2000);
+    }
+
+    // Opens Workflow Stages, reads the OVERALL workflow badge (not per-stage
+    // statuses — completed stages also say "Completed"), closes by clicking outside.
+    // The popup sometimes opens empty while its data loads — close and reopen.
+    async _isWorkflowCompleted() {
+        for (let attempt = 0; attempt < 4; attempt++) {
+            const stagesBtn = this.page.locator(`xpath=${L.workflowStagesBtn}`).first();
+            await stagesBtn.waitFor({ state: 'visible', timeout: 20000 });
+            await stagesBtn.click();
+            await this.page.waitForTimeout(1500);
+
+            const badge = this.page.locator(`xpath=${L.workflowOverallStatusBadge}`).first();
+            const hasData = await badge.waitFor({ state: 'visible', timeout: 8000 })
+                .then(() => true).catch(() => false);
+
+            if (!hasData) {
+                console.log(`[Award] Workflow Stages popup is empty — closing and reopening (${attempt + 1}/4)...`);
+                await this.page.mouse.click(5, 500);
+                await this.page.waitForTimeout(2000);
+                continue;
+            }
+
+            const statusText = (await badge.textContent() ?? '').trim();
+            const completed = /completed/i.test(statusText);
+
+            // Close the popup by clicking outside it
+            await this.page.mouse.click(5, 500);
+            await this.page.waitForTimeout(1000);
+
+            console.log(`[Award] Workflow Stages → overall status: "${statusText}" → ${completed ? 'Completed' : 'NOT completed'}`);
+            return completed;
+        }
+        throw new Error('Workflow Stages popup never loaded its data');
+    }
+
+    async reassignAwardApprover(reason = 'Reassigned for automated testing') {
+        const moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
+        await moreBtn.waitFor({ state: 'visible', timeout: 10000 });
+        await moreBtn.click();
+        await this.page.waitForTimeout(800);
+
+        const opt = this.page.locator(`xpath=${L.reassignApproverOption}`).first();
+        await opt.waitFor({ state: 'visible', timeout: 10000 });
+        await opt.click();
+        await this.page.waitForTimeout(1500);
+
+        // Pick "NSEF Support Admin" in the user picker
+        const userDropdown = this.page.locator(`xpath=${L.reassignUserDropdown}`).first();
+        await userDropdown.waitFor({ state: 'visible', timeout: 10000 });
+        await userDropdown.click({ force: true });
+        await this.page.waitForTimeout(600);
+        const adminOpt = this.page.locator(L.reassignAdminOption).first();
+        await adminOpt.waitFor({ state: 'visible', timeout: 10000 });
+        await adminOpt.click();
+        await this.page.waitForTimeout(400);
+
+        const reasonField = this.page.locator(`xpath=${L.reassignReasonField}`).first();
+        await reasonField.waitFor({ state: 'visible', timeout: 5000 });
+        await reasonField.fill(reason);
+
+        await this.page.locator(`xpath=${L.reassignSubmitBtn}`).first().click();
+        console.log('[Award] Workflow approver reassigned to NSEF Support Admin');
+        await this.page.waitForTimeout(2500);
+    }
+
+    async completeAwardApprovals(comments = 'Approved by automation') {
+        // Each round: read the OVERALL status in Workflow Stages. Only "Completed"
+        // ends the loop (the badge shows e.g. "Active" otherwise — never
+        // "Not Completed"). Anything else → look for Approve; if no Approve
+        // button, reassign to NSEF Support Admin, then approve.
+        const maxRounds = 12;
+        for (let round = 0; round < maxRounds; round++) {
+            if (await this._isWorkflowCompleted()) return;
+
+            const approveBtn = this.page.locator("//button[normalize-space(text())='Approve']").first();
+            const visible = await approveBtn.waitFor({ state: 'visible', timeout: 6000 })
+                .then(() => true).catch(() => false);
+
+            if (!visible) {
+                console.log('[Award] No Approve button — reassigning approver to NSEF Support Admin...');
+                await this.reassignAwardApprover();
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                await this.page.waitForTimeout(2000);
+                await approveBtn.waitFor({ state: 'visible', timeout: 15000 });
+            }
+
+            console.log(`[Award] Approving (round ${round + 1})...`);
+            await this._approveAwardOnce(comments);
+        }
+        throw new Error('Award workflow did not reach Completed status');
+    }
+
+    async clickAwardBackArrow() {
+        const back = this.page.locator(`xpath=${L.awardBackArrow}`).first();
+        await back.waitFor({ state: 'visible', timeout: 15000 });
+        await back.click();
+        console.log('[Award] Clicked back button beside award code');
+        await this.page.waitForTimeout(2000);
+    }
+
+    async isRfxAwarded() {
+        return await this.page.locator(`xpath=${L.awardedStatusBadge}`).first()
+            .isVisible({ timeout: 5000 }).catch(() => false);
+    }
+
+    async assertSourcingStatusAwarded() {
+        await expect(this.page.locator(`xpath=${L.awardedStatusBadge}`).first())
+            .toBeVisible({ timeout: 20000 });
+        console.log('[Award] Sourcing status is Awarded');
+    }
+
+    async clickAwardsTab() {
+        const tab = this.page.locator(`xpath=${L.rfxAwardsTab}`).first();
+        await tab.waitFor({ state: 'visible', timeout: 20000 });
+        await tab.click();
+        await this.page.waitForTimeout(2000);
+    }
+
+    async waitForRequisitionCode() {
+        // PR is created asynchronously — the Requisition field shows "Processing"
+        // until it exists. Reload the current page every 30s until the code shows.
+        const maxAttempts = 10; // ~5 minutes
+        for (let i = 0; i < maxAttempts; i++) {
+            const link = this.page.locator(`xpath=${L.requisitionCodeLink}`).first();
+            if (await link.isVisible({ timeout: 5000 }).catch(() => false)) {
+                const text = (await link.textContent() ?? '').trim();
+                // Any code counts (e.g. "PR-DRAFT") — only "Processing" means wait
+                if (text && !/processing/i.test(text)) {
+                    console.log(`[Award] Requisition code displayed: ${text}`);
+                    return text;
+                }
+                console.log(`[Award] Requisition field shows "${text}" — reloading in 30s (${i + 1}/${maxAttempts})...`);
+            } else {
+                console.log(`[Award] Requisition field not visible yet — reloading in 30s (${i + 1}/${maxAttempts})...`);
+            }
+            await this.page.waitForTimeout(30000);
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.waitForTimeout(3000);
+        }
+        throw new Error('Requisition code did not appear after waiting');
+    }
+
+    async openRequisitionAndSaveCode() {
+        const link = this.page.locator(`xpath=${L.requisitionCodeLink}`).first();
+        await link.waitFor({ state: 'visible', timeout: 10000 });
+        const linkText = (await link.textContent() ?? '').trim();
+
+        // Requisition opens in a new tab
+        const [newPage] = await Promise.all([
+            this.page.context().waitForEvent('page', { timeout: 15000 }),
+            link.click(),
+        ]);
+        await newPage.waitForLoadState('domcontentloaded');
+        await newPage.waitForTimeout(3000);
+        const url = newPage.url();
+        console.log(`[Award] Requisition "${linkText}" opened in new tab → ${url}`);
+
+        // Prefer the real PR code rendered on the requisition page (the field on
+        // the award page may just say "PR-DRAFT")
+        let code = linkText;
+        const bodyText = await newPage.locator('body').textContent().catch(() => '') ?? '';
+        const codeMatch = bodyText.match(/PR[A-Z0-9\-\/]*\d+/i);
+        if (codeMatch) code = codeMatch[0].trim();
+
+        const urlMatch = url.match(/\/(?:purchase-requisitions?|requisitions?|prs?)\/([^\/\?#]+)/i);
+        const reqId = urlMatch ? urlMatch[1] : null;
+
+        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        current.savedRequisition = {
+            code: code,
+            id:   reqId,
+            url:  url,
+        };
+        fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
+        console.log(`[Award] Saved to NSEFoundationData.json → savedRequisition.code = "${code}"`);
+        return code;
+    }
+
+    // ── Save Sourcing Event code for downstream steps ─────────────────────────
+
+    async saveSourcingEventCode() {
+        // Wait for the created event page to actually load — the post-submit
+        // navigation can be slow, and saving before the RFX code is displayed
+        // would store nothing useful for the downstream tests
+        await this.page.waitForURL(/\/quote-requests\/\d+/, { timeout: 90000 });
+
+        let eventCode = null;
+        for (let i = 0; i < 18; i++) { // up to ~90s
+            const bodyText = await this.page.locator('body').textContent() ?? '';
+            const codeMatch = bodyText.match(/SNEV-RFX[A-Z0-9\-]*\d+/i) || bodyText.match(/RFX[A-Z0-9\-]*\d+/i);
+            if (codeMatch) { eventCode = codeMatch[0].trim(); break; }
+            console.log(`[Sourcing] RFX code not displayed yet — waiting (${i + 1}/18)...`);
+            await this.page.waitForTimeout(5000);
+        }
+        if (!eventCode) {
+            throw new Error('RFX code never appeared on the created sourcing event page — not saving');
+        }
+
+        const url = this.page.url();
+        const urlMatch = url.match(/\/(?:quote-requests|sourcing(?:-events)?|events|rfx)\/([^\/\?#]+)/i);
+        const eventId = urlMatch ? urlMatch[1] : null;
+        const displayCode = eventCode;
+
+        console.log(`[Sourcing] Saving Sourcing Event code: ${displayCode}  |  URL: ${url}`);
+
+        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        current.savedSourcingEvent = {
+            code: displayCode,
+            id:   eventId,
+            url:  url,
+        };
+        fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
+
+        console.log(`[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "${displayCode}"`);
         return displayCode;
     }
 

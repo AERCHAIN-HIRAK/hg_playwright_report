@@ -100,6 +100,86 @@ export const NSEFoundation_Locators = {
     itemActiveTextInput:   'input:not([disabled]):not([type="file"])',
     itemActiveNumberInput: 'input[placeholder="Enter a number"]:not([disabled])',
 
+    // ── Intake Listing → Process → Send for Sourcing ──────────────────────────
+    // Search input on the intake listing is hidden (width:0) until its img icon is clicked
+    intakeListingSearchIcon:  '//a[@href="/intakes/create"]/parent::*//img[preceding-sibling::input or following-sibling::input]',
+    intakeListingSearchInput: '//a[@href="/intakes/create"]/parent::*//input',
+    // Row whose Code column (td[1]) matches — used as a function for dynamic code
+    intakeRowByCode: (code) => `//tbody/tr[contains(normalize-space(td[1]),"${code}")]`,
+
+    intakeProcessBtn: '//button[normalize-space(.)="Process"]',
+    // Process opens a dropdown menu: Create PR | Send For Sourcing | Send For Negotiation
+    // (actual casing is "Send For Sourcing" — XPath text match is case-sensitive)
+    intakeSendForSourcingOption: '//*[@role="menuitem"][contains(normalize-space(.),"Send For Sourcing") or contains(normalize-space(.),"Send for Sourcing")]',
+
+    // ── New Sourcing Event page (after Send For Sourcing) ─────────────────────
+    sourcingExpandAllBtn: `(//button[@data-state='closed'])[4]`,
+    sourcingSubmitBtn:    '//button[normalize-space(.)="Submit"]',
+
+    // Event Information — unfilled mandatory fields
+    sourcingPaymentTerms:         `(//*[contains(normalize-space(text()),'Payment Terms')]/following::button[@role='combobox'])[1]`,
+    sourcingExpectedDeliveryDate: `(//*[contains(normalize-space(text()),'Expected Delivery Date')]/following::*[contains(text(),'Select date') or @placeholder='Select date'])[1]`,
+    sourcingCommercialBidDueDate: `(//*[contains(normalize-space(text()),'Commercial Bid Due Date')]/following::*[contains(text(),'Select date') or @placeholder='Select date'])[1]`,
+    sourcingTechnicalBidDueDate:  `(//*[contains(normalize-space(text()),'Technical Bid Due Date')]/following::*[contains(text(),'Select date') or @placeholder='Select date'])[1]`,
+
+    // ── Quote Request (RFX) navigation ────────────────────────────────────────
+    sourcingNavTab:        `//*[@role="tab" or @data-slot="tabs-trigger"][contains(normalize-space(.),"Sourcing")]`,
+    quoteRequestMenuItem:  `//a[@href="/quote-requests"] | //*[@role="menuitem"][contains(normalize-space(.),"Quote Request")] | //*[normalize-space(text())="Quote Request"]`,
+    quoteRequestSearchInput: `//input[@data-slot="input" or contains(@placeholder,"Search")]`,
+    quoteRequestRowByCode: (code) => `//tbody/tr[contains(normalize-space(.),"${code}")]`,
+
+    // RFX view page — supplier quote
+    rfxSubmitQuoteBtn:        `//*[self::button or self::a][contains(normalize-space(.),'Submit Quote')]`,
+    rfxCommercialQuoteOption: `//*[@role='menuitem'][contains(normalize-space(.),'Commercial Quote')] | //button[contains(normalize-space(.),'Commercial Quote')]`,
+
+    // RFX view — More → Foreclose
+    rfxMoreBtn:             `//button[contains(normalize-space(.),'More')]`,
+    rfxForecloseOption:     `//*[@role='menuitem'][contains(normalize-space(.),'Foreclose')] | //button[contains(normalize-space(.),'Foreclose')]`,
+    rfxForecloseReasonField: `//div[@role='dialog']//textarea | //div[@role='dialog']//input[not(@type='file') and not(@type='hidden')]`,
+    rfxForecloseSubmitBtn:  `//div[@role='dialog']//button[contains(normalize-space(.),'Submit') or normalize-space(.)='Confirm' or normalize-space(.)='Foreclose']`,
+
+    // RFX — Award flow
+    rfxAnalysisTab:          `//*[@role='tab' or @data-slot='tabs-trigger'][contains(normalize-space(.),'Analysis')]`,
+    rfxAwardBtn:             `//button[normalize-space(.)='Award']`,
+    // Award allocation table cells (stable id suffixes; prefix varies per quote)
+    awardPendingQtyCell:     `td[id$="pendingAwardedQuantity"]`,
+    awardAllocatedQtyCell:   `td[id$="allocatedQuantity"]:not([id$="pendingAwardedQuantity"])`,
+    workflowSummarySubmitBtn: `//div[@role='dialog']//button[contains(normalize-space(.),'Submit')]`,
+    workflowStagesBtn:       `//button[contains(normalize-space(.),'Workflow Stages')] | //*[normalize-space(text())='Workflow Stages']`,
+    workflowCompletedStatus: `//*[normalize-space(text())='Completed']`,
+    // Overall workflow badge beside the "Workflow N" header in the stages popup
+    // (shows "Active" while running, "Completed" when done — per-stage badges
+    // also say "Completed", so the check must read this one specifically)
+    workflowOverallStatusBadge: `//span[contains(@class,'font-bold')][starts-with(normalize-space(),'Workflow')]/following-sibling::div[1]//span | //span[starts-with(normalize-space(text()),'Workflow ')]/following-sibling::div[1]`,
+    workflowStagesCloseBtn:  `//button[.//span[normalize-space(text())='Close']] | //button[@aria-label='Close'] | //button[contains(@class,'absolute')][.//*[name()='svg' and contains(@class,'lucide-x')]]`,
+    // Back button beside the award code (user-confirmed locator)
+    awardBackArrow:          `//h1[contains(text(),'AWD-FNSE')]/preceding-sibling::button[1]`,
+
+    // More → Reassign Workflow Approver dialog (pattern from intake workflow suite)
+    reassignApproverOption:  `//*[@role='menuitem'][contains(normalize-space(),'Reassign Workflow Approver')] | //button[contains(normalize-space(),'Reassign Workflow Approver')] | //li[contains(normalize-space(),'Reassign Workflow Approver')]`,
+    reassignUserDropdown:    `(//*[@role='dialog']//button[@aria-haspopup='dialog'])[1]`,
+    reassignAdminOption:     `[data-value="NSEF Support Admin"]`,
+    reassignReasonField:     `//*[@role='dialog']//textarea`,
+    reassignSubmitBtn:       `//*[@role='dialog']//button[normalize-space(text())='Reassign'] | //*[@role='dialog']//button[normalize-space(text())='Submit']`,
+    rfxAwardsTab:            `//*[@role='tab' or @data-slot='tabs-trigger'][contains(normalize-space(.),'Awards')]`,
+    awardedStatusBadge:      `//*[normalize-space(text())='Awarded']`,
+    requisitionProcessing:   `//*[contains(normalize-space(text()),'Processing')]`,
+    // Requisition value is a clickable <p>, not an <a>, beside the "Requisition" label
+    requisitionCodeLink:     `//label[contains(normalize-space(.),'Requisition')]/following-sibling::p[1] | (//*[contains(normalize-space(text()),'Requisition')]/following::p[contains(@class,'cursor-pointer')])[1]`,
+
+    // Quote page
+    quotePreferredCurrency: `(//*[contains(normalize-space(text()),'Preferred Currency')]/following::button[@role='combobox'])[1]`,
+    // Editable Unit Rate cell in the quote item grid (user-confirmed locator)
+    quoteUnitRateCell:      `[class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"]`,
+    quoteSubmitBtn:         `//button[contains(normalize-space(.),'Submit Quote')]`,
+    quotedStatusBadge:      `//*[normalize-space(text())='Quoted']`,
+
+    // Supplier Selection — Add Supplier popup
+    sourcingAddSupplierBtn:       `//button[contains(.,'Add Supplier')]`,
+    sourcingSupplierSearch:       `//div[@role='dialog']//input`,
+    sourcingSupplierOption: (name) => `//div[@role='dialog']//*[contains(normalize-space(.),"${name}") and not(.//*[contains(normalize-space(.),"${name}")])]`,
+    sourcingSupplierPopupSubmit:  `//div[@role='dialog']//button[normalize-space(.)='Submit']`,
+
     // ── Submit ────────────────────────────────────────────────────────────────
     submitBtn: 'button:has-text("Submit")',
 

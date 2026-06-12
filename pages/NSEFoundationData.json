@@ -52,9 +52,9 @@
         "deliveryTimeline": "2026-12-31"
     },
     "savedCxo": {
-        "code": "CXO-FNSE-26-101",
-        "id": "5360",
-        "url": "https://nse-capp-v4-uat.aerchain.io/cxos/5360/overview"
+        "code": "CXO-FNSE-26-112",
+        "id": "5374",
+        "url": "https://nse-capp-v4-uat.aerchain.io/cxos/5374/overview"
     },
     "intake": {
         "title": "HG Automation NSEF Intake",
@@ -74,5 +74,29 @@
         "itemSuggestedPrice": "2000",
         "potentialSuppliers": "1",
         "notes": "Automation test notes"
+    },
+    "savedIntake": {
+        "code": "INT-FNSE-26-72",
+        "id": "1842",
+        "url": "https://nse-capp-v4-uat.aerchain.io/intakes/1842/overview"
+    },
+    "sourcing": {
+        "commercialBidDueDate": "2026-12-15",
+        "technicalBidDueDate": "2026-12-14",
+        "expectedDeliveryDate": "2026-12-31",
+        "supplierSearch": "HG Automation SUPP",
+        "preferredCurrency": "INR",
+        "unitRate": "2000",
+        "forecloseReason": "Foreclosed by automation"
+    },
+    "savedSourcingEvent": {
+        "code": "RFX-26-52",
+        "id": "993",
+        "url": "https://nse-capp-v4-uat.aerchain.io/quote-requests/993/overview"
+    },
+    "savedRequisition": {
+        "code": "PR-DRAFT",
+        "id": "873",
+        "url": "https://nse-capp-uat.aerchain.io/requisitions/873"
     }
 }

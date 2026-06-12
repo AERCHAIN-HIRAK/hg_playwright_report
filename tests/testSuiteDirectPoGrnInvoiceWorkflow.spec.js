@@ -186,6 +186,144 @@ test.describe('CXO → Direct PO → GRN → Invoice Workflow', () => {
         await a.approveIntakeUntilReleased(data, 'Approved by automation');
         await a.assertIntakeStatusReleased();
         await a.takeScreenshot('intake_released');
+
+        // Save Intake code for use in downstream steps
+        await a.saveIntakeCode();
+    });
+
+    test('Open saved Intake from listing → Process → Send for Sourcing @Intake @Sourcing', async ({ page }) => {
+        test.setTimeout(180000); // 3 min
+
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+
+        // Login
+        await a.navigateToApp(data);
+        await a.fillLoginEmail(data);
+        await a.clickLoginContinue();
+        await a.fillLoginPassword(data);
+        await a.clickLoginSubmit();
+        await a.assertLoggedIn();
+
+        // Intake listing → open the intake created in the previous test (saved code)
+        await a.clickIntakeTab();
+        await a.openSavedIntakeFromListing();
+        await a.takeScreenshot('intake_opened_from_listing');
+
+        // Process → Send for Sourcing
+        await a.clickIntakeProcess();
+        await a.clickSendForSourcing();
+        await a.takeScreenshot('intake_sent_for_sourcing');
+
+        // New Sourcing event page → expand all sections
+        await a.expandSourcingSections();
+        await a.takeScreenshot('sourcing_sections_expanded');
+
+        // Event Information — fill the fields not auto-populated from the Intake
+        await a.selectSourcingPaymentTerms();
+        await a.fillSourcingCommercialBidDueDate(data);
+        await a.fillSourcingTechnicalBidDueDate(data);
+        await a.fillSourcingExpectedDeliveryDate(data);
+        await a.takeScreenshot('sourcing_event_info_filled');
+
+        // Supplier Selection — Add Supplier popup → search → select → submit popup
+        await a.addSourcingSupplier(data);
+        await a.takeScreenshot('sourcing_supplier_added');
+
+        // Submit the sourcing event
+        await a.submitSourcingEvent();
+        await a.takeScreenshot('sourcing_event_submitted');
+
+        // Save Sourcing Event code for use in downstream steps
+        await a.saveSourcingEventCode();
+    });
+
+    test('Quote the RFX → foreclose @Sourcing @Quote', async ({ page }) => {
+        test.setTimeout(300000); // 5 min
+
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+
+        // Login
+        await a.navigateToApp(data);
+        await a.fillLoginEmail(data);
+        await a.clickLoginContinue();
+        await a.fillLoginPassword(data);
+        await a.clickLoginSubmit();
+        await a.assertLoggedIn();
+
+        // Hover Sourcing → Quote Request → search saved RFX code → open it
+        await a.hoverSourcingTab();
+        await a.clickQuoteRequestMenu();
+        await a.openSavedSourcingEventFromListing();
+        await a.takeScreenshot('rfx_opened_from_listing');
+
+        // Supplier row → Submit Quote → Commercial Quote
+        await a.clickSupplierSubmitQuote();
+        await a.clickCommercialQuoteOption();
+
+        // Quote page → Preferred Currency INR → Unit Rate → Submit Quote
+        await a.selectQuotePreferredCurrency(data);
+        await a.fillQuoteUnitRate(data);
+        await a.takeScreenshot('quote_filled');
+        await a.submitQuote();
+
+        // Sourcing status should change to Quoted
+        await a.assertSourcingStatusQuoted();
+        await a.takeScreenshot('rfx_quoted');
+
+        // TODO: foreclose steps (to be provided)
+    });
+
+    test('Award the RFX → wait for auto-created Purchase Requisition @Sourcing @Award', async ({ page }) => {
+        test.setTimeout(600000); // 10 min — covers award + approvals + PR auto-creation polling
+
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+
+        // Login
+        await a.navigateToApp(data);
+        await a.fillLoginEmail(data);
+        await a.clickLoginContinue();
+        await a.fillLoginPassword(data);
+        await a.clickLoginSubmit();
+        await a.assertLoggedIn();
+
+        // Open the quoted RFX from the Quote Request listing
+        await a.hoverSourcingTab();
+        await a.clickQuoteRequestMenu();
+        await a.openSavedSourcingEventFromListing();
+        await a.takeScreenshot('rfx_opened_for_award');
+
+        // More → Foreclose → reason → Submit
+        await a.forecloseRfx(data);
+        await a.takeScreenshot('rfx_foreclosed');
+
+        // Analysis tab → Award → fill allocated qty → Award → Workflow Summary submit
+        await a.clickAnalysisTab();
+        await a.clickAwardButton();
+        await a.fillAllocatedQuantity();
+        await a.takeScreenshot('award_allocation_filled');
+        await a.clickAwardButton();
+        await a.submitWorkflowSummary();
+        await a.takeScreenshot('award_submitted');
+
+        // Approve as many times as needed; when Approve is missing check Workflow
+        // Stages — if not Completed, reassign approver (NSEF Support Admin) and
+        // approve again, until Workflow Stages shows Completed
+        await a.completeAwardApprovals('Approved by automation');
+        await a.takeScreenshot('award_workflow_completed');
+
+        // Back button beside the AWD code
+        await a.clickAwardBackArrow();
+        await a.takeScreenshot('back_from_award');
+
+        // Reload every 30s until the Requisition field shows the PR code
+        await a.waitForRequisitionCode();
+        await a.takeScreenshot('requisition_code_displayed');
+
+        // Click the code → requisition opens in a new tab → save its code
+        await a.openRequisitionAndSaveCode();
     });
 
 });
