@@ -250,6 +250,41 @@ export const NSEFoundation_Locators = {
     // GRN terminal state after approval
     grnInwardedStatus:    `//*[normalize-space(text())='Inwarded']`,
 
+    // ── PO → Invoice (Create → Invoice → /invoices/new) ───────────────────────
+    poCreateInvoiceOption: `//li[@role='menuitem'][normalize-space(.)='Invoice'] | //*[@role='menuitem'][normalize-space(.)='Invoice']`,
+    // "Confirm Invoice Creation" popup → Proceed (MUI button in dialog)
+    confirmInvoiceProceedBtn: `//div[@role='dialog']//button[normalize-space(.)='Proceed'] | //div[contains(@class,'MuiDialog')]//button[normalize-space(.)='Proceed']`,
+
+    // Create Invoice form
+    // Document upload: first file input (accepts PDF/JPEG/PNG/TIFF, NOT the CAD one)
+    invoiceUploadInput:   `input[type="file"][accept*="application/pdf"]:not([accept*="dwg"])`,
+    invoiceNumberInput:   `(//*[contains(normalize-space(text()),'Invoice Number')]/following::input)[1]`,
+    // Invoice Date is a react-datepicker (use _pickReactDate)
+    invoiceDateInput:     `input[placeholder="Enter Invoice Date"]`,
+    // Period based Invoicing? / Extra billing — MUI Autocomplete (Yes/No options)
+    invoicePeriodBasedField:  `(//*[contains(normalize-space(text()),'Period based Invoicing')]/following::input)[1]`,
+    invoiceExtraBillingField: `(//*[contains(normalize-space(text()),'Extra billing')]/following::input)[1]`,
+    autocompleteNoOption:     `//li[@role='option'][normalize-space(.)='No']`,
+
+    // Line item FIX → "Item Matching" popup
+    invoiceFixBtn:            `//button[normalize-space(.)='FIX']`,
+    // "Add GRN" multi-select autocomplete in the Item Matching dialog
+    itemMatchingAddGrnField:  `(//*[contains(normalize-space(text()),'Add GRN')]/following::input)[1]`,
+    itemMatchingGrnOption: (code) => `//li[@role='option'][contains(normalize-space(.),'${code}')]`,
+    itemMatchingSubmitBtn:    `//div[@role='dialog']//button[normalize-space(.)='Submit'] | //div[contains(@class,'MuiDialog')]//button[normalize-space(.)='Submit']`,
+
+    // Create Invoice page header Submit (single visible MUI button, not in dialog)
+    invoiceSubmitBtn:         `//button[normalize-space(.)='Submit']`,
+    // "Validations" popup → Proceed (MUI in dialog)
+    invoiceValidationProceedBtn: `//div[@role='dialog']//button[normalize-space(.)='Proceed'] | //div[contains(@class,'MuiDialog')]//button[normalize-space(.)='Proceed']`,
+    // "Workflow Summary" popup → Submit (dialog-scoped)
+    invoiceWorkflowSummarySubmitBtn: `//div[@role='dialog']//button[normalize-space(.)='Submit'] | //div[contains(@class,'MuiDialog')]//button[normalize-space(.)='Submit']`,
+    // After all approvals the invoice goes to "Pending Sync" — the test's terminal
+    // state. It only flips to "Accounted" once an external party acknowledges it
+    // (out of scope here), so we assert Pending Sync, not Accounted.
+    invoicePendingSyncStatus:     `//*[normalize-space(text())='Pending Sync']`,
+    invoicePendingApprovalStatus: `//*[normalize-space(text())='Pending Approval']`,
+
     // ── Submit ────────────────────────────────────────────────────────────────
     submitBtn: 'button:has-text("Submit")',
 

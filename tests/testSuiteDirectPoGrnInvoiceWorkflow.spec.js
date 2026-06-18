@@ -449,4 +449,50 @@ test.describe('CXO → Direct PO → GRN → Invoice Workflow', () => {
         await a.takeScreenshot('grn_inwarded');
     });
 
+    test('Invoice for the PO (matched to its GRN) → approve until Pending Sync @PO @Invoice', async ({ page }) => {
+        test.setTimeout(900000); // 15 min — invoice create + matching + multi-stage approval
+
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+
+        // Login
+        await a.navigateToApp(data);
+        await a.fillLoginEmail(data);
+        await a.clickLoginContinue();
+        await a.fillLoginPassword(data);
+        await a.clickLoginSubmit();
+        await a.assertLoggedIn();
+
+        // Open the PO the GRN was created for
+        await a.openSavedPurchaseOrder(data);
+        await a.takeScreenshot('po_opened_for_invoice');
+
+        // Create → Invoice → Select PO Items → Confirm Invoice Creation
+        await a.clickPoCreateInvoice();
+        await a.submitSelectPoItemsForInvoice();
+        await a.confirmInvoiceCreation();
+        await a.takeScreenshot('invoice_create_page');
+
+        // Upload invoice document → Invoice details (number + date) → General details (No/No)
+        await a.uploadInvoiceDocument(data);
+        await a.fillInvoiceDetails(data);
+        await a.setInvoiceGeneralDetailsNo();
+        await a.takeScreenshot('invoice_details_filled');
+
+        // FIX → Item Matching → Add the PO's GRN → Submit
+        await a.matchGrnInItemMatching();
+        await a.takeScreenshot('invoice_grn_matched');
+
+        // Submit → Validations popup → Workflow Summary popup → Invoice created
+        await a.submitInvoice();
+        await a.takeScreenshot('invoice_submitted');
+        await a.saveInvoiceCode();
+
+        // Approve all stages until Pending Sync (terminal here; Accounted needs an
+        // external acknowledgement that's out of scope for this test)
+        await a.approveInvoiceUntilPendingSync('Approved by automation');
+        await a.assertInvoicePendingSync();
+        await a.takeScreenshot('invoice_pending_sync');
+    });
+
 });

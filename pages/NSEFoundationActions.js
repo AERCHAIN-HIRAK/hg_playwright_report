@@ -2550,4 +2550,246 @@ export class NSEFoundationActions {
         return code;
     }
 
+    // ── PO → Invoice (create, match the PO's GRN, approve until Pending Sync) ──
+
+    // Open the saved PO directly (re-login on the capp domain if redirected).
+    async openSavedPurchaseOrder(data) {
+        const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const { url, code } = fresh.savedPurchaseOrder;
+        console.log(`[PO] Opening saved PO ${code} → ${url}`);
+        await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+        await this.page.waitForTimeout(3000);
+
+        if (/nse-auth-uat\.aerchain\.io/.test(this.page.url())) {
+            console.log('[PO] Redirected to login for capp domain — logging in again...');
+            const emailField = this.page.locator(L.loginEmailField).first();
+            if (await emailField.isVisible({ timeout: 5000 }).catch(() => false)) {
+                await emailField.fill(data.login.email);
+                await this.page.locator(L.loginContinueBtn).click();
+            }
+            const pwField = this.page.locator(L.loginPasswordField).first();
+            if (await pwField.waitFor({ state: 'visible', timeout: 10000 }).then(() => true).catch(() => false)) {
+                await pwField.fill(data.login.password);
+                await this.page.locator(L.loginSubmitBtn).click();
+            } else {
+                console.log('[PO] Password step skipped (SSO) — continuing.');
+            }
+        }
+
+        await this.page.waitForURL(/\/purchase-orders\/\d+/, { timeout: 30000 });
+        await this.page.waitForTimeout(2000);
+        console.log(`[PO] On PO page: ${this.page.url()}`);
+    }
+
+    async clickPoCreateInvoice() {
+        await this.page.locator(`xpath=${L.poCreateBtn}`).first().click();
+        await this.page.waitForTimeout(800);
+        const inv = this.page.locator(`xpath=${L.poCreateInvoiceOption}`).first();
+        await inv.waitFor({ state: 'visible', timeout: 10000 });
+        await inv.click();
+        console.log('[INV] Create → Invoice clicked');
+        await this.page.waitForTimeout(1500);
+    }
+
+    async submitSelectPoItemsForInvoice() {
+        const submit = this.page.locator(`xpath=${L.selectPoItemsSubmitBtn}`).first();
+        await submit.waitFor({ state: 'visible', timeout: 10000 });
+        await submit.click();
+        console.log('[INV] Submitted Select PO Items popup');
+        await this.page.waitForTimeout(1500);
+    }
+
+    async confirmInvoiceCreation() {
+        const proceed = this.page.locator(`xpath=${L.confirmInvoiceProceedBtn}`).first();
+        await proceed.waitFor({ state: 'visible', timeout: 10000 });
+        await proceed.click();
+        console.log('[INV] Proceeded Confirm Invoice Creation');
+        await this.page.waitForURL(/\/invoices\/new/, { timeout: 30000 });
+        await this.page.waitForTimeout(2500);
+        console.log(`[INV] On Create Invoice page: ${this.page.url()}`);
+    }
+
+    async uploadInvoiceDocument(data) {
+        const input = this.page.locator(L.invoiceUploadInput).first();
+        const filePath = path.resolve(data.invoice.documentPath);
+        await input.setInputFiles(filePath);
+        console.log(`[INV] Uploaded invoice document: ${filePath}`);
+        await this.page.waitForTimeout(2000);
+    }
+
+    // Bump the stored invoice number by 1 (e.g. INV-AUTO-001 → INV-AUTO-002) and
+    // persist it back to NSEFoundationData.json. The app rejects duplicate invoice
+    // numbers, so every run must use a fresh one.
+    _nextInvoiceNumber() {
+        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        current.invoice = current.invoice || {};
+        const prev = current.invoice.invoiceNumber || 'INV-AUTO-000';
+        const m = prev.match(/^(.*?)(\d+)$/);
+        let next;
+        if (m) {
+            const n = parseInt(m[2], 10) + 1;
+            next = m[1] + String(n).padStart(m[2].length, '0');
+        } else {
+            next = `${prev}-1`;
+        }
+        current.invoice.invoiceNumber = next;
+        fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
+        console.log(`[INV] Invoice number bumped: ${prev} → ${next}`);
+        return next;
+    }
+
+    async fillInvoiceDetails(data) {
+        // Use a fresh, incremented invoice number each run (duplicate check in app)
+        const invoiceNumber = this._nextInvoiceNumber();
+        const num = this.page.locator(`xpath=${L.invoiceNumberInput}`).first();
+        await num.waitFor({ state: 'visible', timeout: 15000 });
+        await num.fill(invoiceNumber);
+        // Invoice Date = test execution date (today) — react-datepicker
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        await this._pickReactDate(this.page.locator(L.invoiceDateInput).first(), today);
+        console.log(`[INV] Filled Invoice Number (${invoiceNumber}) + Invoice Date (${today})`);
+    }
+
+    // MUI Autocomplete: click field → click the "No" option
+    async _selectAutocompleteNo(fieldXpath, label) {
+        const field = this.page.locator(`xpath=${fieldXpath}`).first();
+        await field.scrollIntoViewIfNeeded();
+        await field.click();
+        await this.page.waitForTimeout(700);
+        const no = this.page.locator(`xpath=${L.autocompleteNoOption}`).first();
+        await no.waitFor({ state: 'visible', timeout: 8000 });
+        await no.click();
+        await this.page.waitForTimeout(500);
+        console.log(`[INV] ${label} → No`);
+    }
+
+    async setInvoiceGeneralDetailsNo() {
+        await this._selectAutocompleteNo(L.invoicePeriodBasedField, 'Period based Invoicing');
+        await this._selectAutocompleteNo(L.invoiceExtraBillingField, 'Extra billing');
+    }
+
+    // FIX → Item Matching popup → Add GRN (the PO's GRN) → Submit
+    async matchGrnInItemMatching() {
+        const fix = this.page.locator(`xpath=${L.invoiceFixBtn}`).first();
+        await fix.scrollIntoViewIfNeeded();
+        await fix.click();
+        console.log('[INV] Clicked FIX → Item Matching');
+        await this.page.waitForTimeout(2000);
+
+        // GRN created for this PO
+        const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const grnCode = fresh.savedGrn && fresh.savedGrn.code;
+
+        const addGrn = this.page.locator(`xpath=${L.itemMatchingAddGrnField}`).first();
+        await addGrn.waitFor({ state: 'visible', timeout: 10000 });
+        await addGrn.click();
+        await this.page.waitForTimeout(1000);
+        const opt = grnCode
+            ? this.page.locator(`xpath=${L.itemMatchingGrnOption(grnCode)}`).first()
+            : this.page.locator(`xpath=//li[@role='option'][contains(normalize-space(.),'INW-')]`).first();
+        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.click();
+        console.log(`[INV] Selected GRN ${grnCode || '(first)'} in Item Matching`);
+        await this.page.waitForTimeout(800);
+
+        // Close the multi-select dropdown by clicking the dialog heading, then Submit
+        await this.page.locator(`xpath=(//div[@role='dialog']//*[contains(normalize-space(text()),'Item Matching')])[1]`)
+            .first().click({ force: true }).catch(() => {});
+        await this.page.waitForTimeout(500);
+        const submit = this.page.locator(`xpath=${L.itemMatchingSubmitBtn}`).first();
+        await submit.waitFor({ state: 'visible', timeout: 10000 });
+        await submit.click();
+        console.log('[INV] Submitted Item Matching');
+        await this.page.waitForTimeout(2000);
+    }
+
+    async submitInvoice() {
+        // Header Submit (no popup open yet → the only visible Submit)
+        const submit = this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first();
+        await submit.scrollIntoViewIfNeeded().catch(() => {});
+        await submit.click();
+        console.log('[INV] Clicked Submit (create page)');
+        await this.page.waitForTimeout(1500);
+
+        // "Validations" popup → Proceed
+        const proceed = this.page.locator(`xpath=${L.invoiceValidationProceedBtn}`).first();
+        if (await proceed.waitFor({ state: 'visible', timeout: 15000 }).then(() => true).catch(() => false)) {
+            await proceed.click();
+            console.log('[INV] Proceeded Validations popup');
+        } else {
+            console.log('[INV] Validations popup did not appear');
+        }
+        await this.page.waitForTimeout(2000);
+
+        // "Workflow Summary" popup → Submit
+        const wf = this.page.locator(`xpath=${L.invoiceWorkflowSummarySubmitBtn}`).first();
+        if (await wf.waitFor({ state: 'visible', timeout: 15000 }).then(() => true).catch(() => false)) {
+            await wf.click();
+            console.log('[INV] Confirmed Workflow Summary popup');
+        } else {
+            console.log('[INV] Workflow Summary popup did not appear');
+        }
+        await this.page.waitForURL(/\/invoices\/\d+/, { timeout: 30000 });
+        await this.page.waitForTimeout(3000);
+        console.log(`[INV] Invoice created → ${this.page.url()}`);
+    }
+
+    // Approve the invoice through all stages until it reaches "Pending Sync".
+    // After the final approval the Approve button disappears and the status flips
+    // to "Pending Sync" — the terminal state for this test. (It only becomes
+    // "Accounted" after an external acknowledgement, which is out of scope.)
+    async approveInvoiceUntilPendingSync(comments = 'Approved by automation') {
+        const pendingSync = async (t = 1500) =>
+            await this.page.locator(`xpath=${L.invoicePendingSyncStatus}`).first().isVisible({ timeout: t }).catch(() => false);
+        const pendingApproval = async (t = 1500) =>
+            await this.page.locator(`xpath=${L.invoicePendingApprovalStatus}`).first().isVisible({ timeout: t }).catch(() => false);
+
+        for (let i = 0; i < 12; i++) {
+            if (await pendingSync()) {
+                console.log(`[INV] Status Pending Sync after ${i} approval(s).`);
+                return;
+            }
+            const approveVisible = await this.page.locator(`xpath=${L.poApproveBtn}`).first()
+                .isVisible({ timeout: 4000 }).catch(() => false);
+            if (approveVisible) {
+                console.log(`[INV] Approving stage ${i + 1}...`);
+                await this._approveWithNotes(comments, 'INV');
+                continue;
+            }
+            // No Approve button. If still Pending Approval, the approver isn't us —
+            // reassign and retry. Otherwise the badge may be mid-transition; reload.
+            if (await pendingApproval(1500)) {
+                console.log('[INV] Approve missing while Pending Approval — reassigning to NSEF Support Admin...');
+                if (!(await this.reassignWorkflowApprover('Reassigned for automated testing', 'INV'))) break;
+                continue;
+            }
+            console.log('[INV] No Approve button and not Pending Approval — reloading to re-check status...');
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.waitForTimeout(3000);
+        }
+        if (!(await pendingSync())) throw new Error('Invoice did not reach Pending Sync status');
+    }
+
+    async assertInvoicePendingSync() {
+        await expect(this.page.locator(`xpath=${L.invoicePendingSyncStatus}`).first())
+            .toBeVisible({ timeout: 15000 });
+        console.log('[INV] Status is Pending Sync');
+    }
+
+    async saveInvoiceCode() {
+        const url = this.page.url();
+        const bodyText = await this.page.locator('body').textContent() ?? '';
+        const m = bodyText.match(/Invoice-[A-Z0-9\-]*\d+/i);
+        const code = m ? m[0].trim() : null;
+        const idMatch = url.match(/\/invoices\/(\d+)/);
+        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        current.savedInvoice = { code, id: idMatch ? idMatch[1] : null, url };
+        fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
+        console.log(`[INV] Saved to NSEFoundationData.json → savedInvoice.code = "${code}"`);
+        return code;
+    }
+
 }
