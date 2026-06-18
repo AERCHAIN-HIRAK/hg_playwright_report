@@ -155,6 +155,13 @@ export const NSEFoundation_Locators = {
     // Back button beside the award code (user-confirmed locator)
     awardBackArrow:          `//h1[contains(text(),'AWD-FNSE')]/preceding-sibling::button[1]`,
 
+    // ── Shared approval controls (CXO + award workflows) ──────────────────────
+    approveBtn:            `//button[normalize-space(text())='Approve']`,
+    approveBtnConfirm:     `(//button[normalize-space(text())='Approve'])[2]`,
+    approveCommentsField:  `[placeholder="Enter your comments..."]`,
+    // CXO "released" terminal state (badge text, not in a table/nav)
+    cxoReleasedStatus:     `//*[(contains(normalize-space(),"Active") or contains(normalize-space(),"Released")) and not(ancestor::table) and not(ancestor::nav)]`,
+
     // More → Reassign Workflow Approver dialog (pattern from intake workflow suite)
     reassignApproverOption:  `//*[@role='menuitem'][contains(normalize-space(),'Reassign Workflow Approver')] | //button[contains(normalize-space(),'Reassign Workflow Approver')] | //li[contains(normalize-space(),'Reassign Workflow Approver')]`,
     reassignUserDropdown:    `(//*[@role='dialog']//button[@aria-haspopup='dialog'])[1]`,
@@ -167,18 +174,81 @@ export const NSEFoundation_Locators = {
     // Requisition value is a clickable <p>, not an <a>, beside the "Requisition" label
     requisitionCodeLink:     `//label[contains(normalize-space(.),'Requisition')]/following-sibling::p[1] | (//*[contains(normalize-space(text()),'Requisition')]/following::p[contains(@class,'cursor-pointer')])[1]`,
 
+    // Requisition (PR) — edit → submit (old capp domain, not v4; MUI v4 + react-datepicker)
+    prEditBtn: `(//button[@progresssize='14'])[4]`,
+    prEffectiveFromInput:  `input[placeholder^="Enter Effective from date"]`,
+    prEffectiveToInput:    `input[placeholder^="Enter Effective to date"]`,
+    prPurchaseTypeInput:   `input[id="Purchase Type"]`,
+    prAutocompleteOption:  `[role="option"], .MuiAutocomplete-option`,
+    prInwardRequiredYes:   `div[id="Inward Required"] input[type="radio"][value="1"]`,
+    prInwardMatchQuantity: `div[id="Inward Matching Criterion"] input[type="radio"][value="quantity"]`,
+    prSubmitBtn:           `//button[normalize-space(.)='Submit']`,
+    prSubmittedStatus:     `//*[normalize-space(text())='Submitted']`,
+    // PR status badge sits beside the PR code in the header
+    prStatusBadge: (status) => `//*[normalize-space(text())='${status}']`,
+
     // Quote page
     quotePreferredCurrency: `(//*[contains(normalize-space(text()),'Preferred Currency')]/following::button[@role='combobox'])[1]`,
     // Editable Unit Rate cell in the quote item grid (user-confirmed locator)
     quoteUnitRateCell:      `[class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"]`,
     quoteSubmitBtn:         `//button[contains(normalize-space(.),'Submit Quote')]`,
     quotedStatusBadge:      `//*[normalize-space(text())='Quoted']`,
+    // RFX header status badge while the sourcing event awaits approval (next to
+    // the RFX code). Disappears once the RFX is approved and goes live.
+    rfxPendingApprovalBadge: `//*[normalize-space(text())='Pending Approval']`,
 
     // Supplier Selection — Add Supplier popup
     sourcingAddSupplierBtn:       `//button[contains(.,'Add Supplier')]`,
     sourcingSupplierSearch:       `//div[@role='dialog']//input`,
     sourcingSupplierOption: (name) => `//div[@role='dialog']//*[contains(normalize-space(.),"${name}") and not(.//*[contains(normalize-space(.),"${name}")])]`,
     sourcingSupplierPopupSubmit:  `//div[@role='dialog']//button[normalize-space(.)='Submit']`,
+
+    // ── PR Transactions → Conversions → PRC → PO ──────────────────────────────
+    // PR detail tabs: Overview | Process | Transactions (role=tab)
+    prTransactionsTab:    `//*[@role='tab' or @data-slot='tabs-trigger' or self::button][normalize-space(.)='Transactions']`,
+    // Collapsible "Conversions" section header inside the Transactions tab
+    prConversionsSection: `//*[normalize-space(text())='Conversions']`,
+    // PRC code link in the Conversions table (code is dynamic, e.g. PRC-NSEFN-26-37)
+    prcCodeLink:          `//a[starts-with(normalize-space(.),'PRC-')] | //*[contains(@class,'cursor-pointer')][starts-with(normalize-space(.),'PRC-')] | //td//*[starts-with(normalize-space(.),'PRC-')]`,
+    // Requisition Conversion View → "PO(s)" column value reads "POs(N)" (the blue
+    // link); hovering it reveals a popover containing the PO code link. Match only
+    // "POs(" so we hit the value, NOT the gray "PO(s)" column label.
+    conversionPoCountLink: `//*[contains(normalize-space(text()),'POs(')]`,
+    // PO code (shown in the hover popover; code is dynamic, e.g. PO-NSEFN-26-96)
+    poCodeLink:           `//a[starts-with(normalize-space(.),'PO-NSEF')] | //span[starts-with(normalize-space(.),'PO-NSEF')] | //p[starts-with(normalize-space(.),'PO-NSEF')] | //*[starts-with(normalize-space(text()),'PO-NSEF')]`,
+
+    // ── PO / GRN approval (capp v4 header — same modal for both) ──────────────
+    // "Approve" button in the header; the confirm modal has a notes textarea + Approve
+    poApproveBtn:         `//button[normalize-space(.)='Approve']`,
+    poApproveNotesField:  `//textarea[@placeholder='Write your notes here'] | //div[@role='dialog']//textarea`,
+    // Confirm button: the Approve that follows the notes textarea (not the header one)
+    poApproveConfirmBtn:  `(//textarea[@placeholder='Write your notes here']/following::button[normalize-space(.)='Approve'])[1] | (//div[@role='dialog']//button[normalize-space(.)='Approve'])[1]`,
+    // After all approvals the PO badge reads "Submitted" and a "Create" dropdown appears
+    poSubmittedStatus:    `//*[normalize-space(text())='Submitted']`,
+    poCreateBtn:          `//button[contains(normalize-space(.),'Create')]`,
+    poCreateGrnOption:    `//li[@role='menuitem'][normalize-space(.)='GRN'] | //*[@role='menuitem'][normalize-space(.)='GRN']`,
+    // "Select PO Items" popup → Submit. The PO page has 3 HIDDEN se-btn "Submit"
+    // buttons; the visible popup Submit is a MUI button INSIDE the dialog — so
+    // scope to the dialog or a .first() picks a hidden one and times out.
+    selectPoItemsSubmitBtn: `//div[@role='dialog']//button[normalize-space(.)='Submit'] | //div[contains(@class,'MuiDialog')]//button[normalize-space(.)='Submit']`,
+
+    // ── GRN Create form ───────────────────────────────────────────────────────
+    grnInvoiceNumberInput:   `(//*[contains(normalize-space(text()),'Invoice Number')]/following::input)[1]`,
+    grnDeliveryChallanInput: `(//*[contains(normalize-space(text()),'Delivery challan')]/following::input)[1]`,
+    grnDeliveryNoteRefInput: `(//*[contains(normalize-space(text()),'Delivery Note Reference')]/following::input)[1]`,
+    // Document Date accepts typed input ("18 Jun 2026" → renders "18/06/2026")
+    grnDocumentDateInput:    `input[placeholder="Enter Document Date"]`,
+    // Create GRN page header Submit — single visible MUI button (text node)
+    grnSubmitBtn:            `//button[normalize-space(.)='Submit']`,
+    // "Workflow Summary" popup → Submit (approvers pre-populated). Same modal
+    // component as Select PO Items, so scope to the dialog.
+    grnWorkflowSummarySubmitBtn: `//div[@role='dialog']//button[normalize-space(.)='Submit'] | //div[contains(@class,'MuiDialog')]//button[normalize-space(.)='Submit']`,
+    // Line items AG Grid — column header (used to confirm the grid rendered;
+    // cell values are read by col-id in the action). AG headers can wrap the
+    // label in extra nodes, so match with contains.
+    grnLineItemColHeader: (text) => `//*[@role='columnheader'][contains(normalize-space(.),'${text}')]`,
+    // GRN terminal state after approval
+    grnInwardedStatus:    `//*[normalize-space(text())='Inwarded']`,
 
     // ── Submit ────────────────────────────────────────────────────────────────
     submitBtn: 'button:has-text("Submit")',

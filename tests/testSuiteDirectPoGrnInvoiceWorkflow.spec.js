@@ -234,6 +234,12 @@ test.describe('CXO → Direct PO → GRN → Invoice Workflow', () => {
         await a.submitSourcingEvent();
         await a.takeScreenshot('sourcing_event_submitted');
 
+        // Approve the RFX workflow (reassign to NSEF Support Admin if the Approve
+        // button is missing, same as CXO/Intake) until it is live — otherwise the
+        // supplier "Submit Quote" button never appears in the next test.
+        await a.approveSourcingUntilReleased();
+        await a.takeScreenshot('sourcing_event_approved');
+
         // Save Sourcing Event code for use in downstream steps
         await a.saveSourcingEventCode();
     });
@@ -324,6 +330,123 @@ test.describe('CXO → Direct PO → GRN → Invoice Workflow', () => {
 
         // Click the code → requisition opens in a new tab → save its code
         await a.openRequisitionAndSaveCode();
+    });
+
+    test('PR edit → submit → status Submitted @Requisition @PR', async ({ page }) => {
+        test.setTimeout(300000); // 5 min
+
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+
+        // Login
+        await a.navigateToApp(data);
+        await a.fillLoginEmail(data);
+        await a.clickLoginContinue();
+        await a.fillLoginPassword(data);
+        await a.clickLoginSubmit();
+        await a.assertLoggedIn();
+
+        // Open the saved requisition (re-login on the capp domain if redirected)
+        await a.openSavedRequisition(data);
+        await a.takeScreenshot('pr_opened');
+
+        // Edit → General details: 5 mandatory fields
+        await a.clickPrEdit();
+        await a.fillPrEffectiveFromDate();          // today (script execution date)
+        await a.fillPrEffectiveToDate(data);        // 2026-12-31
+        await a.selectPrPurchaseType(data);         // First time/New
+        await a.selectPrInwardRequiredYes();
+        await a.selectPrInwardMatchingQuantity();
+        await a.takeScreenshot('pr_general_details_filled');
+
+        // Submit → assert Submitted status → save the real PR code
+        await a.submitPr();
+        await a.assertPrSubmitted();
+        await a.takeScreenshot('pr_submitted');
+        await a.saveRequisitionCode();
+    });
+
+    test('Submitted PR auto-processes → PRC (Processed) → PO (Completed) @Requisition @PRC @PO', async ({ page }) => {
+        test.setTimeout(900000); // 15 min — covers two long auto-processing waits
+
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+
+        // Login
+        await a.navigateToApp(data);
+        await a.fillLoginEmail(data);
+        await a.clickLoginContinue();
+        await a.fillLoginPassword(data);
+        await a.clickLoginSubmit();
+        await a.assertLoggedIn();
+
+        // Open the saved submitted requisition (re-login on capp domain if redirected)
+        await a.openSavedRequisition(data);
+        await a.takeScreenshot('pr_opened_for_prc');
+
+        // Reload every 30s until status = Processed → PRC auto-created
+        await a.waitForPrStatus('Processed');
+        await a.takeScreenshot('pr_processed_prc_created');
+
+        // Keep reloading until status = Completed → PO auto-created
+        await a.waitForPrStatus('Completed');
+        await a.takeScreenshot('pr_completed_po_created');
+    });
+
+    test('Completed PR → open PO via conversion → GRN → approve until Inwarded @PO @GRN', async ({ page }) => {
+        test.setTimeout(900000); // 15 min — PO approval stages + GRN create + approval
+
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+
+        // Login
+        await a.navigateToApp(data);
+        await a.fillLoginEmail(data);
+        await a.clickLoginContinue();
+        await a.fillLoginPassword(data);
+        await a.clickLoginSubmit();
+        await a.assertLoggedIn();
+
+        // Open the saved (Completed) requisition
+        await a.openSavedRequisition(data);
+        await a.takeScreenshot('pr_opened_for_grn');
+
+        // Transactions tab → expand Conversions → open PRC → Requisition Conversion View
+        await a.clickPrTransactionsTab();
+        await a.expandPrConversionsSection();
+        await a.openPrcFromConversions();
+        await a.takeScreenshot('prc_conversion_view');
+
+        // Hover PO(s) → click PO code → PO opens in a new (same-size) tab
+        await a.openPoFromConversionViewInNewTab();
+        await a.takeScreenshot('po_opened_new_tab');
+
+        // Approve the PO through all stages until the Create dropdown is available
+        await a.approvePoUntilSubmitted('Approved by automation');
+        await a.takeScreenshot('po_approved');
+
+        // Create → GRN → submit the Select PO Items popup → Create GRN page
+        await a.clickPoCreateGrn();
+        await a.submitSelectPoItemsPopup();
+        await a.takeScreenshot('grn_create_page');
+
+        // General Details: Invoice Number + Delivery challan
+        await a.fillGrnGeneralDetails(data);
+        // Document Details: Delivery Note Reference + Document Date (today)
+        await a.fillGrnDocumentDetails(data);
+        // Line items: Received quantity must equal PO Quantity
+        await a.assertGrnReceivedMatchesPoQty();
+        await a.takeScreenshot('grn_filled');
+
+        // Submit → Workflow Summary popup → Submit → GRN created
+        await a.submitGrn();
+        await a.takeScreenshot('grn_submitted');
+        await a.saveGrnCode();
+
+        // Approve the GRN (Stock Inward) until status = Inwarded
+        await a.approveGrnUntilInwarded('Approved by automation');
+        await a.assertGrnInwarded();
+        await a.takeScreenshot('grn_inwarded');
     });
 
 });

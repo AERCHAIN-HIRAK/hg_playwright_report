@@ -527,71 +527,132 @@ export class NSEFoundationActions {
         await expect(this.page).not.toHaveURL(/\/cxos\/create/, { timeout: 15000 });
     }
 
+    // ── Shared workflow-approval helpers (CXO + award) ────────────────────────
+
+    /** Click Approve → fill comments (if the modal appears) → confirm → reload. */
+    async _clickApproveWithComments(comments = 'Approved by automation') {
+        await this.page.locator(`xpath=${L.approveBtn}`).first().click();
+        const commentsField = this.page.locator(L.approveCommentsField);
+        if (await commentsField.isVisible({ timeout: 5000 }).catch(() => false)) {
+            await commentsField.fill(comments);
+            await this.page.locator(`xpath=${L.approveBtnConfirm}`).click();
+        }
+        await this.page.waitForTimeout(2000);
+        await this.page.reload({ waitUntil: 'domcontentloaded' });
+        await this.page.waitForTimeout(2000);
+    }
+
+    /** Wait for the Approve button, reloading up to `maxReloads` times if stale.
+     *  Returns true if it appeared. Stops early if `stopWhen()` resolves true. */
+    async _waitForApproveButton({ maxReloads = 5, tag = 'Workflow', stopWhen = null } = {}) {
+        const approveBtn = this.page.locator(`xpath=${L.approveBtn}`).first();
+        for (let attempt = 0; attempt <= maxReloads; attempt++) {
+            if (await approveBtn.waitFor({ state: 'visible', timeout: 4000 }).then(() => true).catch(() => false)) {
+                return true;
+            }
+            if (stopWhen && await stopWhen()) return false;
+            if (attempt < maxReloads) {
+                console.log(`[${tag}] Approve button not visible for 4s — reloading (${attempt + 1}/${maxReloads})...`);
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                await this.page.waitForTimeout(2000);
+            }
+        }
+        return false;
+    }
+
+    /** More → Reassign Workflow Approver → NSEF Support Admin → reason → Submit.
+     *  Generic across CXO/award (same v4 header More menu). */
+    async reassignWorkflowApprover(reason = 'Reassigned for automated testing', tag = 'Workflow') {
+        const moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
+        if (!(await moreBtn.isVisible({ timeout: 8000 }).catch(() => false))) {
+            console.log(`[${tag}] No More button — cannot reassign.`);
+            return false;
+        }
+        await moreBtn.click();
+        await this.page.waitForTimeout(800);
+
+        const opt = this.page.locator(`xpath=${L.reassignApproverOption}`).first();
+        if (!(await opt.isVisible({ timeout: 8000 }).catch(() => false))) {
+            console.log(`[${tag}] Reassign option not available.`);
+            await this.page.keyboard.press('Escape');
+            return false;
+        }
+        await opt.click();
+        await this.page.waitForTimeout(1500);
+
+        const userDropdown = this.page.locator(`xpath=${L.reassignUserDropdown}`).first();
+        await userDropdown.waitFor({ state: 'visible', timeout: 10000 });
+        await userDropdown.click({ force: true });
+        await this.page.waitForTimeout(600);
+        const adminOpt = this.page.locator(L.reassignAdminOption).first();
+        await adminOpt.waitFor({ state: 'visible', timeout: 10000 });
+        await adminOpt.click();
+        await this.page.waitForTimeout(400);
+
+        const reasonField = this.page.locator(`xpath=${L.reassignReasonField}`).first();
+        await reasonField.waitFor({ state: 'visible', timeout: 5000 });
+        await reasonField.fill(reason);
+        await this.page.locator(`xpath=${L.reassignSubmitBtn}`).first().click();
+        console.log(`[${tag}] Workflow approver reassigned to NSEF Support Admin`);
+        await this.page.waitForTimeout(2500);
+        await this.page.reload({ waitUntil: 'domcontentloaded' });
+        await this.page.waitForTimeout(2000);
+        return true;
+    }
+
     // ── CXO Approval Workflow ─────────────────────────────────────────────────
 
-    async _approveStage(comments = 'Approved by automation') {
-        await this.page.locator("//button[normalize-space(text())='Approve']").first().click();
-        await this.page.locator('[placeholder="Enter your comments..."]')
-            .waitFor({ state: 'visible', timeout: 10000 });
-        await this.page.locator('[placeholder="Enter your comments..."]').fill(comments);
-        await this.page.locator("(//button[normalize-space(text())='Approve'])[2]").click();
-        await this.page.waitForTimeout(1500);
+    async _isCxoReleased(timeout = 3000) {
+        return await this.page.locator(`xpath=${L.cxoReleasedStatus}`).first()
+            .isVisible({ timeout }).catch(() => false);
     }
 
     async approveAllStages(comments = 'Approved by automation') {
+        // Each round: stop when Released. Otherwise find Approve (reloading if
+        // stale); if it never shows, reassign approver to NSEF Support Admin and
+        // retry. Then approve.
         const maxStages = 10;
-        const maxReloads = 5;
         for (let i = 0; i < maxStages; i++) {
-            // Wait for the Approve button — if it doesn't show within 4s the page
-            // state is stale (button exists in real UI), so reload and retry
-            const approveBtn = this.page.locator("//button[normalize-space(text())='Approve']").first();
-            let visible = false;
-            for (let attempt = 0; attempt <= maxReloads; attempt++) {
-                visible = await approveBtn.waitFor({ state: 'visible', timeout: 4000 })
-                    .then(() => true).catch(() => false);
-                if (visible) break;
+            if (await this._isCxoReleased(1500)) {
+                console.log(`[CXO] Status Released after ${i} approval(s).`);
+                return;
+            }
 
-                // If status already moved to Released, no button is expected — stop retrying
-                const released = await this.page.locator(
-                    '//*[(contains(normalize-space(),"Active") or contains(normalize-space(),"Released")) and not(ancestor::table) and not(ancestor::nav)]'
-                ).first().isVisible({ timeout: 1000 }).catch(() => false);
-                if (released) break;
+            let visible = await this._waitForApproveButton({
+                tag: 'CXO',
+                stopWhen: () => this._isCxoReleased(1000),
+            });
 
-                if (attempt < maxReloads) {
-                    console.log(`[CXO] Approve button not visible for 4s at stage ${i + 1} — reloading (${attempt + 1}/${maxReloads})...`);
-                    await this.page.reload({ waitUntil: 'domcontentloaded' });
-                    await this.page.waitForTimeout(2000);
+            if (!visible) {
+                if (await this._isCxoReleased(1000)) {
+                    console.log(`[CXO] Status Released after ${i} approval(s).`);
+                    return;
+                }
+                console.log('[CXO] Approve button missing — reassigning approver to NSEF Support Admin...');
+                if (!(await this.reassignWorkflowApprover('Reassigned for automated testing', 'CXO'))) {
+                    console.log('[CXO] Reassign unavailable — stopping approval loop.');
+                    break;
+                }
+                visible = await this._waitForApproveButton({ tag: 'CXO', stopWhen: () => this._isCxoReleased(1000) });
+                if (!visible) {
+                    console.log('[CXO] Still no Approve button after reassign — stopping.');
+                    break;
                 }
             }
 
-            if (!visible) {
-                console.log(`[CXO] Approve button not visible at stage ${i + 1} after ${maxReloads} reloads — stopping.`);
-                break;
-            }
-
             console.log(`[CXO] Approving stage ${i + 1}...`);
-            await this._approveStage(comments);
-            await this.page.waitForTimeout(2000);
+            await this._clickApproveWithComments(comments);
 
-            // Reload to get latest status
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
-            await this.page.waitForTimeout(2000);
-
-            const released = await this.page.locator(
-                '//*[(contains(normalize-space(),"Active") or contains(normalize-space(),"Released")) and not(ancestor::table) and not(ancestor::nav)]'
-            ).first().isVisible({ timeout: 3000 }).catch(() => false);
-
-            if (released) {
+            if (await this._isCxoReleased(3000)) {
                 console.log(`[CXO] Status Released after ${i + 1} approval(s).`);
-                break;
+                return;
             }
         }
     }
 
     async assertCxoStatusReleased() {
-        await expect(this.page.locator(
-            '//*[(contains(normalize-space(),"Active") or contains(normalize-space(),"Released")) and not(ancestor::table) and not(ancestor::nav)]'
-        ).first()).toBeVisible({ timeout: 20000 });
+        await expect(this.page.locator(`xpath=${L.cxoReleasedStatus}`).first())
+            .toBeVisible({ timeout: 20000 });
     }
 
     // ── Intake Tab Navigation ─────────────────────────────────────────────────
@@ -1203,13 +1264,13 @@ export class NSEFoundationActions {
 
     async approveIntakeUntilReleased(data, comments = 'Approved by automation') {
         const maxIter = 15;
+        let noActionStreak = 0;
         for (let i = 0; i < maxIter; i++) {
             await this.page.waitForTimeout(2000);
 
             // Check Released/Active
-            const released = await this.page.locator(
-                `xpath=//*[(contains(normalize-space(),"Active") or contains(normalize-space(),"Released")) and not(ancestor::table) and not(ancestor::nav)]`
-            ).first().isVisible({ timeout: 3000 }).catch(() => false);
+            const released = await this.page.locator(`xpath=${L.cxoReleasedStatus}`)
+                .first().isVisible({ timeout: 3000 }).catch(() => false);
             if (released) {
                 console.log(`[Intake] Status Released/Active after ${i} step(s).`);
                 break;
@@ -1218,6 +1279,7 @@ export class NSEFoundationActions {
             // Approve
             const approveBtn = this.page.locator(IL.intakeApprove1).first();
             if (await approveBtn.isVisible({ timeout: 6000 }).catch(() => false)) {
+                noActionStreak = 0;
                 console.log(`[Intake] Approving stage ${i + 1}...`);
                 await approveBtn.click();
                 const cf = this.page.locator(IL.intakeApproveComments);
@@ -1232,6 +1294,7 @@ export class NSEFoundationActions {
             // Review — open edit page, re-fill mandatory fields, submit
             const reviewBtn = this.page.locator(IL.intakeReview).first();
             if (await reviewBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+                noActionStreak = 0;
                 console.log(`[Intake] Handling Review step ${i + 1}...`);
                 await reviewBtn.click();
                 await this.page.waitForLoadState('domcontentloaded');
@@ -1273,6 +1336,7 @@ export class NSEFoundationActions {
             // Acknowledge
             const ackBtn = this.page.locator(IL.intakeAccept).first();
             if (await ackBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+                noActionStreak = 0;
                 console.log(`[Intake] Clicking Acknowledge/Accept step ${i + 1}...`);
                 await ackBtn.click();
                 await this.page.waitForTimeout(1500);
@@ -1287,15 +1351,29 @@ export class NSEFoundationActions {
                 continue;
             }
 
-            console.log(`[Intake] No action button visible at step ${i + 1} — stopping.`);
+            // No action button — the page state may be stale, or the step is
+            // assigned to a different approver. Reload-retry first, then reassign
+            // the workflow approver to NSEF Support Admin before giving up.
+            noActionStreak++;
+            if (noActionStreak <= 2) {
+                console.log(`[Intake] No action button at step ${i + 1} — reloading (${noActionStreak}/2)...`);
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                continue;
+            }
+            if (noActionStreak === 3) {
+                console.log(`[Intake] Still no action button — reassigning approver to NSEF Support Admin...`);
+                if (await this.reassignWorkflowApprover('Reassigned for automated testing', 'Intake')) {
+                    continue;
+                }
+            }
+            console.log(`[Intake] No action button visible at step ${i + 1} after retries — stopping.`);
             break;
         }
     }
 
     async assertIntakeStatusReleased() {
-        await expect(this.page.locator(
-            `xpath=//*[(contains(normalize-space(),"Active") or contains(normalize-space(),"Released")) and not(ancestor::table) and not(ancestor::nav)]`
-        ).first()).toBeVisible({ timeout: 20000 });
+        await expect(this.page.locator(`xpath=${L.cxoReleasedStatus}`).first())
+            .toBeVisible({ timeout: 20000 });
     }
 
     // ── Save Intake code for downstream steps ────────────────────────────────
@@ -1370,6 +1448,17 @@ export class NSEFoundationActions {
             throw new Error('No savedIntake.code in NSEFoundationData.json — run the Intake create test first.');
         }
         return code;
+    }
+
+    // Reads savedRequisition fresh from disk (same staleness reason as above)
+    getSavedRequisition() {
+        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        const saved = current.savedRequisition;
+        if (!saved?.url) {
+            throw new Error('No savedRequisition in NSEFoundationData.json — run the Award test first.');
+        }
+        return saved;
     }
 
     // Reads savedSourcingEvent fresh from disk (same staleness reason as above)
@@ -1519,6 +1608,55 @@ export class NSEFoundationActions {
         await confirmBtn.click();
         console.log('[Sourcing] Confirmed Process Request popup');
         await this.page.waitForTimeout(3000);
+    }
+
+    async _isSourcingPendingApproval(timeout = 3000) {
+        return await this.page.locator(`xpath=${L.rfxPendingApprovalBadge}`).first()
+            .isVisible({ timeout }).catch(() => false);
+    }
+
+    // After "Send for Sourcing" submit, the RFX header shows a "Pending Approval"
+    // badge plus a direct Approve button (same shape as the CXO flow). It only
+    // goes live (suppliers can Submit Quote) once approved. Mirror the CXO pattern:
+    // each round, stop when no longer Pending Approval; otherwise find Approve
+    // (reloading if stale), and if it never shows, reassign the approver to NSEF
+    // Support Admin and retry, then approve.
+    async approveSourcingUntilReleased(comments = 'Approved by automation') {
+        const maxStages = 10;
+        for (let i = 0; i < maxStages; i++) {
+            if (!(await this._isSourcingPendingApproval(2000))) {
+                console.log(`[Sourcing] RFX live (not Pending Approval) after ${i} approval(s).`);
+                return;
+            }
+
+            let visible = await this._waitForApproveButton({
+                tag: 'Sourcing',
+                stopWhen: async () => !(await this._isSourcingPendingApproval(1000)),
+            });
+
+            if (!visible) {
+                if (!(await this._isSourcingPendingApproval(1000))) {
+                    console.log(`[Sourcing] RFX live after ${i} approval(s).`);
+                    return;
+                }
+                console.log('[Sourcing] Approve button missing — reassigning approver to NSEF Support Admin...');
+                if (!(await this.reassignWorkflowApprover('Reassigned for automated testing', 'Sourcing'))) {
+                    console.log('[Sourcing] Reassign unavailable — stopping approval loop.');
+                    break;
+                }
+                visible = await this._waitForApproveButton({
+                    tag: 'Sourcing',
+                    stopWhen: async () => !(await this._isSourcingPendingApproval(1000)),
+                });
+                if (!visible) {
+                    console.log('[Sourcing] Still no Approve button after reassign — stopping.');
+                    break;
+                }
+            }
+
+            console.log(`[Sourcing] Approving stage ${i + 1}...`);
+            await this._clickApproveWithComments(comments);
+        }
     }
 
     // ── Quote Request (RFX) — navigation ──────────────────────────────────────
@@ -1776,23 +1914,10 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(3000);
     }
 
-    async _approveAwardOnce(comments) {
-        const approveBtn = this.page.locator("//button[normalize-space(text())='Approve']").first();
-        await approveBtn.click();
-        const commentsField = this.page.locator('[placeholder="Enter your comments..."]');
-        if (await commentsField.isVisible({ timeout: 5000 }).catch(() => false)) {
-            await commentsField.fill(comments);
-            await this.page.locator("(//button[normalize-space(text())='Approve'])[2]").click();
-        }
-        await this.page.waitForTimeout(2000);
-        await this.page.reload({ waitUntil: 'domcontentloaded' });
-        await this.page.waitForTimeout(2000);
-    }
-
     // Opens Workflow Stages, reads the OVERALL workflow badge (not per-stage
     // statuses — completed stages also say "Completed"), closes by clicking outside.
     // The popup sometimes opens empty while its data loads — close and reopen.
-    async _isWorkflowCompleted() {
+    async _isWorkflowCompleted(tag = 'Award') {
         for (let attempt = 0; attempt < 4; attempt++) {
             const stagesBtn = this.page.locator(`xpath=${L.workflowStagesBtn}`).first();
             await stagesBtn.waitFor({ state: 'visible', timeout: 20000 });
@@ -1804,7 +1929,7 @@ export class NSEFoundationActions {
                 .then(() => true).catch(() => false);
 
             if (!hasData) {
-                console.log(`[Award] Workflow Stages popup is empty — closing and reopening (${attempt + 1}/4)...`);
+                console.log(`[${tag}] Workflow Stages popup is empty — closing and reopening (${attempt + 1}/4)...`);
                 await this.page.mouse.click(5, 500);
                 await this.page.waitForTimeout(2000);
                 continue;
@@ -1817,40 +1942,10 @@ export class NSEFoundationActions {
             await this.page.mouse.click(5, 500);
             await this.page.waitForTimeout(1000);
 
-            console.log(`[Award] Workflow Stages → overall status: "${statusText}" → ${completed ? 'Completed' : 'NOT completed'}`);
+            console.log(`[${tag}] Workflow Stages → overall status: "${statusText}" → ${completed ? 'Completed' : 'NOT completed'}`);
             return completed;
         }
         throw new Error('Workflow Stages popup never loaded its data');
-    }
-
-    async reassignAwardApprover(reason = 'Reassigned for automated testing') {
-        const moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
-        await moreBtn.waitFor({ state: 'visible', timeout: 10000 });
-        await moreBtn.click();
-        await this.page.waitForTimeout(800);
-
-        const opt = this.page.locator(`xpath=${L.reassignApproverOption}`).first();
-        await opt.waitFor({ state: 'visible', timeout: 10000 });
-        await opt.click();
-        await this.page.waitForTimeout(1500);
-
-        // Pick "NSEF Support Admin" in the user picker
-        const userDropdown = this.page.locator(`xpath=${L.reassignUserDropdown}`).first();
-        await userDropdown.waitFor({ state: 'visible', timeout: 10000 });
-        await userDropdown.click({ force: true });
-        await this.page.waitForTimeout(600);
-        const adminOpt = this.page.locator(L.reassignAdminOption).first();
-        await adminOpt.waitFor({ state: 'visible', timeout: 10000 });
-        await adminOpt.click();
-        await this.page.waitForTimeout(400);
-
-        const reasonField = this.page.locator(`xpath=${L.reassignReasonField}`).first();
-        await reasonField.waitFor({ state: 'visible', timeout: 5000 });
-        await reasonField.fill(reason);
-
-        await this.page.locator(`xpath=${L.reassignSubmitBtn}`).first().click();
-        console.log('[Award] Workflow approver reassigned to NSEF Support Admin');
-        await this.page.waitForTimeout(2500);
     }
 
     async completeAwardApprovals(comments = 'Approved by automation') {
@@ -1862,20 +1957,18 @@ export class NSEFoundationActions {
         for (let round = 0; round < maxRounds; round++) {
             if (await this._isWorkflowCompleted()) return;
 
-            const approveBtn = this.page.locator("//button[normalize-space(text())='Approve']").first();
-            const visible = await approveBtn.waitFor({ state: 'visible', timeout: 6000 })
-                .then(() => true).catch(() => false);
-
+            let visible = await this._waitForApproveButton({ maxReloads: 1, tag: 'Award' });
             if (!visible) {
                 console.log('[Award] No Approve button — reassigning approver to NSEF Support Admin...');
-                await this.reassignAwardApprover();
-                await this.page.reload({ waitUntil: 'domcontentloaded' });
-                await this.page.waitForTimeout(2000);
-                await approveBtn.waitFor({ state: 'visible', timeout: 15000 });
+                if (!(await this.reassignWorkflowApprover('Reassigned for automated testing', 'Award'))) {
+                    throw new Error('Award workflow: Approve missing and reassign unavailable');
+                }
+                visible = await this._waitForApproveButton({ maxReloads: 2, tag: 'Award' });
+                if (!visible) throw new Error('Award workflow: Approve still missing after reassign');
             }
 
             console.log(`[Award] Approving (round ${round + 1})...`);
-            await this._approveAwardOnce(comments);
+            await this._clickApproveWithComments(comments);
         }
         throw new Error('Award workflow did not reach Completed status');
     }
@@ -1967,6 +2060,190 @@ export class NSEFoundationActions {
         return code;
     }
 
+    // ── Requisition (PR) — edit → submit ──────────────────────────────────────
+
+    async openSavedRequisition(data) {
+        const { url, code } = this.getSavedRequisition();
+        console.log(`[PR] Opening saved requisition ${code} → ${url}`);
+        await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+        await this.page.waitForTimeout(3000);
+
+        // The PR lives on the non-v4 capp domain — the v4 session may or may not
+        // carry. If redirected to the auth login, re-login tolerantly: each step
+        // (email, password) may be skipped when SSO logs in automatically.
+        if (/nse-auth-uat\.aerchain\.io/.test(this.page.url())) {
+            console.log('[PR] Redirected to login for capp domain — logging in again...');
+            const emailField = this.page.locator(L.loginEmailField).first();
+            if (await emailField.isVisible({ timeout: 5000 }).catch(() => false)) {
+                await emailField.fill(data.login.email);
+                await this.page.locator(L.loginContinueBtn).click();
+            }
+            const pwField = this.page.locator(L.loginPasswordField).first();
+            if (await pwField.waitFor({ state: 'visible', timeout: 10000 }).then(() => true).catch(() => false)) {
+                await pwField.fill(data.login.password);
+                await this.page.locator(L.loginSubmitBtn).click();
+            } else {
+                console.log('[PR] Password step skipped (SSO) — continuing.');
+            }
+        }
+
+        await this.page.waitForURL(/\/requisitions\/\d+/, { timeout: 30000 });
+        await this.page.waitForTimeout(3000);
+        console.log(`[PR] On requisition page: ${this.page.url()}`);
+    }
+
+    async clickPrEdit() {
+        const btn = this.page.locator(`xpath=${L.prEditBtn}`).first();
+        await btn.waitFor({ state: 'visible', timeout: 30000 });
+        await btn.click();
+        console.log('[PR] Clicked Edit');
+        await this.page.waitForURL(/\/edit/, { timeout: 20000 });
+        // MUI edit form takes a while to fully render
+        await this.page.locator(L.prEffectiveFromInput).first()
+            .waitFor({ state: 'visible', timeout: 30000 });
+        await this.page.waitForTimeout(2000);
+        console.log('[PR] Edit page loaded');
+    }
+
+    // react-datepicker: open calendar from input, navigate months, click day
+    async _pickReactDate(input, dateStr) {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const MONTHS = ['January','February','March','April','May','June',
+                        'July','August','September','October','November','December'];
+        await input.scrollIntoViewIfNeeded();
+        await input.click();
+        const cal = this.page.locator('.react-datepicker').last();
+        await cal.waitFor({ state: 'visible', timeout: 10000 });
+
+        for (let i = 0; i < 36; i++) {
+            const caption = (await this.page.locator('.react-datepicker__current-month').last().textContent() ?? '').trim();
+            const [mName, yStr] = caption.split(/\s+/);
+            const diff = (year * 12 + month) - (parseInt(yStr) * 12 + MONTHS.indexOf(mName) + 1);
+            if (diff === 0) break;
+            await this.page.locator(diff > 0
+                ? '.react-datepicker__navigation--next'
+                : '.react-datepicker__navigation--previous').last().click();
+            await this.page.waitForTimeout(300);
+        }
+
+        await this.page.locator(
+            `.react-datepicker__day--${String(day).padStart(3, '0')}:not(.react-datepicker__day--outside-month)`
+        ).last().click();
+        await this.page.waitForTimeout(800);
+    }
+
+    async fillPrEffectiveFromDate() {
+        // Effective from date = script execution date (today)
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        await this._pickReactDate(this.page.locator(L.prEffectiveFromInput).first(), today);
+        console.log(`[PR] Effective from date filled with today: ${today}`);
+    }
+
+    async fillPrEffectiveToDate(data) {
+        await this._pickReactDate(this.page.locator(L.prEffectiveToInput).first(), data.requisition.effectiveToDate);
+        console.log('[PR] Effective to date filled');
+    }
+
+    async selectPrPurchaseType(data) {
+        const input = this.page.locator(L.prPurchaseTypeInput).first();
+        await input.scrollIntoViewIfNeeded();
+        await input.click();
+        await this.page.waitForTimeout(800);
+        const option = this.page.locator(L.prAutocompleteOption)
+            .filter({ hasText: data.requisition.purchaseType }).first();
+        if (await option.isVisible({ timeout: 5000 }).catch(() => false)) {
+            await option.click();
+        } else {
+            await this.page.locator(L.prAutocompleteOption).first().click();
+        }
+        await this.page.waitForTimeout(500);
+        await expect(input).toHaveValue(/.+/, { timeout: 5000 });
+        console.log(`[PR] Purchase Type selected: ${await input.inputValue()}`);
+    }
+
+    async selectPrInwardRequiredYes() {
+        const radio = this.page.locator(L.prInwardRequiredYes).first();
+        await radio.scrollIntoViewIfNeeded();
+        await radio.check({ force: true });
+        console.log('[PR] Inward Required → Yes');
+        await this.page.waitForTimeout(500);
+    }
+
+    async selectPrInwardMatchingQuantity() {
+        const radio = this.page.locator(L.prInwardMatchQuantity).first();
+        await radio.scrollIntoViewIfNeeded();
+        await radio.check({ force: true });
+        console.log('[PR] Inward Matching Criterion → Quantity');
+        await this.page.waitForTimeout(500);
+    }
+
+    async submitPr() {
+        const btn = this.page.locator(`xpath=${L.prSubmitBtn}`).first();
+        await btn.scrollIntoViewIfNeeded();
+        await btn.click();
+        console.log('[PR] Clicked Submit');
+
+        // "Approvers" popup → Submit (waitFor actually blocks; isVisible(timeout)
+        // does not — it returns immediately before the popup renders)
+        const popupSubmit = this.page.locator(
+            `xpath=//div[contains(@class,'MuiDialog-root')]//button[normalize-space(.)='Submit']`
+        ).first();
+        const appeared = await popupSubmit.waitFor({ state: 'visible', timeout: 15000 })
+            .then(() => true).catch(() => false);
+        if (appeared) {
+            await popupSubmit.click();
+            console.log('[PR] Confirmed Approvers popup');
+            await popupSubmit.waitFor({ state: 'hidden', timeout: 15000 }).catch(() => {});
+        } else {
+            console.log('[PR] Approvers popup did not appear');
+        }
+        await this.page.waitForTimeout(4000);
+    }
+
+    async assertPrSubmitted() {
+        await expect(this.page.locator(`xpath=${L.prSubmittedStatus}`).first())
+            .toBeVisible({ timeout: 20000 });
+        console.log('[PR] Requisition status is Submitted');
+    }
+
+    // Reload the PR page every `intervalMs` until its status badge shows `status`.
+    // After submit the PR auto-progresses: Submitted → Processed (PRC auto-created)
+    // → Completed (PO auto-created).
+    async waitForPrStatus(status, { intervalMs = 10000, maxAttempts = 60 } = {}) {
+        for (let i = 0; i < maxAttempts; i++) {
+            const badge = this.page.locator(`xpath=${L.prStatusBadge(status)}`).first();
+            if (await badge.isVisible().catch(() => false)) {
+                console.log(`[PR] Status is "${status}".`);
+                return;
+            }
+            console.log(`[PR] Status not "${status}" yet — reloading in ${intervalMs / 1000}s (${i + 1}/${maxAttempts})...`);
+            await this.page.waitForTimeout(intervalMs);
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.waitForTimeout(3000);
+        }
+        throw new Error(`PR status did not reach "${status}" after ${maxAttempts} reloads`);
+    }
+
+    // Save the real PR code (e.g. PR-NSEFN-26-43) now that it replaced PR-DRAFT
+    async saveRequisitionCode() {
+        const url = this.page.url();
+        const bodyText = await this.page.locator('body').textContent() ?? '';
+        const codeMatch = bodyText.match(/PR-[A-Z0-9\-]*\d+/i);
+        const code = codeMatch ? codeMatch[0].trim() : null;
+        if (!code) throw new Error('PR code not found on the requisition page');
+
+        const urlMatch = url.match(/\/requisitions?\/([^\/\?#]+)/i);
+        const reqId = urlMatch ? urlMatch[1] : null;
+
+        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        current.savedRequisition = { code, id: reqId, url };
+        fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
+        console.log(`[PR] Saved to NSEFoundationData.json → savedRequisition.code = "${code}"`);
+        return code;
+    }
+
     // ── Save Sourcing Event code for downstream steps ─────────────────────────
 
     async saveSourcingEventCode() {
@@ -2005,6 +2282,272 @@ export class NSEFoundationActions {
 
         console.log(`[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "${displayCode}"`);
         return displayCode;
+    }
+
+    // ── Completed PR → PO → GRN (convert to GRN, approve until Inwarded) ───────
+
+    async clickPrTransactionsTab() {
+        const tab = this.page.locator(`xpath=${L.prTransactionsTab}`).first();
+        await tab.waitFor({ state: 'visible', timeout: 30000 });
+        await tab.click();
+        await this.page.waitForTimeout(2000);
+        console.log('[PR] Opened Transactions tab');
+    }
+
+    async expandPrConversionsSection() {
+        const header = this.page.locator(`xpath=${L.prConversionsSection}`).first();
+        await header.waitFor({ state: 'visible', timeout: 15000 });
+        await header.scrollIntoViewIfNeeded();
+        await header.click();
+        await this.page.waitForTimeout(1500);
+        console.log('[PR] Expanded Conversions section');
+    }
+
+    async openPrcFromConversions() {
+        const link = this.page.locator(`xpath=${L.prcCodeLink}`).first();
+        await link.waitFor({ state: 'visible', timeout: 15000 });
+        const code = (await link.textContent() ?? '').trim();
+        await link.click();
+        await this.page.waitForTimeout(2500);
+        console.log(`[PRC] Opened ${code} (Requisition Conversion View)`);
+        return code;
+    }
+
+    // Hover "POs(N)" in the Requisition Conversion View → click the PO code in the
+    // revealed popover → PO opens in a NEW TAB. Switches this.page to the new tab
+    // (sized to match) so all subsequent PO/GRN actions run there.
+    async openPoFromConversionViewInNewTab() {
+        const poCount = this.page.locator(`xpath=${L.conversionPoCountLink}`).first();
+        await poCount.waitFor({ state: 'visible', timeout: 15000 });
+        await poCount.scrollIntoViewIfNeeded();
+
+        // Hover the "POs(N)" value to reveal the popover holding the PO code link.
+        // React tooltips can ignore Playwright's synthetic hover, so retry and fall
+        // back to dispatching real mouseover/mouseenter events on the element.
+        const poLink = this.page.locator(`xpath=${L.poCodeLink}`).first();
+        let revealed = false;
+        for (let attempt = 0; attempt < 4 && !revealed; attempt++) {
+            await poCount.hover().catch(() => {});
+            await this.page.waitForTimeout(1200);
+            revealed = await poLink.isVisible({ timeout: 2500 }).catch(() => false);
+            if (!revealed) {
+                await poCount.evaluate((el) => {
+                    for (const type of ['mouseover', 'mouseenter', 'mousemove']) {
+                        el.dispatchEvent(new MouseEvent(type, { bubbles: true }));
+                    }
+                }).catch(() => {});
+                await this.page.waitForTimeout(1200);
+                revealed = await poLink.isVisible({ timeout: 2500 }).catch(() => false);
+            }
+        }
+        await poLink.waitFor({ state: 'visible', timeout: 10000 });
+        const poCode = (await poLink.textContent() ?? '').trim();
+
+        const [newPage] = await Promise.all([
+            this.page.context().waitForEvent('page', { timeout: 20000 }),
+            poLink.click(),
+        ]);
+        await newPage.waitForLoadState('domcontentloaded');
+        // Keep the new tab the same size as the main one (user requirement)
+        await newPage.setViewportSize({ width: 1800, height: 900 });
+        await newPage.waitForTimeout(3000);
+
+        this.prPage = this.page;   // keep a handle to the PR tab
+        this.page = newPage;       // operate on the PO tab from here on
+        await this.page.waitForURL(/\/purchase-orders\/\d+/, { timeout: 30000 });
+        const url = this.page.url();
+        console.log(`[PO] Opened ${poCode} in new tab → ${url}`);
+
+        // Save PO code/url for potential downstream (Invoice) steps
+        const idMatch = url.match(/\/purchase-orders\/(\d+)/);
+        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        current.savedPurchaseOrder = { code: poCode || null, id: idMatch ? idMatch[1] : null, url };
+        fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
+        return poCode;
+    }
+
+    // Shared PO/GRN approval: header Approve → notes modal → confirm → reload.
+    async _approveWithNotes(comments = 'Approved by automation', tag = 'PO') {
+        await this.page.locator(`xpath=${L.poApproveBtn}`).first().click();
+        const notes = this.page.locator(`xpath=${L.poApproveNotesField}`).first();
+        await notes.waitFor({ state: 'visible', timeout: 10000 });
+        await notes.fill(comments);
+        await this.page.locator(`xpath=${L.poApproveConfirmBtn}`).first().click();
+        console.log(`[${tag}] Approved a stage`);
+        await this.page.waitForTimeout(2500);
+        await this.page.reload({ waitUntil: 'domcontentloaded' });
+        await this.page.waitForTimeout(2500);
+    }
+
+    // Approve the PO through all stages until the "Create" dropdown appears
+    // (status → Submitted). Reassigns approver to NSEF Support Admin if Approve
+    // disappears before completion (same pattern as CXO/award).
+    async approvePoUntilSubmitted(comments = 'Approved by automation') {
+        const createReady = async (t = 1000) =>
+            await this.page.locator(`xpath=${L.poCreateBtn}`).first().isVisible({ timeout: t }).catch(() => false);
+
+        for (let i = 0; i < 10; i++) {
+            if (await createReady()) {
+                console.log(`[PO] Approvals complete (Create available) after ${i} approval(s).`);
+                return;
+            }
+            const approveVisible = await this.page.locator(`xpath=${L.poApproveBtn}`).first()
+                .isVisible({ timeout: 4000 }).catch(() => false);
+            if (approveVisible) {
+                console.log(`[PO] Approving stage ${i + 1}...`);
+                await this._approveWithNotes(comments, 'PO');
+            } else {
+                if (await createReady()) return;
+                console.log('[PO] Approve missing — reassigning approver to NSEF Support Admin...');
+                if (!(await this.reassignWorkflowApprover('Reassigned for automated testing', 'PO'))) break;
+            }
+        }
+        if (!(await createReady())) throw new Error('PO did not reach approved/Submitted (Create) state');
+    }
+
+    async clickPoCreateGrn() {
+        await this.page.locator(`xpath=${L.poCreateBtn}`).first().click();
+        await this.page.waitForTimeout(800);
+        const grn = this.page.locator(`xpath=${L.poCreateGrnOption}`).first();
+        await grn.waitFor({ state: 'visible', timeout: 10000 });
+        await grn.click();
+        console.log('[GRN] Create → GRN clicked');
+        await this.page.waitForTimeout(1500);
+    }
+
+    async submitSelectPoItemsPopup() {
+        const submit = this.page.locator(`xpath=${L.selectPoItemsSubmitBtn}`).first();
+        await submit.waitFor({ state: 'visible', timeout: 10000 });
+        await submit.click();
+        console.log('[GRN] Submitted Select PO Items popup');
+        await this.page.waitForURL(/\/inward/, { timeout: 30000 });
+        await this.page.waitForTimeout(2500);
+        console.log(`[GRN] On Create GRN page: ${this.page.url()}`);
+    }
+
+    async fillGrnGeneralDetails(data) {
+        const inv = this.page.locator(`xpath=${L.grnInvoiceNumberInput}`).first();
+        await inv.waitFor({ state: 'visible', timeout: 15000 });
+        await inv.fill(data.grn.invoiceNumber);
+        await this.page.locator(`xpath=${L.grnDeliveryChallanInput}`).first().fill(data.grn.deliveryChallan);
+        console.log('[GRN] Filled Invoice Number + Delivery challan');
+    }
+
+    async fillGrnDocumentDetails(data) {
+        await this.page.locator(`xpath=${L.grnDeliveryNoteRefInput}`).first().fill(data.grn.deliveryNoteReference);
+
+        // Document Date = test execution date (today). This is a react-datepicker
+        // (same widget as the PR dates) — open it and CLICK the day; typing leaves
+        // the value unparsed. Reuse the shared _pickReactDate helper.
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        await this._pickReactDate(this.page.locator(L.grnDocumentDateInput).first(), today);
+        const dateVal = await this.page.locator(L.grnDocumentDateInput).first().inputValue().catch(() => '');
+        console.log(`[GRN] Filled Delivery Note Reference + Document Date (${today} → "${dateVal}")`);
+    }
+
+    // Verify the GRN line item's Received quantity matches the PO Quantity.
+    // The Line Items grid is an AG Grid with pinned columns, so cells are split
+    // across containers — read them by stable col-id (line_items_po_quantity /
+    // line_items_received), scoped to the grid that holds the PO Quantity header.
+    async assertGrnReceivedMatchesPoQty() {
+        await this.page.locator(`xpath=${L.grnLineItemColHeader('PO Quantity')}`).first()
+            .waitFor({ state: 'visible', timeout: 10000 });
+        const result = await this.page.evaluate(() => {
+            const norm = s => s.replace(/\*|f\(x\)/g, '').trim();
+            const poqHeader = [...document.querySelectorAll('[role="columnheader"]')]
+                .find(h => norm(h.textContent) === 'PO Quantity');
+            const grid = poqHeader && poqHeader.closest('[role="grid"]');
+            if (!grid) return null;
+            const headers = [...grid.querySelectorAll('.ag-header-cell[col-id]')];
+            const colId = (label) => {
+                const h = headers.find(x => norm(x.textContent) === label);
+                return h && h.getAttribute('col-id');
+            };
+            const cellVal = (label) => {
+                const id = colId(label);
+                if (!id) return null;
+                const c = grid.querySelector(`.ag-row[row-index="0"] [col-id="${id}"]`);
+                if (!c) return null;
+                const inp = c.querySelector('input');
+                return (inp ? inp.value : c.textContent).trim();
+            };
+            return { poQty: cellVal('PO Quantity'), received: cellVal('Received') };
+        });
+        if (!result || result.poQty == null || result.received == null) {
+            throw new Error(`Could not read PO Quantity / Received from line items: ${JSON.stringify(result)}`);
+        }
+        const poQty = parseFloat(result.poQty);
+        const received = parseFloat(result.received);
+        console.log(`[GRN] Line item — PO Quantity=${poQty}, Received=${received}`);
+        expect(received).toBe(poQty);
+    }
+
+    async submitGrn() {
+        const submit = this.page.locator(`xpath=${L.grnSubmitBtn}`).first();
+        await submit.scrollIntoViewIfNeeded().catch(() => {});
+        await submit.click();
+        console.log('[GRN] Clicked Submit');
+
+        // "Workflow Summary" popup → Submit (approvers pre-populated). Scoped to the
+        // dialog so it doesn't collide with the page header's Submit.
+        await this.page.waitForTimeout(2000);
+        const wfSubmit = this.page.locator(`xpath=${L.grnWorkflowSummarySubmitBtn}`).first();
+        const appeared = await wfSubmit.waitFor({ state: 'visible', timeout: 15000 }).then(() => true).catch(() => false);
+        if (appeared) {
+            await wfSubmit.click();
+            console.log('[GRN] Confirmed Workflow Summary popup');
+        } else {
+            console.log('[GRN] Workflow Summary popup did not appear');
+        }
+        await this.page.waitForURL(/\/inwards\/\d+/, { timeout: 30000 });
+        await this.page.waitForTimeout(3000);
+        console.log(`[GRN] GRN created → ${this.page.url()}`);
+    }
+
+    // Approve the GRN (Stock Inward) until status = Inwarded.
+    async approveGrnUntilInwarded(comments = 'Approved by automation') {
+        const inwarded = async (t = 1500) =>
+            await this.page.locator(`xpath=${L.grnInwardedStatus}`).first().isVisible({ timeout: t }).catch(() => false);
+
+        for (let i = 0; i < 10; i++) {
+            if (await inwarded()) {
+                console.log(`[GRN] Status Inwarded after ${i} approval(s).`);
+                return;
+            }
+            const approveVisible = await this.page.locator(`xpath=${L.poApproveBtn}`).first()
+                .isVisible({ timeout: 4000 }).catch(() => false);
+            if (approveVisible) {
+                console.log(`[GRN] Approving stage ${i + 1}...`);
+                await this._approveWithNotes(comments, 'GRN');
+            } else {
+                if (await inwarded()) return;
+                console.log('[GRN] Approve missing — reassigning approver to NSEF Support Admin...');
+                if (!(await this.reassignWorkflowApprover('Reassigned for automated testing', 'GRN'))) break;
+            }
+        }
+        if (!(await inwarded())) throw new Error('GRN did not reach Inwarded status');
+    }
+
+    async assertGrnInwarded() {
+        await expect(this.page.locator(`xpath=${L.grnInwardedStatus}`).first())
+            .toBeVisible({ timeout: 15000 });
+        console.log('[GRN] Status is Inwarded');
+    }
+
+    async saveGrnCode() {
+        const url = this.page.url();
+        const bodyText = await this.page.locator('body').textContent() ?? '';
+        const m = bodyText.match(/INW-[A-Z0-9\-]*\d+/i);
+        const code = m ? m[0].trim() : null;
+        const idMatch = url.match(/\/inwards\/(\d+)/);
+        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        current.savedGrn = { code, id: idMatch ? idMatch[1] : null, url };
+        fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
+        console.log(`[GRN] Saved to NSEFoundationData.json → savedGrn.code = "${code}"`);
+        return code;
     }
 
 }

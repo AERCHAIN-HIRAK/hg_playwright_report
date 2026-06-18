@@ -52,9 +52,9 @@
         "deliveryTimeline": "2026-12-31"
     },
     "savedCxo": {
-        "code": "CXO-FNSE-26-112",
-        "id": "5374",
-        "url": "https://nse-capp-v4-uat.aerchain.io/cxos/5374/overview"
+        "code": "CXO-FNSE-26-127",
+        "id": "5397",
+        "url": "https://nse-capp-v4-uat.aerchain.io/cxos/5397/overview"
     },
     "intake": {
         "title": "HG Automation NSEF Intake",
@@ -76,9 +76,9 @@
         "notes": "Automation test notes"
     },
     "savedIntake": {
-        "code": "INT-FNSE-26-72",
-        "id": "1842",
-        "url": "https://nse-capp-v4-uat.aerchain.io/intakes/1842/overview"
+        "code": "INT-FNSE-26-89",
+        "id": "1875",
+        "url": "https://nse-capp-v4-uat.aerchain.io/intakes/1875/overview"
     },
     "sourcing": {
         "commercialBidDueDate": "2026-12-15",
@@ -90,13 +90,32 @@
         "forecloseReason": "Foreclosed by automation"
     },
     "savedSourcingEvent": {
-        "code": "RFX-26-52",
-        "id": "993",
-        "url": "https://nse-capp-v4-uat.aerchain.io/quote-requests/993/overview"
+        "code": "RFX-26-72",
+        "id": "1021",
+        "url": "https://nse-capp-v4-uat.aerchain.io/quote-requests/1021/overview"
+    },
+    "requisition": {
+        "effectiveToDate": "2026-12-31",
+        "purchaseType": "First time/New"
+    },
+    "grn": {
+        "invoiceNumber": "INV-AUTO-001",
+        "deliveryChallan": "DC-AUTO-001",
+        "deliveryNoteReference": "DNR-AUTO-001"
     },
     "savedRequisition": {
-        "code": "PR-DRAFT",
-        "id": "873",
-        "url": "https://nse-capp-uat.aerchain.io/requisitions/873"
+        "code": "PR-NSEFN-26-47",
+        "id": "889",
+        "url": "https://nse-capp-uat.aerchain.io/requisitions/889"
+    },
+    "savedPurchaseOrder": {
+        "code": "PO-NSEFN-26-98",
+        "id": "836",
+        "url": "https://nse-capp-uat.aerchain.io/purchase-orders/836"
+    },
+    "savedGrn": {
+        "code": "INW-NSEFN-26-23",
+        "id": "418",
+        "url": "https://nse-capp-uat.aerchain.io/inwards/418"
     }
 }
