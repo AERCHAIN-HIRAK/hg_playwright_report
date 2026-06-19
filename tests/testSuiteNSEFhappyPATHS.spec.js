@@ -466,4 +466,36 @@ test.describe('NSEF Happy Paths', () => {
         await a.takeScreenshot('invoice_accounted');
     });
 
+    test('Pay the Accounted invoice → Submit → payment shows Completed @PO @Invoice @Payment', async ({ page }) => {
+        test.setTimeout(180000);
+
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+
+        // Open the Accounted invoice and read its Invoice Amount.
+        await a.openSavedInvoice(data);
+        const invoiceAmount = await a.readInvoiceAmount();
+
+        // + Payment → fill paid amount (= invoice amount), a unique UTR, and the
+        // payment date = test execution date.
+        await a.clickAddPayment();
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const utr = 'UTR' + Date.now(); // unique per run
+        await a.fillPaymentForm(invoiceAmount, utr, today);
+        await a.takeScreenshot('payment_form_filled');
+
+        // The line item's Actual Amount must match the invoice amount.
+        expect(await a.getPaymentActualAmount()).toBe(invoiceAmount);
+
+        // Submit → assert success message.
+        await a.submitPayment();
+        await a.assertPaymentSuccessToast();
+
+        // Transactions tab → the payment is listed with Completed status.
+        await a.openInvoiceTransactionsTab();
+        await a.assertPaymentCompleted(utr);
+        await a.takeScreenshot('invoice_payment_completed');
+    });
+
 });

@@ -3030,4 +3030,62 @@ export class NSEFoundationActions {
             .toBeVisible({ timeout: 5000 });
     }
 
+    // ── Invoice payment ────────────────────────────────────────────────────────
+
+    /** Read the "Invoice Amount" from the invoice Overview as a number (₹ 2,00,000.00 → 200000). */
+    async readInvoiceAmount() {
+        const el = this.page.locator(`xpath=${L.invoiceAmountValue}`).first();
+        await el.waitFor({ state: 'visible', timeout: 10000 });
+        const txt = (await el.textContent()) ?? '';
+        return parseFloat(txt.replace(/[₹,\s]/g, ''));
+    }
+
+    /** Open the "Converting to Payment" drawer via the + Payment button. */
+    async clickAddPayment() {
+        await this.page.locator(`xpath=${L.invoiceAddPaymentBtn}`).first().click();
+        await this.page.locator(`xpath=${L.paymentDrawerHeading}`).first()
+            .waitFor({ state: 'visible', timeout: 15000 });
+        await this.page.waitForTimeout(1000);
+    }
+
+    /** Fill the payment form: Paid Amount, a unique UTR, and the payment date. */
+    async fillPaymentForm(amount, utr, dateStr) {
+        await this.page.locator(L.paymentPaidAmountInput).first().fill(String(amount));
+        await this.page.locator(L.paymentUtrInput).first().fill(utr);
+        await this._pickReactDate(this.page.locator(L.paymentDateInput).first(), dateStr);
+        console.log(`[PAY] Paid Amount=${amount}, UTR=${utr}, Payment Date=${dateStr}`);
+    }
+
+    /** Read the line item's "Actual Amount" in the payment drawer as a number. */
+    async getPaymentActualAmount() {
+        const cell = this.page.locator(L.paymentActualAmountCell).first();
+        await cell.waitFor({ state: 'visible', timeout: 10000 });
+        return parseFloat(((await cell.textContent()) ?? '').replace(/[₹,\s]/g, ''));
+    }
+
+    async submitPayment() {
+        await this.page.locator(`xpath=${L.paymentSubmitBtn}`).first().click();
+    }
+
+    /** Assert a (transient) success toast appears right after submitting the payment. */
+    async assertPaymentSuccessToast() {
+        const toast = this.page.locator(L.paymentSuccessToast).filter({ hasText: /\S/ }).first();
+        await expect(toast).toBeVisible({ timeout: 8000 });
+        console.log(`[PAY] Success message: ${((await toast.textContent()) ?? '').trim().slice(0, 120)}`);
+    }
+
+    async openInvoiceTransactionsTab() {
+        await this.page.locator(`xpath=${L.invoiceTransactionsTab}`).first().click();
+        await this.page.waitForTimeout(1500);
+    }
+
+    /** Assert the Payments table lists our payment (by UTR) with status Completed. */
+    async assertPaymentCompleted(utr) {
+        await expect(this.page.getByText(utr, { exact: false }).first())
+            .toBeVisible({ timeout: 10000 });
+        await expect(this.page.locator(`xpath=${L.paymentCompletedStatus}`).first())
+            .toBeVisible({ timeout: 10000 });
+        console.log(`[PAY] Payment ${utr} shows status Completed`);
+    }
+
 }

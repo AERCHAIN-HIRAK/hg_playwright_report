@@ -287,6 +287,25 @@ export const NSEFoundation_Locators = {
     // After the external acknowledgement API call, the invoice flips to "Accounted".
     invoiceAccountedStatus:       `//*[normalize-space(text())='Accounted']`,
 
+    // ── Invoice payment ("+ Payment" → Converting to Payment drawer) ───────────
+    // "Invoice Amount" value on the invoice Overview header (e.g. "₹ 2,00,000.00").
+    invoiceAmountValue:        `(//*[normalize-space(text())='Invoice Amount']/following::*[contains(text(),'₹')])[1]`,
+    invoiceAddPaymentBtn:      `//button[contains(normalize-space(.),'Payment')]`,
+    paymentDrawerHeading:      `//*[normalize-space(text())='Converting to Payment']`,
+    // Submit lives in the drawer header, right after the "Converting to Payment" title.
+    paymentSubmitBtn:          `//*[normalize-space(text())='Converting to Payment']/following::button[normalize-space(.)='Submit'][1]`,
+    paymentPaidAmountInput:    `[id="Paid Amount"]`,
+    paymentUtrInput:           `input[id^="UTR-"]`,
+    paymentDateInput:          `input[placeholder="Enter Payment Date"]`,
+    // The payment drawer's line-item grid — col-id line_items_actual_amount is
+    // unique to this grid (the invoice's own grids don't have it).
+    paymentActualAmountCell:   `.ag-row[row-index="0"] [col-id="line_items_actual_amount"]`,
+    // Success toast after submit (transient) — assert any non-empty toast.
+    paymentSuccessToast:       `[data-sonner-toast], .Toastify__toast, [role="alert"], [role="status"]`,
+    // Invoice detail tabs + payment row status.
+    invoiceTransactionsTab:    `//*[normalize-space(text())='Transactions']`,
+    paymentCompletedStatus:    `//*[normalize-space(text())='Completed']`,
+
     // ── Submit / Cancel ───────────────────────────────────────────────────────
     submitBtn: 'button:has-text("Submit")',
     cancelBtn: 'button:has-text("Cancel")',
