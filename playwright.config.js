@@ -27,7 +27,7 @@ export default defineConfig({
     {
       name: 'tests',
       // Exclude the NSE Foundation spec — it has its own login
-      testMatch: /testSuite(?!NSEFhappyPATHS).*\.spec\.js/,
+      testMatch: /testSuite(?!NSEFhappyPATHS|NsefCXOtest).*\.spec\.js/,
       use: {
         storageState: 'auth.json',
       },
@@ -35,9 +35,18 @@ export default defineConfig({
     },
 
     {
+      name: 'nsef-setup',
+      testMatch: /auth\.nsef\.setup\.js/,
+    },
+
+    {
       name: 'nsef-tests',
-      testMatch: /testSuiteNSEFhappyPATHS\.spec\.js/,
-      // Fresh browser — no stored state, no setup dependency
+      testMatch: /testSuite(NSEFhappyPATHS|NsefCXOtest)\.spec\.js/,
+      // Reuse the one-time NSEF login captured by nsef-setup.
+      use: {
+        storageState: 'auth.nsef.json',
+      },
+      dependencies: ['nsef-setup'],
     }
 
   ]

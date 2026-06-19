@@ -55,6 +55,31 @@ export class NSEFoundationActions {
         await expect(this.page).toHaveURL(/nse-capp-v4-uat\.aerchain\.io/);
     }
 
+    /**
+     * Open the app, reusing a stored session when present. Navigates straight to
+     * the app URL: if a saved storageState authenticated us, the dashboard loads;
+     * otherwise the app redirects to the login form and we sign in. This lets the
+     * suites share one up-front login (auth.nsef.json) instead of logging in per
+     * test, while still working if run without the stored state.
+     */
+    async openApp(data) {
+        await this.page.goto(`${data.loginUrl}/`);
+        await this.page.waitForLoadState('domcontentloaded');
+        const emailField = this.page.locator(L.loginEmailField);
+        if (await emailField.isVisible({ timeout: 6000 }).catch(() => false)) {
+            await this.fillLoginEmail(data);
+            await this.clickLoginContinue();
+            await this.fillLoginPassword(data);
+            await this.clickLoginSubmit();
+        }
+        await this.assertLoggedIn();
+        // Let the post-login dashboard fully render before navigating onward.
+        await this.page.waitForLoadState('networkidle').catch(() => {});
+        await this.page.locator('tbody tr td').first()
+            .waitFor({ state: 'visible', timeout: 30000 }).catch(() => {});
+        await this.page.waitForTimeout(500);
+    }
+
     // ── Navigation ────────────────────────────────────────────────────────────
 
     async clickCxoTab() {
@@ -74,6 +99,19 @@ export class NSEFoundationActions {
 
     async assertCxoCreatePage() {
         await expect(this.page).toHaveURL(/\/cxos\/create/);
+    }
+
+    /** Sections load asynchronously after navigation — wait until the full
+     *  template is rendered before interacting (else an early Submit fires no
+     *  validation and section badges never appear). Section titles are
+     *  <textarea>s whose value is the section name. */
+    async waitForCreatePageLoaded() {
+        await this.page.waitForLoadState('networkidle').catch(() => {});
+        await this.page.waitForFunction(() => {
+            const vals = [...document.querySelectorAll('textarea')].map(t => (t.value || '').trim());
+            return vals.includes('Header Details') && vals.includes('Suggested Suppliers');
+        }, { timeout: 25000 });
+        await this.page.waitForTimeout(500);
     }
 
     // ── CXO Form – Title & Summary ────────────────────────────────────────────
@@ -525,6 +563,126 @@ export class NSEFoundationActions {
 
     async assertCxoSubmittedSuccessfully() {
         await expect(this.page).not.toHaveURL(/\/cxos\/create/, { timeout: 15000 });
+    }
+
+    // ── Validation / negative-path helpers ────────────────────────────────────
+
+    /** Click Submit WITHOUT handling the success popup — for invalid forms that
+     *  are expected to be rejected, so the test can assert toasts/badges. */
+    async clickSubmitExpectingError() {
+        await this.page.locator(L.submitBtn).first().click();
+        await this.page.waitForTimeout(800);
+    }
+
+    async assertStillOnCreatePage() {
+        await expect(this.page).toHaveURL(/\/cxos\/create/);
+    }
+
+    /** Assert a validation toast containing the given text appears. */
+    async assertToast(text) {
+        await expect(this.page.getByText(text, { exact: false }).first())
+            .toBeVisible({ timeout: 8000 });
+    }
+
+    /** Locator for the per-section "N errors!" badges (one leaf <span> per flagged
+     *  section). Scoped to <span> so the wrapping <div> (same text) isn't double-counted. */
+    errorBadges() {
+        return this.page.locator('span').filter({ hasText: L.cxoErrorBadgeRegex });
+    }
+
+    /** Assert at least one "N errors!" badge is showing on the form. */
+    async assertAnyErrorBadgeVisible() {
+        await expect(this.errorBadges().first()).toBeVisible({ timeout: 10000 });
+    }
+
+    /** Assert the form shows exactly `n` section error badges. */
+    async assertErrorBadgeCount(n) {
+        await this.errorBadges().first().waitFor({ state: 'visible', timeout: 10000 });
+        await expect(this.errorBadges()).toHaveCount(n);
+    }
+
+    /** Read the numeric error count from every section badge, in document order. */
+    async getErrorBadgeCounts() {
+        const loc = this.errorBadges();
+        await loc.first().waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+        const n = await loc.count();
+        const counts = [];
+        for (let i = 0; i < n; i++) {
+            const t = (await loc.nth(i).textContent())?.trim() || '';
+            const m = t.match(/\d+/);
+            counts.push(m ? parseInt(m[0], 10) : 0);
+        }
+        return counts;
+    }
+
+    /** Form-control fields showing the invalid (red) border after an invalid submit. */
+    redBorderedFields() {
+        return this.page.locator(L.cxoRedBorderField);
+    }
+
+    /** Assert unfilled mandatory fields show the red border (≥ `min` of them) and
+     *  the "<field> is empty" helper messages. Requires sections expanded first. */
+    async assertMandatoryFieldsHaveRedBorder(min = 6) {
+        await this.redBorderedFields().first().waitFor({ state: 'visible', timeout: 10000 });
+        const n = await this.redBorderedFields().count();
+        expect(n, 'red-bordered mandatory field count').toBeGreaterThanOrEqual(min);
+        await expect(this.page.getByText(L.cxoFieldEmptyMsgRegex).first())
+            .toBeVisible({ timeout: 5000 });
+    }
+
+    /** Assert the "Please enter the title" toast does NOT fire after submit. */
+    async assertTitleToastAbsent() {
+        await expect(this.page.getByText(L.cxoTitleRequiredToast, { exact: false }))
+            .toHaveCount(0, { timeout: 4000 });
+    }
+
+    async clickCancel() {
+        await this.page.locator(L.cancelBtn).first().click();
+        await this.page.waitForTimeout(1000);
+        // A "Leave without saving" / discard confirmation may appear
+        const leave = this.page.getByRole('button', { name: /Leave|Discard|Yes|Confirm/i }).first();
+        if (await leave.isVisible({ timeout: 3000 }).catch(() => false)) {
+            await leave.click();
+            await this.page.waitForTimeout(800);
+        }
+    }
+
+    // ── Title edge-case helpers ────────────────────────────────────────────────
+
+    async typeTitle(value) {
+        await this.page.locator(L.cxoTitle).click();
+        await this.page.locator(L.cxoTitle).fill(value);
+        await this.page.waitForTimeout(300);
+    }
+
+    /** Read back the title value (handles input/textarea or contenteditable). */
+    async getTitleValue() {
+        const el = this.page.locator(L.cxoTitle).first();
+        const v = await el.inputValue().catch(() => null);
+        if (v !== null) return v;
+        return (await el.textContent().catch(() => '')) ?? '';
+    }
+
+    // ── Qty edge-case helpers (Item Details) ───────────────────────────────────
+
+    /** Type a value into the (already-added) row's Qty cell and read back what the
+     *  input actually accepted, BEFORE committing with Tab. Used to verify the
+     *  field rejects negatives / accepts decimals. */
+    async typeItemQtyAndRead(value) {
+        const cell = this.page.locator(L.itemQtyCell);
+        await cell.scrollIntoViewIfNeeded();
+        await cell.click();
+        await this.page.waitForTimeout(400);
+        await this.page.keyboard.type(value);
+        await this.page.waitForTimeout(300);
+        // Read the focused input's value directly — robust to inline vs portal inputs
+        const accepted = await this.page.evaluate(() => {
+            const el = document.activeElement;
+            return el && 'value' in el ? el.value : null;
+        });
+        await this.page.keyboard.press('Tab');
+        await this.page.waitForTimeout(300);
+        return accepted;
     }
 
     // ── Shared workflow-approval helpers (CXO + award) ────────────────────────

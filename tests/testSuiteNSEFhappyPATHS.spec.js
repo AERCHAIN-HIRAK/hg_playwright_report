@@ -8,20 +8,15 @@ import data from '../pages/NSEFoundationData.json';
 // Uses a separate login (nsefsupport@demo.com) — overrides the shared auth.json
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Clear inherited storageState so we do a fresh login for this user
-test.use({ storageState: undefined });
+// Session is provided by the nsef-setup project (auth.nsef.json) — login happens
+// once per run, not per test. openApp() reuses it (and logs in if it's missing).
 
 // ── Shared helper: login + navigate to Intake create page ────────────────────
 async function loginAndOpenIntakeCreate(page) {
     const a = new NSEFoundationActions(page);
     await page.setViewportSize({ width: 1800, height: 900 });
 
-    await a.navigateToApp(data);
-    await a.fillLoginEmail(data);
-    await a.clickLoginContinue();
-    await a.fillLoginPassword(data);
-    await a.clickLoginSubmit();
-    await a.assertLoggedIn();
+    await a.openApp(data);
 
     await a.clickIntakeTab();
     await a.clickCreateIntake();
@@ -36,12 +31,7 @@ async function loginAndOpenCxoCreate(page) {
     await page.setViewportSize({ width: 1800, height: 900 });
 
     // Login
-    await a.navigateToApp(data);
-    await a.fillLoginEmail(data);
-    await a.clickLoginContinue();
-    await a.fillLoginPassword(data);
-    await a.clickLoginSubmit();
-    await a.assertLoggedIn();
+    await a.openApp(data);
 
     // Navigate to CXO → Create
     await a.clickCxoTab();
@@ -198,12 +188,7 @@ test.describe('NSEF Happy Paths', () => {
         await page.setViewportSize({ width: 1800, height: 900 });
 
         // Login
-        await a.navigateToApp(data);
-        await a.fillLoginEmail(data);
-        await a.clickLoginContinue();
-        await a.fillLoginPassword(data);
-        await a.clickLoginSubmit();
-        await a.assertLoggedIn();
+        await a.openApp(data);
 
         // Intake listing → open the intake created in the previous test (saved code)
         await a.clickIntakeTab();
@@ -251,12 +236,7 @@ test.describe('NSEF Happy Paths', () => {
         await page.setViewportSize({ width: 1800, height: 900 });
 
         // Login
-        await a.navigateToApp(data);
-        await a.fillLoginEmail(data);
-        await a.clickLoginContinue();
-        await a.fillLoginPassword(data);
-        await a.clickLoginSubmit();
-        await a.assertLoggedIn();
+        await a.openApp(data);
 
         // Hover Sourcing → Quote Request → search saved RFX code → open it
         await a.hoverSourcingTab();
@@ -288,12 +268,7 @@ test.describe('NSEF Happy Paths', () => {
         await page.setViewportSize({ width: 1800, height: 900 });
 
         // Login
-        await a.navigateToApp(data);
-        await a.fillLoginEmail(data);
-        await a.clickLoginContinue();
-        await a.fillLoginPassword(data);
-        await a.clickLoginSubmit();
-        await a.assertLoggedIn();
+        await a.openApp(data);
 
         // Open the quoted RFX from the Quote Request listing
         await a.hoverSourcingTab();
@@ -339,12 +314,7 @@ test.describe('NSEF Happy Paths', () => {
         await page.setViewportSize({ width: 1800, height: 900 });
 
         // Login
-        await a.navigateToApp(data);
-        await a.fillLoginEmail(data);
-        await a.clickLoginContinue();
-        await a.fillLoginPassword(data);
-        await a.clickLoginSubmit();
-        await a.assertLoggedIn();
+        await a.openApp(data);
 
         // Open the saved requisition (re-login on the capp domain if redirected)
         await a.openSavedRequisition(data);
@@ -373,12 +343,7 @@ test.describe('NSEF Happy Paths', () => {
         await page.setViewportSize({ width: 1800, height: 900 });
 
         // Login
-        await a.navigateToApp(data);
-        await a.fillLoginEmail(data);
-        await a.clickLoginContinue();
-        await a.fillLoginPassword(data);
-        await a.clickLoginSubmit();
-        await a.assertLoggedIn();
+        await a.openApp(data);
 
         // Open the saved submitted requisition (re-login on capp domain if redirected)
         await a.openSavedRequisition(data);
@@ -400,12 +365,7 @@ test.describe('NSEF Happy Paths', () => {
         await page.setViewportSize({ width: 1800, height: 900 });
 
         // Login
-        await a.navigateToApp(data);
-        await a.fillLoginEmail(data);
-        await a.clickLoginContinue();
-        await a.fillLoginPassword(data);
-        await a.clickLoginSubmit();
-        await a.assertLoggedIn();
+        await a.openApp(data);
 
         // Open the saved (Completed) requisition
         await a.openSavedRequisition(data);
@@ -456,12 +416,7 @@ test.describe('NSEF Happy Paths', () => {
         await page.setViewportSize({ width: 1800, height: 900 });
 
         // Login
-        await a.navigateToApp(data);
-        await a.fillLoginEmail(data);
-        await a.clickLoginContinue();
-        await a.fillLoginPassword(data);
-        await a.clickLoginSubmit();
-        await a.assertLoggedIn();
+        await a.openApp(data);
 
         // Open the PO the GRN was created for
         await a.openSavedPurchaseOrder(data);

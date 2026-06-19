@@ -285,8 +285,29 @@ export const NSEFoundation_Locators = {
     invoicePendingSyncStatus:     `//*[normalize-space(text())='Pending Sync']`,
     invoicePendingApprovalStatus: `//*[normalize-space(text())='Pending Approval']`,
 
-    // ── Submit ────────────────────────────────────────────────────────────────
+    // ── Submit / Cancel ───────────────────────────────────────────────────────
     submitBtn: 'button:has-text("Submit")',
+    cancelBtn: 'button:has-text("Cancel")',
+
+    // ── CXO create – validation (negative / edge tests) ───────────────────────
+    // After an invalid Submit, each section with missing mandatory fields shows
+    // a red "N errors!" badge (a <span class="...rounded-full...">N errors!</span>)
+    // next to its title, plus transient toasts. NOTE: section titles are
+    // <textarea>s, so they cannot be anchored on by text — match the badge spans
+    // directly. On a fully empty form the badges render in document order with
+    // counts [8, 4, 9, 4, 1, 1] = Header Details, Basic Information,
+    // Particulars of Procurement, Purchase Business Case, Item Details,
+    // Suggested Suppliers.
+    cxoErrorBadgeRegex: /^\d+ errors?!$/,
+    // When sections are expanded and Submit is clicked, each unfilled mandatory
+    // field gets a red border (class "border-destructive", border rgb(176,21,0))
+    // and a red "<field> is empty" helper message. The fields are combobox buttons.
+    cxoRedBorderField: 'button[role="combobox"][class*="border-destructive"]',
+    cxoFieldEmptyMsgRegex: /is empty$/i,
+    // Validation toast messages (substring match — toasts auto-dismiss)
+    cxoTitleRequiredToast: 'Please enter the title',
+    cxoItemRowRequiredToast: 'At least one row is required',
+    cxoHighlightedErrorsToast: 'Seems like there are errors in the highlighted fields',
 
     // ── Post-submit assertions ────────────────────────────────────────────────
     cxoStatusBadge: '[class*="badge"], [class*="status"], span:has-text("Submitted"), span:has-text("Draft")',
