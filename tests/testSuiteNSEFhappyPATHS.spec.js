@@ -54,7 +54,7 @@ async function loginAndOpenCxoCreate(page) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('CXO → Direct PO → GRN → Invoice Workflow', () => {
+test.describe('NSEF Happy Paths', () => {
 
     test('Create CXO with all mandatory fields → verify BRF auto-populate → Submit @CXO @Smoke', async ({ page }) => {
         test.setTimeout(300000); // 5 min — covers create + 4 approval stages + save

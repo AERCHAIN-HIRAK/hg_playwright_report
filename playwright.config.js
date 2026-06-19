@@ -27,7 +27,7 @@ export default defineConfig({
     {
       name: 'tests',
       // Exclude the NSE Foundation spec — it has its own login
-      testMatch: /testSuite(?!DirectPoGrn).*\.spec\.js/,
+      testMatch: /testSuite(?!NSEFhappyPATHS).*\.spec\.js/,
       use: {
         storageState: 'auth.json',
       },
@@ -36,7 +36,7 @@ export default defineConfig({
 
     {
       name: 'nsef-tests',
-      testMatch: /testSuiteDirectPoGrnInvoiceWorkflow\.spec\.js/,
+      testMatch: /testSuiteNSEFhappyPATHS\.spec\.js/,
       // Fresh browser — no stored state, no setup dependency
     }
 
