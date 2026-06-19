@@ -2963,8 +2963,10 @@ export class NSEFoundationActions {
         const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
         const expenseRecordNo = fresh.savedInvoice?.code;
         const responseBodyRef = fresh.invoice?.invoiceNumber;
-        const apiKey = process.env.NSEF_INVOICE_ACK_KEY;
-        if (!apiKey) throw new Error('NSEF_INVOICE_ACK_KEY is not set in .env');
+        // Prefer the env var (.env) but fall back to the committed data key so the
+        // test runs without local .env setup.
+        const apiKey = process.env.NSEF_INVOICE_ACK_KEY || data.invoice.ackApiKey;
+        if (!apiKey) throw new Error('Invoice ack API key missing (NSEF_INVOICE_ACK_KEY env or invoice.ackApiKey)');
         if (!expenseRecordNo) throw new Error('savedInvoice.code missing — run the invoice flow first');
 
         const payload = {
