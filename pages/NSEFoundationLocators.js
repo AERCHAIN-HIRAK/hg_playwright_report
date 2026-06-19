@@ -284,6 +284,8 @@ export const NSEFoundation_Locators = {
     // (out of scope here), so we assert Pending Sync, not Accounted.
     invoicePendingSyncStatus:     `//*[normalize-space(text())='Pending Sync']`,
     invoicePendingApprovalStatus: `//*[normalize-space(text())='Pending Approval']`,
+    // After the external acknowledgement API call, the invoice flips to "Accounted".
+    invoiceAccountedStatus:       `//*[normalize-space(text())='Accounted']`,
 
     // ── Submit / Cancel ───────────────────────────────────────────────────────
     submitBtn: 'button:has-text("Submit")',

@@ -154,7 +154,9 @@
     },
     "invoice": {
         "invoiceNumber": "INV-AUTO-003",
-        "documentPath": "fixtures/invoice_document.png"
+        "documentPath": "fixtures/invoice_document.png",
+        "ackUrl": "https://nse-api-uat.aerchain.io/invoice/ack",
+        "ackTemplateId": 1233
     },
     "savedRequisition": {
         "code": "PR-NSEFN-26-50",

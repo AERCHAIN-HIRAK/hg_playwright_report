@@ -2950,4 +2950,82 @@ export class NSEFoundationActions {
         return code;
     }
 
+    // ── External acknowledgement (invoice → Accounted) ─────────────────────────
+
+    /**
+     * POST the invoice acknowledgement to the external API so a Pending Sync
+     * invoice flips to "Accounted". EXPENSE_RECORD_NO = saved invoice code and
+     * response_body_reference = the invoice number, both read fresh from disk so
+     * they match the invoice the last flow created. The X-API-Key is read from
+     * the NSEF_INVOICE_ACK_KEY env var (.env) — never hardcoded.
+     */
+    async acknowledgeInvoice(data) {
+        const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const expenseRecordNo = fresh.savedInvoice?.code;
+        const responseBodyRef = fresh.invoice?.invoiceNumber;
+        const apiKey = process.env.NSEF_INVOICE_ACK_KEY;
+        if (!apiKey) throw new Error('NSEF_INVOICE_ACK_KEY is not set in .env');
+        if (!expenseRecordNo) throw new Error('savedInvoice.code missing — run the invoice flow first');
+
+        const payload = {
+            transactionData: {
+                EXPENSE_RECORD_NO: expenseRecordNo,
+                success: true,
+                operation: 'create',
+                response_body_reference: responseBodyRef,
+                templateId: data.invoice.ackTemplateId ?? 1233,
+            },
+        };
+        console.log(`[ACK] POST ${data.invoice.ackUrl} → EXPENSE_RECORD_NO="${expenseRecordNo}", response_body_reference="${responseBodyRef}"`);
+        const resp = await this.page.request.post(data.invoice.ackUrl, {
+            headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+            data: payload,
+        });
+        const body = await resp.text().catch(() => '');
+        console.log(`[ACK] Response ${resp.status()}: ${body.slice(0, 300)}`);
+        expect(resp.ok(), `Ack API returned ${resp.status()}: ${body}`).toBeTruthy();
+        await this.page.waitForTimeout(2000); // let the backend apply the status change
+        return resp;
+    }
+
+    /** Open the invoice created by the last flow (capp domain — re-login if redirected). */
+    async openSavedInvoice(data) {
+        const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const { url, code } = fresh.savedInvoice;
+        console.log(`[INV] Opening saved invoice ${code} → ${url}`);
+        await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+        await this.page.waitForTimeout(3000);
+
+        if (/nse-auth-uat\.aerchain\.io/.test(this.page.url())) {
+            console.log('[INV] Redirected to login for capp domain — logging in again...');
+            const emailField = this.page.locator(L.loginEmailField).first();
+            if (await emailField.isVisible({ timeout: 5000 }).catch(() => false)) {
+                await emailField.fill(data.login.email);
+                await this.page.locator(L.loginContinueBtn).click();
+            }
+            const pwField = this.page.locator(L.loginPasswordField).first();
+            if (await pwField.waitFor({ state: 'visible', timeout: 10000 }).then(() => true).catch(() => false)) {
+                await pwField.fill(data.login.password);
+                await this.page.locator(L.loginSubmitBtn).click();
+            }
+        }
+        await this.page.waitForURL(/\/invoices\/\d+/, { timeout: 30000 });
+        await this.page.waitForTimeout(2000);
+        console.log(`[INV] On invoice page: ${this.page.url()}`);
+    }
+
+    /** Assert the invoice status is "Accounted" (reload-retry — the flip can lag the ack). */
+    async assertInvoiceAccounted() {
+        const accounted = async (t = 2000) =>
+            await this.page.locator(`xpath=${L.invoiceAccountedStatus}`).first().isVisible({ timeout: t }).catch(() => false);
+        for (let i = 0; i < 6; i++) {
+            if (await accounted(2000)) { console.log('[INV] Status is Accounted'); return; }
+            console.log(`[INV] Not Accounted yet — reloading (${i + 1}/6)...`);
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.waitForTimeout(3000);
+        }
+        await expect(this.page.locator(`xpath=${L.invoiceAccountedStatus}`).first())
+            .toBeVisible({ timeout: 5000 });
+    }
+
 }

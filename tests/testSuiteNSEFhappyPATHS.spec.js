@@ -443,11 +443,27 @@ test.describe('NSEF Happy Paths', () => {
         await a.takeScreenshot('invoice_submitted');
         await a.saveInvoiceCode();
 
-        // Approve all stages until Pending Sync (terminal here; Accounted needs an
-        // external acknowledgement that's out of scope for this test)
+        // Approve all stages until Pending Sync. The invoice only flips to
+        // "Accounted" after the external acknowledgement API call — see the next test.
         await a.approveInvoiceUntilPendingSync('Approved by automation');
         await a.assertInvoicePendingSync();
         await a.takeScreenshot('invoice_pending_sync');
+    });
+
+    test('Acknowledge the Pending Sync invoice via API → status becomes Accounted @PO @Invoice @Ack', async ({ page }) => {
+        test.setTimeout(180000);
+
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+
+        // POST the external acknowledgement (EXPENSE_RECORD_NO = saved invoice code,
+        // response_body_reference = invoice number — both from the previous test).
+        await a.acknowledgeInvoice(data);
+
+        // Open the invoice in the browser and verify the status is now Accounted.
+        await a.openSavedInvoice(data);
+        await a.assertInvoiceAccounted();
+        await a.takeScreenshot('invoice_accounted');
     });
 
 });
