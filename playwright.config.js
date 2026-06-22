@@ -10,12 +10,27 @@ export default defineConfig({
   ['json', { outputFile: 'test-results/results.json' }]
   ],
 
+  // Whole-test budget. A test still gets up to 120s overall, but no single
+  // locator interaction below is allowed to stall the run.
   timeout: 120000,
+
+  // Auto-retrying assertions (expect(locator).toBeVisible(), etc.) give up
+  // after 30s instead of waiting the full test timeout.
+  expect: {
+    timeout: 30000,
+  },
 
   use: {
     headless: false,
+    // If a locator can't be acted on (not found / not actionable) within 30s,
+    // the action throws → the test is marked failed → artifacts below are
+    // captured. This stops the "error page shown but browser hangs open" case.
+    actionTimeout: 30000,
+    navigationTimeout: 30000,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // Trace on failure even if a run forgets the `--trace on` CLI flag.
+    trace: 'retain-on-failure',
   },
 
   projects: [
