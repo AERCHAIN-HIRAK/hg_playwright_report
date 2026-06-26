@@ -1145,19 +1145,22 @@ export class NSEFoundationActions {
     }
 
     async selectIntakeCXOTransaction(data) {
+        // Read the CXO code fresh from disk — the imported `data` object is stale
+        // when the CXO create test rewrote the JSON earlier in this same run.
+        const cxoCode = this.getSavedCxoCode();
         const trigger = this.page.locator(IL.intakeCXOtransaction).first();
         if (!(await trigger.isVisible({ timeout: 3000 }).catch(() => false))) return;
         let selected = false;
         while (!selected) {
             await this._openDropdown(trigger, { hasSearch: true });
             const searchBox = this.page.locator(IL.intakeCXOtransactionSearch).last();
-            await searchBox.fill(data.savedCxo.code);
+            await searchBox.fill(cxoCode);
             await this.page.waitForTimeout(800);
             const opt = this.page.locator(`xpath=(//div[@role='option'])[1]`).first();
             await opt.waitFor({ state: 'visible', timeout: 10000 });
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(data.savedCxo.code, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(trigger).toContainText(cxoCode, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1604,6 +1607,19 @@ export class NSEFoundationActions {
         const code = current.savedIntake?.code;
         if (!code || code === 'unknown') {
             throw new Error('No savedIntake.code in NSEFoundationData.json — run the Intake create test first.');
+        }
+        return code;
+    }
+
+    // Reads savedCxo.code fresh from disk (the imported data object is stale
+    // when the CXO create test ran earlier in the same session and rewrote the
+    // JSON — using `data.savedCxo.code` selects the PREVIOUS run's CXO).
+    getSavedCxoCode() {
+        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        const code = current.savedCxo?.code;
+        if (!code || code === 'unknown') {
+            throw new Error('No savedCxo.code in NSEFoundationData.json — run the CXO create test first.');
         }
         return code;
     }
