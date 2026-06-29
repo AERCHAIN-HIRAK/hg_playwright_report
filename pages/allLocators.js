@@ -242,6 +242,11 @@ exports.intakeCreate_Locators = {
     intakeItemDesc: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[1]', // xpath — same cell as Product Name (inline description)
     intakeItemDescField: '[id="description"]', // CSS
     intakeItemQty: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[2]', // xpath — [1]=ItemName,[2]=Description,[3]=Qty
+    // Qty cell on a row with NO Item Name yet selected. Until an item is picked
+    // the Description cell is still editable, so the Qty column is the 3rd
+    // editable cell. (Once an item is selected Description auto-fills/collapses
+    // and Qty becomes the 2nd cell → use intakeItemQty above for that case.)
+    intakeItemQtyEmptyRow: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[3]', // xpath
     intakeItemQtyField: '(//input[@placeholder="Enter a number"])[3]', // xpath
     intakeItemUOM: '(//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"])[4]', // xpath — [4]=UOM (auto-populated, do NOT click)
     intakeItemUOMOpt: "(//*[@role='option'])[1]", // xpath - first available option (any element type)
@@ -340,6 +345,69 @@ exports.intakeCreate_Locators = {
     intakeApproveComments: '[placeholder="Enter your comments..."]', // CSS
     intakeAppSubmit: "(//button[text()='Approve'])[2]", // xpath
     intakeReview: "//button[text()='Review']", // xpath
-    intakeAccept: "//button[text()='Accept']" // xpath
+    intakeAccept: "//button[text()='Accept']", // xpath
+
+    // ── Pending-approval header actions (Reject / Recall) ─────────────────────
+    intakeRejectBtn: "//button[normalize-space(text())='Reject']", // xpath — header trigger (.first())
+    intakeRejectConfirm: "//*[@role='dialog']//button[normalize-space(text())='Reject']", // xpath — dialog confirm (disabled until a comment is typed)
+    intakeRecallBtn: "//button[normalize-space(text())='Recall']", // xpath — header trigger
+    intakeRecallConfirm: "//*[@role='dialog']//button[normalize-space(text())='Recall']", // xpath — "Recall Intake Transaction" dialog confirm (disabled until a comment)
+    // A Draft has no header Edit button — Edit lives in the More dropdown.
+    intakeEditOption: "//*[normalize-space(text())='Edit']", // xpath — More → Edit menu item (opens /intakes/{id}/edit)
+
+    // Status badges beside the code in the overview header.
+    intakeStatusRejected: "//*[normalize-space(text())='Rejected']", // xpath
+    intakeStatusDraft: "//*[normalize-space(text())='Draft']", // xpath
+
+    // ── More dropdown → Workflow Stages (slide-over "Workflow Steps" panel) ────
+    intakeMoreBtn: "//button[normalize-space(.)='More']", // xpath — header More dropdown trigger
+    intakeWorkflowStagesOption: "//*[normalize-space(text())='Workflow Stages']", // xpath — menu item
+    intakeWorkflowStepsPanelTitle: "//*[normalize-space(text())='Workflow Steps']", // xpath — slide-over title
+
+    // ── More dropdown → Regenerate / Download Document ────────────────────────
+    intakeRegenerateDocOption: "//*[normalize-space(text())='Regenerate Document']", // xpath — menu item
+    intakeDownloadDocOption: "//*[normalize-space(text())='Download Document']", // xpath — menu item (triggers a PDF download)
+    intakeRegenerateToast: 'Intake document regenerated successfully', // toast text after Regenerate
+
+    // ── More dropdown → Clone ─────────────────────────────────────────────────
+    // Clone opens /intakes/{id}/clone — a fully pre-filled "New Intake request"
+    // form (this template has NO empty date fields, so it submits as-is).
+    intakeCloneOption: "//*[normalize-space(text())='Clone']", // xpath — menu item
+
+    // ── More dropdown → Amend (Released intakes) ──────────────────────────────
+    // Amend opens an editable, pre-filled form (like clone) for a Released intake.
+    intakeAmendOption: "//*[normalize-space(text())='Amend']", // xpath — menu item
+
+    // ── More dropdown → Audit Logs ────────────────────────────────────────────
+    // Opens a panel with a change table (S.No. | Change | From | To) — used to
+    // verify the field/qty changes recorded during an Amend.
+    intakeAuditLogsOption: "//*[normalize-space(text())='Audit Logs']", // xpath — menu item
+
+    // ── More dropdown → Reassign Purchaser (Released intakes) ─────────────────
+    intakeReassignPurchaserOption: "//*[normalize-space(text())='Reassign Purchaser']", // xpath — menu item
+    intakeReassignAddTrigger: "//button[normalize-space(.)='Select purchasers to add']", // xpath — "New Purchaser(s)" multi-select trigger
+    intakeReassignReplaceTrigger: "//button[normalize-space(.)='None (add only)']", // xpath — "Replace Purchaser (optional)" dropdown trigger
+    intakeReassignReason: 'textarea[placeholder="Enter Reason"]', // CSS — reason field
+    intakeReassignConfirm: "//*[@role='dialog']//button[normalize-space(text())='Reassign']", // xpath — confirm button
+    intakeReassignToast: 'Purchasers reassigned successfully', // success toast
+
+    // ── Activity Log (clock icon in the intake toolbar) ───────────────────────
+    intakeActivityLogBtn: "//button[.//*[contains(@class,'lucide-clock')]]", // xpath — clock icon button
+    intakeActivityLogTitle: "//*[normalize-space(text())='Activity Log']", // xpath — panel title
+
+    // ── More dropdown → Reassign User (Released intakes) ──────────────────────
+    intakeReassignUserOption: "//*[normalize-space(text())='Reassign User']", // xpath — menu item
+    intakeReassignUserTrigger: "//button[normalize-space(.)='Select a user']", // xpath — single-select user dropdown
+    intakeReassignUserReason: 'textarea[placeholder="Please provide reason for reassignment..."]', // CSS — reason
+    intakeReassignUserSubmit: "//*[@role='dialog']//button[normalize-space(text())='Submit']", // xpath — submit
+    intakeReassignUserToast: 'Intake request reassigned successfully', // success toast
+
+    // ── More dropdown → Mark Processed (Released intakes) ─────────────────────
+    // Opens a "Mark Processed" dialog ("Please provide a reason for closing this
+    // intake.") with a reason field + Cancel/Submit. After Submit → status Processed.
+    intakeMarkProcessedOption: "//*[normalize-space(text())='Mark Processed']", // xpath — menu item
+    intakeMarkProcessedReason: "//*[@role='dialog']//*[self::textarea or self::input]", // xpath — reason field
+    intakeMarkProcessedSubmit: "//*[@role='dialog']//button[normalize-space(text())='Submit']", // xpath — submit
+    intakeStatusProcessed: "//*[normalize-space(text())='Processed']" // xpath — status badge
 
 };

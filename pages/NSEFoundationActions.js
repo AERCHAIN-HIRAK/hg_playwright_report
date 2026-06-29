@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { NSEFoundation_Locators as L } from './NSEFoundationLocators';
 import { intakeCreate_Locators as IL } from './allLocators';
+import { PDFParse } from 'pdf-parse';
 import fs from 'fs';
 import path from 'path';
 
@@ -1107,6 +1108,7 @@ export class NSEFoundationActions {
         if (!(await el.isVisible({ timeout: 3000 }).catch(() => false))) return;
         await el.scrollIntoViewIfNeeded();
         await this._selectNADropdown(el);
+        
     }
 
     async selectIntakeSEBICategorization() {
@@ -1535,6 +1537,773 @@ export class NSEFoundationActions {
     async assertIntakeStatusReleased() {
         await expect(this.page.locator(`xpath=${L.cxoReleasedStatus}`).first())
             .toBeVisible({ timeout: 20000 });
+    }
+
+    // ── Intake – Full create + submit (reusable) ──────────────────────────────
+    // Mirrors the NSEF happy-path "Create Intake" steps. Leaves the intake on its
+    // overview page in Pending Approval. Used by negative flows (Reject/Recall)
+    // that need a freshly-submitted intake without re-typing the whole form.
+    async createAndSubmitIntake(data) {
+        await this.closeAskAieraIfVisible();
+        await this.expandIntakeSections();
+
+        await this.fillIntakeTitle(data);
+        await this.fillIntakeSummary(data);
+        await this.selectIntakeCompany1();
+        await this.selectIntakeCompany2();
+        await this.selectIntakeDepartment(data);
+        await this.selectIntakeExpenseNatureApproval(data);
+        await this.selectIntakeCurrency(data);
+        await this.selectIntakeFunction(data);
+        await this.selectIntakeVertical(data);
+        await this.selectIntakeProjectName();
+        await this.selectIntakeNatureOfExpense(data);
+        await this.selectIntakeGLAccount();
+        await this.selectIntakeProfitCenter();
+        await this.selectIntakeCostCenter();
+        await this.selectIntakeSEBICategorization();
+        await this.selectIntakeSubSegment();
+        await this.selectIntakeProjectCategory();
+        await this.selectIntakeCXOType(data);
+        await this.selectIntakeCXOTransaction(data);
+        await this.assertIntakeBRFAutoPopulated();
+
+        await this.addIntakeLineRow();
+        await this.fillIntakeLineItem(data);
+        await this.fillIntakePotentialSuppliers(data);
+
+        await this.submitIntake();
+        await this.completeIntakeSubmissionPopup();
+    }
+
+    // ── Intake – Reject (from the pending-approval page) ──────────────────────
+    // The header Reject button opens a "Reject Intake ..." dialog with a comments
+    // textarea; the dialog's Reject button stays disabled until a comment is
+    // entered. If the Reject button is missing (step assigned to another
+    // approver) we reassign to NSEF Support Admin and retry, same as approvals.
+    async rejectIntake(reason = 'Rejected by automation') {
+        const rejectBtn = this.page.locator(IL.intakeRejectBtn).first();
+
+        let ready = false;
+        for (let attempt = 0; attempt < 5 && !ready; attempt++) {
+            await this.page.waitForTimeout(1500);
+            if (await rejectBtn.isVisible({ timeout: 4000 }).catch(() => false)) { ready = true; break; }
+            if (attempt < 2) {
+                console.log(`[Intake] Reject button not visible — reloading (${attempt + 1}/2)...`);
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                continue;
+            }
+            if (attempt === 2) {
+                console.log('[Intake] Reassigning approver to NSEF Support Admin so Reject is available...');
+                await this.reassignWorkflowApprover('Reassigned for automated testing', 'Intake');
+                continue;
+            }
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+        }
+        await rejectBtn.waitFor({ state: 'visible', timeout: 8000 });
+        await rejectBtn.click();
+
+        // Reject dialog → comments (shares the approve-comments placeholder)
+        const comments = this.page.locator(IL.intakeApproveComments).first();
+        await comments.waitFor({ state: 'visible', timeout: 10000 });
+        await comments.fill(reason);
+
+        const confirm = this.page.locator(`xpath=${IL.intakeRejectConfirm}`).first();
+        await confirm.waitFor({ state: 'visible', timeout: 8000 });
+        await confirm.click();
+        console.log('[Intake] Reject submitted');
+        await this.page.waitForTimeout(2000);
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+        await this.page.waitForTimeout(1500);
+    }
+
+    async assertIntakeStatusRejected() {
+        await expect(this.page.locator(`xpath=${IL.intakeStatusRejected}`).first())
+            .toBeVisible({ timeout: 20000 });
+    }
+
+    // ── Intake – Recall (from the pending-approval page) ──────────────────────
+    // Header Recall opens a "Recall Intake Transaction" dialog (same shape as
+    // Reject); confirm is disabled until a comment is typed. After recall the
+    // status flips to Draft. Same approver-reassign fallback as rejectIntake.
+    async recallIntake(reason = 'Recalled by automation') {
+        const recallBtn = this.page.locator(IL.intakeRecallBtn).first();
+
+        let ready = false;
+        for (let attempt = 0; attempt < 5 && !ready; attempt++) {
+            await this.page.waitForTimeout(1500);
+            if (await recallBtn.isVisible({ timeout: 4000 }).catch(() => false)) { ready = true; break; }
+            if (attempt < 2) {
+                console.log(`[Intake] Recall button not visible — reloading (${attempt + 1}/2)...`);
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                continue;
+            }
+            if (attempt === 2) {
+                console.log('[Intake] Reassigning approver to NSEF Support Admin so Recall is available...');
+                await this.reassignWorkflowApprover('Reassigned for automated testing', 'Intake');
+                continue;
+            }
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+        }
+        await recallBtn.waitFor({ state: 'visible', timeout: 8000 });
+        await recallBtn.click();
+
+        const comments = this.page.locator(IL.intakeApproveComments).first();
+        await comments.waitFor({ state: 'visible', timeout: 10000 });
+        await comments.fill(reason);
+
+        const confirm = this.page.locator(`xpath=${IL.intakeRecallConfirm}`).first();
+        await confirm.waitFor({ state: 'visible', timeout: 8000 });
+        await confirm.click();
+        console.log('[Intake] Recall submitted');
+        await this.page.waitForTimeout(2000);
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+        await this.page.waitForTimeout(1500);
+    }
+
+    async assertIntakeStatusDraft() {
+        await expect(this.page.locator(`xpath=${IL.intakeStatusDraft}`).first())
+            .toBeVisible({ timeout: 20000 });
+    }
+
+    // ── Intake – Edit a recalled Draft and resubmit ───────────────────────────
+    // Opens the Draft's editable form (Edit), tweaks the title so the edit is
+    // real, then submits through the usual Workflow-Summary popup → back to
+    // Pending Approval, re-triggering the approval workflow.
+    async editAndResubmitDraftIntake(data) {
+        // A Draft has no header Edit button — open it from the More dropdown.
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const editOption = this.page.locator(`xpath=${IL.intakeEditOption}`).first();
+        await editOption.waitFor({ state: 'visible', timeout: 8000 });
+        await editOption.click();
+        await this.page.waitForURL(/\/intakes\/[^\/]+\/edit/, { timeout: 15000 });
+        await this.page.waitForLoadState('domcontentloaded');
+        await this.waitForCreatePageLoaded().catch(() => {});
+        await this.page.waitForTimeout(1500);
+        await this.closeAskAieraIfVisible().catch(() => {});
+
+        // Make a genuine edit — append to the document title.
+        const title = this.page.locator(IL.intakeTitle).first();
+        await title.waitFor({ state: 'visible', timeout: 10000 });
+        await title.click();
+        const current = await title.inputValue().catch(() => '');
+        await title.fill(`${current || data.intake.title} - recalled edit`);
+        await this.page.waitForTimeout(500);
+
+        await this.submitIntake();
+        await this.completeIntakeSubmissionPopup();
+    }
+
+    // ── Intake – Workflow Stages (More → Workflow Stages) ─────────────────────
+    // Opens the slide-over "Workflow Steps" panel which lists each workflow run
+    // as "Workflow N". A re-triggered workflow shows up as a new entry, so the
+    // distinct "Workflow N" count increases after a recall + resubmit.
+    async openWorkflowStages() {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const option = this.page.locator(`xpath=${IL.intakeWorkflowStagesOption}`).first();
+        await option.waitFor({ state: 'visible', timeout: 8000 });
+        await option.click();
+        await this.page.locator(`xpath=${IL.intakeWorkflowStepsPanelTitle}`).first()
+            .waitFor({ state: 'visible', timeout: 10000 });
+        await this.page.waitForTimeout(800);
+    }
+
+    /** Distinct count of "Workflow N" runs shown in the Workflow Steps panel. */
+    async getWorkflowCount() {
+        return await this.page.evaluate(() => {
+            const set = new Set();
+            document.querySelectorAll('*').forEach(e => {
+                const t = (e.textContent || '').trim();
+                if (/^Workflow\s+\d+$/.test(t)) set.add(t);
+            });
+            return set.size;
+        });
+    }
+
+    async closeWorkflowStages() {
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(500);
+    }
+
+    /** With the Workflow Steps panel open: assert every workflow run is shown as
+     *  Inactive and none is Active — the expected state right after a Recall (the
+     *  intake is back in Draft, so its workflow runs are deactivated). The
+     *  step-level "Pending" inside a run is not a workflow-level status. */
+    async assertWorkflowsInactive() {
+        const counts = await this.page.evaluate(() => {
+            const set = new Set();
+            document.querySelectorAll('*').forEach(e => {
+                const t = (e.textContent || '').trim();
+                if (/^Workflow\s+\d+$/.test(t)) set.add(t);
+            });
+            const leaf = s => [...document.querySelectorAll('*')]
+                .filter(e => e.children.length === 0 && (e.textContent || '').trim() === s).length;
+            return { workflows: set.size, inactive: leaf('Inactive'), active: leaf('Active') };
+        });
+        console.log(`[Recall] Draft workflow states — runs:${counts.workflows} inactive:${counts.inactive} active:${counts.active}`);
+        expect(counts.workflows, 'workflow runs present in panel').toBeGreaterThanOrEqual(1);
+        expect(counts.inactive, 'every workflow run should be Inactive on a recalled Draft')
+            .toBeGreaterThanOrEqual(counts.workflows);
+        expect(counts.active, 'no workflow run should be Active on a recalled Draft').toBe(0);
+    }
+
+    // ── Intake – Regenerate / Download Document (More dropdown) ────────────────
+
+    /** More → Regenerate Document → assert the success toast. */
+    async regenerateIntakeDocument() {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const option = this.page.locator(`xpath=${IL.intakeRegenerateDocOption}`).first();
+        await option.waitFor({ state: 'visible', timeout: 8000 });
+        await option.click();
+        await expect(this.page.getByText(IL.intakeRegenerateToast, { exact: false }).first())
+            .toBeVisible({ timeout: 15000 });
+        console.log('[Intake] Document regenerated');
+        await this.page.waitForTimeout(1000);
+    }
+
+    /** More → Download Document → capture the downloaded PDF and return its text.
+     *  The app fetches a presigned S3 URL and downloads a PDF; Playwright's
+     *  download event captures it. The PDF is parsed with pdf-parse. */
+    async downloadIntakeDocumentText() {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const option = this.page.locator(`xpath=${IL.intakeDownloadDocOption}`).first();
+        await option.waitFor({ state: 'visible', timeout: 8000 });
+
+        const [download] = await Promise.all([
+            this.page.waitForEvent('download', { timeout: 30000 }),
+            option.click(),
+        ]);
+        const filePath = await download.path();
+        const suggested = download.suggestedFilename();
+        console.log(`[Intake] Downloaded document: ${suggested}`);
+
+        const buf = fs.readFileSync(filePath);
+        const parser = new PDFParse({ data: buf });
+        const res = await parser.getText();
+        return { text: res.text || '', filename: suggested };
+    }
+
+    /** Download the intake PDF and verify (a) the Status line shows the expected
+     *  status (case-insensitive) and (b) every value in `expectedFields` appears.
+     *  In the PDF the status is the line right after a "Status" label, in caps. */
+    async assertIntakeDocumentStatusAndFields(expectedStatus, expectedFields = []) {
+        const { text, filename } = await this.downloadIntakeDocumentText();
+
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        const idx = lines.findIndex(l => l === 'Status');
+        const docStatus = idx >= 0 ? lines[idx + 1] : '(no Status label found)';
+        console.log(`[Intake] PDF "${filename}" → Status: "${docStatus}"`);
+
+        // Normalise case and separators: the PDF prints "PENDING-APPROVAL" while
+        // the UI uses "Pending Approval" — treat space/underscore/hyphen alike.
+        const norm = s => (s || '').toUpperCase().replace(/[\s_-]+/g, ' ').trim();
+        expect(norm(docStatus), `PDF status should be "${expectedStatus}"`)
+            .toBe(norm(expectedStatus));
+
+        for (const value of expectedFields) {
+            expect(text, `PDF should display field value "${value}"`).toContain(value);
+        }
+        return { text, docStatus };
+    }
+
+    // ── Intake – Clone (More dropdown) ────────────────────────────────────────
+
+    /** Read the visible intake code (e.g. "INT-FNSE-26-133") from the page. */
+    async getCurrentIntakeCode() {
+        const bodyText = (await this.page.locator('body').textContent()) ?? '';
+        const m = bodyText.match(/INT-FNSE-\d+-\d+/);
+        return m ? m[0] : null;
+    }
+
+    /** More → Clone → the pre-filled clone form → Submit → complete the
+     *  Workflow-Summary popup. This template's clone has no empty date fields,
+     *  so it submits as-is. Leaves the NEW (cloned) intake on its overview. */
+    async cloneIntake() {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const cloneOpt = this.page.locator(`xpath=${IL.intakeCloneOption}`).first();
+        await cloneOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await cloneOpt.click();
+
+        await this.page.waitForURL(/\/intakes\/[^\/]+\/clone/, { timeout: 15000 });
+        await this.page.waitForLoadState('domcontentloaded');
+        await this.waitForCreatePageLoaded().catch(() => {});
+        await this.page.waitForTimeout(1500);
+        await this.closeAskAieraIfVisible().catch(() => {});
+
+        await this.submitIntakeViaWorkflowPopup();
+    }
+
+    /** Submit a pre-filled intake form (clone / amend) through the Workflow-
+     *  Summary popup. Step 2 (Purchaser Assignment) starts empty, so its Submit
+     *  is disabled until a purchaser is chosen. Crucially, after picking the
+     *  purchaser the people-picker overlay must be dismissed (Escape) — if left
+     *  open it intercepts the final Submit click and the popup never closes. */
+    async submitIntakeViaWorkflowPopup() {
+        await this.submitIntake();
+
+        // Amend submissions add a mandatory "Reason for amend" field at the top
+        // of the Workflow-Summary popup; Proceed stays disabled until it's set.
+        const reasonField = this.page.locator(
+            "xpath=(//*[contains(normalize-space(.),'Reason for amend')]/following::*[self::input or self::textarea])[1]"
+        ).first();
+        if (await reasonField.isVisible({ timeout: 3000 }).catch(() => false)) {
+            await reasonField.fill('Amended by automation');
+            await this.page.waitForTimeout(500);
+        }
+
+        const proceed = this.page.locator(IL.intakeProceed).first();
+        await proceed.waitFor({ state: 'visible', timeout: 15000 });
+        await proceed.click();
+        await this.page.waitForTimeout(1500);
+
+        const finalSubmit = this.page.locator(IL.intakeFinalSubmit).first();
+        await finalSubmit.waitFor({ state: 'visible', timeout: 10000 });
+
+        // Assign a purchaser when the Submit is still disabled (picker empty).
+        if (!(await finalSubmit.isEnabled().catch(() => false))) {
+            const dropdown = this.page.locator(IL.intakePurAsignDropdown).first();
+            await dropdown.click({ force: true });
+            await this.page.waitForTimeout(600);
+            const adminOpt = this.page.locator(IL.intakepurAsignOpt).first();
+            await adminOpt.waitFor({ state: 'visible', timeout: 8000 });
+            await adminOpt.click();
+            await this.page.waitForTimeout(400);
+            // Dismiss the people-picker overlay so it doesn't eat the Submit click.
+            await this.page.keyboard.press('Escape');
+            await this.page.waitForTimeout(500);
+        }
+
+        await finalSubmit.click();
+        await expect(this.page).toHaveURL(/overview/, { timeout: 25000 });
+        await this.page.waitForTimeout(1000);
+        console.log('[Intake] Submitted via workflow popup');
+    }
+
+    // ── Intake – Amend (More dropdown, Released intakes) ──────────────────────
+
+    /** Change the (already-populated) line item's Qty cell to `newQty`. On the
+     *  pre-filled amend/edit grid the Description stays a separate editable cell,
+     *  so Qty is the 3rd inline-editable cell (intakeItemQtyEmptyRow = [3]), not
+     *  the 2nd (which is Description). */
+    async changeIntakeLineItemQty(newQty) {
+        const cell = this.page.locator(IL.intakeItemQtyEmptyRow).first();
+        await cell.scrollIntoViewIfNeeded();
+        await cell.click();
+        await this.page.waitForTimeout(400);
+        await this.page.keyboard.press('Control+a');
+        await this.page.keyboard.type(String(newQty));
+        await this.page.keyboard.press('Tab');
+        await this.page.waitForTimeout(500);
+    }
+
+    /** More → Amend (Released intake) → editable pre-filled form → change the
+     *  line-item qty, append "automation amended" to the title → submit through
+     *  the workflow popup. Leaves the intake in its amend-approval state. */
+    async amendIntake(data, newQty = '150') {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const amendOpt = this.page.locator(`xpath=${IL.intakeAmendOption}`).first();
+        await amendOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await amendOpt.click();
+
+        await this.page.waitForURL(/\/intakes\/[^\/]+\/amend/, { timeout: 15000 });
+        await this.page.waitForLoadState('domcontentloaded');
+        await this.waitForCreatePageLoaded().catch(() => {});
+        await this.page.waitForTimeout(1500);
+        await this.closeAskAieraIfVisible().catch(() => {});
+
+        // Change the line item quantity.
+        await this.changeIntakeLineItemQty(newQty);
+
+        // Append "automation amended" to the title.
+        const title = this.page.locator(IL.intakeTitle).first();
+        await title.click();
+        const current = await title.inputValue().catch(() => '');
+        await title.fill(`${current || data.intake.title} automation amended`);
+        await this.page.waitForTimeout(500);
+
+        await this.submitIntakeViaWorkflowPopup();
+        console.log('[Amend] Amend submitted');
+    }
+
+    /** With the Workflow Steps panel open: assert at least one workflow run is
+     *  shown as Completed (the amend workflow after it has been approved). */
+    async assertWorkflowCompleted() {
+        const counts = await this.page.evaluate(() => {
+            const leaf = s => [...document.querySelectorAll('*')]
+                .filter(e => e.children.length === 0 && (e.textContent || '').trim() === s).length;
+            return { completed: leaf('Completed'), active: leaf('Active'), pending: leaf('Pending'), inactive: leaf('Inactive') };
+        });
+        console.log(`[Amend] Workflow states — completed:${counts.completed} active:${counts.active} pending:${counts.pending} inactive:${counts.inactive}`);
+        expect(counts.completed, 'amend workflow should show Completed').toBeGreaterThanOrEqual(1);
+    }
+
+    /** More → Audit Logs → wait for the change table (Change | From | To). */
+    async openIntakeAuditLogs() {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const opt = this.page.locator(`xpath=${IL.intakeAuditLogsOption}`).first();
+        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.click();
+        // The Audit Logs panel renders a table with a "Change"/"From"/"To" header.
+        await this.page.getByText('Audit Logs', { exact: true }).first()
+            .waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+        await this.page.waitForTimeout(1500);
+    }
+
+    /** With the Audit Logs panel open, assert the amend's title (subject) and
+     *  line-item Qty changes are recorded as From → To rows. */
+    async assertAuditLogShowsAmendChanges(data, oldQty, newQty) {
+        const txt = await this.page.locator('body').innerText();
+        const newTitle = `${data.intake.title} automation amended`;
+        console.log(`[Amend] Audit log — has new title:${txt.includes(newTitle)} has qty ${oldQty}->${newQty}:${new RegExp(`Qty\\s+${oldQty}\\s+${newQty}`).test(txt)}`);
+
+        // Subject change recorded (To column holds the amended title).
+        expect(txt, 'audit log should record the subject/title change').toContain('automation amended');
+        // Qty change recorded as "<item> - Qty  <old>  <new>".
+        expect(txt, `audit log should record the Qty change ${oldQty} → ${newQty}`)
+            .toMatch(new RegExp(`Qty\\s+${oldQty}\\s+${newQty}`));
+    }
+
+    async closeIntakeAuditLogs() {
+        const closeBtn = this.page.getByRole('button', { name: /^Close$/ }).first();
+        if (await closeBtn.isVisible({ timeout: 2000 }).catch(() => false)) await closeBtn.click();
+        else await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(400);
+    }
+
+    // ── Intake – Reassign Purchaser (More dropdown, Released intakes) ─────────
+
+    /** More → Reassign Purchaser → wait for the popup. */
+    async openReassignPurchaser() {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const opt = this.page.locator(`xpath=${IL.intakeReassignPurchaserOption}`).first();
+        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.click();
+        await this.page.locator(`xpath=${IL.intakeReassignAddTrigger}`).first()
+            .waitFor({ state: 'visible', timeout: 10000 });
+        await this.page.waitForTimeout(800);
+    }
+
+    /** Open the "Select purchasers to add" multi-select and tick the option rows
+     *  at `indices` (option[0] is "Select All", users start at 1). Returns the
+     *  selected user names. Closes the list (Escape) since it overlays the form. */
+    async _selectAddPurchasers(indices) {
+        await this.page.locator(`xpath=${IL.intakeReassignAddTrigger}`).first().click();
+        await this.page.waitForTimeout(1000);
+        const opts = this.page.locator('[role="option"]');
+        const names = [];
+        for (const i of indices) {
+            const name = (await opts.nth(i).textContent())?.trim();
+            names.push(name);
+            await opts.nth(i).click();
+            await this.page.waitForTimeout(300);
+        }
+        await this.page.keyboard.press('Escape'); // close the list (overlays reason/Reassign)
+        await this.page.waitForTimeout(600);
+        return names;
+    }
+
+    async _fillReasonAndReassign(reason) {
+        await this.page.locator(IL.intakeReassignReason).first().fill(reason);
+        await this.page.waitForTimeout(400);
+        await this.page.locator(`xpath=${IL.intakeReassignConfirm}`).first().click();
+        await expect(this.page.getByText(IL.intakeReassignToast, { exact: false }).first())
+            .toBeVisible({ timeout: 15000 });
+        await this.page.waitForTimeout(1500);
+    }
+
+    /** Reassignment #1: add the first two available purchasers. Returns their names. */
+    async reassignPurchaserAddTwo(reason) {
+        await this.openReassignPurchaser();
+        const names = await this._selectAddPurchasers([1, 2]);
+        await this._fillReasonAndReassign(reason);
+        console.log('[Reassign] Added purchasers:', JSON.stringify(names));
+        return names;
+    }
+
+    /** Reassignment #2: open the Replace-Purchaser dropdown, assert the
+     *  previously-added users are listed, replace the first one, add a new
+     *  purchaser, then reassign. */
+    async reassignPurchaserReplace(reason, previousNames) {
+        await this.openReassignPurchaser();
+
+        // Open the Replace Purchaser dropdown and verify the previous purchasers.
+        await this.page.locator(`xpath=${IL.intakeReassignReplaceTrigger}`).first().click();
+        await this.page.waitForTimeout(1000);
+        const replaceOpts = await this.page.evaluate(() =>
+            [...document.querySelectorAll('[role="option"]')].map(o => (o.textContent || '').trim()).filter(Boolean));
+        console.log('[Reassign] Replace dropdown options:', JSON.stringify(replaceOpts));
+        for (const nm of previousNames) {
+            expect(replaceOpts.some(o => o.includes(nm)),
+                `Replace dropdown should list previously-added purchaser "${nm}"`).toBe(true);
+        }
+        // Replace the first previously-added purchaser. The Replace dropdown is a
+        // single-select and auto-closes on pick — only Escape if it's still open
+        // (an unconditional Escape would close the whole popup instead).
+        await this.page.locator('[role="option"]').filter({ hasText: previousNames[0] }).first().click();
+        await this.page.waitForTimeout(500);
+        if (await this.page.locator('[role="option"]').first().isVisible({ timeout: 500 }).catch(() => false)) {
+            await this.page.keyboard.press('Escape');
+            await this.page.waitForTimeout(400);
+        }
+
+        // Add a new purchaser (a different option) and reassign. Return its name.
+        const newNames = await this._selectAddPurchasers([3]);
+        await this._fillReasonAndReassign(reason);
+        console.log('[Reassign] Replace reassignment done — new purchaser:', JSON.stringify(newNames));
+        return newNames[0];
+    }
+
+    /** Reopen Reassign Purchaser, open the Replace dropdown and assert the given
+     *  (newly-added) purchaser is now listed there, then cancel out. Confirms the
+     *  previous replace reassignment took effect. */
+    async verifyReplaceDropdownHasUser(expectedName) {
+        await this.openReassignPurchaser();
+        await this.page.locator(`xpath=${IL.intakeReassignReplaceTrigger}`).first().click();
+        await this.page.waitForTimeout(1000);
+        const opts = await this.page.evaluate(() =>
+            [...document.querySelectorAll('[role="option"]')].map(o => (o.textContent || '').trim()).filter(Boolean));
+        console.log('[Reassign] Replace dropdown after replace:', JSON.stringify(opts));
+        expect(opts.some(o => o.includes(expectedName)),
+            `Replace dropdown should now list the newly-added purchaser "${expectedName}"`).toBe(true);
+        // Close the dropdown, then cancel the popup.
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(400);
+        const cancel = this.page.locator(`xpath=//*[@role='dialog']//button[normalize-space(text())='Cancel']`).first();
+        if (await cancel.isVisible({ timeout: 2000 }).catch(() => false)) await cancel.click();
+        await this.page.waitForTimeout(800);
+    }
+
+    // ── Intake – Reassign User (More dropdown, Released intakes) ──────────────
+
+    /** More → Reassign User → "Select a user" → pick a user → close the list →
+     *  reason → Submit. Returns { name, toast } for assertions/logging. */
+    async reassignUser(reason = 'Reassigned user by automation') {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const opt = this.page.locator(`xpath=${IL.intakeReassignUserOption}`).first();
+        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.click();
+
+        const trigger = this.page.locator(`xpath=${IL.intakeReassignUserTrigger}`).first();
+        await trigger.waitFor({ state: 'visible', timeout: 10000 });
+        await trigger.click();
+        await this.page.waitForTimeout(1000);
+
+        const options = this.page.locator('[role="option"]');
+        const name = (await options.first().textContent())?.trim();
+        await options.first().click();
+        await this.page.waitForTimeout(500);
+        // Single-select usually auto-closes; only Escape if the list is still open.
+        if (await options.first().isVisible({ timeout: 500 }).catch(() => false)) {
+            await this.page.keyboard.press('Escape');
+            await this.page.waitForTimeout(400);
+        }
+
+        await this.page.locator(IL.intakeReassignUserReason).first().fill(reason);
+        await this.page.waitForTimeout(400);
+        await this.page.locator(`xpath=${IL.intakeReassignUserSubmit}`).first().click();
+        await expect(this.page.getByText(IL.intakeReassignUserToast, { exact: false }).first())
+            .toBeVisible({ timeout: 15000 });
+        await this.page.waitForTimeout(1000);
+        console.log(`[ReassignUser] reassigned to "${name}" — toast confirmed`);
+        return { name };
+    }
+
+    // ── Intake – Mark Processed (More dropdown, Released intakes) ─────────────
+
+    /** More → Mark Processed → fill the reason → Submit → status becomes Processed. */
+    async markIntakeProcessed(reason = 'Marked processed by automation') {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const opt = this.page.locator(`xpath=${IL.intakeMarkProcessedOption}`).first();
+        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.click();
+
+        const reasonField = this.page.locator(`xpath=${IL.intakeMarkProcessedReason}`).first();
+        await reasonField.waitFor({ state: 'visible', timeout: 10000 });
+        await reasonField.fill(reason);
+        await this.page.waitForTimeout(400);
+        await this.page.locator(`xpath=${IL.intakeMarkProcessedSubmit}`).first().click();
+        await this.page.waitForTimeout(2500);
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+        await this.page.waitForTimeout(1500);
+        console.log('[MarkProcessed] submitted');
+    }
+
+    async assertIntakeStatusProcessed() {
+        await expect(this.page.locator(`xpath=${IL.intakeStatusProcessed}`).first())
+            .toBeVisible({ timeout: 20000 });
+    }
+
+    // ── Intake – Activity Log (clock icon) ────────────────────────────────────
+
+    async openActivityLog() {
+        const clock = this.page.locator(`xpath=${IL.intakeActivityLogBtn}`).first();
+        await clock.waitFor({ state: 'visible', timeout: 15000 });
+        await clock.click();
+        await this.page.locator(`xpath=${IL.intakeActivityLogTitle}`).first()
+            .waitFor({ state: 'visible', timeout: 10000 });
+        await this.page.waitForTimeout(1200);
+    }
+
+    /** Assert the Activity Log contains each of the given strings (e.g. the two
+     *  distinct reassignment reasons → proves both events were captured). */
+    async assertActivityLogContains(texts) {
+        const log = await this.page.locator('body').innerText();
+        console.log('[Reassign] Activity Log (first 1200 chars):\n' + log.slice(log.indexOf('Activity Log'), log.indexOf('Activity Log') + 1200));
+        for (const t of texts) {
+            expect(log, `Activity Log should capture "${t}"`).toContain(t);
+        }
+    }
+
+    // ── Intake – Negative / validation helpers ────────────────────────────────
+    // The Intake create page does NOT navigate or toast on an invalid Submit.
+    // Instead it stays on /intakes/create and renders:
+    //   • per-section "N errors!" badges (e.g. Header Details "19 errors!")
+    //   • once a section is expanded, red-bordered fields + "<field> is empty" text
+
+    /** Click Submit WITHOUT handling the Workflow-Summary popup — for invalid
+     *  forms that are expected to be rejected, so the test can assert badges. */
+    async submitIntakeExpectingError() {
+        await this.page.locator(IL.intakeSubmit).first().click();
+        await this.page.waitForTimeout(1200);
+    }
+
+    async assertStillOnIntakeCreatePage() {
+        await expect(this.page).toHaveURL(/\/intakes\/create/);
+    }
+
+    /** Assert the Workflow-Summary submission popup did NOT open (i.e. the
+     *  invalid Submit was blocked client-side). */
+    async assertNoIntakeSubmissionPopup() {
+        await this.page.waitForTimeout(600);
+        const proceed = this.page.locator(IL.intakeProceed).first();
+        const open = await proceed.isVisible({ timeout: 2000 }).catch(() => false);
+        expect(open, 'Workflow-Summary submission popup should not open').toBe(false);
+    }
+
+    /** Assert the given section shows its "N errors!" badge. Takes the first
+     *  error badge that follows the section title, which is that section's own
+     *  badge (un-flagged sections render no badge). */
+    async assertIntakeSectionErrorBadge(section) {
+        const badge = this.page.locator(
+            `xpath=(//*[normalize-space(text())=${JSON.stringify(section)}]/following::span[contains(normalize-space(.),'error') and contains(normalize-space(.),'!')])[1]`
+        ).first();
+        await expect(badge).toBeVisible({ timeout: 10000 });
+    }
+
+    /** Intake mandatory dropdowns flagged invalid render a red (destructive)
+     *  border on their trigger button — note this is a plain <button>, not the
+     *  role="combobox" the CXO form uses. */
+    intakeRedBorderedFields() {
+        return this.page.locator('button[class*="border-destructive"]');
+    }
+
+    /** With the sections expanded, assert ≥ `min` mandatory fields show the red
+     *  border AND ≥ `min` "<field> is empty" helper messages are visible. */
+    async assertIntakeMandatoryFieldsFlagged(min = 15) {
+        await this.intakeRedBorderedFields().first().waitFor({ state: 'visible', timeout: 10000 });
+        const reds = await this.intakeRedBorderedFields().count();
+        expect(reds, 'red-bordered mandatory fields').toBeGreaterThanOrEqual(min);
+        const empties = this.page.getByText(/is empty$/i);
+        const emptyCount = await empties.count();
+        expect(emptyCount, '"<field> is empty" messages').toBeGreaterThanOrEqual(min);
+        console.log(`[IntakeNeg] ${reds} red-bordered fields, ${emptyCount} "is empty" messages`);
+    }
+
+    // ── Intake – Title edge-case helpers ──────────────────────────────────────
+
+    /** Replace the document title with `value` and read back what the textarea
+     *  actually stored. */
+    async typeIntakeTitle(value) {
+        const el = this.page.locator(IL.intakeTitle).first();
+        await el.click();
+        await el.fill('');
+        await el.fill(value);
+        await this.page.waitForTimeout(300);
+    }
+
+    async getIntakeTitleValue() {
+        return await this.page.locator(IL.intakeTitle).first().inputValue();
+    }
+
+    // ── Intake – Line-item numeric edge-case helpers ──────────────────────────
+
+    /** Type into the (already-added) row's inline Qty editor and read back what
+     *  it accepted BEFORE committing — used to prove the field strips the minus
+     *  sign / non-numeric chars and accepts decimals while typing. Discards the
+     *  edit (Escape) so the cell is left untouched for the next call. */
+    async typeIntakeQtyAndRead(value) {
+        return await this._typeNumericCellAndRead(IL.intakeItemQtyEmptyRow, value);
+    }
+
+    /** Same as above for the Suggested Price cell. */
+    async typeIntakePriceAndRead(value) {
+        return await this._typeNumericCellAndRead(IL.intakeItemSuggPrice, value);
+    }
+
+    async _typeNumericCellAndRead(cellLocator, value) {
+        const cell = this.page.locator(cellLocator).first();
+        await cell.scrollIntoViewIfNeeded();
+        await cell.click();
+        await this.page.waitForTimeout(500);
+        // Select any existing (committed) content, then type the new value so the
+        // field's numeric masking applies to each keystroke.
+        await this.page.keyboard.press('Control+a');
+        await this.page.keyboard.type(value);
+        await this.page.waitForTimeout(300);
+        // Read what the inline editor accepted BEFORE committing.
+        const accepted = await this.page.evaluate(() => {
+            const el = document.activeElement;
+            return el && 'value' in el ? el.value : null;
+        });
+        // Commit with Tab (NOT Escape). Tab leaves the cell showing its value so a
+        // subsequent click re-opens the editor reliably — Escape can leave the
+        // cell in a state where the next click fails to re-enter edit mode.
+        await this.page.keyboard.press('Tab');
+        await this.page.waitForTimeout(400);
+        return accepted;
+    }
+
+    /** Click Cancel on the create form, dismissing any "leave without saving"
+     *  confirmation, then confirm the create page was left. */
+    async cancelIntakeCreate() {
+        await this.page.locator(L.cancelBtn).first().click();
+        await this.page.waitForTimeout(1000);
+        const leave = this.page.getByRole('button', { name: /Leave|Discard|Yes|Confirm|Ok/i }).first();
+        if (await leave.isVisible({ timeout: 3000 }).catch(() => false)) {
+            await leave.click();
+            await this.page.waitForTimeout(800);
+        }
+        await expect(this.page).not.toHaveURL(/\/intakes\/create/, { timeout: 15000 });
     }
 
     // ── Save Intake code for downstream steps ────────────────────────────────
