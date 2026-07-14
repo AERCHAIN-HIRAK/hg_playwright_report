@@ -814,6 +814,419 @@ export class NSEFoundationActions {
             .toBeVisible({ timeout: 20000 });
     }
 
+    /** End-to-end: fill every mandatory CXO section, Submit, approve all stages
+     *  until Released, then persist the code (savedCxo) for downstream linking.
+     *  Mirrors the CXO happy-path test so suites needing a released CXO up front
+     *  (e.g. an intake that links a CXO) can set one up in a single call.
+     *  Assumes the CXO create page is already open (clickCreateCxo + assert). */
+    async createAndReleaseCxo(data) {
+        await this.fillAllCxoSections(data);
+
+        // Submit → approve until Released → persist code
+        await this.clickSubmit();
+        await this.assertCxoSubmittedSuccessfully();
+        await this.approveAllStages('Approved by automation');
+        await this.assertCxoStatusReleased();
+        await this.saveCxoCode();
+    }
+
+    /** Fill every mandatory CXO create-form section (title, header, basic info,
+     *  particulars, business case, one line item, suggested suppliers) and wait
+     *  for the auto-populated BRF. Leaves the form filled and ready to Submit
+     *  (→ workflow) or Save (→ Draft). Assumes the create page is already open. */
+    async fillAllCxoSections(data) {
+        await this.waitForCreatePageLoaded();
+        await this.expandAllSections();
+
+        // Title & Summary
+        await this.fillCxoTitle(data);
+        await this.fillCxoSummary(data);
+
+        // Header Details
+        await this.selectCxoCompany();
+        await this.selectCxoDepartment(data);
+        await this.selectCxoFunction(data);
+        await this.selectCxoCurrency(data);
+        await this.selectCxoType(data);
+        await this.selectCxoTransactionFlowType(data);
+        await this.selectCxoExpenseNature(data);
+
+        // Basic Information
+        await this.fillCxoStartDate(data);
+        await this.fillCxoEndDate(data);
+        await this.selectCxoTypeOfProcurement(data);
+        await this.selectCxoFinancialYear(data);
+
+        // Particulars of Procurement
+        await this.selectExistingApplications(data);
+        await this.selectBusinessOrCompliance(data);
+        await this.fillMinimumCommitmentPeriod(data);
+        await this.selectCloudExposure(data);
+        await this.selectMeitYVendors(data);
+        await this.fillDetailsOtherAgency(data);
+        await this.selectSebiOutsourcingCircular(data);
+        await this.fillNatureOfDataShared(data);
+        await this.selectRpwdCompliance(data);
+
+        // Purchase Business Case
+        await this.fillDetailsOfItemsServices(data);
+        await this.fillNecessityOfPurchase(data);
+        await this.selectEmergencyProcurement(data);
+        await this.fillDeliveryTimeline(data);
+
+        // Item Details — one line item
+        await this.clickAddRow();
+        await this.fillItemName(data);
+        await this.fillItemQty(data);
+        await this.fillItemSuggestedPrice(data);
+        await this.fillItemProjectName(data);
+        await this.fillItemVertical(data);
+        await this.fillItemGlAccount(data);
+        await this.fillItemProfitCenter(data);
+        await this.fillItemCostCenter(data);
+        await this.fillItemSebiCategorization(data);
+        await this.fillItemSubSegment(data);
+        await this.fillItemProjectCategory(data);
+        await this.fillItemNatureOfExpense(data);
+
+        // Suggested Suppliers
+        await this.fillPotentialSuppliers(data);
+
+        await this.assertBrfAutoPopulated(data);
+    }
+
+    // ── CXO – Save as Draft / Submit to Pending Approval ──────────────────────
+
+    /** Fill all sections, then Save (NOT Submit) → the CXO is created in Draft
+     *  status without entering the approval workflow. Lands on the CXO overview.
+     *  Persists the code (savedCxo) for reference. */
+    async createCxoDraft(data) {
+        await this.fillAllCxoSections(data);
+
+        const saveBtn = this.page.locator(L.cxoSaveDraftBtn).first();
+        await saveBtn.waitFor({ state: 'visible', timeout: 10000 });
+        await saveBtn.click();
+        // Save (no workflow submit) → "…saved successfully" toast → the app
+        // navigates to the CXO overview with the status badge showing Draft.
+        await this.page.waitForURL(/\/cxos\/[^\/]+\/overview/, { timeout: 20000 });
+        await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+        await this.page.waitForTimeout(2000);
+        console.log('[CXO] Saved as Draft → overview');
+        await this.saveCxoCode();
+    }
+
+    /** Fill all sections, then Submit through the Workflow-Summary popup → the CXO
+     *  enters the approval workflow at Pending Approval. Lands on the CXO
+     *  overview. Persists the code (savedCxo). */
+    async createAndSubmitCxo(data) {
+        await this.fillAllCxoSections(data);
+
+        await this.clickSubmit();
+        await this.assertCxoSubmittedSuccessfully();
+        await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+        await this.page.waitForTimeout(2000);
+        console.log('[CXO] Submitted → Pending Approval');
+        await this.saveCxoCode();
+    }
+
+    // ── CXO – Reject (from the pending-approval page) ─────────────────────────
+    // Mirrors rejectIntake: the header Reject button opens a reject dialog with a
+    // comments textarea; the dialog's Reject stays disabled until a comment is
+    // entered. If the Reject button is missing (step assigned to another
+    // approver) we reassign to NSEF Support Admin and retry, same as approvals.
+    async rejectCxo(reason = 'Rejected by automation') {
+        const rejectBtn = this.page.locator(`xpath=${IL.intakeRejectBtn}`).first();
+
+        let ready = false;
+        for (let attempt = 0; attempt < 5 && !ready; attempt++) {
+            await this.page.waitForTimeout(1500);
+            if (await rejectBtn.isVisible({ timeout: 4000 }).catch(() => false)) { ready = true; break; }
+            if (attempt < 2) {
+                console.log(`[CXO] Reject button not visible — reloading (${attempt + 1}/2)...`);
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                continue;
+            }
+            if (attempt === 2) {
+                console.log('[CXO] Reassigning approver to NSEF Support Admin so Reject is available...');
+                await this.reassignWorkflowApprover('Reassigned for automated testing', 'CXO');
+                continue;
+            }
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+        }
+        await rejectBtn.waitFor({ state: 'visible', timeout: 8000 });
+        await rejectBtn.click();
+
+        const comments = this.page.locator(IL.intakeApproveComments).first();
+        await comments.waitFor({ state: 'visible', timeout: 10000 });
+        await comments.fill(reason);
+
+        const confirm = this.page.locator(`xpath=${IL.intakeRejectConfirm}`).first();
+        await confirm.waitFor({ state: 'visible', timeout: 8000 });
+        await confirm.click();
+        console.log('[CXO] Reject submitted');
+        await this.page.waitForTimeout(2000);
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+        await this.page.waitForTimeout(1500);
+    }
+
+    // ── CXO – Status assertions ───────────────────────────────────────────────
+
+    async assertCxoStatusDraft() {
+        await expect(this.page.locator(`xpath=${IL.intakeStatusDraft}`).first())
+            .toBeVisible({ timeout: 20000 });
+    }
+
+    async assertCxoStatusRejected() {
+        await expect(this.page.locator(`xpath=${IL.intakeStatusRejected}`).first())
+            .toBeVisible({ timeout: 20000 });
+    }
+
+    async assertCxoStatusPendingApproval() {
+        await expect(this.page.locator(`xpath=${IL.cxoStatusPendingApproval}`).first())
+            .toBeVisible({ timeout: 20000 });
+    }
+
+    // ── CXO – Mark Processed (More dropdown, Released CXOs) ────────────────────
+    // On a Released CXO the More menu exposes "Process" (the CXO wording for Mark
+    // Processed). It opens a "Process CXO" dialog with a mandatory reason; on
+    // Submit the CXO status becomes Processed. The dialog's reason field + Submit
+    // are the same shape as intake's, so those locators are reused.
+
+    async markCxoProcessed(reason = 'Marked processed by automation') {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const opt = this.page.locator(`xpath=${IL.cxoProcessOption}`).first();
+        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.click();
+
+        const reasonField = this.page.locator(`xpath=${IL.intakeMarkProcessedReason}`).first();
+        await reasonField.waitFor({ state: 'visible', timeout: 10000 });
+        await reasonField.fill(reason);
+        await this.page.waitForTimeout(400);
+        await this.page.locator(`xpath=${IL.intakeMarkProcessedSubmit}`).first().click();
+        await this.page.waitForTimeout(2500);
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+        await this.page.waitForTimeout(1500);
+        console.log('[CXO] Mark Processed submitted');
+    }
+
+    async assertCxoStatusProcessed() {
+        await expect(this.page.locator(`xpath=${IL.intakeStatusProcessed}`).first())
+            .toBeVisible({ timeout: 20000 });
+    }
+
+    // ── CXO – Cancel (More dropdown, Released CXOs) ────────────────────────────
+    // On a Released CXO the More menu exposes "Cancel". It opens a "Cancel CXO"
+    // dialog with a mandatory reason; on Submit the status becomes Cancelled. The
+    // reason field + Submit share the same shape as the Process dialog.
+
+    async cancelCxo(reason = 'Cancelled by automation') {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const opt = this.page.locator(`xpath=${IL.cxoCancelOption}`).first();
+        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.click();
+
+        const reasonField = this.page.locator(`xpath=${IL.intakeMarkProcessedReason}`).first();
+        await reasonField.waitFor({ state: 'visible', timeout: 10000 });
+        await reasonField.fill(reason);
+        await this.page.waitForTimeout(400);
+        await this.page.locator(`xpath=${IL.intakeMarkProcessedSubmit}`).first().click();
+        await this.page.waitForTimeout(2500);
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+        await this.page.waitForTimeout(1500);
+        console.log('[CXO] Cancel submitted');
+    }
+
+    async assertCxoStatusCancelled() {
+        await expect(this.page.locator(`xpath=${IL.cxoStatusCancelled}`).first())
+            .toBeVisible({ timeout: 20000 });
+    }
+
+    // ── CXO – Regenerate / Download Document (More dropdown) ──────────────────
+    // The CXO detail page shares the generic v4 header More menu (same as intake),
+    // so Regenerate/Download Document reuse the generic menu-item locators. The
+    // regenerate toast wording is matched leniently (…regenerated successfully).
+
+    async regenerateCxoDocument() {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const option = this.page.locator(`xpath=${IL.intakeRegenerateDocOption}`).first();
+        await option.waitFor({ state: 'visible', timeout: 8000 });
+        await option.click();
+        await expect(this.page.getByText(/regenerated successfully/i).first())
+            .toBeVisible({ timeout: 15000 });
+        console.log('[CXO] Document regenerated');
+        await this.page.waitForTimeout(1000);
+    }
+
+    /** More → Download Document → capture the downloaded PDF and return its text.
+     *  Same mechanism as the intake download (presigned S3 URL → PDF → pdf-parse). */
+    async downloadCxoDocumentText() {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const option = this.page.locator(`xpath=${IL.intakeDownloadDocOption}`).first();
+        await option.waitFor({ state: 'visible', timeout: 8000 });
+
+        const [download] = await Promise.all([
+            this.page.waitForEvent('download', { timeout: 30000 }),
+            option.click(),
+        ]);
+        const filePath = await download.path();
+        const suggested = download.suggestedFilename();
+        console.log(`[CXO] Downloaded document: ${suggested}`);
+
+        const buf = fs.readFileSync(filePath);
+        const parser = new PDFParse({ data: buf });
+        const res = await parser.getText();
+        return { text: res.text || '', filename: suggested };
+    }
+
+    /** Download the CXO PDF and verify (a) the Status line shows the expected
+     *  status (case-insensitive, separator-insensitive) and (b) every value in
+     *  `expectedFields` appears. Mirrors assertIntakeDocumentStatusAndFields. */
+    async assertCxoDocumentStatusAndFields(expectedStatus, expectedFields = []) {
+        const { text, filename } = await this.downloadCxoDocumentText();
+
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        const idx = lines.findIndex(l => l === 'Status');
+        const docStatus = idx >= 0 ? lines[idx + 1] : '(no Status label found)';
+        console.log(`[CXO] PDF "${filename}" → Status: "${docStatus}"`);
+
+        const norm = s => (s || '').toUpperCase().replace(/[\s_-]+/g, ' ').trim();
+        expect(norm(docStatus), `PDF status should be "${expectedStatus}"`)
+            .toBe(norm(expectedStatus));
+
+        for (const value of expectedFields) {
+            expect(text, `PDF should display field value "${value}"`).toContain(value);
+        }
+        return { text, docStatus };
+    }
+
+    // ── CXO – Clone (More dropdown, any CXO) ──────────────────────────────────
+
+    /** More → Clone → the pre-filled clone form (/cxos/{id}/clone) → Submit
+     *  through the Workflow-Summary popup. This template's clone comes fully
+     *  populated (title, dates, sections, one line item) and valid, so it
+     *  submits as-is; the new clone lands on its own overview at Pending
+     *  Approval. Reuses clickSubmit() (which handles the Workflow-Summary popup,
+     *  same as CXO create). The caller then approves to Released. */
+    async cloneCxo() {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first(); // generic header More
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+
+        const cloneOpt = this.page.locator(`xpath=${IL.intakeCloneOption}`).first();
+        await cloneOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await cloneOpt.click();
+
+        await this.page.waitForURL(/\/cxos\/[^\/]+\/clone/, { timeout: 15000 });
+        await this.page.waitForLoadState('domcontentloaded');
+        await this.waitForCreatePageLoaded().catch(() => {});
+        await this.page.waitForTimeout(1500);
+
+        // Pre-filled and valid → submit as-is (handles the Workflow-Summary popup).
+        await this.clickSubmit();
+        await expect(this.page).toHaveURL(/\/cxos\/[^\/]+\/overview/, { timeout: 25000 });
+        await this.page.waitForTimeout(1000);
+        console.log('[CXO] Clone submitted → new CXO on overview');
+    }
+
+    // ── CXO – Amend (More dropdown, Released CXOs) ────────────────────────────
+
+    /** More → Amend (Released CXO) → editable pre-filled form (/cxos/{id}/amend)
+     *  → make a real edit (append " Amended" to the title) → Submit → fill the
+     *  mandatory "Reason for amend" in the Workflow-Summary popup → popup Submit.
+     *  The CXO returns to its overview at Pending Approval; the caller approves
+     *  to Released. Same CXO id (amend edits in place, unlike Clone). */
+    async amendCxo(data) {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first(); // generic header More
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+
+        const amendOpt = this.page.locator(`xpath=${IL.intakeAmendOption}`).first();
+        await amendOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await amendOpt.click();
+
+        await this.page.waitForURL(/\/cxos\/[^\/]+\/amend/, { timeout: 15000 });
+        await this.page.waitForLoadState('domcontentloaded');
+        await this.waitForCreatePageLoaded().catch(() => {});
+        await this.page.waitForTimeout(1500);
+
+        // Make a real edit so the amend is meaningful — append to the title.
+        const current = await this.getTitleValue();
+        const newTitle = `${current} Amended`;
+        await this.typeTitle(newTitle);
+        await this.page.waitForTimeout(500);
+        this.lastAmendTitle = newTitle; // exposed so callers can assert it in Audit Logs
+
+        // Submit → Workflow-Summary popup with a mandatory "Reason for amend".
+        await this.page.locator(L.submitBtn).first().click();
+        await this.page.waitForTimeout(2000);
+
+        const reason = this.page.locator(`xpath=${IL.cxoAmendReasonField}`).first();
+        await reason.waitFor({ state: 'visible', timeout: 10000 });
+        await reason.fill('Amended by automation');
+        await this.page.waitForTimeout(500);
+
+        const popupSubmit = this.page.locator(`xpath=${IL.cxoAmendPopupSubmit}`).first();
+        await expect(popupSubmit).toBeEnabled({ timeout: 8000 });
+        await popupSubmit.click();
+        await expect(this.page).toHaveURL(/\/cxos\/[^\/]+\/overview/, { timeout: 25000 });
+        await this.page.waitForTimeout(1000);
+        console.log('[CXO] Amend submitted → overview (Pending Approval)');
+        return newTitle;
+    }
+
+    // ── CXO – Audit Logs (More dropdown) ──────────────────────────────────────
+
+    /** More → Audit Logs → wait for the dialog and return its text content.
+     *  The dialog lists field-level change history (or "No audit logs available"
+     *  when nothing is recorded). */
+    async openCxoAuditLogs() {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first(); // generic header More
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+
+        const opt = this.page.locator(`xpath=${IL.intakeAuditLogsOption}`).first();
+        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.click();
+
+        const dialog = this.page.locator(`xpath=${IL.auditLogsDialog}`).first();
+        await dialog.waitFor({ state: 'visible', timeout: 12000 });
+        await this.page.waitForTimeout(1200);
+        const text = (await dialog.innerText()) ?? '';
+        console.log(`[CXO] Audit Logs opened — content:\n${text.slice(0, 600)}`);
+        return text;
+    }
+
+    /** Assert the Audit Logs record the amend: the dialog is NOT empty and shows
+     *  each expected string (e.g. the changed title). Opens the dialog itself. */
+    async assertCxoAuditLogContains(texts = []) {
+        const body = await this.openCxoAuditLogs();
+        expect(body, 'Audit Logs should not be empty after an amend')
+            .not.toContain(IL.auditLogsEmptyMsg);
+        for (const t of texts) {
+            expect(body, `Audit Logs should record the amend change "${t}"`).toContain(t);
+        }
+        // Close the dialog.
+        const dialog = this.page.locator(`xpath=${IL.auditLogsDialog}`).first();
+        const close = dialog.getByRole('button', { name: /Close/i }).first();
+        if (await close.isVisible({ timeout: 2000 }).catch(() => false)) await close.click();
+        else await this.page.keyboard.press('Escape');
+    }
+
     // ── Intake Tab Navigation ─────────────────────────────────────────────────
 
     async clickIntakeTab() {
@@ -2163,6 +2576,94 @@ export class NSEFoundationActions {
             .toBeVisible({ timeout: 20000 });
     }
 
+    // ── Revert Pending Budget (More dropdown, Released CXOs) ──────────────────
+    // Lives on the parent CXO. The pending-budget row opens PRE-SELECTED with its
+    // Rollback Value pre-filled to the full Pending Value, so a full revert only
+    // needs Remarks + Submit. Same header More menu as the intake, so this works
+    // on either module's overview page.
+
+    /** More → Revert Pending Budget → (optionally override the amount in the
+     *  Rollback Value cell) → fill Remarks → Submit. With `amount` null the
+     *  pre-filled full Pending Value is used (revert everything). Throws if the
+     *  dialog reports nothing is pending, which the test should surface. */
+    async revertPendingBudget({ amount = null, remarks = 'Reverted by automation' } = {}) {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+
+        const opt = this.page.locator(`xpath=${IL.intakeRevertBudgetOption}`).first();
+        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.click();
+
+        const dialog = this.page.locator(`xpath=${IL.revertBudgetDialog}`).first();
+        await dialog.waitFor({ state: 'visible', timeout: 12000 });
+        await this.page.waitForTimeout(600);
+
+        // Guard: nothing to revert → fail loudly (setup problem, not a pass).
+        if (await dialog.getByText(IL.revertBudgetEmptyMsg, { exact: false })
+                .isVisible({ timeout: 2000 }).catch(() => false)) {
+            throw new Error('[RevertBudget] Dialog shows "No pending budget to revert" — the released CXO has no pending budget.');
+        }
+
+        // The single budget row (has the Rollback Value input) — opens pre-ticked.
+        const row = this.page.locator(`xpath=${IL.revertBudgetRow}`).first();
+        await row.waitFor({ state: 'visible', timeout: 8000 });
+        const checkbox = row.locator(`xpath=${IL.revertBudgetRowCheckbox}`).first();
+        if ((await checkbox.getAttribute('aria-checked').catch(() => null)) === 'false') {
+            await checkbox.click().catch(() => {});
+        }
+
+        const rollback = row.locator(`xpath=${IL.revertBudgetRollbackInput}`).first();
+        await rollback.waitFor({ state: 'visible', timeout: 8000 });
+        // Only override the pre-filled full amount when an explicit amount is given.
+        if (amount != null) {
+            await rollback.click();
+            await rollback.fill(String(amount));
+            await this.page.waitForTimeout(300);
+        }
+        const revertedAmount = (await rollback.inputValue().catch(() => '')) || String(amount ?? '');
+        console.log(`[RevertBudget] Rollback Value = ${revertedAmount}`);
+
+        // Remarks (required).
+        const remarksField = this.page.locator(`xpath=${IL.revertBudgetRemarks}`).first();
+        await remarksField.waitFor({ state: 'visible', timeout: 8000 });
+        await remarksField.fill(remarks);
+        await this.page.waitForTimeout(300);
+
+        // Submit — enabled once a row is selected, amount set, and remarks entered.
+        const submit = this.page.locator(`xpath=${IL.revertBudgetSubmit}`).first();
+        await expect(submit).toBeEnabled({ timeout: 8000 });
+        await submit.click();
+        await this.page.waitForTimeout(2500);
+        console.log(`[RevertBudget] Submitted revert of ${revertedAmount} with remarks "${remarks}"`);
+        // Dialog closes on success.
+        await dialog.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {});
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+        await this.page.waitForTimeout(1500);
+        return revertedAmount;
+    }
+
+    /** Re-open Revert Pending Budget and assert the full pending budget is gone
+     *  ("No pending budget to revert") — proving the revert persisted. */
+    async assertPendingBudgetReverted() {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        await this.page.locator(`xpath=${IL.intakeRevertBudgetOption}`).first().click();
+
+        const dialog = this.page.locator(`xpath=${IL.revertBudgetDialog}`).first();
+        await dialog.waitFor({ state: 'visible', timeout: 12000 });
+        await expect(dialog.getByText(IL.revertBudgetEmptyMsg, { exact: false }).first())
+            .toBeVisible({ timeout: 8000 });
+        console.log('[RevertBudget] Verified: no pending budget remains after revert');
+        // Close the dialog.
+        const cancel = dialog.getByRole('button', { name: /Cancel|Close/i }).first();
+        if (await cancel.isVisible({ timeout: 2000 }).catch(() => false)) await cancel.click();
+        else await this.page.keyboard.press('Escape');
+    }
+
     // ── Intake – Activity Log (clock icon) ────────────────────────────────────
 
     async openActivityLog() {
@@ -2753,6 +3254,83 @@ export class NSEFoundationActions {
             await this.page.waitForTimeout(2000);
         }
         await expect(this.page.locator(`xpath=${L.quotedStatusBadge}`).first()).toBeVisible({ timeout: 10000 });
+    }
+
+    // ── RFX — Reject during the approval workflow ─────────────────────────────
+    // A submitted sourcing event sits at Pending Approval with a header Reject
+    // button (same v4 header as CXO/Intake). The reject dialog needs a comment
+    // before its Reject confirm enables. If the Reject button is missing (step
+    // assigned to another approver) reassign to NSEF Support Admin and retry.
+    async rejectRfx(reason = 'Rejected by automation') {
+        const rejectBtn = this.page.locator(`xpath=${IL.intakeRejectBtn}`).first();
+
+        let ready = false;
+        for (let attempt = 0; attempt < 5 && !ready; attempt++) {
+            await this.page.waitForTimeout(1500);
+            if (await rejectBtn.isVisible({ timeout: 4000 }).catch(() => false)) { ready = true; break; }
+            if (attempt < 2) {
+                console.log(`[RFX] Reject button not visible — reloading (${attempt + 1}/2)...`);
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                continue;
+            }
+            if (attempt === 2) {
+                console.log('[RFX] Reassigning approver to NSEF Support Admin so Reject is available...');
+                await this.reassignWorkflowApprover('Reassigned for automated testing', 'RFX');
+                continue;
+            }
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+        }
+        await rejectBtn.waitFor({ state: 'visible', timeout: 8000 });
+        await rejectBtn.click();
+
+        const comments = this.page.locator(IL.intakeApproveComments).first();
+        await comments.waitFor({ state: 'visible', timeout: 10000 });
+        await comments.fill(reason);
+
+        const confirm = this.page.locator(`xpath=${IL.intakeRejectConfirm}`).first();
+        await confirm.waitFor({ state: 'visible', timeout: 8000 });
+        await confirm.click();
+        console.log('[RFX] Reject submitted');
+        await this.page.waitForTimeout(2000);
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+        await this.page.waitForTimeout(1500);
+    }
+
+    async assertSourcingStatusRejected() {
+        await expect(this.page.locator(`xpath=${IL.intakeStatusRejected}`).first())
+            .toBeVisible({ timeout: 20000 });
+    }
+
+    // ── RFX — Edit a Rejected RFX and resubmit ────────────────────────────────
+    // A Rejected RFX is editable via More → Edit (it drops back to an editable
+    // Draft form, pre-filled with the prior values). Resubmitting re-triggers the
+    // approval workflow; the caller then approves it to live/Released.
+    async editAndResubmitRejectedRfx() {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const editOpt = this.page.locator(`xpath=//*[@role='menuitem'][normalize-space(.)='Edit']`).first();
+        await editOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await editOpt.click();
+
+        await this.page.waitForURL(/\/quote-requests\/[^\/]+\/edit/, { timeout: 15000 }).catch(() => {});
+        await this.page.waitForLoadState('domcontentloaded');
+        await this.page.waitForTimeout(2500);
+
+        // The form is pre-filled and valid → resubmit as-is (Submit + the
+        // "Process Request" confirmation popup, same as a fresh sourcing event).
+        await this.submitSourcingEvent();
+        await this.page.waitForTimeout(2000);
+        console.log('[RFX] Rejected RFX edited & resubmitted → Pending Approval');
+    }
+
+    async assertSourcingStatusReleased() {
+        // A live/approved RFX no longer shows the Pending Approval badge; its
+        // header status reads Released (accept Live/Active/Published as synonyms).
+        await expect(this.page.locator(
+            `xpath=//*[normalize-space(text())='Released' or normalize-space(text())='Live' or normalize-space(text())='Active' or normalize-space(text())='Published']`
+        ).first()).toBeVisible({ timeout: 20000 });
     }
 
     // ── RFX — More → Foreclose ────────────────────────────────────────────────
@@ -3871,6 +4449,142 @@ export class NSEFoundationActions {
         await expect(this.page.locator(`xpath=${L.paymentCompletedStatus}`).first())
             .toBeVisible({ timeout: 10000 });
         console.log(`[PAY] Payment ${utr} shows status Completed`);
+    }
+
+    // ── Org Settings › User Management (Tracks — department access) ────────────
+    // VERIFIED against the live UAT env (2026-07-07). The v4 top-bar gear opens
+    // Org Settings in a NEW TAB on the admin subdomain
+    // (nse-capp-admin-uat.aerchain.io). We keep a handle to the original v4
+    // dashboard tab (`this.dashboardPage`) and switch `this.page` to the admin
+    // tab for the User-Management steps, then close the admin tab and switch
+    // back for the "home → dashboard" step.
+
+    /** Click the v4 top-bar gear ("Open Settings"). Org Settings opens in a NEW
+     *  browser tab — capture it and make it the active page. */
+    async clickOrgSettings() {
+        const context = this.page.context();
+        this.dashboardPage = this.page; // remember the v4 dashboard tab
+        const [adminPage] = await Promise.all([
+            context.waitForEvent('page', { timeout: 20000 }),
+            this.page.locator(L.orgSettingsGearBtn).first().click(),
+        ]);
+        await adminPage.waitForLoadState('domcontentloaded');
+        await adminPage.waitForLoadState('networkidle').catch(() => {});
+        this.page = adminPage; // subsequent steps run on the admin tab
+        console.log('[ADMIN] Opened Org Settings (new tab)');
+    }
+
+    /** Expand the "User Management" accordion in the admin sidebar. */
+    async clickUserManagement() {
+        const heading = this.page.locator(`xpath=${L.adminUserMgmtHeading}`).first();
+        await heading.waitFor({ state: 'visible', timeout: 15000 });
+        await heading.click();
+        // Wait for the revealed "Users" child link to appear
+        await this.page.locator(`xpath=${L.adminUsersLink}`).first()
+            .waitFor({ state: 'visible', timeout: 10000 });
+        console.log('[ADMIN] Expanded User Management');
+    }
+
+    async clickUsers() {
+        await this.page.locator(`xpath=${L.adminUsersLink}`).first().click();
+        await this.page.waitForURL(/\/user-management\/users/, { timeout: 15000 });
+        // Wait for the users table to render
+        await this.page.locator('table tbody tr').first()
+            .waitFor({ state: 'visible', timeout: 15000 });
+        console.log('[ADMIN] Opened Users list');
+    }
+
+    /** Open a user record by its display name — clicking the row opens the
+     *  "Update User" drawer. The drawer is a MUI modal with a full-viewport
+     *  backdrop, so once open the row is no longer clickable; never blindly
+     *  re-click. Wait generously for the drawer; retry only after Escaping any
+     *  backdrop. */
+    async openUserByName(name) {
+        const row = this.page.locator(`xpath=${L.adminUserRowByName(name)}`).first();
+        const drawer = this.page.getByRole('heading', { name: 'Update User' });
+        await row.waitFor({ state: 'visible', timeout: 15000 });
+        await row.click();
+        if (await drawer.isVisible({ timeout: 12000 }).catch(() => false)) {
+            console.log(`[ADMIN] Opened user "${name}" (Update User drawer)`);
+            return;
+        }
+        // Retry once: clear any stray backdrop first so the row is clickable again.
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(500);
+        await row.click();
+        await drawer.waitFor({ state: 'visible', timeout: 12000 });
+        console.log(`[ADMIN] Opened user "${name}" (Update User drawer, retry)`);
+    }
+
+    /** Adjust the "Full Access" checkbox beside "Select Department", exercising
+     *  the Update flow. Behaviour depends on the box's initial state (dictated):
+     *   • Initially UNCHECKED → check → Update → uncheck → Update, then close the
+     *     drawer. (Leaves it unchecked & saved, having exercised Update twice.)
+     *   • Initially CHECKED → just uncheck; the caller then closes the settings
+     *     tab (no Update / drawer close needed).
+     *  Either way the caller follows with clickHomeIcon() + waitForUserDashboard(). */
+    async handleDepartmentFullAccess() {
+        const box = this.page.locator(`xpath=${L.fullAccessCheckboxFor('Select Department')}`).first();
+        await box.waitFor({ state: 'attached', timeout: 10000 });
+        const startedChecked = await box.isChecked();
+
+        if (!startedChecked) {
+            console.log('[ADMIN] Dept Full Access started UNCHECKED → check→Update→uncheck→Update');
+            await this._setDeptFullAccess(box, true);   // check
+            await this.clickUpdate();
+            await this._setDeptFullAccess(box, false);  // uncheck
+            await this.clickUpdate();
+            await this.closeUserPanel();
+        } else {
+            console.log('[ADMIN] Dept Full Access started CHECKED → uncheck, then close settings tab');
+            await this._setDeptFullAccess(box, false);  // uncheck; caller closes the tab
+        }
+    }
+
+    /** Set the given checkbox to `checked` (click only if the state differs). */
+    async _setDeptFullAccess(box, checked) {
+        if ((await box.isChecked()) !== checked) {
+            await box.click();
+        }
+        if (checked) await expect(box).toBeChecked({ timeout: 5000 });
+        else         await expect(box).not.toBeChecked({ timeout: 5000 });
+    }
+
+    async clickUpdate() {
+        await this.page.locator(`xpath=${L.updateBtn}`).first().click();
+        // Confirm the save landed
+        await expect(this.page.getByText(L.userUpdatedToast, { exact: false }).first())
+            .toBeVisible({ timeout: 10000 });
+        console.log('[ADMIN] Clicked Update — "User updated successfully"');
+    }
+
+    /** Close the "Update User" drawer via its cross (X) icon. */
+    async closeUserPanel() {
+        await this.page.locator(L.panelCloseIcon).first().click();
+        await this.page.getByRole('heading', { name: 'Update User' })
+            .waitFor({ state: 'hidden', timeout: 10000 });
+        console.log('[ADMIN] Closed user drawer');
+    }
+
+    /** "Home" given the new-tab reality: close the Org Settings tab and return
+     *  to the still-open v4 dashboard tab. */
+    async clickHomeIcon() {
+        if (this.dashboardPage && this.page !== this.dashboardPage) {
+            await this.page.close();
+            this.page = this.dashboardPage;
+            await this.page.bringToFront();
+        }
+        console.log('[ADMIN] Returned to v4 dashboard tab');
+    }
+
+    /** Wait until the user dashboard has rendered ("User's Dashboard" heading). */
+    async waitForUserDashboard() {
+        await this.page.waitForLoadState('networkidle').catch(() => {});
+        await expect(this.page.getByText("User's Dashboard", { exact: false }).first())
+            .toBeVisible({ timeout: 30000 });
+        await this.page.locator('tbody tr td').first()
+            .waitFor({ state: 'visible', timeout: 30000 }).catch(() => {});
+        console.log('[ADMIN] User dashboard displayed');
     }
 
 }

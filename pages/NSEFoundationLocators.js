@@ -306,9 +306,16 @@ export const NSEFoundation_Locators = {
     invoiceTransactionsTab:    `//*[normalize-space(text())='Transactions']`,
     paymentCompletedStatus:    `//*[normalize-space(text())='Completed']`,
 
-    // ── Submit / Cancel ───────────────────────────────────────────────────────
+    // ── Submit / Cancel / Save-as-Draft ───────────────────────────────────────
     submitBtn: 'button:has-text("Submit")',
     cancelBtn: 'button:has-text("Cancel")',
+    // Save on the CXO create page persists the CXO WITHOUT submitting it into the
+    // approval workflow → toast "CXO request saved successfully" → the CXO lands
+    // on /cxos/{id}/overview in Draft status. It is an ICON-ONLY button (no text
+    // or aria-label) sitting immediately after the "AI Polish" button in the
+    // header action group — anchor on AI Polish and take the next sibling button.
+    cxoSaveDraftBtn: `xpath=//button[normalize-space(.)='AI Polish']/following-sibling::button[1]`,
+    cxoSavedToast: 'saved successfully',
 
     // ── CXO create – validation (negative / edge tests) ───────────────────────
     // After an invalid Submit, each section with missing mandatory fields shows
@@ -332,5 +339,37 @@ export const NSEFoundation_Locators = {
 
     // ── Post-submit assertions ────────────────────────────────────────────────
     cxoStatusBadge: '[class*="badge"], [class*="status"], span:has-text("Submitted"), span:has-text("Draft")',
+
+    // ── Org Settings › User Management (Tracks — department access) ────────────
+    // VERIFIED against the live UAT env (2026-07-07). The v4 top-bar gear
+    // ("Open Settings") opens Org Settings in a NEW BROWSER TAB on a different
+    // subdomain (https://nse-capp-admin-uat.aerchain.io). Every step from
+    // User Management onward runs on that admin tab; "home" = close the admin
+    // tab and return to the still-open v4 dashboard tab.
+
+    // v4 top-bar gear that launches the Org Settings tab
+    orgSettingsGearBtn:  'button[aria-label="Open Settings"]',
+    // Admin sidebar: "User Management" is an expandable accordion heading (a button)
+    adminUserMgmtHeading: '//button[.//p[normalize-space(.)="User Management"] or normalize-space(.)="User Management"]',
+    // Its "Users" child link (revealed after expanding)
+    adminUsersLink:      '//a[@href="/user-management/users"]',
+    // A user row in the Users table, matched by display name (opens "Update User" drawer)
+    adminUserRowByName:  (name) => `//table//td[normalize-space(.)="${name}"]`,
+    // The "Update User" drawer — signalled by its h6 heading (a clean leaf; note
+    // XPath normalize-space(text())="Update User" wrongly returns 0 here, so
+    // match on normalize-space(.) instead).
+    updateUserDrawer:    '//h6[normalize-space(.)="Update User"]',
+    // "Full Access" checkbox beside a given dimension's "Select <Dim>" field.
+    // Each dimension row is a MuiStack holding the "Select <Dim>" label + exactly
+    // one checkbox. Pass the label text, e.g. "Select Department".
+    fullAccessCheckboxFor: (dimensionLabel) =>
+        `//label[normalize-space(.)="${dimensionLabel}"]/ancestor::div[contains(@class,"MuiStack-root")][1]//input[@type="checkbox"]`,
+    // Update button inside the drawer (disabled until a field changes; exact text
+    // avoids matching the "Update User" heading)
+    updateBtn:           '//div[contains(@class,"MuiPaper-root")]//button[normalize-space(.)="Update"]',
+    // Success toast after Update
+    userUpdatedToast:    'User updated successfully',
+    // Cross (X) icon closing the drawer — MUI icon button wrapping a lucide-x svg
+    panelCloseIcon:      'div.MuiPaper-root button:has(svg.lucide-x)',
 
 };

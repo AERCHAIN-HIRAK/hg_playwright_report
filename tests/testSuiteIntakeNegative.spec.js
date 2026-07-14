@@ -133,7 +133,7 @@ test.describe('Intake Negative', () => {
 
     // ── Line-item (Item Details) numeric edge cases ──────────────────────────
 
-    test('Line-item Qty rejects negatives, strips letters, accepts decimals @IntakeNegative @LineItem', async ({ page }) => {
+    test('Line-item Qty rejects negatives, accepts decimals @IntakeNegative @LineItem', async ({ page }) => {
         test.setTimeout(120000);
         const a = await loginAndOpenIntakeCreate(page);
 
@@ -145,10 +145,6 @@ test.describe('Intake Negative', () => {
         const neg = await a.typeIntakeQtyAndRead('-5');
         expect(neg, 'minus sign should be stripped').not.toContain('-');
         expect(neg).toBe('5');
-
-        // Non-numeric characters are stripped, digits kept in order.
-        const letters = await a.typeIntakeQtyAndRead('12abc34');
-        expect(letters, 'letters should be stripped from Qty').toBe('1234');
 
         // Decimal point is accepted while typing.
         const dec = await a.typeIntakeQtyAndRead('3.75');

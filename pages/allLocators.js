@@ -358,6 +358,8 @@ exports.intakeCreate_Locators = {
     // Status badges beside the code in the overview header.
     intakeStatusRejected: "//*[normalize-space(text())='Rejected']", // xpath
     intakeStatusDraft: "//*[normalize-space(text())='Draft']", // xpath
+    // CXO overview header status badge while awaiting workflow approvals.
+    cxoStatusPendingApproval: "//*[normalize-space(text())='Pending Approval']", // xpath
 
     // ── More dropdown → Workflow Stages (slide-over "Workflow Steps" panel) ────
     intakeMoreBtn: "//button[normalize-space(.)='More']", // xpath — header More dropdown trigger
@@ -408,6 +410,52 @@ exports.intakeCreate_Locators = {
     intakeMarkProcessedOption: "//*[normalize-space(text())='Mark Processed']", // xpath — menu item
     intakeMarkProcessedReason: "//*[@role='dialog']//*[self::textarea or self::input]", // xpath — reason field
     intakeMarkProcessedSubmit: "//*[@role='dialog']//button[normalize-space(text())='Submit']", // xpath — submit
-    intakeStatusProcessed: "//*[normalize-space(text())='Processed']" // xpath — status badge
+    intakeStatusProcessed: "//*[normalize-space(text())='Processed']", // xpath — status badge
+    // On a Released CXO the More menu labels this action "Process" (not "Mark
+    // Processed"); it opens a "Process CXO" dialog with the SAME reason field +
+    // Submit as intake, and Submit flips the status to Processed. Scoped to
+    // menuitem so it won't match "Non-CSR Process" text elsewhere on the page.
+    cxoProcessOption: "//*[@role='menuitem'][normalize-space(.)='Process']", // xpath — menu item
+    // On a Released CXO the More menu also exposes "Cancel"; it opens a "Cancel
+    // CXO" dialog with the SAME reason field + Submit, and Submit flips the status
+    // to "Cancelled". Scoped to menuitem so it won't match the dialog's own
+    // Cancel button or the create-page Cancel button.
+    cxoCancelOption: "//*[@role='menuitem'][normalize-space(.)='Cancel']", // xpath — menu item
+    cxoStatusCancelled: "//*[normalize-space(text())='Cancelled']", // xpath — status badge
+
+    // ── More dropdown → Revert Pending Budget (Released CXOs) ─────────────────
+    // Lives on the parent CXO (NOT the child intake). Opens a "Revert Pending
+    // Budget" dialog with a budget table (columns: <checkbox> | Budget Item Code
+    // | Transaction Value | Consumed Value | Reverted Value | Pending Value |
+    // Rollback Value) plus a required Remarks textarea and Cancel/Submit.
+    // A released CXO's pending budget row comes PRE-SELECTED with its Rollback
+    // Value pre-filled to the full Pending Value, so Submit is enabled once
+    // Remarks are entered. After a full revert the dialog reports "No pending
+    // budget to revert". Same header More menu on CXO and intake, so these are
+    // module-agnostic.
+    intakeRevertBudgetOption:   "//*[normalize-space(text())='Revert Pending Budget']", // xpath — menu item
+    revertBudgetDialog:         "//*[@role='dialog'][.//*[normalize-space(text())='Revert Pending Budget']]", // xpath — the dialog
+    revertBudgetEmptyMsg:       "No pending budget to revert", // text — shown when nothing is revertable
+    revertBudgetRow:            "//*[@role='dialog']//tbody/tr[.//input]", // xpath — a budget row (has the Rollback Value input; excludes the empty-message row)
+    revertBudgetRowCheckbox:    ".//*[@role='checkbox']", // xpath (relative to a row) — the row tick (custom checkbox, pre-checked)
+    revertBudgetRollbackInput:  ".//td[last()]//input", // xpath (relative to a row) — Rollback Value editor (input type=number)
+    revertBudgetRemarks:        "//*[@role='dialog']//textarea[contains(@placeholder,'remark')]", // xpath — Remarks *
+    revertBudgetSubmit:         "//*[@role='dialog']//button[normalize-space(text())='Submit']", // xpath — submit
+
+    // ── More dropdown → Amend (Released CXOs) ────────────────────────────────
+    // Amend opens the editable pre-filled form at /cxos/{id}/amend (same id).
+    // On Submit a "Workflow Summary" popup appears with a MANDATORY "Reason for
+    // amend" textarea; the popup Submit stays disabled until it's filled. After
+    // submit the CXO returns to its overview at Pending Approval (re-approval).
+    // (Reuses the generic intakeMoreBtn + intakeAmendOption for the menu.)
+    cxoAmendReasonField:        "(//*[contains(normalize-space(.),'Reason for amend')]/following::textarea)[1]", // xpath — popup reason *
+    cxoAmendPopupSubmit:        "//*[@role='dialog']//button[normalize-space(text())='Submit']", // xpath — popup submit
+
+    // ── More dropdown → Audit Logs ───────────────────────────────────────────
+    // Opens an "Audit Logs" dialog listing field-level change history. When
+    // there is nothing recorded it shows "No audit logs available".
+    // (Reuses the generic intakeMoreBtn + intakeAuditLogsOption for the menu.)
+    auditLogsDialog:            "//*[@role='dialog'][.//*[normalize-space(text())='Audit Logs']]", // xpath — the dialog
+    auditLogsEmptyMsg:          "No audit logs available" // text — shown when nothing is recorded
 
 };

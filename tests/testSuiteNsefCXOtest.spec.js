@@ -233,6 +233,213 @@ test.describe('CXO Create — Edge Cases', () => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
+// CXO — REVERT PENDING BUDGET  (More dropdown, Released CXOs)
+//
+// Reverting pending budget is a parent-CXO action (not on the child intake).
+// When a CXO is Released its line-item value becomes committed/pending budget;
+// More → Revert Pending Budget opens a dialog with that budget PRE-SELECTED and
+// its Rollback Value pre-filled to the full Pending Value, needing only Remarks
+// to Submit. After a full revert the CXO reports "No pending budget to revert".
+// ═════════════════════════════════════════════════════════════════════════════
+
+test.describe('CXO — Revert Pending Budget', () => {
+
+    test('Create + release a CXO → More → Revert Pending Budget → amount + reason → Submit @CXO @RevertBudget', async ({ page }) => {
+        test.setTimeout(600000); // 10 min — create + approve to Released + revert
+
+        const a = await loginAndOpenCxoCreate(page);
+
+        // Build + approve a CXO to Released so it holds a pending budget.
+        await a.createAndReleaseCxo(data);
+        await a.takeScreenshot('cxo_revert_budget_released');
+
+        // More → Revert Pending Budget → (full pending amount) + reason → Submit.
+        await a.revertPendingBudget({ remarks: 'Reverted by automation' });
+        await a.takeScreenshot('cxo_revert_budget_submitted');
+
+        // Re-open the dialog: the full pending budget was reverted → none remains.
+        await a.assertPendingBudgetReverted();
+        await a.takeScreenshot('cxo_revert_budget_verified');
+    });
+
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// CXO — MORE DROPDOWN ACTIONS  (on a Released CXO)
+//
+// Once a CXO is Released its header More menu exposes several actions (Clone,
+// Amend, Reassign User, Regenerate/Download Document, Audit Logs, Workflow
+// Stages, Cancel, Process). Each test builds + releases a fresh CXO, then
+// exercises one More-dropdown action end-to-end.
+// ═════════════════════════════════════════════════════════════════════════════
+
+test.describe('CXO — More Dropdown (Released CXO)', () => {
+
+    test('Clone a Released CXO → pre-filled clone form → Submit → approve until Released @CXO @Clone', async ({ page }) => {
+        test.setTimeout(900000); // 15 min — create+release source CXO, then clone + approve to Released
+
+        const a = await loginAndOpenCxoCreate(page);
+
+        // Build + approve a source CXO to Released.
+        await a.createAndReleaseCxo(data);
+        await a.takeScreenshot('cxo_clone_source_released');
+
+        // More → Clone → pre-filled clone form → Submit (Workflow-Summary popup).
+        await a.cloneCxo();
+        await a.takeScreenshot('cxo_clone_submitted');
+
+        // Approve the cloned CXO through all stages → Released.
+        await a.approveAllStages('Approved by automation');
+        await a.assertCxoStatusReleased();
+        await a.takeScreenshot('cxo_clone_released');
+    });
+
+    test('Amend a Released CXO → edit title → Submit with reason → approve until Released @CXO @Amend', async ({ page }) => {
+        test.setTimeout(900000); // 15 min — create+release CXO, then amend + re-approve to Released
+
+        const a = await loginAndOpenCxoCreate(page);
+
+        // Build + approve a CXO to Released.
+        await a.createAndReleaseCxo(data);
+        await a.takeScreenshot('cxo_amend_source_released');
+
+        // More → Amend → editable form → change title → Submit + "Reason for amend".
+        const amendedTitle = await a.amendCxo(data);
+        await a.takeScreenshot('cxo_amend_submitted');
+
+        // The amend re-triggers the workflow → approve through all stages → Released.
+        await a.approveAllStages('Approved by automation');
+        await a.assertCxoStatusReleased();
+        await a.takeScreenshot('cxo_amend_released');
+
+        // The amend change must be recorded in the Audit Logs (More → Audit Logs).
+        await a.assertCxoAuditLogContains([amendedTitle]);
+        await a.takeScreenshot('cxo_amend_audit_log');
+    });
+
+    test('Mark Processed a Released CXO → More → Mark Processed → reason → status Processed @CXO @MarkProcessed', async ({ page }) => {
+        test.setTimeout(600000); // 10 min — create + approve to Released + mark processed
+
+        const a = await loginAndOpenCxoCreate(page);
+
+        // Build + approve a CXO to Released (Mark Processed is only offered then).
+        await a.createAndReleaseCxo(data);
+        await a.takeScreenshot('cxo_markprocessed_released');
+
+        // More → Mark Processed → reason → Submit → status flips to Processed.
+        await a.markCxoProcessed('Marked processed by automation');
+        await a.assertCxoStatusProcessed();
+        await a.takeScreenshot('cxo_markprocessed_done');
+    });
+
+    test('Cancel a Released CXO → More → Cancel → reason → status Cancelled @CXO @Cancel', async ({ page }) => {
+        test.setTimeout(600000); // 10 min — create + approve to Released + cancel
+
+        const a = await loginAndOpenCxoCreate(page);
+
+        // Build + approve a CXO to Released (Cancel is only offered then).
+        await a.createAndReleaseCxo(data);
+        await a.takeScreenshot('cxo_cancel_released');
+
+        // More → Cancel → reason → Submit → status flips to Cancelled.
+        await a.cancelCxo('Cancelled by automation');
+        await a.assertCxoStatusCancelled();
+        await a.takeScreenshot('cxo_cancel_done');
+    });
+
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// CXO — REGENERATE + DOWNLOAD DOCUMENT  (More dropdown, per status)
+//
+// The CXO detail-page More menu exposes Regenerate Document and Download
+// Document. For each lifecycle status we reach the status, Regenerate the
+// document, reload, Download it, parse the PDF, and assert the Status line
+// (case/separator-insensitive) plus that the CXO's header field values render.
+//
+// Statuses reached:
+//  • Draft            — fill the create form then Save (no workflow submit).
+//  • Pending Approval — fill + Submit (enters the approval workflow).
+//  • Released         — Submit + approve every workflow stage.
+//  • Rejected         — Submit then Reject during a workflow step.
+// ═════════════════════════════════════════════════════════════════════════════
+
+test.describe('CXO — Document (Regenerate + Download)', () => {
+
+    // Header field values that must render in every CXO PDF (from shared data).
+    const DOC_FIELDS = [
+        data.cxo.title,               // Subject
+        data.cxo.department,          // Premises
+        data.cxo.expenseNature,       // Non-CSR Process
+        data.cxo.currency,            // INR - Indian Rupee
+        data.cxo.function,            // Legal
+        data.cxo.cxoType,             // Non-Financial
+    ];
+
+    test('Draft: Regenerate → Download → PDF shows correct status + fields @CXO @Document', async ({ page }) => {
+        test.setTimeout(360000);
+
+        const a = await loginAndOpenCxoCreate(page);
+        await a.createCxoDraft(data);            // → Draft
+        await a.assertCxoStatusDraft();
+
+        await a.regenerateCxoDocument();
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(2500);
+
+        await a.assertCxoDocumentStatusAndFields('Draft', DOC_FIELDS);
+        await a.takeScreenshot('cxo_doc_draft');
+    });
+
+    test('Pending Approval: Regenerate → Download → PDF shows correct status + fields @CXO @Document', async ({ page }) => {
+        test.setTimeout(360000);
+
+        const a = await loginAndOpenCxoCreate(page);
+        await a.createAndSubmitCxo(data);        // → Pending Approval
+        await a.assertCxoStatusPendingApproval();
+
+        await a.regenerateCxoDocument();
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(2500);
+
+        await a.assertCxoDocumentStatusAndFields('Pending Approval', DOC_FIELDS);
+        await a.takeScreenshot('cxo_doc_pending_approval');
+    });
+
+    test('Released: Regenerate → Download → PDF shows correct status + fields @CXO @Document', async ({ page }) => {
+        test.setTimeout(600000); // 10 min — full approval to Released
+
+        const a = await loginAndOpenCxoCreate(page);
+        await a.createAndReleaseCxo(data);       // → Released
+        await a.assertCxoStatusReleased();
+
+        await a.regenerateCxoDocument();
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(2500);
+
+        await a.assertCxoDocumentStatusAndFields('Released', DOC_FIELDS);
+        await a.takeScreenshot('cxo_doc_released');
+    });
+
+    test('Rejected: Regenerate → Download → PDF shows correct status + fields @CXO @Document', async ({ page }) => {
+        test.setTimeout(420000);
+
+        const a = await loginAndOpenCxoCreate(page);
+        await a.createAndSubmitCxo(data);        // → Pending Approval
+        await a.rejectCxo('Rejected by automation'); // → Rejected
+        await a.assertCxoStatusRejected();
+
+        await a.regenerateCxoDocument();
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(2500);
+
+        await a.assertCxoDocumentStatusAndFields('Rejected', DOC_FIELDS);
+        await a.takeScreenshot('cxo_doc_rejected');
+    });
+
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
 // CXO LISTING PAGE  (/cxos)
 //
 // Positive / negative / edge coverage for the CXO listing: page structure,

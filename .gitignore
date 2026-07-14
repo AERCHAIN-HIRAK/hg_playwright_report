@@ -1,7 +1,6 @@
 node_modules/
 playwright-report/
 test-results/
-.env
 auth.json
 screenshots/
 .claude/

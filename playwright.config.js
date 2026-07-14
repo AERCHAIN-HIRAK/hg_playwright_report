@@ -10,23 +10,23 @@ export default defineConfig({
   ['json', { outputFile: 'test-results/results.json' }]
   ],
 
-  // Whole-test budget. A test still gets up to 120s overall, but no single
+  // Whole-test budget. A test still gets up to 30s overall, but no single
   // locator interaction below is allowed to stall the run.
-  timeout: 120000,
+  timeout: 30000,
 
   // Auto-retrying assertions (expect(locator).toBeVisible(), etc.) give up
-  // after 30s instead of waiting the full test timeout.
+  // after 5s instead of waiting the full test timeout.
   expect: {
-    timeout: 30000,
+    timeout: 5000,
   },
 
   use: {
     headless: false,
-    // If a locator can't be acted on (not found / not actionable) within 30s,
+    // If a locator can't be acted on (not found / not actionable) within 5s,
     // the action throws → the test is marked failed → artifacts below are
     // captured. This stops the "error page shown but browser hangs open" case.
-    actionTimeout: 30000,
-    navigationTimeout: 30000,
+    actionTimeout: 5000,
+    navigationTimeout: 5000,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     // Trace on failure even if a run forgets the `--trace on` CLI flag.
@@ -43,7 +43,7 @@ export default defineConfig({
     {
       name: 'tests',
       // Exclude the NSE Foundation specs — they have their own login
-      testMatch: /testSuite(?!NSEFhappyPATHS|NsefCXOtest|IntakeNegative).*\.spec\.js/,
+      testMatch: /testSuite(?!NSEFhappyPATHS|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests).*\.spec\.js/,
       use: {
         storageState: 'auth.json',
       },
@@ -57,7 +57,7 @@ export default defineConfig({
 
     {
       name: 'nsef-tests',
-      testMatch: /testSuite(NSEFhappyPATHS|NsefCXOtest|IntakeNegative)\.spec\.js/,
+      testMatch: /testSuite(NSEFhappyPATHS|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests)\.spec\.js/,
       // Reuse the one-time NSEF login captured by nsef-setup.
       use: {
         storageState: 'auth.nsef.json',

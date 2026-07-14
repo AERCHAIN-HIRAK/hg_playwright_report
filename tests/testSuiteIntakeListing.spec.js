@@ -4,7 +4,7 @@ import data from '../pages/IntakeListingData.json';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Intake Listing Page — Full Coverage
-// Session loaded from auth.json (setup project dependency).
+// Session loaded from auth.nsef.json (nsef-setup project dependency).
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Aerchain NSE - Intake Listing Page', () => {
@@ -55,29 +55,24 @@ test.describe('Aerchain NSE - Intake Listing Page', () => {
     // =========================================================================
     test.describe('Status Cards', () => {
 
-        test('Draft card shows a numeric count @StatusCard', async () => {
-            const count = await listing.getStatusCardCount('Draft');
-            expect(count).toBeGreaterThanOrEqual(0);
+        test('Draft card is visible @StatusCard', async () => {
+            await listing.verifyStatusCardVisible('Draft');
         });
 
-        test('Awaiting Actions card shows a numeric count @StatusCard', async () => {
-            const count = await listing.getStatusCardCount('Awaiting Actions');
-            expect(count).toBeGreaterThanOrEqual(0);
+        test('Awaiting Actions card is visible @StatusCard', async () => {
+            await listing.verifyStatusCardVisible('Awaiting Actions');
         });
 
-        test('Active/Released card shows a numeric count @StatusCard', async () => {
-            const count = await listing.getStatusCardCount('Active/Released');
-            expect(count).toBeGreaterThanOrEqual(0);
+        test('Active/Released card is visible @StatusCard', async () => {
+            await listing.verifyStatusCardVisible('Active/Released');
         });
 
-        test('Completed/Successful card shows a numeric count @StatusCard', async () => {
-            const count = await listing.getStatusCardCount('Completed/Successful');
-            expect(count).toBeGreaterThanOrEqual(0);
+        test('Completed/Successful card is visible @StatusCard', async () => {
+            await listing.verifyStatusCardVisible('Completed/Successful');
         });
 
-        test('Cancelled/Rejected card shows a numeric count @StatusCard', async () => {
-            const count = await listing.getStatusCardCount('Cancelled/Rejected');
-            expect(count).toBeGreaterThanOrEqual(0);
+        test('Cancelled/Rejected card is visible @StatusCard', async () => {
+            await listing.verifyStatusCardVisible('Cancelled/Rejected');
         });
 
         test('clicking a status card refreshes the table @StatusCard', async () => {

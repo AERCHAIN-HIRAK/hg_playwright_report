@@ -127,6 +127,17 @@ export class intakeListingActions {
         return match ? parseInt(match[0], 10) : 0;
     }
 
+    async verifyStatusCardVisible(cardName) {
+        const map = {
+            'Draft':                L.statusCard_Draft,
+            'Awaiting Actions':     L.statusCard_AwaitingActions,
+            'Active/Released':      L.statusCard_ActiveReleased,
+            'Completed/Successful': L.statusCard_Completed,
+            'Cancelled/Rejected':   L.statusCard_Cancelled,
+        };
+        await expect(this.page.locator(map[cardName]).first()).toBeVisible();
+    }
+
     // ── Tabs ──────────────────────────────────────────────────────────────────
 
     async clickTab(tabName) {
@@ -369,13 +380,14 @@ export class intakeListingActions {
 
     async navigateBack() {
         await this.page.goBack({ waitUntil: 'domcontentloaded' });
-        await this.page.waitForURL(/\/intakes$/, { timeout: 15000 });
-        // The create page shows an "Unsaved Changes" dialog that intercepts back navigation.
-        // Click "Leave without saving" to confirm the navigation.
+        // The create page shows an "Unsaved Changes" dialog that intercepts back
+        // navigation — the URL stays on the create page until it's dismissed.
+        // Click "Leave without saving" FIRST, then wait for the listing URL.
         const leaveBtn = this.page.getByRole('button', { name: 'Leave without saving' });
         if (await leaveBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
             await leaveBtn.click();
         }
+        await this.page.waitForURL(/\/intakes$/, { timeout: 15000 });
         await this.page.locator('tbody tr td').first().waitFor({ state: 'visible', timeout: 30000 });
     }
 
