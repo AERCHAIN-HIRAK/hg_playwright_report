@@ -42,8 +42,8 @@ export default defineConfig({
 
     {
       name: 'tests',
-      // Exclude the NSE Foundation specs — they have their own login
-      testMatch: /testSuite(?!NSEFhappyPATHS|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests).*\.spec\.js/,
+      // Exclude the NSE Foundation + Supplier specs — they have their own login
+      testMatch: /testSuite(?!NSEFhappyPATHS|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests|SupplierPortal|allmodulesrejectedit).*\.spec\.js/,
       use: {
         storageState: 'auth.json',
       },
@@ -57,12 +57,27 @@ export default defineConfig({
 
     {
       name: 'nsef-tests',
-      testMatch: /testSuite(NSEFhappyPATHS|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests)\.spec\.js/,
+      testMatch: /testSuite(NSEFhappyPATHS|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests|allmodulesrejectedit)\.spec\.js/,
       // Reuse the one-time NSEF login captured by nsef-setup.
       use: {
         storageState: 'auth.nsef.json',
       },
       dependencies: ['nsef-setup'],
+    },
+
+    {
+      name: 'supplier-setup',
+      testMatch: /auth\.supplier\.setup\.js/,
+    },
+
+    {
+      name: 'supplier-tests',
+      testMatch: /testSuiteSupplierPortal\.spec\.js/,
+      // Combined CAPP + SAPP session so both portals are authenticated.
+      use: {
+        storageState: 'auth.supplier.json',
+      },
+      dependencies: ['supplier-setup'],
     }
 
   ]

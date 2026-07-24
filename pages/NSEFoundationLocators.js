@@ -167,7 +167,7 @@ export const NSEFoundation_Locators = {
     reassignUserDropdown:    `(//*[@role='dialog']//button[@aria-haspopup='dialog'])[1]`,
     reassignAdminOption:     `[data-value="NSEF Support Admin"]`,
     reassignReasonField:     `//*[@role='dialog']//textarea`,
-    reassignSubmitBtn:       `//*[@role='dialog']//button[normalize-space(text())='Reassign'] | //*[@role='dialog']//button[normalize-space(text())='Submit']`,
+    reassignSubmitBtn:       `//*[@role='dialog']//button[normalize-space(.)='Reassign'] | //*[@role='dialog']//button[normalize-space(.)='Submit']`,
     rfxAwardsTab:            `//*[@role='tab' or @data-slot='tabs-trigger'][contains(normalize-space(.),'Awards')]`,
     awardedStatusBadge:      `//*[normalize-space(text())='Awarded']`,
     requisitionProcessing:   `//*[contains(normalize-space(text()),'Processing')]`,
@@ -249,6 +249,17 @@ export const NSEFoundation_Locators = {
     grnLineItemColHeader: (text) => `//*[@role='columnheader'][contains(normalize-space(.),'${text}')]`,
     // GRN terminal state after approval
     grnInwardedStatus:    `//*[normalize-space(text())='Inwarded']`,
+
+    // ── Reject-edit suite (GRN + Invoice, old capp domain) — PROVISIONAL ─────────
+    // Old-capp approval pages expose a header Reject beside Approve; the notes
+    // modal is shared (poApproveNotesField). GRN/Invoice edit re-uses AG-grid
+    // col-ids. Selectors below must be verified on the first live run.
+    cappRejectBtn:        `//button[normalize-space(.)='Reject']`,
+    cappRejectConfirmBtn: `(//div[@role='dialog']//button[normalize-space(.)='Reject'])[1] | (//textarea[@placeholder='Write your notes here']/following::button[normalize-space(.)='Reject'])[1]`,
+    cappEditBtn:          `//button[normalize-space(.)='Edit']`,
+    // GRN Received-qty cell (AG grid col-id, row 0)
+    grnReceivedCell:      `//div[@role='grid'][.//*[@role='columnheader'][contains(normalize-space(.),'Received')]]//div[@class='ag-row' or contains(@class,'ag-row')][@row-index='0']//div[@col-id='line_items_received']`,
+    grnInwardedOrRejected: `//*[normalize-space(text())='Rejected' or normalize-space(text())='Inwarded']`,
 
     // ── PO → Invoice (Create → Invoice → /invoices/new) ───────────────────────
     poCreateInvoiceOption: `//li[@role='menuitem'][normalize-space(.)='Invoice'] | //*[@role='menuitem'][normalize-space(.)='Invoice']`,

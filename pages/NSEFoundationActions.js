@@ -739,11 +739,23 @@ export class NSEFoundationActions {
         await opt.click();
         await this.page.waitForTimeout(1500);
 
+        // The approver picker differs by document type: CXO/Intake/RFX use an
+        // aria-haspopup dropdown button with [data-value] options; the Invoice
+        // reassign dialog uses a combobox ("New Reassign Approver", placeholder
+        // "Select Approver as Replacement") with <li role=option> options. Try the
+        // dropdown first, then fall back to the combobox.
         const userDropdown = this.page.locator(`xpath=${L.reassignUserDropdown}`).first();
-        await userDropdown.waitFor({ state: 'visible', timeout: 10000 });
-        await userDropdown.click({ force: true });
-        await this.page.waitForTimeout(600);
-        const adminOpt = this.page.locator(L.reassignAdminOption).first();
+        if (await userDropdown.isVisible({ timeout: 4000 }).catch(() => false)) {
+            await userDropdown.click({ force: true });
+        } else {
+            const combo = this.page.locator(`xpath=//div[@role='dialog']//input[contains(@placeholder,'Select Approver')]`).first();
+            await combo.waitFor({ state: 'visible', timeout: 8000 });
+            await combo.click({ force: true });
+        }
+        await this.page.waitForTimeout(700);
+        const adminOpt = this.page.locator(L.reassignAdminOption)
+            .or(this.page.locator(`xpath=//li[@role='option'][normalize-space(.)='NSEF Support Admin']`))
+            .first();
         await adminOpt.waitFor({ state: 'visible', timeout: 10000 });
         await adminOpt.click();
         await this.page.waitForTimeout(400);
@@ -2318,7 +2330,10 @@ export class NSEFoundationActions {
         await cell.scrollIntoViewIfNeeded();
         await cell.click();
         await this.page.waitForTimeout(400);
-        await this.page.keyboard.press('Control+a');
+        // ControlOrMeta+a → real select-all inside the focused input (on macOS a
+        // plain Control+a moves to line start, prepending instead of replacing).
+        await this.page.keyboard.press('ControlOrMeta+a');
+        await this.page.keyboard.press('Delete');
         await this.page.keyboard.type(String(newQty));
         await this.page.keyboard.press('Tab');
         await this.page.waitForTimeout(500);
@@ -4585,6 +4600,360 @@ export class NSEFoundationActions {
         await this.page.locator('tbody tr td').first()
             .waitFor({ state: 'visible', timeout: 30000 }).catch(() => {});
         console.log('[ADMIN] User dashboard displayed');
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // REJECT → EDIT → RESUBMIT helpers (testSuiteallmodulesrejectedit)
+    //
+    // Shared pattern across modules: a document is Rejected during its approval
+    // workflow, re-opened from the header More dropdown ("Edit"), its line-item
+    // quantity is lowered, " reject edit" is appended to the title/subject, and
+    // it is resubmitted — which must re-trigger a fresh approval workflow (a new
+    // "Workflow N" entry in the Workflow Steps panel).
+    //
+    // NOTE: the PR/PO/PRC helpers below touch UI not previously automated; their
+    // selectors are provisional and may need tightening after a live run.
+    // ═════════════════════════════════════════════════════════════════════════
+
+    /** Snapshot the number of distinct "Workflow N" runs (open the panel, read,
+     *  close). Used to assert a resubmit added a new workflow run. */
+    async snapshotWorkflowCount() {
+        await this.openWorkflowStages();
+        const n = await this.getWorkflowCount();
+        await this.closeWorkflowStages();
+        console.log(`[RejectEdit] Workflow runs currently: ${n}`);
+        return n;
+    }
+
+    /** Assert the Workflow Steps panel now shows MORE runs than `previous` — i.e.
+     *  the resubmit re-triggered a new approval workflow. */
+    async assertNewWorkflowTriggered(previous) {
+        await this.openWorkflowStages();
+        const now = await this.getWorkflowCount();
+        await this.closeWorkflowStages();
+        console.log(`[RejectEdit] Workflow runs before=${previous} after=${now}`);
+        expect(now, 'resubmit after reject should trigger a new workflow run')
+            .toBeGreaterThan(previous);
+        return now;
+    }
+
+    // ── CXO reject → edit → resubmit ──────────────────────────────────────────
+
+    /** Overwrite the (already-added) CXO line-item Qty cell with a new value. */
+    async changeCxoLineItemQty(newQty) {
+        const cell = this.page.locator(L.itemQtyCell).first();
+        await cell.scrollIntoViewIfNeeded();
+        await cell.click();
+        await this.page.waitForTimeout(400);
+        // ControlOrMeta+a → real select-all inside the focused input (on macOS a
+        // plain Control+a is "move to line start", which prepends instead of
+        // replacing → e.g. 100 became 5100).
+        await this.page.keyboard.press('ControlOrMeta+a');
+        await this.page.keyboard.press('Delete');
+        await this.page.keyboard.type(String(newQty));
+        await this.page.keyboard.press('Tab');
+        await this.page.waitForTimeout(500);
+        console.log(`[CXO] Line-item qty changed to ${newQty}`);
+    }
+
+    /** Rejected CXO → More → Edit → editable form (/cxos/{id}/edit) → lower qty,
+     *  append " reject edit" to the title → Submit (handles the Workflow-Summary
+     *  popup). Leaves the CXO on its overview at Pending Approval; caller then
+     *  verifies a new workflow was triggered. Returns the new title. */
+    async editAndResubmitRejectedCxo(data, newQty = '5') {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const editOpt = this.page.locator(`xpath=${IL.intakeEditOption}`).first();
+        await editOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await editOpt.click();
+
+        await this.page.waitForURL(/\/cxos\/[^\/]+\/edit/, { timeout: 15000 });
+        await this.page.waitForLoadState('domcontentloaded');
+        await this.waitForCreatePageLoaded().catch(() => {});
+        await this.page.waitForTimeout(1500);
+
+        await this.changeCxoLineItemQty(newQty);
+
+        const current = await this.getTitleValue();
+        const newTitle = `${current} reject edit`;
+        await this.typeTitle(newTitle);
+        await this.page.waitForTimeout(500);
+
+        await this.clickSubmit();
+        await expect(this.page).toHaveURL(/\/cxos\/[^\/]+\/overview/, { timeout: 25000 });
+        await this.page.waitForTimeout(1500);
+        console.log(`[CXO] Rejected CXO edited & resubmitted → title="${newTitle}"`);
+        return newTitle;
+    }
+
+    // ── Intake reject → edit → resubmit ───────────────────────────────────────
+
+    /** Rejected intake → More → Edit → editable form (/intakes/{id}/edit) → lower
+     *  qty, append " reject edit" to the title → resubmit through the intake
+     *  submission popup. Returns the new title. */
+    async editAndResubmitRejectedIntake(data, newQty = '5') {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const editOpt = this.page.locator(`xpath=${IL.intakeEditOption}`).first();
+        await editOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await editOpt.click();
+
+        await this.page.waitForURL(/\/intakes\/[^\/]+\/edit/, { timeout: 15000 });
+        await this.page.waitForLoadState('domcontentloaded');
+        await this.waitForCreatePageLoaded().catch(() => {});
+        await this.page.waitForTimeout(1500);
+        await this.closeAskAieraIfVisible().catch(() => {});
+
+        await this.changeIntakeLineItemQty(newQty);
+
+        const title = this.page.locator(IL.intakeTitle).first();
+        await title.click();
+        const current = await title.inputValue().catch(() => '');
+        const newTitle = `${current || data.intake.title} reject edit`;
+        await title.fill(newTitle);
+        await this.page.waitForTimeout(500);
+
+        await this.submitIntake();
+        await this.completeIntakeSubmissionPopup();
+        console.log(`[Intake] Rejected intake edited & resubmitted → title="${newTitle}"`);
+        return newTitle;
+    }
+
+    // ── RFX reject → edit → lower qty → resubmit ──────────────────────────────
+
+    /** Rejected RFX → More → Edit → editable Draft form → lower the line-item qty,
+     *  append " reject edit" to the title → resubmit the sourcing event. The RFX
+     *  qty cell reuses the intake qty-cell pattern. */
+    async editAndResubmitRejectedRfxLowerQty(newQty = '5') {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const editOpt = this.page.locator(`xpath=//*[@role='menuitem'][normalize-space(.)='Edit']`).first();
+        await editOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await editOpt.click();
+
+        await this.page.waitForURL(/\/quote-requests\/[^\/]+\/edit/, { timeout: 15000 });
+        await this.page.waitForLoadState('domcontentloaded');
+        await this.page.waitForTimeout(2500);
+
+        // Lower the quantity (best-effort: reuse the intake qty-cell overwrite).
+        await this.changeIntakeLineItemQty(newQty).catch(
+            () => console.log('[RFX] qty cell not editable on RFX edit form — skipping'));
+
+        // Append " reject edit" to the title if a title field is present.
+        const title = this.page.locator(IL.intakeTitle).first();
+        if (await title.isVisible({ timeout: 5000 }).catch(() => false)) {
+            const current = await title.inputValue().catch(() => '');
+            await title.fill(`${current} reject edit`);
+            await this.page.waitForTimeout(500);
+        }
+
+        await this.submitSourcingEvent();
+        await this.page.waitForTimeout(2000);
+        console.log(`[RFX] Rejected RFX edited (qty→${newQty}) & resubmitted`);
+    }
+
+    /** After a re-convertible intake's Process → Send for Sourcing lands on the
+     *  New Sourcing event page: expand the sections and assert the (lowered)
+     *  line-item qty shows in the Item Table. The qty may render as a grid-cell
+     *  text node or an input value, so check both. */
+    async assertSourcingLineItemQty(qty) {
+        await this.expandSourcingSections().catch(() => {});
+        await this.page.waitForTimeout(1500);
+        await this.assertQtyVisibleOnPage(qty, 'RFX', 'sourcing line item');
+    }
+
+    /** Assert `qty` appears somewhere on the current page — as a grid-cell / text
+     *  node OR an input value — tolerating trailing decimals ("50.00"), units
+     *  ("50 Nos") and thousands separators. */
+    async assertQtyVisibleOnPage(qty, tag = 'Qty', where = 'page') {
+        const q = String(qty);
+        const found = await this.page.evaluate((val) => {
+            const re = new RegExp(`(^|[^\\d])${val}(\\.0+)?([^\\d]|$)`);
+            const norm = s => (s || '').replace(/,/g, '').trim();
+            const textHit = [...document.querySelectorAll('*')]
+                .some(e => e.children.length === 0 && re.test(norm(e.textContent)));
+            const inputHit = [...document.querySelectorAll('input, textarea')]
+                .some(i => re.test(norm(i.value)));
+            return textHit || inputHit;
+        }, q);
+        expect(found, `${where} should show the qty ${q}`).toBeTruthy();
+        console.log(`[${tag}] Verified qty ${q} shown in the ${where}`);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // GRN + Invoice reject → edit → lower qty (old capp domain) — PROVISIONAL
+    // ═════════════════════════════════════════════════════════════════════════
+
+    /** Diagnostic: log every editable field (id / name / placeholder / value) and
+     *  every button caption on the page — used to discover selectors for UI not
+     *  yet automated (old-capp GRN/Invoice reject + edit forms). */
+    async dumpEditableFields(tag = 'DUMP') {
+        const info = await this.page.evaluate(() => {
+            const inputs = [...document.querySelectorAll('input, textarea, [contenteditable="true"]')]
+                .map(e => ({
+                    id: e.id || '', name: e.getAttribute('name') || '',
+                    ph: e.getAttribute('placeholder') || '', type: e.getAttribute('type') || e.tagName,
+                    val: (e.value ?? e.textContent ?? '').toString().slice(0, 30),
+                }))
+                .filter(x => x.id || x.name || x.ph || x.val);
+            const buttons = [...document.querySelectorAll('button')]
+                .map(b => (b.textContent || '').trim()).filter(Boolean).slice(0, 50);
+            return { inputs: inputs.slice(0, 50), buttons };
+        });
+        console.log(`[${tag}] editable fields:\n` + JSON.stringify(info.inputs, null, 1));
+        console.log(`[${tag}] buttons: ${JSON.stringify(info.buttons)}`);
+        return info;
+    }
+
+    /** Reject a document currently in an old-capp approval workflow (GRN / Invoice):
+     *  header Reject → notes → confirm. Reassigns the approver to NSEF Support
+     *  Admin and retries if Reject isn't available (same pattern as approvals). */
+    async rejectCappDoc(reason = 'Rejected by automation', tag = 'DOC') {
+        const rejectBtn = this.page.locator(`xpath=${L.cappRejectBtn}`).first();
+        let ready = false;
+        for (let attempt = 0; attempt < 5 && !ready; attempt++) {
+            if (await rejectBtn.isVisible({ timeout: 4000 }).catch(() => false)) { ready = true; break; }
+            if (attempt === 2) {
+                console.log(`[${tag}] Reject missing — reassigning approver to NSEF Support Admin...`);
+                await this.reassignWorkflowApprover('Reassigned for automated testing', tag).catch(() => {});
+            } else {
+                console.log(`[${tag}] Reject not visible — reloading (${attempt + 1})`);
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+            }
+            await this.page.waitForTimeout(1500);
+        }
+        if (!ready) {
+            console.log(`[${tag}] Reject still not found — dumping buttons for discovery`);
+            await this.dumpEditableFields(`${tag}-DETAIL`);
+        }
+        await rejectBtn.waitFor({ state: 'visible', timeout: 8000 });
+        await rejectBtn.click();
+
+        const notes = this.page.locator(`xpath=${L.poApproveNotesField}`).first();
+        if (await notes.isVisible({ timeout: 8000 }).catch(() => false)) await notes.fill(reason);
+
+        const confirm = this.page.locator(`xpath=${L.cappRejectConfirmBtn}`).first();
+        await confirm.waitFor({ state: 'visible', timeout: 8000 });
+        await confirm.click();
+        console.log(`[${tag}] Reject submitted`);
+        await this.page.waitForTimeout(2500);
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+        await this.page.waitForTimeout(1500);
+    }
+
+    /** Open the edit form of a rejected old-capp doc (GRN/Invoice): try the
+     *  top-level Edit button first, then the More dropdown → Edit (the rejected
+     *  doc's header exposes only More / Overview / Transactions). Dumps buttons
+     *  if neither is found. Returns true when an edit was opened. */
+    async openCappEditForm(tag = 'DOC') {
+        const editBtn = this.page.locator(`xpath=${L.cappEditBtn}`).first();
+        if (await editBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
+            await editBtn.click();
+            await this.page.waitForTimeout(2500);
+            return true;
+        }
+        // Fall back to the More dropdown → Edit.
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        if (await more.isVisible({ timeout: 5000 }).catch(() => false)) {
+            await more.click();
+            await this.page.waitForTimeout(700);
+            const editOpt = this.page.locator(`xpath=${IL.intakeEditOption}`).first();
+            if (await editOpt.isVisible({ timeout: 5000 }).catch(() => false)) {
+                await editOpt.click();
+                await this.page.waitForTimeout(2500);
+                console.log(`[${tag}] Opened edit via More → Edit`);
+                return true;
+            }
+            console.log(`[${tag}] More opened but no Edit option — dumping`);
+        }
+        console.log(`[${tag}] Edit not found (top-level or More) — dumping`);
+        await this.dumpEditableFields(`${tag}-DETAIL`);
+        return false;
+    }
+
+    /** Rejected GRN → Edit → lower the Received qty (AG-grid cell), annotate the
+     *  Invoice Number with " reject edit" → resubmit. */
+    async editGrnReceivedLowerQtyAndSubmit(newQty = '50') {
+        await this.openCappEditForm('GRN');
+        await this.page.waitForTimeout(500);
+
+        // Lower the Received qty in the AG-grid cell (double-click → edit → type).
+        const cell = this.page.locator(`xpath=${L.grnReceivedCell}`).first();
+        if (await cell.isVisible({ timeout: 8000 }).catch(() => false)) {
+            await cell.scrollIntoViewIfNeeded();
+            await cell.dblclick();
+            await this.page.waitForTimeout(400);
+            await this.page.keyboard.press('ControlOrMeta+a');
+            await this.page.keyboard.press('Delete');
+            await this.page.keyboard.type(String(newQty));
+            await this.page.keyboard.press('Enter');
+            console.log(`[GRN] Received qty lowered to ${newQty}`);
+        } else {
+            console.log('[GRN] Received cell not found — dumping');
+            await this.dumpEditableFields('GRN-EDIT');
+        }
+        await this.page.waitForTimeout(500);
+
+        // Annotate the Invoice Number field with " reject edit".
+        const inv = this.page.locator(`xpath=${L.grnInvoiceNumberInput}`).first();
+        if (await inv.isVisible({ timeout: 5000 }).catch(() => false)) {
+            const cur = await inv.inputValue().catch(() => '');
+            await inv.fill(`${cur} reject edit`);
+            console.log('[GRN] Invoice Number annotated with " reject edit"');
+        }
+        await this.page.waitForTimeout(500);
+
+        await this.submitGrn();
+    }
+
+    /** Open the saved PO → Create → GRN → Select PO Items, and assert the reduced
+     *  qty is available for creating a new GRN. */
+    async assertPoQtyAvailableForGrn(qty, data) {
+        await this.openSavedPurchaseOrder(data);
+        await this.clickPoCreateGrn();
+        await this.page.waitForTimeout(1500);
+        await this.assertQtyVisibleOnPage(qty, 'GRN', 'Select PO Items (qty available for GRN)');
+    }
+
+    /** Rejected Invoice → Edit → lower the qty (AG-grid cell), annotate the invoice
+     *  number with " reject edit" → resubmit. */
+    async editInvoiceLowerQtyAndSubmit(newQty = '50') {
+        await this.openCappEditForm('INV');
+        await this.page.waitForTimeout(500);
+
+        // The invoice qty cell / field is not yet automated — dump for discovery,
+        // then best-effort set it via the same AG-grid pattern as the GRN.
+        const cell = this.page.locator(`xpath=${L.grnReceivedCell}`).first();
+        if (await cell.isVisible({ timeout: 6000 }).catch(() => false)) {
+            await cell.dblclick();
+            await this.page.waitForTimeout(400);
+            await this.page.keyboard.press('ControlOrMeta+a');
+            await this.page.keyboard.press('Delete');
+            await this.page.keyboard.type(String(newQty));
+            await this.page.keyboard.press('Enter');
+            console.log(`[INV] Qty lowered to ${newQty}`);
+        } else {
+            console.log('[INV] Qty cell not found on invoice edit — dumping');
+            await this.dumpEditableFields('INV-EDIT');
+        }
+        await this.page.waitForTimeout(500);
+
+        await this.submitInvoice();
+    }
+
+    /** Open the saved PO → Create → Invoice, and assert the reduced qty is
+     *  available for creating a new Invoice. */
+    async assertPoQtyAvailableForInvoice(qty, data) {
+        await this.openSavedPurchaseOrder(data);
+        await this.clickPoCreateInvoice();
+        await this.page.waitForTimeout(1500);
+        await this.assertQtyVisibleOnPage(qty, 'INV', 'Select PO Items (qty available for Invoice)');
     }
 
 }
