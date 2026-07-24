@@ -1,0 +1,633 @@
+(node:7717) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+[1A[2K(node:7718) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/2] [nsef-setup] › tests/auth.nsef.setup.js:9:6 › NSEF login and save session
+[1A[2K(node:7744) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[2/2] [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:174:9 › All-modules reject → edit → resubmit › GRN: build to GRN → reject → edit (qty↓) → reduced qty available for GRN @RejectEdit @GRN
+[1A[2K[nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:174:9 › All-modules reject → edit → resubmit › GRN: build to GRN → reject → edit (qty↓) → reduced qty available for GRN @RejectEdit @GRN
+✓ BRF auto-populated: "Dont Touch"
+
+[1A[2K[CXO] Approving stage 1...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[1A[2K[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[1A[2K[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[CXO] Approving stage 2...
+
+[1A[2K[CXO] Approving stage 3...
+
+[1A[2K[CXO] Approving stage 4...
+
+[1A[2K[CXO] Status Released after 4 approval(s).
+
+[1A[2K[CXO] Saving CXO code: CXO-FNSE-26-230  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5525/overview
+
+[1A[2K[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-230"
+
+[1A[2KBRF No. value: "Dont Touch"
+
+[1A[2K[Intake] Approving stage 1...
+
+[1A[2K[Intake] No action button at step 2 — reloading (1/2)...
+
+[1A[2K[Intake] No action button at step 3 — reloading (2/2)...
+
+[1A[2K[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[1A[2K[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[Intake] Approving stage 5...
+
+[1A[2K[Intake] Clicking Acknowledge/Accept step 6...
+
+[1A[2K[Intake] Status Released/Active after 6 step(s).
+
+[1A[2K[Intake] Saving Intake code: INT-FNSE-26-278  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2072/overview
+
+[1A[2K[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-278"
+
+[1A[2K[Intake] Searching listing for saved intake: INT-FNSE-26-278
+
+[1A[2K[Intake] Opened intake INT-FNSE-26-278 → https://nse-capp-v4-uat.aerchain.io/intakes/2072/overview
+
+[1A[2K[Intake] Clicked Process button
+
+[1A[2K[Intake] Clicked Send for Sourcing
+
+[1A[2K[Sourcing] Expanded all sections
+
+[1A[2K[Sourcing] Payment Terms selected
+
+[1A[2K[Sourcing] Commercial Bid Due Date filled
+
+[1A[2K[Sourcing] Technical Bid Due Date filled
+
+[1A[2K[Sourcing] Expected Delivery Date filled
+
+[1A[2K[Sourcing] Supplier "HG Automation SUPP" added
+
+[1A[2K[Sourcing] Clicked Submit
+
+[1A[2K[Sourcing] Confirmed Process Request popup
+
+[1A[2K[Sourcing] Approving stage 1...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (1/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (2/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (3/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (4/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (5/5)...
+
+[1A[2K[Sourcing] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[1A[2K[Sourcing] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[Sourcing] Approving stage 2...
+
+[1A[2K[Sourcing] RFX live (not Pending Approval) after 2 approval(s).
+
+[1A[2K[Sourcing] Saving Sourcing Event code: RFX-26-148  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1114/overview
+
+[1A[2K[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-148"
+
+[1A[2K[Quote] On Quote Request listing page
+
+[1A[2K[Quote] Searching quote requests for: RFX-26-148
+
+[1A[2K[Quote] Opened sourcing event RFX-26-148 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1114
+
+[1A[2K[Quote] Clicked Submit Quote on supplier
+
+[1A[2K[Quote] Selected Commercial Quote
+
+[1A[2K[Quote] Preferred Currency set to INR
+
+[1A[2K[Quote] Unit Rate filled: 2000
+
+[1A[2K[Quote] Clicked Submit Quote
+
+[1A[2K[Quote] Confirmed quote submission popup
+
+[1A[2K[Quote] Quote form closed — submission processed
+
+[1A[2K[Quote] Sourcing status is Quoted
+
+[1A[2K[Quote] On Quote Request listing page
+
+[1A[2K[Quote] Searching quote requests for: RFX-26-148
+
+[1A[2K[Quote] Opened sourcing event RFX-26-148 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1114
+
+[1A[2K[Award] Clicked Foreclose
+
+[1A[2K[Award] Foreclose submitted
+
+[1A[2K[Award] On Analysis tab
+
+[1A[2K[Award] Clicked Award
+
+[1A[2K[Award] Pending Awarded Quantity: "100.00" → entering 100
+
+[1A[2K[Award] Allocated quantity filled: 100
+
+[1A[2K[Award] Clicked Award
+
+[1A[2K[Award] Workflow Summary submitted
+
+[1A[2K[Award] Workflow Stages → overall status: "Active" → NOT completed
+
+[1A[2K[Award] Approving (round 1)...
+
+[1A[2K[Award] Workflow Stages → overall status: "Active" → NOT completed
+
+[1A[2K[Award] Approve button not visible for 4s — reloading (1/1)...
+
+[1A[2K[Award] No Approve button — reassigning approver to NSEF Support Admin...
+
+[1A[2K[Award] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[Award] Approving (round 2)...
+
+[1A[2K[Award] Workflow Stages → overall status: "Completed" → Completed
+
+[1A[2K[Award] Clicked back button beside award code
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (1/10)...
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (2/10)...
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (3/10)...
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (4/10)...
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (5/10)...
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (6/10)...
+
+[1A[2K[Award] Requisition code displayed: PR-DRAFT
+
+[1A[2K[Award] Requisition "PR-DRAFT" opened in new tab → https://nse-capp-uat.aerchain.io/requisitions/960
+
+[1A[2K[Award] Saved to NSEFoundationData.json → savedRequisition.code = "PR-DRAFT"
+
+[1A[2K[PR] Opening saved requisition PR-DRAFT → https://nse-capp-uat.aerchain.io/requisitions/960
+
+[1A[2K[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/960
+
+[1A[2K[PR] Clicked Edit
+
+[1A[2K[PR] Edit page loaded
+
+[1A[2K[PR] Effective from date filled with today: 2026-07-24
+
+[1A[2K[PR] Effective to date filled
+
+[1A[2K[PR] Purchase Type selected: First time/New
+
+[1A[2K[PR] Inward Required → Yes
+
+[1A[2K[PR] Inward Matching Criterion → Quantity
+
+[1A[2K[PR] Clicked Submit
+
+[1A[2K[PR] Confirmed Approvers popup
+
+[1A[2K[PR] Requisition status is Submitted
+
+[1A[2K[PR] Saved to NSEFoundationData.json → savedRequisition.code = "PR-NSEFN-26-84"
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (1/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (2/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (3/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (4/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (5/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (6/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (7/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (8/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (9/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (10/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (11/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (12/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (13/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (14/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (15/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (16/60)...
+
+[1A[2K[PR] Status is "Processed".
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (1/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (2/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (3/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (4/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (5/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (6/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (7/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (8/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (9/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (10/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (11/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (12/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (13/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (14/60)...
+
+[1A[2K[PR] Status is "Completed".
+
+[1A[2K[PR] Opening saved requisition PR-NSEFN-26-84 → https://nse-capp-uat.aerchain.io/requisitions/960
+
+[1A[2K[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/960
+
+[1A[2K[PR] Opened Transactions tab
+
+[1A[2K[PR] Expanded Conversions section
+
+[1A[2K[PRC] Opened PRC-NSEFN-26-76 (Requisition Conversion View)
+
+[1A[2K[PO] Opened PO-NSEFN-26-148 in new tab → https://nse-capp-uat.aerchain.io/purchase-orders/909
+
+[1A[2K[PO] Approving stage 1...
+
+[1A[2K[PO] Approved a stage
+
+[1A[2K[PO] Approving stage 2...
+
+[1A[2K[PO] Approved a stage
+
+[1A[2K[PO] Approving stage 3...
+
+[1A[2K[PO] Approved a stage
+
+[1A[2K[PO] Approvals complete (Create available) after 3 approval(s).
+
+[1A[2K[GRN] Create → GRN clicked
+
+[1A[2K[GRN] Submitted Select PO Items popup
+
+[1A[2K[GRN] On Create GRN page: https://nse-capp-uat.aerchain.io/pending-inwards/po/909/inward
+
+[1A[2K[GRN] Filled Invoice Number + Delivery challan
+
+[1A[2K[GRN] Filled Delivery Note Reference + Document Date (2026-07-24 → "24/07/2026")
+
+[1A[2K[GRN] Clicked Submit
+
+[1A[2K[GRN] Confirmed Workflow Summary popup
+
+[1A[2K[GRN] GRN created → https://nse-capp-uat.aerchain.io/inwards/471
+
+[1A[2K[GRN] Saved to NSEFoundationData.json → savedGrn.code = "INW-NSEFN-26-54"
+
+[1A[2K[GRN] Reject submitted
+
+[1A[2K[GRN] More opened but no Edit option — dumping
+
+[1A[2K[GRN] Edit not found (top-level or More) — dumping
+
+[1A[2K[GRN-DETAIL] editable fields:
+[
+ {
+  "id": "ag-23-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-24-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-25-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-26-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-27-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-28-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-29-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-30-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-31-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-32-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-33-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-49-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-50-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-51-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-48-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-34-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-35-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-36-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-37-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-38-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-39-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-40-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-41-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-42-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-43-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-44-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-52-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-53-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-54-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-55-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ },
+ {
+  "id": "ag-56-input",
+  "name": "",
+  "ph": "",
+  "type": "checkbox",
+  "val": "on"
+ }
+]
+
+[1A[2K[GRN-DETAIL] buttons: ["Cancel","More","Overview","Transactions"]
+
+[1A[2K  1) [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:174:9 › All-modules reject → edit → resubmit › GRN: build to GRN → reject → edit (qty↓) → reduced qty available for GRN @RejectEdit @GRN 
+
+    TimeoutError: locator.dblclick: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//div[@role=\'grid\'][.//*[@role=\'columnheader\'][contains(normalize-space(.),\'Received\')]]//div[@class=\'ag-row\' or contains(@class,\'ag-row\')][@row-index=\'0\']//div[@col-id=\'line_items_received\']').first()[22m
+    [2m    - locator resolved to <div tabindex="-1" role="gridcell" aria-colindex="9" col-id="line_items_received" class="ag-cell ag-cell-not-inline-editing ag-cell-normal-height ag-cell-value">…</div>[22m
+    [2m  - attempting dblclick action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div aria-hidden="true"></div> from <div role="presentation" id="customized-menu" class="MuiPopover-root">…</div> subtree intercepts pointer events[22m
+    [2m    - retrying dblclick action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div aria-hidden="true"></div> from <div role="presentation" id="customized-menu" class="MuiPopover-root">…</div> subtree intercepts pointer events[22m
+    [2m    - retrying dblclick action[22m
+    [2m      - waiting 100ms[22m
+    [2m    9 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div aria-hidden="true"></div> from <div role="presentation" id="customized-menu" class="MuiPopover-root">…</div> subtree intercepts pointer events[22m
+    [2m    - retrying dblclick action[22m
+    [2m      - waiting 500ms[22m
+
+
+       at ../pages/NSEFoundationActions.js:4890
+
+      4888 |         if (await cell.isVisible({ timeout: 8000 }).catch(() => false)) {
+      4889 |             await cell.scrollIntoViewIfNeeded();
+    > 4890 |             await cell.dblclick();
+           |                        ^
+      4891 |             await this.page.waitForTimeout(400);
+      4892 |             await this.page.keyboard.press('ControlOrMeta+a');
+      4893 |             await this.page.keyboard.press('Delete');
+        at NSEFoundationActions.editGrnReceivedLowerQtyAndSubmit (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:4890:24)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteallmodulesrejectedit.spec.js:197:9
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-c1c61-able-for-GRN-RejectEdit-GRN-nsef-tests/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-c1c61-able-for-GRN-RejectEdit-GRN-nsef-tests/test-failed-3.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-c1c61-able-for-GRN-RejectEdit-GRN-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #4: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-c1c61-able-for-GRN-RejectEdit-GRN-nsef-tests/video-2.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #5: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-c1c61-able-for-GRN-RejectEdit-GRN-nsef-tests/video-1.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #6: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-c1c61-able-for-GRN-RejectEdit-GRN-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteallmodulesrejecte-c1c61-able-for-GRN-RejectEdit-GRN-nsef-tests/error-context.md
+
+
+[1A[2K  Slow test file: [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js (17.0m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  1 failed
+    [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:174:9 › All-modules reject → edit → resubmit › GRN: build to GRN → reject → edit (qty↓) → reduced qty available for GRN @RejectEdit @GRN 
+  1 passed (17.7m)

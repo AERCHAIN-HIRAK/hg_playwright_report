@@ -1,0 +1,14 @@
+(node:4374) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+[1A[2K(node:4378) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/2] [nsef-setup] › tests/auth.nsef.setup.js:9:6 › NSEF login and save session
+[1A[2K(node:4415) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[2/2] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:70:13 › Aerchain NSE - Intake Listing Page › Status Cards › Cancelled/Rejected card is visible @StatusCard
+[1A[2K  2 passed (8.7s)

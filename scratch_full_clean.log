@@ -1,0 +1,1986 @@
+(node:4490) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 192 tests using 1 worker
+
+(node:4492) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1/192] [supplier-setup] › tests/auth.supplier.setup.js:16:6 › CAPP + SAPP login and save combined session
+(node:4540) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[2/192] [nsef-setup] › tests/auth.nsef.setup.js:9:6 › NSEF login and save session
+(node:4565) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[3/192] [setup] › tests/auth.setup.js:3:6 › Login and save session
+(node:4589) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[4/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:27:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should load the intake listing page @Smoke
+[5/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:31:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display all 5 status summary cards @Smoke
+[6/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:35:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display the Create Intake button @Smoke
+[7/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:39:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display pagination info @Smoke
+[8/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:43:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display at least one table row @Smoke
+[9/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:54:13 › Aerchain NSE - Intake Listing Page › Status Cards › Draft card is visible @StatusCard
+[10/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:58:13 › Aerchain NSE - Intake Listing Page › Status Cards › Awaiting Actions card is visible @StatusCard
+[11/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:62:13 › Aerchain NSE - Intake Listing Page › Status Cards › Active/Released card is visible @StatusCard
+[12/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:66:13 › Aerchain NSE - Intake Listing Page › Status Cards › Completed/Successful card is visible @StatusCard
+[13/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:70:13 › Aerchain NSE - Intake Listing Page › Status Cards › Cancelled/Rejected card is visible @StatusCard
+[14/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:74:13 › Aerchain NSE - Intake Listing Page › Status Cards › clicking a status card refreshes the table @StatusCard
+[15/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:79:13 › Aerchain NSE - Intake Listing Page › Status Cards › clicking Draft card (0 records) shows empty or 0 rows @StatusCard
+[16/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:95:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › filter popup opens on clicking Status filter icon @Filter
+[17/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:103:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › filter popup opens on clicking Created By filter icon @Filter
+[18/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:111:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › search within filter popup narrows the option list @Filter
+[19/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:122:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › single filter by Created By — table updates @Filter
+[20/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:127:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › single filter by Status — table updates @Filter
+[21/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:132:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › multi-filter: Status then Created By — table updates @Filter
+[22/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:139:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › filter clear resets to all records @Filter
+[23/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:148:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › clear all selections button resets popup state @Filter
+[24/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:161:17 › Aerchain NSE - Intake Listing Page › Filters › Negative › filter search with non-existent user does not crash popup @Filter
+[25/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:173:17 › Aerchain NSE - Intake Listing Page › Filters › Edge Cases › special characters in filter search do not crash @Filter
+[26/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:180:17 › Aerchain NSE - Intake Listing Page › Filters › Edge Cases › long string in filter search does not crash @Filter
+[27/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:200:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Code column — first click applies a sort @Sort
+[28/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:205:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Code column — second click still shows records @Sort
+[29/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:211:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Subject column — applies a sort @Sort
+[30/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:216:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Subject column — second click still shows records @Sort
+[31/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:222:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Date column — applies a date sort @Sort
+[32/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:227:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Date column — second click still shows records @Sort
+[33/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:233:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Status column — applies a sort @Sort
+[34/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:238:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sorting after tab switch still works @Sort
+[35/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:248:17 › Aerchain NSE - Intake Listing Page › Sorting › Negative › column values remain non-empty after sort (no crash for duplicates) @Sort
+[36/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:265:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by partial intake code returns results @Search
+[37/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:270:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by exact intake code returns at least 1 row @Search
+[38/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:276:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by partial subject returns results @Search
+[39/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:281:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by exact subject returns results @Search
+[40/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:286:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search with different case does not crash the page @Search
+[41/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:294:17 › Aerchain NSE - Intake Listing Page › Search › Positive › clearing search restores all records @Search
+[42/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:307:17 › Aerchain NSE - Intake Listing Page › Search › Negative › non-existent search term does not crash the page @Search
+[43/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:313:17 › Aerchain NSE - Intake Listing Page › Search › Negative › spaces-only search does not crash the page @Search
+[44/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:318:17 › Aerchain NSE - Intake Listing Page › Search › Negative › SQL injection string in search does not break the page @Search
+[45/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:323:17 › Aerchain NSE - Intake Listing Page › Search › Negative › XSS payload in search does not inject script @Search
+[46/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:334:17 › Aerchain NSE - Intake Listing Page › Search › Edge Cases › very long string in search does not crash @Search
+[47/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:339:17 › Aerchain NSE - Intake Listing Page › Search › Edge Cases › special characters in search do not crash @Search
+[48/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:344:17 › Aerchain NSE - Intake Listing Page › Search › Edge Cases › unicode characters in search do not crash @Search
+[49/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:360:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › pagination info shows "Showing X – Y of Z entries" @Pagination
+[50/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:367:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Previous button is disabled on first page @Pagination
+[51/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:371:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Next page changes pagination info @Pagination
+[52/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:379:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Next then Previous returns to original page @Pagination
+[53/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:388:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Next button is disabled on last page @Pagination
+[54/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:398:17 › Aerchain NSE - Intake Listing Page › Pagination › Negative / Edge Cases › rapid next-page clicks do not break the table @Pagination
+[55/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:410:17 › Aerchain NSE - Intake Listing Page › Pagination › Pagination after Filter / Search / Sort › search on page 2 does not crash the page @Pagination
+[56/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:417:17 › Aerchain NSE - Intake Listing Page › Pagination › Pagination after Filter / Search / Sort › table shows correct rows on page 2 after sort @Pagination
+[57/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:435:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › clicking first row code opens the detail page @Navigation
+[58/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:440:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › URL changes to detail URL after row click @Navigation
+[59/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:445:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › browser back from detail page returns to listing @Navigation
+[60/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:452:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › detail page contains the clicked intake code @Navigation
+[61/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:466:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Edge Cases › back and re-click the same row is stable @Navigation
+[62/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:475:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Edge Cases › refreshing the detail page keeps the URL intact @Navigation
+[63/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:494:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › Create Intake button is visible on listing page @Create
+[64/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:498:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › Create Intake button navigates to create page @Create
+[65/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:503:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › URL is /intakes/create after clicking Create Intake @Create
+[66/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:508:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › browser back from create page returns to listing @Create
+[67/192] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:520:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Edge Cases › navigating back from create page preserves listing rows @Create
+[68/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:38:9 › Intake Negative › Submit empty intake → blocked on create page with section error badges @IntakeNegative @Validation
+[69/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:56:9 › Intake Negative › Empty submit → expanded sections show red borders + "is empty" messages @IntakeNegative @Validation
+[nsef-tests] › tests/testSuiteIntakeNegative.spec.js:56:9 › Intake Negative › Empty submit → expanded sections show red borders + "is empty" messages @IntakeNegative @Validation
+[IntakeNeg] 18 red-bordered fields, 17 "is empty" messages
+
+[70/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:69:9 › Intake Negative › Title + summary only → still blocked (mandatory fields missing) @IntakeNegative @Validation
+[71/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:86:9 › Intake Negative › Whitespace-only title is treated as empty @IntakeNegative @Title
+[72/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:102:9 › Intake Negative › Very long title is accepted without breaking the form @IntakeNegative @Title
+[73/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:119:9 › Intake Negative › Special characters / HTML in title are stored literally @IntakeNegative @Title
+[74/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:136:9 › Intake Negative › Line-item Qty rejects negatives, accepts decimals @IntakeNegative @LineItem
+[75/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:156:9 › Intake Negative › Line-item Qty rejects zero / non-numeric only input @IntakeNegative @LineItem
+[76/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:178:9 › Intake Negative › Line-item Suggested Price rejects negative values @IntakeNegative @LineItem
+[77/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:195:9 › Intake Negative › Create + submit intake → Reject with reason → status Rejected @IntakeNegative @Reject
+[nsef-tests] › tests/testSuiteIntakeNegative.spec.js:195:9 › Intake Negative › Create + submit intake → Reject with reason → status Rejected @IntakeNegative @Reject
+BRF No. value: "Budget 703"
+
+[Intake] Reject submitted
+
+[78/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:214:9 › Intake Negative › Create + submit → Recall → Draft → edit → resubmit re-triggers the workflow @IntakeNegative @Recall
+[nsef-tests] › tests/testSuiteIntakeNegative.spec.js:214:9 › Intake Negative › Create + submit → Recall → Draft → edit → resubmit re-triggers the workflow @IntakeNegative @Recall
+BRF No. value: "Budget 703"
+
+[Recall] Workflow runs after first submit: 2
+
+[Intake] Recall submitted
+
+[Recall] Draft workflow states — runs:2 inactive:2 active:0
+
+[Recall] Workflow runs after resubmit: 4
+
+[79/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:270:9 › Intake Negative › Pending Approval: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document
+[nsef-tests] › tests/testSuiteIntakeNegative.spec.js:270:9 › Intake Negative › Pending Approval: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document
+BRF No. value: "Budget 703"
+
+[Intake] Document regenerated
+
+[Intake] Downloaded document: intake-2043-2026-07-22_09-41-09.pdf
+
+[Intake] PDF "intake-2043-2026-07-22_09-41-09.pdf" → Status: "PENDING-APPROVAL"
+
+[80/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:284:9 › Intake Negative › Rejected: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document
+[nsef-tests] › tests/testSuiteIntakeNegative.spec.js:284:9 › Intake Negative › Rejected: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document
+BRF No. value: "Budget 703"
+
+[Intake] Reject submitted
+
+[Intake] Document regenerated
+
+[Intake] Downloaded document: intake-2044-2026-07-22_09-42-08.pdf
+
+[Intake] PDF "intake-2044-2026-07-22_09-42-08.pdf" → Status: "REJECTED"
+
+[81/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:299:9 › Intake Negative › Draft: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document
+[nsef-tests] › tests/testSuiteIntakeNegative.spec.js:299:9 › Intake Negative › Draft: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document
+BRF No. value: "Budget 703"
+
+[Intake] Recall submitted
+
+[Intake] Document regenerated
+
+[Intake] Downloaded document: intake-2045-2026-07-22_09-43-07.pdf
+
+[Intake] PDF "intake-2045-2026-07-22_09-43-07.pdf" → Status: "DRAFT"
+
+[82/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:315:9 › Intake Negative › Released: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document
+[nsef-tests] › tests/testSuiteIntakeNegative.spec.js:315:9 › Intake Negative › Released: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document
+BRF No. value: "Budget 703"
+
+[Intake] Approving stage 1...
+
+[Intake] No action button at step 2 — reloading (1/2)...
+
+[Intake] No action button at step 3 — reloading (2/2)...
+
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[Intake] Approving stage 5...
+
+[Intake] Clicking Acknowledge/Accept step 6...
+
+[Intake] Status Released/Active after 6 step(s).
+
+[Intake] Document regenerated
+
+[Intake] Downloaded document: intake-2046-2026-07-22_09-44-32.pdf
+
+[Intake] PDF "intake-2046-2026-07-22_09-44-32.pdf" → Status: "RELEASED"
+
+[83/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:337:9 › Intake Negative › Clone an intake → new intake → submit → approve to Released → only its own new workflows @IntakeNegative @Clone
+[nsef-tests] › tests/testSuiteIntakeNegative.spec.js:337:9 › Intake Negative › Clone an intake → new intake → submit → approve to Released → only its own new workflows @IntakeNegative @Clone
+BRF No. value: "Budget 703"
+
+[Clone] Source intake: INT-FNSE-26-256
+
+[Intake] Submitted via workflow popup
+
+[Clone] Cloned intake: INT-FNSE-26-257
+
+[Intake] Approving stage 1...
+
+[Intake] No action button at step 2 — reloading (1/2)...
+
+[Intake] No action button at step 3 — reloading (2/2)...
+
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[Intake] Approving stage 5...
+
+[Intake] Clicking Acknowledge/Accept step 6...
+
+[Intake] Status Released/Active after 6 step(s).
+
+[Clone] Clone workflow runs displayed: 2
+
+[84/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:374:9 › Intake Negative › Amend a Released intake → change qty + title → submit → complete workflow → Workflow Stages Completed @IntakeNegative @Amend
+[nsef-tests] › tests/testSuiteIntakeNegative.spec.js:374:9 › Intake Negative › Amend a Released intake → change qty + title → submit → complete workflow → Workflow Stages Completed @IntakeNegative @Amend
+BRF No. value: "Budget 703"
+
+[Intake] Approving stage 1...
+
+[Intake] No action button at step 2 — reloading (1/2)...
+
+[Intake] No action button at step 3 — reloading (2/2)...
+
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[Intake] Approving stage 5...
+
+[Intake] Clicking Acknowledge/Accept step 6...
+
+[Intake] Status Released/Active after 6 step(s).
+
+[Intake] Submitted via workflow popup
+
+[Amend] Amend submitted
+
+[Intake] Approving stage 1...
+
+[Intake] No action button at step 2 — reloading (1/2)...
+
+[Intake] No action button at step 3 — reloading (2/2)...
+
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[Intake] Approving stage 5...
+
+[Intake] Clicking Acknowledge/Accept step 6...
+
+[Intake] Status Released/Active after 6 step(s).
+
+[Amend] Workflow states — completed:4 active:0 pending:1 inactive:0
+
+[Amend] Audit log — has new title:true has qty 100->150:true
+
+[85/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:411:9 › Intake Negative › Reassign Purchaser on a Released intake → add two, then replace → Activity Log captures both @IntakeNegative @Reassign
+[nsef-tests] › tests/testSuiteIntakeNegative.spec.js:411:9 › Intake Negative › Reassign Purchaser on a Released intake → add two, then replace → Activity Log captures both @IntakeNegative @Reassign
+BRF No. value: "Budget 703"
+
+[Intake] Approving stage 1...
+
+[Intake] No action button at step 2 — reloading (1/2)...
+
+[Intake] No action button at step 3 — reloading (2/2)...
+
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[Intake] Approving stage 5...
+
+[Intake] Clicking Acknowledge/Accept step 6...
+
+[Intake] Status Released/Active after 6 step(s).
+
+[Reassign] Added purchasers: ["Amey Koli","Aniket Ravindra Pawar"]
+
+[Reassign] Replace dropdown options: ["None (add only)","Amey Koli","Aniket Ravindra Pawar"]
+
+[Reassign] Replace reassignment done — new purchaser: ["Santosh Harijan"]
+
+[Reassign] Replace dropdown after replace: ["None (add only)","Aniket Ravindra Pawar","Santosh Harijan"]
+
+[Reassign] Activity Log (first 1200 chars):
+Activity Log
+Download
+All
+Comments
+Activities
+Audit Logs
+Approvals
+NSEF Support Admin
+22 jul, 2026 at 3:19 pm
+Intake created and sent for approval successfully
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:19 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:19 pm
+Intake has been sent to approval successfully
+Reason: Approved by automation
+NSEF Support Admin
+22 jul, 2026 at 3:19 pm
+Approval has been Reassigned from NSEIL Support User to NSEF Support Admin
+Reason: Reassigned for automated testing
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:19 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:19 pm
+Intake has been sent to approval successfully
+Reason: Approved by automation
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:19 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+NSEF Support Admin
+22 jul, 2026 at 3:19 pm
+NSEF Support Admin has accepted the Purchaser assignment
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:19 pm
+Intake approved and released successfully by NSEF Support Admin
+Reason: Approved by automation
+NSEF Support Adm
+
+[86/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:443:9 › Intake Negative › Reassign User on a Released intake → select user + reason → Submit @IntakeNegative @ReassignUser
+[nsef-tests] › tests/testSuiteIntakeNegative.spec.js:443:9 › Intake Negative › Reassign User on a Released intake → select user + reason → Submit @IntakeNegative @ReassignUser
+BRF No. value: "Budget 703"
+
+[Intake] Approving stage 1...
+
+[Intake] No action button at step 2 — reloading (1/2)...
+
+[Intake] No action button at step 3 — reloading (2/2)...
+
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[Intake] Approving stage 5...
+
+[Intake] Clicking Acknowledge/Accept step 6...
+
+[Intake] Status Released/Active after 6 step(s).
+
+[ReassignUser] reassigned to "Aash" — toast confirmed
+
+[Reassign] Activity Log (first 1200 chars):
+Activity Log
+Download
+All
+Comments
+Activities
+Audit Logs
+Approvals
+NSEF Support Admin
+22 jul, 2026 at 3:21 pm
+Intake created and sent for approval successfully
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:21 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:21 pm
+Intake has been sent to approval successfully
+Reason: Approved by automation
+NSEF Support Admin
+22 jul, 2026 at 3:21 pm
+Approval has been Reassigned from NSEIL Support User to NSEF Support Admin
+Reason: Reassigned for automated testing
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:21 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:21 pm
+Intake has been sent to approval successfully
+Reason: Approved by automation
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:21 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+NSEF Support Admin
+22 jul, 2026 at 3:21 pm
+NSEF Support Admin has accepted the Purchaser assignment
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:21 pm
+Intake approved and released successfully by NSEF Support Admin
+Reason: Approved by automation
+NSEF Support Adm
+
+[87/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:467:9 › Intake Negative › Mark Processed on a Released intake → status Processed → Activity Log captures it @IntakeNegative @MarkProcessed
+[nsef-tests] › tests/testSuiteIntakeNegative.spec.js:467:9 › Intake Negative › Mark Processed on a Released intake → status Processed → Activity Log captures it @IntakeNegative @MarkProcessed
+BRF No. value: "Budget 703"
+
+[Intake] Approving stage 1...
+
+[Intake] No action button at step 2 — reloading (1/2)...
+
+[Intake] No action button at step 3 — reloading (2/2)...
+
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[Intake] Approving stage 5...
+
+[Intake] Clicking Acknowledge/Accept step 6...
+
+[Intake] Status Released/Active after 6 step(s).
+
+[MarkProcessed] submitted
+
+[Reassign] Activity Log (first 1200 chars):
+Activity Log
+Download
+All
+Comments
+Activities
+Audit Logs
+Approvals
+NSEF Support Admin
+22 jul, 2026 at 3:22 pm
+Intake created and sent for approval successfully
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:22 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:22 pm
+Intake has been sent to approval successfully
+Reason: Approved by automation
+NSEF Support Admin
+22 jul, 2026 at 3:22 pm
+Approval has been Reassigned from NSEIL Support User to NSEF Support Admin
+Reason: Reassigned for automated testing
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:22 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:22 pm
+Intake has been sent to approval successfully
+Reason: Approved by automation
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:22 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+NSEF Support Admin
+22 jul, 2026 at 3:22 pm
+NSEF Support Admin has accepted the Purchaser assignment
+Approved by NSEF Support Admin
+22 jul, 2026 at 3:22 pm
+Intake approved and released successfully by NSEF Support Admin
+Reason: Approved by automation
+NSEF Support Adm
+
+[88/192] [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:490:9 › Intake Negative › Cancel a partially-filled intake discards and leaves the create page @IntakeNegative @Cancel
+[89/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:56:9 › CXO Create — Positive › Expand-all reveals the form sections and their fields @CXO @Positive
+[90/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:75:9 › CXO Create — Negative › Submit empty form is blocked with a "title required" toast @CXO @Negative
+[91/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:85:9 › CXO Create — Negative › Submit empty form is blocked with an "Item Details row required" toast @CXO @Negative
+[92/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:96:9 › CXO Create — Negative › Empty form flags every mandatory section with an error badge @CXO @Negative
+[93/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:108:9 › CXO Create — Negative › Empty form shows the expected mandatory-field error counts per section @CXO @Negative
+[94/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:120:9 › CXO Create — Negative › Submit with sections expanded shows a red border on unfilled mandatory fields @CXO @Negative
+[95/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:134:9 › CXO Create — Negative › Title-only submit clears the title error but stays blocked on other sections @CXO @Negative
+[96/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:149:9 › CXO Create — Negative › Cancel from the create page leaves the form @CXO @Negative
+[97/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:166:9 › CXO Create — Edge Cases › Whitespace-only title is accepted as-is (not trimmed, no title error) @CXO @Edge
+[98/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:184:9 › CXO Create — Edge Cases › Special characters / emoji are accepted in the title @CXO @Edge
+[99/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:199:9 › CXO Create — Edge Cases › Very long title (300 chars) is accepted in the title field @CXO @Edge
+[100/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:212:9 › CXO Create — Edge Cases › Qty field rejects negative values (minus sign stripped) @CXO @Edge
+[101/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:223:9 › CXO Create — Edge Cases › Qty field accepts decimal values @CXO @Edge
+[102/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:247:9 › CXO — Revert Pending Budget › Create + release a CXO → More → Revert Pending Budget → amount + reason → Submit @CXO @RevertBudget
+[nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:247:9 › CXO — Revert Pending Budget › Create + release a CXO → More → Revert Pending Budget → amount + reason → Submit @CXO @RevertBudget
+✓ BRF auto-populated: "Dont Touch"
+
+[CXO] Approving stage 1...
+
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[CXO] Approving stage 2...
+
+[CXO] Approving stage 3...
+
+[CXO] Approving stage 4...
+
+[CXO] Status Released after 4 approval(s).
+
+[CXO] Saving CXO code: CXO-FNSE-26-206  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5496/overview
+
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-206"
+
+[RevertBudget] Rollback Value = 200000
+
+[RevertBudget] Submitted revert of 200000 with remarks "Reverted by automation"
+
+[RevertBudget] Verified: no pending budget remains after revert
+
+[103/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:278:9 › CXO — More Dropdown (Released CXO) › Clone a Released CXO → pre-filled clone form → Submit → approve until Released @CXO @Clone
+[nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:278:9 › CXO — More Dropdown (Released CXO) › Clone a Released CXO → pre-filled clone form → Submit → approve until Released @CXO @Clone
+✓ BRF auto-populated: "Dont Touch"
+
+[CXO] Approving stage 1...
+
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[CXO] Approving stage 2...
+
+[CXO] Approving stage 3...
+
+[CXO] Approving stage 4...
+
+[CXO] Status Released after 4 approval(s).
+
+[CXO] Saving CXO code: CXO-FNSE-26-207  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5497/overview
+
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-207"
+
+[CXO] Clone submitted → new CXO on overview
+
+[CXO] Approving stage 1...
+
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[CXO] Approving stage 2...
+
+[CXO] Approving stage 3...
+
+[CXO] Approving stage 4...
+
+[CXO] Status Released after 4 approval(s).
+
+[104/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:297:9 › CXO — More Dropdown (Released CXO) › Amend a Released CXO → edit title → Submit with reason → approve until Released @CXO @Amend
+[nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:297:9 › CXO — More Dropdown (Released CXO) › Amend a Released CXO → edit title → Submit with reason → approve until Released @CXO @Amend
+✓ BRF auto-populated: "Dont Touch"
+
+[CXO] Approving stage 1...
+
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[CXO] Approving stage 2...
+
+[CXO] Approving stage 3...
+
+[CXO] Approving stage 4...
+
+[CXO] Status Released after 4 approval(s).
+
+[CXO] Saving CXO code: CXO-FNSE-26-209  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5499/overview
+
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-209"
+
+[CXO] Amend submitted → overview (Pending Approval)
+
+[CXO] Approving stage 1...
+
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[CXO] Approving stage 2...
+
+[CXO] Approving stage 3...
+
+[CXO] Approving stage 4...
+
+[CXO] Status Released after 4 approval(s).
+
+[CXO] Audit Logs opened — content:
+Audit Logs
+NS
+NSEF Support Admin
+Jul 22nd 2026, 3:31 PM
+S. No.	Change	From	To
+1	code	CXO-FNSE-26-209	CXO-FNSE-26-209/1
+2	status	released	pending-amend-approval
+3	subject	HG Automation CXO	HG Automation CXO Amended
+Close
+
+[105/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:320:9 › CXO — More Dropdown (Released CXO) › Mark Processed a Released CXO → More → Mark Processed → reason → status Processed @CXO @MarkProcessed
+[nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:320:9 › CXO — More Dropdown (Released CXO) › Mark Processed a Released CXO → More → Mark Processed → reason → status Processed @CXO @MarkProcessed
+✓ BRF auto-populated: "Dont Touch"
+
+[CXO] Approving stage 1...
+
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[CXO] Approving stage 2...
+
+[CXO] Approving stage 3...
+
+[CXO] Approving stage 4...
+
+[CXO] Status Released after 4 approval(s).
+
+[CXO] Saving CXO code: CXO-FNSE-26-210  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5500/overview
+
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-210"
+
+[CXO] Mark Processed submitted
+
+[106/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:335:9 › CXO — More Dropdown (Released CXO) › Cancel a Released CXO → More → Cancel → reason → status Cancelled @CXO @Cancel
+[nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:335:9 › CXO — More Dropdown (Released CXO) › Cancel a Released CXO → More → Cancel → reason → status Cancelled @CXO @Cancel
+✓ BRF auto-populated: "Dont Touch"
+
+[CXO] Approving stage 1...
+
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[CXO] Approving stage 2...
+
+[CXO] Approving stage 3...
+
+[CXO] Approving stage 4...
+
+[CXO] Status Released after 4 approval(s).
+
+[CXO] Saving CXO code: CXO-FNSE-26-211  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5501/overview
+
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-211"
+
+[CXO] Cancel submitted
+
+[107/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:379:9 › CXO — Document (Regenerate + Download) › Draft: Regenerate → Download → PDF shows correct status + fields @CXO @Document
+[nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:379:9 › CXO — Document (Regenerate + Download) › Draft: Regenerate → Download → PDF shows correct status + fields @CXO @Document
+✓ BRF auto-populated: "Dont Touch"
+
+[CXO] Saved as Draft → overview
+
+[CXO] Saving CXO code: 5502  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5502/overview
+
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "5502"
+
+[CXO] Document regenerated
+
+[CXO] Downloaded document: transaction-5502-2026-07-22_10-07-34.pdf
+
+[CXO] PDF "transaction-5502-2026-07-22_10-07-34.pdf" → Status: "DRAFT"
+
+[108/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:394:9 › CXO — Document (Regenerate + Download) › Pending Approval: Regenerate → Download → PDF shows correct status + fields @CXO @Document
+[nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:394:9 › CXO — Document (Regenerate + Download) › Pending Approval: Regenerate → Download → PDF shows correct status + fields @CXO @Document
+✓ BRF auto-populated: "Dont Touch"
+
+[CXO] Submitted → Pending Approval
+
+[CXO] Saving CXO code: CXO-FNSE-26-212  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5503/overview
+
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-212"
+
+[CXO] Document regenerated
+
+[CXO] Downloaded document: transaction-5503-2026-07-22_10-08-40.pdf
+
+[CXO] PDF "transaction-5503-2026-07-22_10-08-40.pdf" → Status: "PENDING-APPROVAL"
+
+[109/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:409:9 › CXO — Document (Regenerate + Download) › Released: Regenerate → Download → PDF shows correct status + fields @CXO @Document
+[nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:409:9 › CXO — Document (Regenerate + Download) › Released: Regenerate → Download → PDF shows correct status + fields @CXO @Document
+✓ BRF auto-populated: "Dont Touch"
+
+[CXO] Approving stage 1...
+
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[CXO] Approving stage 2...
+
+[CXO] Approving stage 3...
+
+[CXO] Approving stage 4...
+
+[CXO] Status Released after 4 approval(s).
+
+[CXO] Saving CXO code: CXO-FNSE-26-213  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5504/overview
+
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-213"
+
+[CXO] Document regenerated
+
+[CXO] Downloaded document: transaction-5504-2026-07-22_10-10-47.pdf
+
+[CXO] PDF "transaction-5504-2026-07-22_10-10-47.pdf" → Status: "RELEASED"
+
+[110/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:424:9 › CXO — Document (Regenerate + Download) › Rejected: Regenerate → Download → PDF shows correct status + fields @CXO @Document
+[nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:424:9 › CXO — Document (Regenerate + Download) › Rejected: Regenerate → Download → PDF shows correct status + fields @CXO @Document
+✓ BRF auto-populated: "Dont Touch"
+
+[CXO] Submitted → Pending Approval
+
+[CXO] Saving CXO code: CXO-FNSE-26-214  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5505/overview
+
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-214"
+
+[CXO] Reject submitted
+
+[CXO] Document regenerated
+
+[CXO] Downloaded document: transaction-5505-2026-07-22_10-11-58.pdf
+
+[CXO] PDF "transaction-5505-2026-07-22_10-11-58.pdf" → Status: "REJECTED"
+
+[111/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:473:13 › CXO Listing Page › Page Load & Structure › listing page loads with table rows @Listing @Smoke
+[112/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:479:13 › CXO Listing Page › Page Load & Structure › all listing tabs are visible @Listing @Smoke
+  1) [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:479:13 › CXO Listing Page › Page Load & Structure › all listing tabs are visible @Listing @Smoke 
+
+    TimeoutError: page.goto: Timeout 5000ms exceeded.
+    Call log:
+      - navigating to "https://nse-capp-v4-uat.aerchain.io/", waiting until "load"
+
+
+       at ../pages/NSEFoundationActions.js:67
+
+      65 |      */
+      66 |     async openApp(data) {
+    > 67 |         await this.page.goto(`${data.loginUrl}/`);
+         |                         ^
+      68 |         await this.page.waitForLoadState('domcontentloaded');
+      69 |         const emailField = this.page.locator(L.loginEmailField);
+      70 |         if (await emailField.isVisible({ timeout: 6000 }).catch(() => false)) {
+        at NSEFoundationActions.openApp (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:67:25)
+        at loginAndOpenCxoListing (/Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteNsefCXOtest.spec.js:458:16)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteNsefCXOtest.spec.js:481:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteNsefCXOtest-CXO-L-0e42a-s-are-visible-Listing-Smoke-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteNsefCXOtest-CXO-L-0e42a-s-are-visible-Listing-Smoke-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteNsefCXOtest-CXO-L-0e42a-s-are-visible-Listing-Smoke-nsef-tests/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/testSuiteNsefCXOtest-CXO-L-0e42a-s-are-visible-Listing-Smoke-nsef-tests/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/testSuiteNsefCXOtest-CXO-L-0e42a-s-are-visible-Listing-Smoke-nsef-tests/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+(node:5148) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[113/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:485:13 › CXO Listing Page › Page Load & Structure › Create CXO button and pagination info are visible @Listing @Smoke
+[114/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:496:13 › CXO Listing Page › Tabs › switching to "My Pending Approval" activates that tab @Listing @Tabs
+[115/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:503:13 › CXO Listing Page › Tabs › switching to "Draft" activates that tab @Listing @Tabs
+[116/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:510:13 › CXO Listing Page › Tabs › returning to "All" tab shows records again @Listing @Tabs
+[117/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:525:21 › CXO Listing Page › Sorting › Positive › sort Code column keeps records (first + second click) @Listing @Sort
+[118/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:525:21 › CXO Listing Page › Sorting › Positive › sort Subject column keeps records (first + second click) @Listing @Sort
+[119/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:525:21 › CXO Listing Page › Sorting › Positive › sort Date column keeps records (first + second click) @Listing @Sort
+[120/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:525:21 › CXO Listing Page › Sorting › Positive › sort Status column keeps records (first + second click) @Listing @Sort
+[121/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:537:17 › CXO Listing Page › Sorting › Negative › Code column values stay non-empty after sort (handles duplicates) @Listing @Sort
+[122/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:552:17 › CXO Listing Page › Search › Positive › search by partial code returns results @Listing @Search
+[123/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:559:17 › CXO Listing Page › Search › Positive › search by exact code returns at least one row @Listing @Search
+[124/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:566:17 › CXO Listing Page › Search › Positive › search by partial subject returns results @Listing @Search
+[125/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:573:17 › CXO Listing Page › Search › Positive › different-case search does not crash the page @Listing @Search
+[126/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:580:17 › CXO Listing Page › Search › Positive › clearing the search restores records @Listing @Search
+[127/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:590:17 › CXO Listing Page › Search › Negative › non-existent search term shows no results without crashing @Listing @Search
+[128/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:598:17 › CXO Listing Page › Search › Negative › spaces-only search does not crash the page @Listing @Search
+[129/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:605:17 › CXO Listing Page › Search › Negative › SQL-injection string does not break the page @Listing @Search
+[130/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:612:17 › CXO Listing Page › Search › Negative › XSS payload does not inject a script @Listing @Search
+[131/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:623:17 › CXO Listing Page › Search › Edge Cases › very long search string does not crash @Listing @Search
+[132/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:630:17 › CXO Listing Page › Search › Edge Cases › special characters in search do not crash @Listing @Search
+[133/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:637:17 › CXO Listing Page › Search › Edge Cases › unicode characters in search do not crash @Listing @Search
+[134/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:650:17 › CXO Listing Page › Filters › Positive › Status filter popup opens @Listing @Filter
+[135/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:657:17 › CXO Listing Page › Filters › Positive › Created By filter popup opens @Listing @Filter
+[136/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:664:17 › CXO Listing Page › Filters › Positive › filtering by Status updates the table @Listing @Filter
+[137/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:672:17 › CXO Listing Page › Filters › Positive › filtering by Created By updates the table @Listing @Filter
+[138/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:681:17 › CXO Listing Page › Filters › Negative / Edge › non-existent user in filter search does not crash the popup @Listing @Filter
+[139/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:689:17 › CXO Listing Page › Filters › Negative / Edge › special characters in filter search do not crash the popup @Listing @Filter
+[140/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:703:17 › CXO Listing Page › Pagination › Positive › pagination info shows "Showing X – Y of Z entries" @Listing @Pagination
+[141/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:712:17 › CXO Listing Page › Pagination › Positive › Previous is disabled on the first page @Listing @Pagination
+[142/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:718:17 › CXO Listing Page › Pagination › Positive › Next page changes the pagination range @Listing @Pagination
+[143/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:728:17 › CXO Listing Page › Pagination › Positive › Next then Previous returns to the original range @Listing @Pagination
+[144/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:739:17 › CXO Listing Page › Pagination › Positive › Next is disabled on the last page @Listing @Pagination
+[145/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:748:17 › CXO Listing Page › Pagination › Negative / Edge › search on page 2 does not crash the page @Listing @Pagination
+  2) [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:748:17 › CXO Listing Page › Pagination › Negative / Edge › search on page 2 does not crash the page @Listing @Pagination 
+
+    TimeoutError: page.goto: Timeout 5000ms exceeded.
+    Call log:
+      - navigating to "https://nse-capp-v4-uat.aerchain.io/", waiting until "load"
+
+
+       at ../pages/NSEFoundationActions.js:67
+
+      65 |      */
+      66 |     async openApp(data) {
+    > 67 |         await this.page.goto(`${data.loginUrl}/`);
+         |                         ^
+      68 |         await this.page.waitForLoadState('domcontentloaded');
+      69 |         const emailField = this.page.locator(L.loginEmailField);
+      70 |         if (await emailField.isVisible({ timeout: 6000 }).catch(() => false)) {
+        at NSEFoundationActions.openApp (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:67:25)
+        at loginAndOpenCxoListing (/Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteNsefCXOtest.spec.js:458:16)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteNsefCXOtest.spec.js:750:30
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteNsefCXOtest-CXO-L-3ed95-the-page-Listing-Pagination-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/testSuiteNsefCXOtest-CXO-L-3ed95-the-page-Listing-Pagination-nsef-tests/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/testSuiteNsefCXOtest-CXO-L-3ed95-the-page-Listing-Pagination-nsef-tests/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+(node:5315) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[146/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:763:17 › CXO Listing Page › Row Navigation › Positive › clicking the first row code opens the detail page @Listing @Navigation
+[147/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:770:17 › CXO Listing Page › Row Navigation › Positive › browser back from the detail page returns to the listing @Listing @Navigation
+  3) [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:770:17 › CXO Listing Page › Row Navigation › Positive › browser back from the detail page returns to the listing @Listing @Navigation 
+
+    TimeoutError: page.goto: Timeout 5000ms exceeded.
+    Call log:
+      - navigating to "https://nse-capp-v4-uat.aerchain.io/", waiting until "load"
+
+
+       at ../pages/NSEFoundationActions.js:67
+
+      65 |      */
+      66 |     async openApp(data) {
+    > 67 |         await this.page.goto(`${data.loginUrl}/`);
+         |                         ^
+      68 |         await this.page.waitForLoadState('domcontentloaded');
+      69 |         const emailField = this.page.locator(L.loginEmailField);
+      70 |         if (await emailField.isVisible({ timeout: 6000 }).catch(() => false)) {
+        at NSEFoundationActions.openApp (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:67:25)
+        at loginAndOpenCxoListing (/Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteNsefCXOtest.spec.js:458:16)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteNsefCXOtest.spec.js:772:30
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteNsefCXOtest-CXO-L-3c91a--listing-Listing-Navigation-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/testSuiteNsefCXOtest-CXO-L-3c91a--listing-Listing-Navigation-nsef-tests/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/testSuiteNsefCXOtest-CXO-L-3c91a--listing-Listing-Navigation-nsef-tests/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+(node:5352) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[148/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:782:17 › CXO Listing Page › Row Navigation › Edge Cases › refreshing the detail page keeps the URL intact @Listing @Navigation
+[149/192] [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:797:13 › CXO Listing Page › Create CXO Button › Create CXO button opens the create page @Listing @Create
+[150/192] [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:49:9 › NSEF Happy Paths › Create CXO with all mandatory fields → verify BRF auto-populate → Submit @CXO @Smoke
+[nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:49:9 › NSEF Happy Paths › Create CXO with all mandatory fields → verify BRF auto-populate → Submit @CXO @Smoke
+✓ BRF auto-populated: "Dont Touch"
+
+[CXO] Approving stage 1...
+
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[CXO] Approving stage 2...
+
+[CXO] Approving stage 3...
+
+[CXO] Approving stage 4...
+
+[CXO] Status Released after 4 approval(s).
+
+[CXO] Saving CXO code: CXO-FNSE-26-215  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5506/overview
+
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-215"
+
+[151/192] [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:131:9 › NSEF Happy Paths › Create Intake → fill all details → Submit → approve until Released @Intake @Smoke
+[nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:131:9 › NSEF Happy Paths › Create Intake → fill all details → Submit → approve until Released @Intake @Smoke
+BRF No. value: "Budget 703"
+
+[Intake] Approving stage 1...
+
+[Intake] No action button at step 2 — reloading (1/2)...
+
+[Intake] No action button at step 3 — reloading (2/2)...
+
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[Intake] Approving stage 5...
+
+[Intake] Clicking Acknowledge/Accept step 6...
+
+[Intake] Status Released/Active after 6 step(s).
+
+[Intake] Saving Intake code: INT-FNSE-26-262  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2053/overview
+
+[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-262"
+
+[152/192] [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:184:9 › NSEF Happy Paths › Open saved Intake from listing → Process → Send for Sourcing @Intake @Sourcing
+[nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:184:9 › NSEF Happy Paths › Open saved Intake from listing → Process → Send for Sourcing @Intake @Sourcing
+[Intake] Searching listing for saved intake: INT-FNSE-26-262
+
+[Intake] Opened intake INT-FNSE-26-262 → https://nse-capp-v4-uat.aerchain.io/intakes/2053
+
+[Intake] Clicked Process button
+
+[Intake] Clicked Send for Sourcing
+
+[Sourcing] Expanded all sections
+
+[Sourcing] Payment Terms selected
+
+[Sourcing] Commercial Bid Due Date filled
+
+[Sourcing] Technical Bid Due Date filled
+
+[Sourcing] Expected Delivery Date filled
+
+[Sourcing] Supplier "HG Automation SUPP" added
+
+[Sourcing] Clicked Submit
+
+[Sourcing] Confirmed Process Request popup
+
+[Sourcing] Approving stage 1...
+
+[Sourcing] Approve button not visible for 4s — reloading (1/5)...
+
+[Sourcing] Approve button not visible for 4s — reloading (2/5)...
+
+[Sourcing] Approve button not visible for 4s — reloading (3/5)...
+
+[Sourcing] Approve button not visible for 4s — reloading (4/5)...
+
+[Sourcing] Approve button not visible for 4s — reloading (5/5)...
+
+[Sourcing] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[Sourcing] Workflow approver reassigned to NSEF Support Admin
+
+[Sourcing] Approving stage 2...
+
+[Sourcing] RFX live (not Pending Approval) after 2 approval(s).
+
+[Sourcing] Saving Sourcing Event code: RFX-26-135  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1099/overview
+
+[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-135"
+
+[153/192] [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:232:9 › NSEF Happy Paths › Quote the RFX → foreclose @Sourcing @Quote
+[nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:232:9 › NSEF Happy Paths › Quote the RFX → foreclose @Sourcing @Quote
+[Quote] On Quote Request listing page
+
+[Quote] Searching quote requests for: RFX-26-135
+
+[Quote] Opened sourcing event RFX-26-135 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1099
+
+[Quote] Clicked Submit Quote on supplier
+
+[Quote] Selected Commercial Quote
+
+[Quote] Preferred Currency set to INR
+
+[Quote] Unit Rate filled: 2000
+
+[Quote] Clicked Submit Quote
+
+[Quote] Confirmed quote submission popup
+
+[Quote] Quote form closed — submission processed
+
+[Quote] Sourcing status is Quoted
+
+[154/192] [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:264:9 › NSEF Happy Paths › Award the RFX → wait for auto-created Purchase Requisition @Sourcing @Award
+[nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:264:9 › NSEF Happy Paths › Award the RFX → wait for auto-created Purchase Requisition @Sourcing @Award
+[Quote] On Quote Request listing page
+
+[Quote] Searching quote requests for: RFX-26-135
+
+[Quote] Opened sourcing event RFX-26-135 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1099
+
+[Award] Clicked Foreclose
+
+[Award] Foreclose submitted
+
+[Award] On Analysis tab
+
+[Award] Clicked Award
+
+[Award] Pending Awarded Quantity: "100.00" → entering 100
+
+[Award] Allocated quantity filled: 100
+
+[Award] Clicked Award
+
+[Award] Workflow Summary submitted
+
+[Award] Workflow Stages → overall status: "Active" → NOT completed
+
+[Award] Approving (round 1)...
+
+[Award] Workflow Stages → overall status: "Active" → NOT completed
+
+[Award] Approve button not visible for 4s — reloading (1/1)...
+
+[Award] No Approve button — reassigning approver to NSEF Support Admin...
+
+[Award] Workflow approver reassigned to NSEF Support Admin
+
+[Award] Approving (round 2)...
+
+[Award] Workflow Stages → overall status: "Completed" → Completed
+
+[Award] Clicked back button beside award code
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (1/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (2/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (3/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (4/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (5/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (6/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (7/10)...
+
+[Award] Requisition code displayed: PR-DRAFT
+
+[Award] Requisition "PR-DRAFT" opened in new tab → https://nse-capp-uat.aerchain.io/requisitions/946
+
+[Award] Saved to NSEFoundationData.json → savedRequisition.code = "PR-DRAFT"
+
+[155/192] [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:310:9 › NSEF Happy Paths › PR edit → submit → status Submitted @Requisition @PR
+[nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:310:9 › NSEF Happy Paths › PR edit → submit → status Submitted @Requisition @PR
+[PR] Opening saved requisition PR-DRAFT → https://nse-capp-uat.aerchain.io/requisitions/946
+
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/946
+
+[PR] Clicked Edit
+
+[PR] Edit page loaded
+
+[PR] Effective from date filled with today: 2026-07-22
+
+[PR] Effective to date filled
+
+[PR] Purchase Type selected: First time/New
+
+[PR] Inward Required → Yes
+
+[PR] Inward Matching Criterion → Quantity
+
+[PR] Clicked Submit
+
+[PR] Confirmed Approvers popup
+
+[PR] Requisition status is Submitted
+
+[PR] Saved to NSEFoundationData.json → savedRequisition.code = "PR-NSEFN-26-77"
+
+[156/192] [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:339:9 › NSEF Happy Paths › Submitted PR auto-processes → PRC (Processed) → PO (Completed) @Requisition @PRC @PO
+[nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:339:9 › NSEF Happy Paths › Submitted PR auto-processes → PRC (Processed) → PO (Completed) @Requisition @PRC @PO
+[PR] Opening saved requisition PR-NSEFN-26-77 → https://nse-capp-uat.aerchain.io/requisitions/946
+
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/946
+
+[PR] Status not "Processed" yet — reloading in 10s (1/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (2/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (3/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (4/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (5/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (6/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (7/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (8/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (9/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (10/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (11/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (12/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (13/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (14/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (15/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (16/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (17/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (18/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (19/60)...
+
+[PR] Status is "Processed".
+
+[PR] Status not "Completed" yet — reloading in 10s (1/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (2/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (3/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (4/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (5/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (6/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (7/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (8/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (9/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (10/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (11/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (12/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (13/60)...
+
+[PR] Status is "Completed".
+
+[157/192] [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:361:9 › NSEF Happy Paths › Completed PR → open PO via conversion → GRN → approve until Inwarded @PO @GRN
+[nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:361:9 › NSEF Happy Paths › Completed PR → open PO via conversion → GRN → approve until Inwarded @PO @GRN
+[PR] Opening saved requisition PR-NSEFN-26-77 → https://nse-capp-uat.aerchain.io/requisitions/946
+
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/946
+
+[PR] Opened Transactions tab
+
+[PR] Expanded Conversions section
+
+[PRC] Opened PRC-NSEFN-26-69 (Requisition Conversion View)
+
+[PO] Opened PO-NSEFN-26-139 in new tab → https://nse-capp-uat.aerchain.io/purchase-orders/900
+
+[PO] Approving stage 1...
+
+[PO] Approved a stage
+
+[PO] Approving stage 2...
+
+[PO] Approved a stage
+
+[PO] Approving stage 3...
+
+[PO] Approved a stage
+
+[PO] Approvals complete (Create available) after 3 approval(s).
+
+[GRN] Create → GRN clicked
+
+[GRN] Submitted Select PO Items popup
+
+[GRN] On Create GRN page: https://nse-capp-uat.aerchain.io/pending-inwards/po/900/inward
+
+[GRN] Filled Invoice Number + Delivery challan
+
+[GRN] Filled Delivery Note Reference + Document Date (2026-07-22 → "22/07/2026")
+
+[GRN] Line item — PO Quantity=100, Received=100
+
+[GRN] Clicked Submit
+
+[GRN] Confirmed Workflow Summary popup
+
+[GRN] GRN created → https://nse-capp-uat.aerchain.io/inwards/467
+
+[GRN] Saved to NSEFoundationData.json → savedGrn.code = "INW-NSEFN-26-50"
+
+[GRN] Approving stage 1...
+
+[GRN] Approved a stage
+
+[GRN] Status Inwarded after 1 approval(s).
+
+[GRN] Status is Inwarded
+
+[158/192] [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:412:9 › NSEF Happy Paths › Invoice for the PO (matched to its GRN) → approve until Pending Sync @PO @Invoice
+[nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:412:9 › NSEF Happy Paths › Invoice for the PO (matched to its GRN) → approve until Pending Sync @PO @Invoice
+[PO] Opening saved PO PO-NSEFN-26-139 → https://nse-capp-uat.aerchain.io/purchase-orders/900
+
+[PO] On PO page: https://nse-capp-uat.aerchain.io/purchase-orders/900
+
+[INV] Create → Invoice clicked
+
+[INV] Submitted Select PO Items popup
+
+[INV] Proceeded Confirm Invoice Creation
+
+[INV] On Create Invoice page: https://nse-capp-uat.aerchain.io/invoices/new
+
+[INV] Uploaded invoice document: /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png
+
+[INV] Invoice number bumped: INV-AUTO-022 → INV-AUTO-023
+
+[INV] Filled Invoice Number (INV-AUTO-023) + Invoice Date (2026-07-22)
+
+[INV] Period based Invoicing → No
+
+[INV] Extra billing → No
+
+[INV] Clicked FIX → Item Matching
+
+[INV] Selected GRN INW-NSEFN-26-50 in Item Matching
+
+[INV] Submitted Item Matching
+
+[INV] Clicked Submit (create page)
+
+[INV] Proceeded Validations popup
+
+[INV] Confirmed Workflow Summary popup
+
+[INV] Invoice created → https://nse-capp-uat.aerchain.io/invoices/985
+
+[INV] Saved to NSEFoundationData.json → savedInvoice.code = "Invoice-FNSE-26-149"
+
+[INV] Approving stage 1...
+
+[INV] Approved a stage
+
+[INV] Approving stage 2...
+
+[INV] Approved a stage
+
+[INV] Approving stage 3...
+
+[INV] Approved a stage
+
+[INV] Approving stage 4...
+
+[INV] Approved a stage
+
+[INV] Status Pending Sync after 4 approval(s).
+
+[INV] Status is Pending Sync
+
+[159/192] [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:453:9 › NSEF Happy Paths › Acknowledge the Pending Sync invoice via API → status becomes Accounted @PO @Invoice @Ack
+[nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:453:9 › NSEF Happy Paths › Acknowledge the Pending Sync invoice via API → status becomes Accounted @PO @Invoice @Ack
+[ACK] POST https://nse-api-uat.aerchain.io/invoice/ack → EXPENSE_RECORD_NO="Invoice-FNSE-26-149", response_body_reference="INV-AUTO-023"
+
+[ACK] Response 200: {"success":true,"error":null,"errors":[],"data":{}}
+
+[INV] Opening saved invoice Invoice-FNSE-26-149 → https://nse-capp-uat.aerchain.io/invoices/985
+
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/985
+
+[INV] Status is Accounted
+
+[160/192] [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:469:9 › NSEF Happy Paths › Pay the Accounted invoice → Submit → payment shows Completed @PO @Invoice @Payment
+[nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:469:9 › NSEF Happy Paths › Pay the Accounted invoice → Submit → payment shows Completed @PO @Invoice @Payment
+[INV] Opening saved invoice Invoice-FNSE-26-149 → https://nse-capp-uat.aerchain.io/invoices/985
+
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/985
+
+[PAY] Paid Amount=200000, UTR=UTR1784716522567, Payment Date=2026-07-22
+
+  4) [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:469:9 › NSEF Happy Paths › Pay the Accounted invoice → Submit → payment shows Completed @PO @Invoice @Payment 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  locator('[data-sonner-toast], .Toastify__toast, [role="alert"], [role="status"]').filter({ hasText: /\S/ }).first()
+    Expected: visible
+    Received: hidden
+    Timeout:  8000ms
+
+    Call log:
+      - Expect "toBeVisible" with timeout 8000ms
+      - waiting for locator('[data-sonner-toast], .Toastify__toast, [role="alert"], [role="status"]').filter({ hasText: /\S/ }).first()
+        12 × locator resolved to <span role="status" class="ag-paging-row-summary-panel">…</span>
+           - unexpected value "hidden"
+
+
+       at ../pages/NSEFoundationActions.js:4448
+
+      4446 |     async assertPaymentSuccessToast() {
+      4447 |         const toast = this.page.locator(L.paymentSuccessToast).filter({ hasText: /\S/ }).first();
+    > 4448 |         await expect(toast).toBeVisible({ timeout: 8000 });
+           |                             ^
+      4449 |         console.log(`[PAY] Success message: ${((await toast.textContent()) ?? '').trim().slice(0, 120)}`);
+      4450 |     }
+      4451 |
+        at NSEFoundationActions.assertPaymentSuccessToast (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:4448:29)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteNSEFhappyPATHS.spec.js:493:17
+
+    Test timeout of 30000ms exceeded.
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteNSEFhappyPATHS-NS-af3fb-ompleted-PO-Invoice-Payment-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteNSEFhappyPATHS-NS-af3fb-ompleted-PO-Invoice-Payment-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteNSEFhappyPATHS-NS-af3fb-ompleted-PO-Invoice-Payment-nsef-tests/error-context.md
+
+
+(node:5502) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[161/192] [nsef-tests] › tests/testSuiteNSETracksHotfixes.spec.js:32:9 › NSE Tracks & Hotfixes › Tracks › Modules show transactions per user department access @Tracks @DeptAccess
+[nsef-tests] › tests/testSuiteNSETracksHotfixes.spec.js:32:9 › NSE Tracks & Hotfixes › Tracks › Modules show transactions per user department access @Tracks @DeptAccess
+[ADMIN] Opened Org Settings (new tab)
+
+[ADMIN] Expanded User Management
+
+[ADMIN] Opened Users list
+
+[ADMIN] Opened user "NSEF Support Admin" (Update User drawer, retry)
+
+[ADMIN] Dept Full Access started CHECKED → uncheck, then close settings tab
+
+[ADMIN] Returned to v4 dashboard tab
+
+[ADMIN] User dashboard displayed
+
+[162/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:59:9 › RFX Listing Page › listing page loads with table rows @RFX @Listing @Smoke
+[163/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:68:13 › RFX Listing Page › Search — Negative › non-existent search term shows no results without crashing @RFX @Listing @Search
+[164/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:76:13 › RFX Listing Page › Search — Negative › spaces-only search does not crash the page @RFX @Listing @Search
+[165/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:83:13 › RFX Listing Page › Search — Negative › SQL-injection string does not break the page @RFX @Listing @Search
+[166/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:90:13 › RFX Listing Page › Search — Negative › XSS payload does not inject a script @RFX @Listing @Search
+[167/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:102:13 › RFX Listing Page › Search — Edge Cases › very long search string does not crash @RFX @Listing @Search
+[168/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:109:13 › RFX Listing Page › Search — Edge Cases › special characters in search do not crash @RFX @Listing @Search
+[169/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:116:13 › RFX Listing Page › Search — Edge Cases › unicode characters in search do not crash @RFX @Listing @Search
+[170/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:123:13 › RFX Listing Page › Search — Edge Cases › different-case search does not crash the page @RFX @Listing @Search
+[171/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:130:13 › RFX Listing Page › Search — Edge Cases › clearing the search restores records @RFX @Listing @Search
+[172/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:142:13 › RFX Listing Page › Filters — Negative / Edge › non-existent value in Status filter does not crash the popup @RFX @Listing @Filter
+[173/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:150:13 › RFX Listing Page › Filters — Negative / Edge › special characters in Created By filter do not crash the popup @RFX @Listing @Filter
+[174/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:162:13 › RFX Listing Page › Pagination — Negative / Edge › search on page 2 does not crash the page @RFX @Listing @Pagination
+[175/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:175:13 › RFX Listing Page › Row Navigation › clicking the first row opens the RFX detail page @RFX @Listing @Navigation
+[176/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:182:13 › RFX Listing Page › Row Navigation › browser back from the detail page returns to the listing @RFX @Listing @Navigation
+[177/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:192:13 › RFX Listing Page › Row Navigation › refreshing the detail page keeps the URL intact @RFX @Listing @Navigation
+[178/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:213:9 › RFX More Dropdown (Quote Request) › More → Audit Logs opens the audit-log dialog @RFX @MoreDropdown
+[nsef-tests] › tests/testSuiteRFXtests.spec.js:213:9 › RFX More Dropdown (Quote Request) › More → Audit Logs opens the audit-log dialog @RFX @MoreDropdown
+[CXO] Audit Logs opened — content:
+Audit Logs
+No audit logs available
+Close
+
+[179/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:221:9 › RFX More Dropdown (Quote Request) › More → Workflow Stages opens the Workflow Steps panel @RFX @MoreDropdown
+[180/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:230:9 › RFX More Dropdown (Quote Request) › More → Regenerate Document shows the success toast @RFX @MoreDropdown
+[nsef-tests] › tests/testSuiteRFXtests.spec.js:230:9 › RFX More Dropdown (Quote Request) › More → Regenerate Document shows the success toast @RFX @MoreDropdown
+[CXO] Document regenerated
+
+[181/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:237:9 › RFX More Dropdown (Quote Request) › More → Download Document downloads the RFX PDF @RFX @MoreDropdown
+[nsef-tests] › tests/testSuiteRFXtests.spec.js:237:9 › RFX More Dropdown (Quote Request) › More → Download Document downloads the RFX PDF @RFX @MoreDropdown
+[CXO] Downloaded document: quote-request-1099-2026-07-22_10-37-49.pdf
+
+[182/192] [nsef-tests] › tests/testSuiteRFXtests.spec.js:256:9 › RFX Reject during workflow › Sourcing event → submit → Reject at Pending Approval → status Rejected @RFX @Reject
+[nsef-tests] › tests/testSuiteRFXtests.spec.js:256:9 › RFX Reject during workflow › Sourcing event → submit → Reject at Pending Approval → status Rejected @RFX @Reject
+BRF No. value: "Budget 703"
+
+[Intake] Approving stage 1...
+
+[Intake] No action button at step 2 — reloading (1/2)...
+
+[Intake] No action button at step 3 — reloading (2/2)...
+
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[Intake] Approving stage 5...
+
+[Intake] Clicking Acknowledge/Accept step 6...
+
+[Intake] Status Released/Active after 6 step(s).
+
+[Intake] Saving Intake code: INT-FNSE-26-263  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2054/overview
+
+[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-263"
+
+[Intake] Searching listing for saved intake: INT-FNSE-26-263
+
+[Intake] Opened intake INT-FNSE-26-263 → https://nse-capp-v4-uat.aerchain.io/intakes/2054/overview
+
+[Intake] Clicked Process button
+
+[Intake] Clicked Send for Sourcing
+
+[Sourcing] Expanded all sections
+
+[Sourcing] Payment Terms selected
+
+[Sourcing] Commercial Bid Due Date filled
+
+[Sourcing] Technical Bid Due Date filled
+
+[Sourcing] Expected Delivery Date filled
+
+[Sourcing] Supplier "HG Automation SUPP" added
+
+[Sourcing] Clicked Submit
+
+[Sourcing] Confirmed Process Request popup
+
+[Sourcing] Saving Sourcing Event code: RFX-26-136  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1100/overview
+
+[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-136"
+
+[RFX] Reject submitted
+
+(node:5638) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[183/192] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:51:9 › Supplier Portal Happy Path › Create CXO with all mandatory fields → Submit → Released @Supplier @CXO
+[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:51:9 › Supplier Portal Happy Path › Create CXO with all mandatory fields → Submit → Released @Supplier @CXO
+✓ BRF auto-populated: "Dont Touch"
+
+[CXO] Approving stage 1...
+
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[CXO] Approving stage 2...
+
+[CXO] Approving stage 3...
+
+[CXO] Approving stage 4...
+
+[CXO] Status Released after 4 approval(s).
+
+[CXO] Saving CXO code: CXO-FNSE-26-216  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5507/overview
+
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-216"
+
+[184/192] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:105:9 › Supplier Portal Happy Path › Create Intake → fill all → Submit → Released @Supplier @Intake
+[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:105:9 › Supplier Portal Happy Path › Create Intake → fill all → Submit → Released @Supplier @Intake
+BRF No. value: "Budget 703"
+
+[Intake] Approving stage 1...
+
+[Intake] No action button at step 2 — reloading (1/2)...
+
+[Intake] No action button at step 3 — reloading (2/2)...
+
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[Intake] Approving stage 5...
+
+[Intake] Clicking Acknowledge/Accept step 6...
+
+[Intake] Status Released/Active after 6 step(s).
+
+[Intake] Saving Intake code: INT-FNSE-26-264  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2055/overview
+
+[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-264"
+
+[185/192] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:142:9 › Supplier Portal Happy Path › Open Intake → Process → Send for Sourcing → RFX live @Supplier @Sourcing
+[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:142:9 › Supplier Portal Happy Path › Open Intake → Process → Send for Sourcing → RFX live @Supplier @Sourcing
+[Intake] Searching listing for saved intake: INT-FNSE-26-264
+
+[Intake] Opened intake INT-FNSE-26-264 → https://nse-capp-v4-uat.aerchain.io/intakes/2055
+
+[Intake] Clicked Process button
+
+[Intake] Clicked Send for Sourcing
+
+[Sourcing] Expanded all sections
+
+[Sourcing] Payment Terms selected
+
+[Sourcing] Commercial Bid Due Date filled
+
+[Sourcing] Technical Bid Due Date filled
+
+[Sourcing] Expected Delivery Date filled
+
+[Sourcing] Supplier "HG Automation SUPP" added
+
+[Sourcing] Clicked Submit
+
+[Sourcing] Confirmed Process Request popup
+
+[Sourcing] Approving stage 1...
+
+[Sourcing] Approve button not visible for 4s — reloading (1/5)...
+
+[Sourcing] Approve button not visible for 4s — reloading (2/5)...
+
+[Sourcing] Approve button not visible for 4s — reloading (3/5)...
+
+[Sourcing] Approve button not visible for 4s — reloading (4/5)...
+
+[Sourcing] Approve button not visible for 4s — reloading (5/5)...
+
+[Sourcing] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[Sourcing] Workflow approver reassigned to NSEF Support Admin
+
+[Sourcing] Approving stage 2...
+
+[Sourcing] RFX live (not Pending Approval) after 2 approval(s).
+
+[Sourcing] Saving Sourcing Event code: RFX-26-137  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1101/overview
+
+[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-137"
+
+[186/192] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:164:9 › Supplier Portal Happy Path › [SAPP] Quote the RFX → Accept → Commercial Quote → Submit @Supplier @SAPP @Quote
+[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:164:9 › Supplier Portal Happy Path › [SAPP] Quote the RFX → Accept → Commercial Quote → Submit @Supplier @SAPP @Quote
+[SAPP RFX] Opening RFX-26-137
+
+[SAPP RFX] Search box not present — clicking row link directly
+
+[SAPP RFX] Opened RFX-26-137 → https://nse-sapp-v4-uat.aerchain.io/supplier-quote-requests/1885
+
+[SAPP RFX] Clicked Accept
+
+[SAPP RFX] Agreed to Terms & Conditions
+
+[SAPP RFX] Confirmed Accept
+
+[SAPP RFX] Clicked Submit Quote
+
+[SAPP RFX] Selected Commercial
+
+[SAPP RFX] Preferred Currency = INR
+
+[SAPP RFX] Unit Rate = 2000
+
+[SAPP RFX] Clicked Submit Quote (form)
+
+[SAPP RFX] Confirmed submission
+
+[SAPP RFX] Status = Quoted
+
+[187/192] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:184:9 › Supplier Portal Happy Path › Award the RFX → foreclose → auto-created PR @Supplier @Award
+[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:184:9 › Supplier Portal Happy Path › Award the RFX → foreclose → auto-created PR @Supplier @Award
+[Quote] On Quote Request listing page
+
+[Quote] Searching quote requests for: RFX-26-137
+
+[Quote] Opened sourcing event RFX-26-137 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1101
+
+[Award] Clicked Foreclose
+
+[Award] Foreclose submitted
+
+[Award] On Analysis tab
+
+[Award] Clicked Award
+
+[Award] Pending Awarded Quantity: "100.00" → entering 100
+
+[Award] Allocated quantity filled: 100
+
+[Award] Clicked Award
+
+[Award] Workflow Summary submitted
+
+[Award] Workflow Stages → overall status: "Active" → NOT completed
+
+[Award] Approving (round 1)...
+
+[Award] Workflow Stages → overall status: "Active" → NOT completed
+
+[Award] Approve button not visible for 4s — reloading (1/1)...
+
+[Award] No Approve button — reassigning approver to NSEF Support Admin...
+
+[Award] Workflow approver reassigned to NSEF Support Admin
+
+[Award] Approving (round 2)...
+
+[Award] Workflow Stages → overall status: "Completed" → Completed
+
+[Award] Clicked back button beside award code
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (1/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (2/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (3/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (4/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (5/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (6/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (7/10)...
+
+[Award] Requisition field shows "Processing..." — reloading in 30s (8/10)...
+
+[Award] Requisition code displayed: PR-DRAFT
+
+[Award] Requisition "PR-DRAFT" opened in new tab → https://nse-capp-uat.aerchain.io/requisitions/947
+
+[Award] Saved to NSEFoundationData.json → savedRequisition.code = "PR-DRAFT"
+
+[188/192] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:206:9 › Supplier Portal Happy Path › PR edit → submit → Submitted @Supplier @PR
+[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:206:9 › Supplier Portal Happy Path › PR edit → submit → Submitted @Supplier @PR
+[PR] Opening saved requisition PR-DRAFT → https://nse-capp-uat.aerchain.io/requisitions/947
+
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/947
+
+[PR] Clicked Edit
+
+[PR] Edit page loaded
+
+[PR] Effective from date filled with today: 2026-07-22
+
+[PR] Effective to date filled
+
+[PR] Purchase Type selected: First time/New
+
+[PR] Inward Required → Yes
+
+[PR] Inward Matching Criterion → Quantity
+
+[PR] Clicked Submit
+
+[PR] Confirmed Approvers popup
+
+[PR] Requisition status is Submitted
+
+[PR] Saved to NSEFoundationData.json → savedRequisition.code = "PR-NSEFN-26-78"
+
+[189/192] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:225:9 › Supplier Portal Happy Path › Submitted PR → PRC (Processed) → PO (Completed) @Supplier @PRC @PO
+[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:225:9 › Supplier Portal Happy Path › Submitted PR → PRC (Processed) → PO (Completed) @Supplier @PRC @PO
+[PR] Opening saved requisition PR-NSEFN-26-78 → https://nse-capp-uat.aerchain.io/requisitions/947
+
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/947
+
+[PR] Status not "Processed" yet — reloading in 10s (1/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (2/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (3/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (4/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (5/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (6/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (7/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (8/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (9/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (10/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (11/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (12/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (13/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (14/60)...
+
+[PR] Status not "Processed" yet — reloading in 10s (15/60)...
+
+[PR] Status is "Processed".
+
+[PR] Status not "Completed" yet — reloading in 10s (1/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (2/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (3/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (4/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (5/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (6/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (7/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (8/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (9/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (10/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (11/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (12/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (13/60)...
+
+[PR] Status not "Completed" yet — reloading in 10s (14/60)...
+
+[PR] Status is "Completed".
+
+[190/192] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:240:9 › Supplier Portal Happy Path › PO approve → [SAPP] Accept PO → [CAPP] Create GRN → Inwarded @Supplier @SAPP @GRN
+[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:240:9 › Supplier Portal Happy Path › PO approve → [SAPP] Accept PO → [CAPP] Create GRN → Inwarded @Supplier @SAPP @GRN
+[PR] Opening saved requisition PR-NSEFN-26-78 → https://nse-capp-uat.aerchain.io/requisitions/947
+
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/947
+
+[PR] Opened Transactions tab
+
+[PR] Expanded Conversions section
+
+[PRC] Opened PRC-NSEFN-26-70 (Requisition Conversion View)
+
+[PO] Opened PO-NSEFN-26-140 in new tab → https://nse-capp-uat.aerchain.io/purchase-orders/901
+
+[PO] Approving stage 1...
+
+[PO] Approved a stage
+
+[PO] Approving stage 2...
+
+[PO] Approved a stage
+
+[PO] Approving stage 3...
+
+[PO] Approved a stage
+
+[PO] Approvals complete (Create available) after 3 approval(s).
+
+[SAPP PO] Searching for PO-NSEFN-26-140
+
+[SAPP PO] Opened PO-NSEFN-26-140 → https://nse-sapp-uat.aerchain.io/purchase-orders/901
+
+[SAPP PO] Clicked Accept
+
+[SAPP PO] Confirmed Accept
+
+[PO] Opening saved PO PO-NSEFN-26-140 → https://nse-capp-uat.aerchain.io/purchase-orders/901
+
+[PO] On PO page: https://nse-capp-uat.aerchain.io/purchase-orders/901
+
+[GRN] Create → GRN clicked
+
+[GRN] Submitted Select PO Items popup
+
+[GRN] On Create GRN page: https://nse-capp-uat.aerchain.io/pending-inwards/po/901/inward
+
+[GRN] Filled Invoice Number + Delivery challan
+
+[GRN] Filled Delivery Note Reference + Document Date (2026-07-22 → "22/07/2026")
+
+[GRN] Line item — PO Quantity=100, Received=100
+
+[GRN] Clicked Submit
+
+[GRN] Confirmed Workflow Summary popup
+
+[GRN] GRN created → https://nse-capp-uat.aerchain.io/inwards/468
+
+[GRN] Saved to NSEFoundationData.json → savedGrn.code = "INW-NSEFN-26-51"
+
+[GRN] Approving stage 1...
+
+[GRN] Approved a stage
+
+[GRN] Status Inwarded after 1 approval(s).
+
+[GRN] Status is Inwarded
+
+[191/192] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:281:9 › Supplier Portal Happy Path › [SAPP] Create Invoice for PO → [CAPP] review → Pending Sync @Supplier @SAPP @Invoice
+[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:281:9 › Supplier Portal Happy Path › [SAPP] Create Invoice for PO → [CAPP] review → Pending Sync @Supplier @SAPP @Invoice
+[SAPP PO] Searching for PO-NSEFN-26-140
+
+[SAPP PO] Opened PO-NSEFN-26-140 → https://nse-sapp-uat.aerchain.io/purchase-orders/901
+
+[SAPP PO] Create present, no Accept — PO already accepted
+
+[SAPP PO] Create → Invoice
+
+[SAPP Invoice] Submitted "Select PO Items" dialog
+
+[SAPP Invoice] Confirmed "Confirm Invoice Creation" → Proceed
+
+[SAPP Invoice] Invoice number bumped: INV-AUTO-023 → INV-AUTO-024
+
+[SAPP Invoice] Invoice Date set to today (22/07/2026)
+
+[SAPP Invoice] Period based Invoicing → No
+
+[SAPP Invoice] Extra billing → No
+
+[SAPP Invoice] Filled form (Invoice Number=INV-AUTO-024, date=today, Period/Extra=No, document uploaded)
+
+[SAPP Invoice] Clicked Submit (attempt 1)
+
+[SAPP Invoice] Clicked Submit (attempt 2)
+
+[SAPP Invoice] Clicked Submit (attempt 3)
+
+[SAPP Invoice] Validations popup → Proceed
+
+[SAPP Invoice] Approvers popup → Submit
+
+[SAPP Invoice] Invoice created → https://nse-sapp-uat.aerchain.io/invoices/986
+
+[SAPP Invoice] Saved savedInvoice.code="Invoice-FNSE-26-151", CAPP url=https://nse-capp-uat.aerchain.io/invoices/986
+
+[INV] Opening saved invoice Invoice-FNSE-26-151 → https://nse-capp-uat.aerchain.io/invoices/986
+
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/986
+
+[INV] Workflow approver reassigned to NSEF Support Admin
+
+[INV] Added GRN INW-NSEFN-26-51 in Item Matching
+
+[INV] Submitted Item Matching
+
+[INV] Clicked Review → opening invoice in edit mode
+
+[INV] Clicked review Submit (attempt 1)
+
+[INV] Clicked review Submit (attempt 2)
+
+[INV] Validations popup → Proceed
+
+[INV] Approvers popup → Submit
+
+[INV] No Approve button and not Pending Approval — reloading to re-check status...
+
+[INV] Approve missing while Pending Approval — reassigning to NSEF Support Admin...
+
+  5) [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:281:9 › Supplier Portal Happy Path › [SAPP] Create Invoice for PO → [CAPP] review → Pending Sync @Supplier @SAPP @Invoice 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+      - waiting for locator('//*[@role=\'dialog\']//button[normalize-space(text())=\'Reassign\'] | //*[@role=\'dialog\']//button[normalize-space(text())=\'Submit\']').first()
+
+
+       at ../pages/NSEFoundationActions.js:766
+
+      764 |         await reasonField.waitFor({ state: 'visible', timeout: 5000 });
+      765 |         await reasonField.fill(reason);
+    > 766 |         await this.page.locator(`xpath=${L.reassignSubmitBtn}`).first().click();
+          |                                                                         ^
+      767 |         console.log(`[${tag}] Workflow approver reassigned to NSEF Support Admin`);
+      768 |         await this.page.waitForTimeout(2500);
+      769 |         await this.page.reload({ waitUntil: 'domcontentloaded' });
+        at NSEFoundationActions.reassignWorkflowApprover (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:766:73)
+        at NSEFoundationActions.approveInvoiceUntilPendingSync (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:4298:23)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteSupplierPortal.spec.js:301:9
+
+    Test timeout of 30000ms exceeded.
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteSupplierPortal-Su-c0b65--Sync-Supplier-SAPP-Invoice-supplier-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteSupplierPortal-Su-c0b65--Sync-Supplier-SAPP-Invoice-supplier-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteSupplierPortal-Su-c0b65--Sync-Supplier-SAPP-Invoice-supplier-tests/error-context.md
+
+
+[192/192] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:307:9 › Supplier Portal Happy Path › Acknowledge the Pending Sync invoice via API → Accounted @Supplier @Ack
+  Slow test file: [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js (19.9m)
+  Slow test file: [nsef-tests] › tests/testSuiteIntakeNegative.spec.js (15.9m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  5 failed
+    [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:479:13 › CXO Listing Page › Page Load & Structure › all listing tabs are visible @Listing @Smoke 
+    [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:748:17 › CXO Listing Page › Pagination › Negative / Edge › search on page 2 does not crash the page @Listing @Pagination 
+    [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:770:17 › CXO Listing Page › Row Navigation › Positive › browser back from the detail page returns to the listing @Listing @Navigation 
+    [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:469:9 › NSEF Happy Paths › Pay the Accounted invoice → Submit → payment shows Completed @PO @Invoice @Payment 
+    [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:281:9 › Supplier Portal Happy Path › [SAPP] Create Invoice for PO → [CAPP] review → Pending Sync @Supplier @SAPP @Invoice 
+  1 did not run
+  186 passed (1.4h)

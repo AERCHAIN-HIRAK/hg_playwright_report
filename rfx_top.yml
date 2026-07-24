@@ -1,0 +1,101 @@
+- generic [ref=e3]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - link "Logo" [ref=e9] [cursor=pointer]:
+            - /url: /quote-requests/1081/overview
+            - img "Logo" [ref=e10]
+          - tablist [ref=e12]:
+            - link "Home" [ref=e13] [cursor=pointer]:
+              - /url: https://nse-capp-uat.aerchain.io/home?user=476817af-4349-4254-8476-553c0c9726e4
+            - link "CXO CXO" [ref=e15] [cursor=pointer]:
+              - /url: /cxos
+            - link "Intakes Intake" [ref=e18] [cursor=pointer]:
+              - /url: /intakes
+            - tab "Sourcing" [selected] [ref=e21] [cursor=pointer]
+        - generic [ref=e22]:
+          - generic [ref=e24] [cursor=pointer]:
+            - img "Aiera Logo" [ref=e25]
+            - generic [ref=e26]: Ask Aiera
+          - button "Open Settings" [ref=e27] [cursor=pointer]:
+            - img [ref=e28]
+          - button "Open Notifications" [ref=e31] [cursor=pointer]:
+            - button [ref=e32]
+            - generic [ref=e36]: 99+
+          - img "NSE Foundation" [ref=e39] [cursor=pointer]
+    - main [ref=e41]:
+      - generic [ref=e42]:
+        - generic [ref=e44]:
+          - generic [ref=e45]:
+            - link [ref=e46] [cursor=pointer]:
+              - /url: /quote-requests
+            - generic [ref=e48]: RFX-26-121
+            - generic [ref=e49]: Released
+          - generic [ref=e50]:
+            - button [ref=e52] [cursor=pointer]
+            - button [ref=e53] [cursor=pointer]
+            - button [ref=e54] [cursor=pointer]
+            - button "More" [ref=e55] [cursor=pointer]
+        - tablist [ref=e59]:
+          - tab "Overview" [selected] [ref=e60] [cursor=pointer]:
+            - img [ref=e61]
+            - text: Overview
+          - tab "Evaluations" [disabled]:
+            - img
+            - text: Evaluations
+          - tab "Analysis" [ref=e64] [cursor=pointer]:
+            - img [ref=e65]
+            - text: Analysis
+          - tab "Awards" [ref=e68] [cursor=pointer]:
+            - img [ref=e69]
+            - text: Awards
+          - tab "Transactions" [ref=e75] [cursor=pointer]:
+            - img [ref=e76]
+            - text: Transactions
+        - generic [ref=e83]:
+          - generic [ref=e84]:
+            - generic [ref=e85]
+            - generic [ref=e125]
+          - generic [ref=e134]:
+            - generic [ref=e135]
+            - generic [ref=e140]: Automation test summary
+          - generic [ref=e141]:
+            - generic [ref=e143]
+            - generic [ref=e155]
+          - generic [ref=e394]:
+            - generic [ref=e396]
+            - generic [ref=e408]
+          - generic [ref=e444]:
+            - generic [ref=e446]
+            - generic [ref=e459]
+          - generic [ref=e630]:
+            - generic [ref=e632]
+            - generic [ref=e644]
+          - generic [ref=e707]:
+            - generic [ref=e709]
+            - generic [ref=e718]
+          - generic [ref=e769]:
+            - generic [ref=e771]
+            - generic [ref=e781]
+          - generic [ref=e788]:
+            - generic [ref=e790]
+            - generic [ref=e800]
+          - generic [ref=e831]:
+            - generic [ref=e833]
+            - generic [ref=e843]
+          - generic [ref=e856]:
+            - generic [ref=e858]
+            - generic [ref=e868]
+          - generic [ref=e894]:
+            - generic [ref=e896]
+            - generic [ref=e906]
+          - generic [ref=e921]:
+            - generic [ref=e923]
+            - generic [ref=e934]
+          - generic [ref=e938]:
+            - generic [ref=e940]
+            - generic [ref=e951]

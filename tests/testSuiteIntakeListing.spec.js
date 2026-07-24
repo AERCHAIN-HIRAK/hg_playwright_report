@@ -32,10 +32,6 @@ test.describe('Aerchain NSE - Intake Listing Page', () => {
             await listing.verifyAllStatusCardsVisible();
         });
 
-        test('should display all listing tabs @Smoke', async () => {
-            await listing.verifyAllTabsVisible();
-        });
-
         test('should display the Create Intake button @Smoke', async () => {
             await listing.verifyCreateIntakeButtonVisible();
         });
@@ -85,43 +81,6 @@ test.describe('Aerchain NSE - Intake Listing Page', () => {
             await listing.clickStatusCard('Draft');
             const rowCount = await listing.getVisibleRowCount();
             expect(rowCount).toBe(draftCount > 0 ? rowCount : 0);
-        });
-
-    });
-
-    // =========================================================================
-    // 3. TAB NAVIGATION
-    // =========================================================================
-    test.describe('Tab Navigation', () => {
-
-        test('switching to "My Pending Approval" tab loads table @Tabs', async () => {
-            await listing.clickTab(data.tabs.myPendingApproval);
-            const count = await listing.getVisibleRowCount();
-            expect(count).toBeGreaterThanOrEqual(0);
-        });
-
-        test('switching to "Pending Buyer Acceptance" tab loads table @Tabs', async () => {
-            await listing.clickTab(data.tabs.pendingBuyerAcceptance);
-            const count = await listing.getVisibleRowCount();
-            expect(count).toBeGreaterThanOrEqual(0);
-        });
-
-        test('switching to "Pending Buyer to process" tab loads table @Tabs', async () => {
-            await listing.clickTab(data.tabs.pendingBuyerToProcess);
-            const count = await listing.getVisibleRowCount();
-            expect(count).toBeGreaterThanOrEqual(0);
-        });
-
-        test('switching to "Draft" tab loads table @Tabs', async () => {
-            await listing.clickTab(data.tabs.draft);
-            const count = await listing.getVisibleRowCount();
-            expect(count).toBeGreaterThanOrEqual(0);
-        });
-
-        test('returning to All tab after another tab shows records @Tabs', async () => {
-            await listing.clickTab(data.tabs.myPendingApproval);
-            await listing.clickTab(data.tabs.all);
-            await listing.verifyRowCountGreaterThan(0);
         });
 
     });

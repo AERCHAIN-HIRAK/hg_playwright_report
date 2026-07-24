@@ -7,3 +7,6 @@ screenshots/
 .playwright-mcp/
 skills-lock.json
 auth.nsef.json
+auth.supplier.json
+.env
+.playwright-cli/

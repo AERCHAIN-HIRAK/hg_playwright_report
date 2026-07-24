@@ -1,0 +1,114 @@
+(node:3897) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 65 tests using 1 worker
+
+[1A[2K(node:3898) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/65] [nsef-setup] › tests/auth.nsef.setup.js:9:6 › NSEF login and save session
+[1A[2K(node:3938) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[2/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:27:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should load the intake listing page @Smoke
+[1A[2K[3/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:31:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display all 5 status summary cards @Smoke
+[1A[2K[4/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:35:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display the Create Intake button @Smoke
+[1A[2K[5/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:39:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display pagination info @Smoke
+[1A[2K[6/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:43:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display at least one table row @Smoke
+[1A[2K[7/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:54:13 › Aerchain NSE - Intake Listing Page › Status Cards › Draft card is visible @StatusCard
+[1A[2K[8/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:58:13 › Aerchain NSE - Intake Listing Page › Status Cards › Awaiting Actions card is visible @StatusCard
+[1A[2K[9/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:62:13 › Aerchain NSE - Intake Listing Page › Status Cards › Active/Released card is visible @StatusCard
+[1A[2K[10/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:66:13 › Aerchain NSE - Intake Listing Page › Status Cards › Completed/Successful card is visible @StatusCard
+[1A[2K[11/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:70:13 › Aerchain NSE - Intake Listing Page › Status Cards › Cancelled/Rejected card is visible @StatusCard
+[1A[2K  1) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:70:13 › Aerchain NSE - Intake Listing Page › Status Cards › Cancelled/Rejected card is visible @StatusCard 
+
+    TimeoutError: page.goto: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - navigating to "https://nse-capp-v4-uat.aerchain.io/intakes", waiting until "load"[22m
+
+
+       at ../pages/intakeListingActions.js:78
+
+      76 |
+      77 |     async navigateToListingPage(baseUrl = 'https://nse-capp-v4-uat.aerchain.io') {
+    > 78 |         await this.page.goto(`${baseUrl}/intakes`);
+         |                         ^
+      79 |         await this.waitForListingPageLoad();
+      80 |     }
+      81 |
+        at intakeListingActions.navigateToListingPage (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:78:25)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:19:23
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-58203--card-is-visible-StatusCard-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-58203--card-is-visible-StatusCard-nsef-tests/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/testSuiteIntakeListing-Aer-58203--card-is-visible-StatusCard-nsef-tests/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K(node:4003) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[12/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:74:13 › Aerchain NSE - Intake Listing Page › Status Cards › clicking a status card refreshes the table @StatusCard
+[1A[2K[13/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:79:13 › Aerchain NSE - Intake Listing Page › Status Cards › clicking Draft card (0 records) shows empty or 0 rows @StatusCard
+[1A[2K[14/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:95:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › filter popup opens on clicking Status filter icon @Filter
+[1A[2K[15/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:103:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › filter popup opens on clicking Created By filter icon @Filter
+[1A[2K[16/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:111:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › search within filter popup narrows the option list @Filter
+[1A[2K[17/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:122:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › single filter by Created By — table updates @Filter
+[1A[2K[18/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:127:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › single filter by Status — table updates @Filter
+[1A[2K[19/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:132:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › multi-filter: Status then Created By — table updates @Filter
+[1A[2K[20/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:139:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › filter clear resets to all records @Filter
+[1A[2K[21/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:148:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › clear all selections button resets popup state @Filter
+[1A[2K[22/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:161:17 › Aerchain NSE - Intake Listing Page › Filters › Negative › filter search with non-existent user does not crash popup @Filter
+[1A[2K[23/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:173:17 › Aerchain NSE - Intake Listing Page › Filters › Edge Cases › special characters in filter search do not crash @Filter
+[1A[2K[24/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:180:17 › Aerchain NSE - Intake Listing Page › Filters › Edge Cases › long string in filter search does not crash @Filter
+[1A[2K[25/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:200:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Code column — first click applies a sort @Sort
+[1A[2K[26/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:205:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Code column — second click still shows records @Sort
+[1A[2K[27/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:211:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Subject column — applies a sort @Sort
+[1A[2K[28/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:216:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Subject column — second click still shows records @Sort
+[1A[2K[29/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:222:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Date column — applies a date sort @Sort
+[1A[2K[30/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:227:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Date column — second click still shows records @Sort
+[1A[2K[31/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:233:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Status column — applies a sort @Sort
+[1A[2K[32/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:238:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sorting after tab switch still works @Sort
+[1A[2K[33/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:248:17 › Aerchain NSE - Intake Listing Page › Sorting › Negative › column values remain non-empty after sort (no crash for duplicates) @Sort
+[1A[2K[34/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:265:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by partial intake code returns results @Search
+[1A[2K[35/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:270:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by exact intake code returns at least 1 row @Search
+[1A[2K[36/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:276:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by partial subject returns results @Search
+[1A[2K[37/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:281:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by exact subject returns results @Search
+[1A[2K[38/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:286:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search with different case does not crash the page @Search
+[1A[2K[39/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:294:17 › Aerchain NSE - Intake Listing Page › Search › Positive › clearing search restores all records @Search
+[1A[2K[40/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:307:17 › Aerchain NSE - Intake Listing Page › Search › Negative › non-existent search term does not crash the page @Search
+[1A[2K[41/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:313:17 › Aerchain NSE - Intake Listing Page › Search › Negative › spaces-only search does not crash the page @Search
+[1A[2K[42/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:318:17 › Aerchain NSE - Intake Listing Page › Search › Negative › SQL injection string in search does not break the page @Search
+[1A[2K[43/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:323:17 › Aerchain NSE - Intake Listing Page › Search › Negative › XSS payload in search does not inject script @Search
+[1A[2K[44/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:334:17 › Aerchain NSE - Intake Listing Page › Search › Edge Cases › very long string in search does not crash @Search
+[1A[2K[45/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:339:17 › Aerchain NSE - Intake Listing Page › Search › Edge Cases › special characters in search do not crash @Search
+[1A[2K[46/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:344:17 › Aerchain NSE - Intake Listing Page › Search › Edge Cases › unicode characters in search do not crash @Search
+[1A[2K[47/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:360:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › pagination info shows "Showing X – Y of Z entries" @Pagination
+[1A[2K[48/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:367:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Previous button is disabled on first page @Pagination
+[1A[2K[49/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:371:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Next page changes pagination info @Pagination
+[1A[2K[50/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:379:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Next then Previous returns to original page @Pagination
+[1A[2K[51/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:388:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Next button is disabled on last page @Pagination
+[1A[2K[52/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:398:17 › Aerchain NSE - Intake Listing Page › Pagination › Negative / Edge Cases › rapid next-page clicks do not break the table @Pagination
+[1A[2K[53/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:410:17 › Aerchain NSE - Intake Listing Page › Pagination › Pagination after Filter / Search / Sort › search on page 2 does not crash the page @Pagination
+[1A[2K[54/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:417:17 › Aerchain NSE - Intake Listing Page › Pagination › Pagination after Filter / Search / Sort › table shows correct rows on page 2 after sort @Pagination
+[1A[2K[55/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:435:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › clicking first row code opens the detail page @Navigation
+[1A[2K[56/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:440:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › URL changes to detail URL after row click @Navigation
+[1A[2K[57/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:445:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › browser back from detail page returns to listing @Navigation
+[1A[2K[58/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:452:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › detail page contains the clicked intake code @Navigation
+[1A[2K[59/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:466:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Edge Cases › back and re-click the same row is stable @Navigation
+[1A[2K[60/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:475:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Edge Cases › refreshing the detail page keeps the URL intact @Navigation
+[1A[2K[61/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:494:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › Create Intake button is visible on listing page @Create
+[1A[2K[62/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:498:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › Create Intake button navigates to create page @Create
+[1A[2K[63/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:503:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › URL is /intakes/create after clicking Create Intake @Create
+[1A[2K[64/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:508:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › browser back from create page returns to listing @Create
+[1A[2K[65/65] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:520:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Edge Cases › navigating back from create page preserves listing rows @Create
+[1A[2K  1 failed
+    [nsef-tests] › tests/testSuiteIntakeListing.spec.js:70:13 › Aerchain NSE - Intake Listing Page › Status Cards › Cancelled/Rejected card is visible @StatusCard 
+  64 passed (2.6m)

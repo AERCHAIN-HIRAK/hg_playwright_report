@@ -1,0 +1,417 @@
+(node:2970) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 71 tests using 1 worker
+
+[1A[2K(node:2972) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/71] [nsef-setup] › tests/auth.nsef.setup.js:9:6 › NSEF login and save session
+[1A[2K(node:3013) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[2/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:27:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should load the intake listing page @Smoke
+[1A[2K[3/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:31:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display all 5 status summary cards @Smoke
+[1A[2K[4/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:35:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display all listing tabs @Smoke
+[1A[2K  1) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:35:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display all listing tabs @Smoke 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('//button[@data-slot="tabs-trigger"][contains(normalize-space(),"My Pending Approval")]').filter({ visible: true }).first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('//button[@data-slot="tabs-trigger"][contains(normalize-space(),"My Pending Approval")]').filter({ visible: true }).first()[22m
+
+
+       at ../pages/intakeListingActions.js:164
+
+      162 |         ];
+      163 |         for (const t of tabs) {
+    > 164 |             await expect(this.page.locator(t).filter({ visible: true }).first()).toBeVisible();
+          |                                                                                  ^
+      165 |         }
+      166 |     }
+      167 |
+        at intakeListingActions.verifyAllTabsVisible (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:164:82)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:36:13
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-0ac08-play-all-listing-tabs-Smoke-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-0ac08-play-all-listing-tabs-Smoke-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-0ac08-play-all-listing-tabs-Smoke-nsef-tests/error-context.md
+
+
+[1A[2K(node:3052) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[5/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:39:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display the Create Intake button @Smoke
+[1A[2K[6/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:43:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display pagination info @Smoke
+[1A[2K[7/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:47:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display at least one table row @Smoke
+[1A[2K[8/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:58:13 › Aerchain NSE - Intake Listing Page › Status Cards › Draft card is visible @StatusCard
+[1A[2K[9/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:62:13 › Aerchain NSE - Intake Listing Page › Status Cards › Awaiting Actions card is visible @StatusCard
+[1A[2K[10/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:66:13 › Aerchain NSE - Intake Listing Page › Status Cards › Active/Released card is visible @StatusCard
+[1A[2K[11/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:70:13 › Aerchain NSE - Intake Listing Page › Status Cards › Completed/Successful card is visible @StatusCard
+[1A[2K[12/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:74:13 › Aerchain NSE - Intake Listing Page › Status Cards › Cancelled/Rejected card is visible @StatusCard
+[1A[2K[13/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:78:13 › Aerchain NSE - Intake Listing Page › Status Cards › clicking a status card refreshes the table @StatusCard
+[1A[2K[14/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:83:13 › Aerchain NSE - Intake Listing Page › Status Cards › clicking Draft card (0 records) shows empty or 0 rows @StatusCard
+[1A[2K[15/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:97:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "My Pending Approval" tab loads table @Tabs
+[1A[2K  2) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:97:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "My Pending Approval" tab loads table @Tabs 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//button[@data-slot="tabs-trigger"][contains(normalize-space(),"My Pending Approval")]').filter({ visible: true }).first()[22m
+
+
+       at ../pages/intakeListingActions.js:145
+
+      143 |     async clickTab(tabName) {
+      144 |         // Two identical tab buttons exist in DOM (responsive layout). Only the visible one is clickable.
+    > 145 |         await this.page.locator(this._tabLocator(tabName)).filter({ visible: true }).first().click();
+          |                                                                                              ^
+      146 |         await this.waitForListingPageLoad();
+      147 |     }
+      148 |
+        at intakeListingActions.clickTab (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:145:94)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:98:27
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-68e22-proval-tab-loads-table-Tabs-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-68e22-proval-tab-loads-table-Tabs-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-68e22-proval-tab-loads-table-Tabs-nsef-tests/error-context.md
+
+
+[1A[2K(node:3127) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[16/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:103:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Pending Buyer Acceptance" tab loads table @Tabs
+[1A[2K  3) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:103:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Pending Buyer Acceptance" tab loads table @Tabs 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//button[@data-slot="tabs-trigger"][contains(normalize-space(),"Pending Buyer Acceptance")]').filter({ visible: true }).first()[22m
+
+
+       at ../pages/intakeListingActions.js:145
+
+      143 |     async clickTab(tabName) {
+      144 |         // Two identical tab buttons exist in DOM (responsive layout). Only the visible one is clickable.
+    > 145 |         await this.page.locator(this._tabLocator(tabName)).filter({ visible: true }).first().click();
+          |                                                                                              ^
+      146 |         await this.waitForListingPageLoad();
+      147 |     }
+      148 |
+        at intakeListingActions.clickTab (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:145:94)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:104:27
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-49d91-ptance-tab-loads-table-Tabs-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-49d91-ptance-tab-loads-table-Tabs-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-49d91-ptance-tab-loads-table-Tabs-nsef-tests/error-context.md
+
+
+[1A[2K(node:3158) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[17/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:109:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Pending Buyer to process" tab loads table @Tabs
+[1A[2K  4) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:109:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Pending Buyer to process" tab loads table @Tabs 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//button[@data-slot="tabs-trigger"][contains(normalize-space(),"Pending Buyer to process")]').filter({ visible: true }).first()[22m
+
+
+       at ../pages/intakeListingActions.js:145
+
+      143 |     async clickTab(tabName) {
+      144 |         // Two identical tab buttons exist in DOM (responsive layout). Only the visible one is clickable.
+    > 145 |         await this.page.locator(this._tabLocator(tabName)).filter({ visible: true }).first().click();
+          |                                                                                              ^
+      146 |         await this.waitForListingPageLoad();
+      147 |     }
+      148 |
+        at intakeListingActions.clickTab (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:145:94)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:110:27
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-f4846-rocess-tab-loads-table-Tabs-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-f4846-rocess-tab-loads-table-Tabs-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-f4846-rocess-tab-loads-table-Tabs-nsef-tests/error-context.md
+
+
+[1A[2K(node:3191) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[18/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:115:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Draft" tab loads table @Tabs
+[1A[2K  5) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:115:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Draft" tab loads table @Tabs 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//button[@data-slot="tabs-trigger"][contains(normalize-space(),"Draft")]').filter({ visible: true }).first()[22m
+
+
+       at ../pages/intakeListingActions.js:145
+
+      143 |     async clickTab(tabName) {
+      144 |         // Two identical tab buttons exist in DOM (responsive layout). Only the visible one is clickable.
+    > 145 |         await this.page.locator(this._tabLocator(tabName)).filter({ visible: true }).first().click();
+          |                                                                                              ^
+      146 |         await this.waitForListingPageLoad();
+      147 |     }
+      148 |
+        at intakeListingActions.clickTab (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:145:94)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:116:27
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-27b38--Draft-tab-loads-table-Tabs-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-27b38--Draft-tab-loads-table-Tabs-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-27b38--Draft-tab-loads-table-Tabs-nsef-tests/error-context.md
+
+
+[1A[2K(node:3225) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[19/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:121:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › returning to All tab after another tab shows records @Tabs
+[1A[2K  6) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:121:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › returning to All tab after another tab shows records @Tabs 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//button[@data-slot="tabs-trigger"][contains(normalize-space(),"My Pending Approval")]').filter({ visible: true }).first()[22m
+
+
+       at ../pages/intakeListingActions.js:145
+
+      143 |     async clickTab(tabName) {
+      144 |         // Two identical tab buttons exist in DOM (responsive layout). Only the visible one is clickable.
+    > 145 |         await this.page.locator(this._tabLocator(tabName)).filter({ visible: true }).first().click();
+          |                                                                                              ^
+      146 |         await this.waitForListingPageLoad();
+      147 |     }
+      148 |
+        at intakeListingActions.clickTab (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:145:94)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:122:27
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-2a7e4-ther-tab-shows-records-Tabs-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-2a7e4-ther-tab-shows-records-Tabs-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-2a7e4-ther-tab-shows-records-Tabs-nsef-tests/error-context.md
+
+
+[1A[2K(node:3283) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[20/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:136:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › filter popup opens on clicking Status filter icon @Filter
+[1A[2K[21/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:144:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › filter popup opens on clicking Created By filter icon @Filter
+[1A[2K[22/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:152:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › search within filter popup narrows the option list @Filter
+[1A[2K[23/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:163:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › single filter by Created By — table updates @Filter
+[1A[2K  7) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:163:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › single filter by Created By — table updates @Filter 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//div[@data-radix-popper-content-wrapper]').getByText('Aerchain NSE Admin', { exact: true })[22m
+
+
+       at ../pages/intakeListingActions.js:225
+
+      223 |         await this.page.locator('//div[@data-radix-popper-content-wrapper]')
+      224 |             .getByText(optionText, { exact: true })
+    > 225 |             .click();
+          |              ^
+      226 |     }
+      227 |
+      228 |     async applyColumnFilter() {
+        at intakeListingActions.selectFilterOption (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:225:14)
+        at intakeListingActions.applyFilterWithSearch (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:257:9)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:164:17
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-885ad-d-By-—-table-updates-Filter-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-885ad-d-By-—-table-updates-Filter-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-885ad-d-By-—-table-updates-Filter-nsef-tests/error-context.md
+
+
+[1A[2K(node:3332) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[24/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:168:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › single filter by Status — table updates @Filter
+[1A[2K[25/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:173:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › multi-filter: Status then Created By — table updates @Filter
+[1A[2K  8) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:173:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › multi-filter: Status then Created By — table updates @Filter 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//div[@data-radix-popper-content-wrapper]').getByText('Aerchain NSE Admin', { exact: true })[22m
+
+
+       at ../pages/intakeListingActions.js:225
+
+      223 |         await this.page.locator('//div[@data-radix-popper-content-wrapper]')
+      224 |             .getByText(optionText, { exact: true })
+    > 225 |             .click();
+          |              ^
+      226 |     }
+      227 |
+      228 |     async applyColumnFilter() {
+        at intakeListingActions.selectFilterOption (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:225:14)
+        at intakeListingActions.applyFilterWithSearch (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:257:9)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:175:17
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-e1544-d-By-—-table-updates-Filter-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-e1544-d-By-—-table-updates-Filter-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-e1544-d-By-—-table-updates-Filter-nsef-tests/error-context.md
+
+
+[1A[2K(node:3369) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[26/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:180:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › filter clear resets to all records @Filter
+[1A[2K[27/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:189:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › clear all selections button resets popup state @Filter
+[1A[2K  9) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:189:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › clear all selections button resets popup state @Filter 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//div[@data-radix-popper-content-wrapper]').getByText('Aerchain NSE Admin', { exact: true })[22m
+
+
+       at ../pages/intakeListingActions.js:225
+
+      223 |         await this.page.locator('//div[@data-radix-popper-content-wrapper]')
+      224 |             .getByText(optionText, { exact: true })
+    > 225 |             .click();
+          |              ^
+      226 |     }
+      227 |
+      228 |     async applyColumnFilter() {
+        at intakeListingActions.selectFilterOption (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:225:14)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:192:17
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-fc5fa-n-resets-popup-state-Filter-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-fc5fa-n-resets-popup-state-Filter-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-fc5fa-n-resets-popup-state-Filter-nsef-tests/error-context.md
+
+
+[1A[2K(node:3406) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[28/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:202:17 › Aerchain NSE - Intake Listing Page › Filters › Negative › filter search with non-existent user does not crash popup @Filter
+[1A[2K[29/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:214:17 › Aerchain NSE - Intake Listing Page › Filters › Edge Cases › special characters in filter search do not crash @Filter
+[1A[2K[30/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:221:17 › Aerchain NSE - Intake Listing Page › Filters › Edge Cases › long string in filter search does not crash @Filter
+[1A[2K[31/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:241:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Code column — first click applies a sort @Sort
+[1A[2K[32/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:246:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Code column — second click still shows records @Sort
+[1A[2K[33/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:252:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Subject column — applies a sort @Sort
+[1A[2K[34/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:257:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Subject column — second click still shows records @Sort
+[1A[2K[35/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:263:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Date column — applies a date sort @Sort
+[1A[2K[36/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:268:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Date column — second click still shows records @Sort
+[1A[2K[37/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:274:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Status column — applies a sort @Sort
+[1A[2K[38/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:279:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sorting after tab switch still works @Sort
+[1A[2K[39/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:289:17 › Aerchain NSE - Intake Listing Page › Sorting › Negative › column values remain non-empty after sort (no crash for duplicates) @Sort
+[1A[2K[40/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:306:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by partial intake code returns results @Search
+[1A[2K[41/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:311:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by exact intake code returns at least 1 row @Search
+[1A[2K[42/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:317:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by partial subject returns results @Search
+[1A[2K[43/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:322:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by exact subject returns results @Search
+[1A[2K[44/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:327:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search with different case does not crash the page @Search
+[1A[2K[45/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:335:17 › Aerchain NSE - Intake Listing Page › Search › Positive › clearing search restores all records @Search
+[1A[2K[46/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:348:17 › Aerchain NSE - Intake Listing Page › Search › Negative › non-existent search term does not crash the page @Search
+[1A[2K[47/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:354:17 › Aerchain NSE - Intake Listing Page › Search › Negative › spaces-only search does not crash the page @Search
+[1A[2K[48/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:359:17 › Aerchain NSE - Intake Listing Page › Search › Negative › SQL injection string in search does not break the page @Search
+[1A[2K[49/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:364:17 › Aerchain NSE - Intake Listing Page › Search › Negative › XSS payload in search does not inject script @Search
+[1A[2K[50/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:375:17 › Aerchain NSE - Intake Listing Page › Search › Edge Cases › very long string in search does not crash @Search
+[1A[2K[51/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:380:17 › Aerchain NSE - Intake Listing Page › Search › Edge Cases › special characters in search do not crash @Search
+[1A[2K[52/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:385:17 › Aerchain NSE - Intake Listing Page › Search › Edge Cases › unicode characters in search do not crash @Search
+[1A[2K[53/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:401:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › pagination info shows "Showing X – Y of Z entries" @Pagination
+[1A[2K[54/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:408:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Previous button is disabled on first page @Pagination
+[1A[2K[55/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:412:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Next page changes pagination info @Pagination
+[1A[2K[56/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:420:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Next then Previous returns to original page @Pagination
+[1A[2K[57/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:429:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Next button is disabled on last page @Pagination
+[1A[2K[58/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:439:17 › Aerchain NSE - Intake Listing Page › Pagination › Negative / Edge Cases › rapid next-page clicks do not break the table @Pagination
+[1A[2K[59/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:451:17 › Aerchain NSE - Intake Listing Page › Pagination › Pagination after Filter / Search / Sort › search on page 2 does not crash the page @Pagination
+[1A[2K[60/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:458:17 › Aerchain NSE - Intake Listing Page › Pagination › Pagination after Filter / Search / Sort › table shows correct rows on page 2 after sort @Pagination
+[1A[2K[61/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:476:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › clicking first row code opens the detail page @Navigation
+[1A[2K[62/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:481:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › URL changes to detail URL after row click @Navigation
+[1A[2K[63/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:486:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › browser back from detail page returns to listing @Navigation
+[1A[2K[64/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:493:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › detail page contains the clicked intake code @Navigation
+[1A[2K[65/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:507:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Edge Cases › back and re-click the same row is stable @Navigation
+[1A[2K[66/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:516:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Edge Cases › refreshing the detail page keeps the URL intact @Navigation
+[1A[2K[67/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:535:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › Create Intake button is visible on listing page @Create
+[1A[2K[68/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:539:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › Create Intake button navigates to create page @Create
+[1A[2K[69/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:544:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › URL is /intakes/create after clicking Create Intake @Create
+[1A[2K[70/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:549:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › browser back from create page returns to listing @Create
+[1A[2K[71/71] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:561:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Edge Cases › navigating back from create page preserves listing rows @Create
+[1A[2K  9 failed
+    [nsef-tests] › tests/testSuiteIntakeListing.spec.js:35:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display all listing tabs @Smoke 
+    [nsef-tests] › tests/testSuiteIntakeListing.spec.js:97:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "My Pending Approval" tab loads table @Tabs 
+    [nsef-tests] › tests/testSuiteIntakeListing.spec.js:103:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Pending Buyer Acceptance" tab loads table @Tabs 
+    [nsef-tests] › tests/testSuiteIntakeListing.spec.js:109:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Pending Buyer to process" tab loads table @Tabs 
+    [nsef-tests] › tests/testSuiteIntakeListing.spec.js:115:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Draft" tab loads table @Tabs 
+    [nsef-tests] › tests/testSuiteIntakeListing.spec.js:121:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › returning to All tab after another tab shows records @Tabs 
+    [nsef-tests] › tests/testSuiteIntakeListing.spec.js:163:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › single filter by Created By — table updates @Filter 
+    [nsef-tests] › tests/testSuiteIntakeListing.spec.js:173:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › multi-filter: Status then Created By — table updates @Filter 
+    [nsef-tests] › tests/testSuiteIntakeListing.spec.js:189:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › clear all selections button resets popup state @Filter 
+  62 passed (8.1m)

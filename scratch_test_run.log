@@ -1,0 +1,219 @@
+(node:2217) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 198 tests using 1 worker
+
+[1A[2K(node:2220) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/198] [supplier-setup] › tests/auth.supplier.setup.js:16:6 › CAPP + SAPP login and save combined session
+[1A[2K(node:2277) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[2/198] [nsef-setup] › tests/auth.nsef.setup.js:9:6 › NSEF login and save session
+[1A[2K(node:2300) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[3/198] [setup] › tests/auth.setup.js:3:6 › Login and save session
+[1A[2K(node:2322) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[4/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:27:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should load the intake listing page @Smoke
+[1A[2K[5/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:31:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display all 5 status summary cards @Smoke
+[1A[2K  1) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:31:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display all 5 status summary cards @Smoke 
+
+    TimeoutError: page.goto: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - navigating to "https://nse-capp-v4-uat.aerchain.io/intakes", waiting until "load"[22m
+
+
+       at ../pages/intakeListingActions.js:78
+
+      76 |
+      77 |     async navigateToListingPage(baseUrl = 'https://nse-capp-v4-uat.aerchain.io') {
+    > 78 |         await this.page.goto(`${baseUrl}/intakes`);
+         |                         ^
+      79 |         await this.waitForListingPageLoad();
+      80 |     }
+      81 |
+        at intakeListingActions.navigateToListingPage (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:78:25)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:19:23
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-79ac5--status-summary-cards-Smoke-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-79ac5--status-summary-cards-Smoke-nsef-tests/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/testSuiteIntakeListing-Aer-79ac5--status-summary-cards-Smoke-nsef-tests/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K(node:2352) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[6/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:35:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display all listing tabs @Smoke
+[1A[2K  2) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:35:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display all listing tabs @Smoke 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('//button[@data-slot="tabs-trigger"][contains(normalize-space(),"My Pending Approval")]').filter({ visible: true }).first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('//button[@data-slot="tabs-trigger"][contains(normalize-space(),"My Pending Approval")]').filter({ visible: true }).first()[22m
+
+
+       at ../pages/intakeListingActions.js:164
+
+      162 |         ];
+      163 |         for (const t of tabs) {
+    > 164 |             await expect(this.page.locator(t).filter({ visible: true }).first()).toBeVisible();
+          |                                                                                  ^
+      165 |         }
+      166 |     }
+      167 |
+        at intakeListingActions.verifyAllTabsVisible (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:164:82)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:36:13
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-0ac08-play-all-listing-tabs-Smoke-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-0ac08-play-all-listing-tabs-Smoke-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-0ac08-play-all-listing-tabs-Smoke-nsef-tests/error-context.md
+
+
+[1A[2K(node:2390) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[7/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:39:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display the Create Intake button @Smoke
+[1A[2K[8/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:43:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display pagination info @Smoke
+[1A[2K[9/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:47:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display at least one table row @Smoke
+[1A[2K[10/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:58:13 › Aerchain NSE - Intake Listing Page › Status Cards › Draft card is visible @StatusCard
+[1A[2K[11/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:62:13 › Aerchain NSE - Intake Listing Page › Status Cards › Awaiting Actions card is visible @StatusCard
+[1A[2K[12/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:66:13 › Aerchain NSE - Intake Listing Page › Status Cards › Active/Released card is visible @StatusCard
+[1A[2K[13/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:70:13 › Aerchain NSE - Intake Listing Page › Status Cards › Completed/Successful card is visible @StatusCard
+[1A[2K[14/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:74:13 › Aerchain NSE - Intake Listing Page › Status Cards › Cancelled/Rejected card is visible @StatusCard
+[1A[2K[15/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:78:13 › Aerchain NSE - Intake Listing Page › Status Cards › clicking a status card refreshes the table @StatusCard
+[1A[2K[16/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:83:13 › Aerchain NSE - Intake Listing Page › Status Cards › clicking Draft card (0 records) shows empty or 0 rows @StatusCard
+[1A[2K[17/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:97:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "My Pending Approval" tab loads table @Tabs
+[1A[2K  3) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:97:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "My Pending Approval" tab loads table @Tabs 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//button[@data-slot="tabs-trigger"][contains(normalize-space(),"My Pending Approval")]').filter({ visible: true }).first()[22m
+
+
+       at ../pages/intakeListingActions.js:145
+
+      143 |     async clickTab(tabName) {
+      144 |         // Two identical tab buttons exist in DOM (responsive layout). Only the visible one is clickable.
+    > 145 |         await this.page.locator(this._tabLocator(tabName)).filter({ visible: true }).first().click();
+          |                                                                                              ^
+      146 |         await this.waitForListingPageLoad();
+      147 |     }
+      148 |
+        at intakeListingActions.clickTab (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:145:94)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:98:27
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-68e22-proval-tab-loads-table-Tabs-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-68e22-proval-tab-loads-table-Tabs-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-68e22-proval-tab-loads-table-Tabs-nsef-tests/error-context.md
+
+
+[1A[2K(node:2462) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[18/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:103:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Pending Buyer Acceptance" tab loads table @Tabs
+[1A[2K  4) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:103:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Pending Buyer Acceptance" tab loads table @Tabs 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//button[@data-slot="tabs-trigger"][contains(normalize-space(),"Pending Buyer Acceptance")]').filter({ visible: true }).first()[22m
+
+
+       at ../pages/intakeListingActions.js:145
+
+      143 |     async clickTab(tabName) {
+      144 |         // Two identical tab buttons exist in DOM (responsive layout). Only the visible one is clickable.
+    > 145 |         await this.page.locator(this._tabLocator(tabName)).filter({ visible: true }).first().click();
+          |                                                                                              ^
+      146 |         await this.waitForListingPageLoad();
+      147 |     }
+      148 |
+        at intakeListingActions.clickTab (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:145:94)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:104:27
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-49d91-ptance-tab-loads-table-Tabs-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-49d91-ptance-tab-loads-table-Tabs-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-49d91-ptance-tab-loads-table-Tabs-nsef-tests/error-context.md
+
+
+[1A[2K(node:2492) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[19/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:109:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Pending Buyer to process" tab loads table @Tabs
+[1A[2K  5) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:109:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Pending Buyer to process" tab loads table @Tabs 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//button[@data-slot="tabs-trigger"][contains(normalize-space(),"Pending Buyer to process")]').filter({ visible: true }).first()[22m
+
+
+       at ../pages/intakeListingActions.js:145
+
+      143 |     async clickTab(tabName) {
+      144 |         // Two identical tab buttons exist in DOM (responsive layout). Only the visible one is clickable.
+    > 145 |         await this.page.locator(this._tabLocator(tabName)).filter({ visible: true }).first().click();
+          |                                                                                              ^
+      146 |         await this.waitForListingPageLoad();
+      147 |     }
+      148 |
+        at intakeListingActions.clickTab (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:145:94)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:110:27
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-f4846-rocess-tab-loads-table-Tabs-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-f4846-rocess-tab-loads-table-Tabs-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-f4846-rocess-tab-loads-table-Tabs-nsef-tests/error-context.md
+
+
+[1A[2K(node:2522) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[20/198] [nsef-tests] › tests/testSuiteIntakeListing.spec.js:115:13 › Aerchain NSE - Intake Listing Page › Tab Navigation › switching to "Draft" tab loads table @Tabs

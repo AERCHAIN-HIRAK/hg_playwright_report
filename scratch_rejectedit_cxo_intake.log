@@ -1,0 +1,69 @@
+(node:4002) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+[1A[2K(node:4003) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/3] [supplier-setup] › tests/auth.supplier.setup.js:16:6 › CAPP + SAPP login and save combined session
+[1A[2K(node:4055) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[2/3] [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:45:9 › All-modules reject → edit → resubmit › CXO: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @CXO
+[1A[2K[supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:45:9 › All-modules reject → edit → resubmit › CXO: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @CXO
+✓ BRF auto-populated: "Dont Touch"
+
+[1A[2K[CXO] Submitted → Pending Approval
+
+[1A[2K[CXO] Saving CXO code: CXO-FNSE-26-219  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5514/overview
+
+[1A[2K[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-219"
+
+[1A[2K[CXO] Reject submitted
+
+[1A[2K[RejectEdit] Workflow runs currently: 1
+
+[1A[2K[CXO] Line-item qty changed to 5
+
+[1A[2K[CXO] Rejected CXO edited & resubmitted → title="HG Automation CXO reject edit"
+
+[1A[2K[RejectEdit] Workflow runs before=1 after=2
+
+[1A[2K[3/3] [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:74:9 › All-modules reject → edit → resubmit › Intake: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @Intake
+[1A[2K  1) [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:74:9 › All-modules reject → edit → resubmit › Intake: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @Intake 
+
+    TimeoutError: locator.waitFor: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('xpath=(//div[@role=\'option\'])[1]').first() to be visible[22m
+
+
+       at ../pages/NSEFoundationActions.js:1587
+
+      1585 |             await this.page.waitForTimeout(800);
+      1586 |             const opt = this.page.locator(`xpath=(//div[@role='option'])[1]`).first();
+    > 1587 |             await opt.waitFor({ state: 'visible', timeout: 10000 });
+           |                       ^
+      1588 |             await opt.click();
+      1589 |             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
+      1590 |             try { await expect(trigger).toContainText(cxoCode, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+        at NSEFoundationActions.selectIntakeCXOTransaction (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:1587:23)
+        at NSEFoundationActions.createAndSubmitIntake (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:1993:9)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteallmodulesrejectedit.spec.js:83:9
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-72205--workflow-RejectEdit-Intake-supplier-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-72205--workflow-RejectEdit-Intake-supplier-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteallmodulesrejecte-72205--workflow-RejectEdit-Intake-supplier-tests/error-context.md
+
+
+[1A[2K  1 failed
+    [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:74:9 › All-modules reject → edit → resubmit › Intake: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @Intake 
+  2 passed (2.7m)

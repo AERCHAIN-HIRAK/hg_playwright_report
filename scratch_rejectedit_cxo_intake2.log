@@ -1,0 +1,79 @@
+(node:4295) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+[1A[2K(node:4296) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/3] [supplier-setup] › tests/auth.supplier.setup.js:16:6 › CAPP + SAPP login and save combined session
+[1A[2K(node:4331) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[2/3] [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:49:9 › All-modules reject → edit → resubmit › CXO: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @CXO
+[1A[2K[supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:49:9 › All-modules reject → edit → resubmit › CXO: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @CXO
+✓ BRF auto-populated: "Dont Touch"
+
+[1A[2K[CXO] Submitted → Pending Approval
+
+[1A[2K[CXO] Saving CXO code: CXO-FNSE-26-220  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5515/overview
+
+[1A[2K[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-220"
+
+[1A[2K[CXO] Reject submitted
+
+[1A[2K[RejectEdit] Workflow runs currently: 1
+
+[1A[2K[CXO] Line-item qty changed to 200
+
+[1A[2K[CXO] Rejected CXO edited & resubmitted → title="HG Automation CXO reject edit"
+
+[1A[2K[RejectEdit] Workflow runs before=1 after=2
+
+[1A[2K[3/3] [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:78:9 › All-modules reject → edit → resubmit › Intake: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @Intake
+[1A[2K[supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:78:9 › All-modules reject → edit → resubmit › Intake: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @Intake
+✓ BRF auto-populated: "Dont Touch"
+
+[1A[2K[CXO] Approving stage 1...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[1A[2K[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[1A[2K[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[CXO] Approving stage 2...
+
+[1A[2K[CXO] Approving stage 3...
+
+[1A[2K[CXO] Approving stage 4...
+
+[1A[2K[CXO] Status Released after 4 approval(s).
+
+[1A[2K[CXO] Saving CXO code: CXO-FNSE-26-221  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5516/overview
+
+[1A[2K[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-221"
+
+[1A[2KBRF No. value: "Dont Touch"
+
+[1A[2K[Intake] Saving Intake code: INT-FNSE-26-269  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2063/overview
+
+[1A[2K[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-269"
+
+[1A[2K[Intake] Reject submitted
+
+[1A[2K[RejectEdit] Workflow runs currently: 2
+
+[1A[2K[Intake] Rejected intake edited & resubmitted → title="HG Automation NSEF Intake reject edit"
+
+[1A[2K[RejectEdit] Workflow runs before=2 after=4
+
+[1A[2K  3 passed (4.7m)

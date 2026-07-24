@@ -1,0 +1,33 @@
+(node:6616) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+[1A[2K(node:6617) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/2] [nsef-setup] › tests/auth.nsef.setup.js:9:6 › NSEF login and save session
+[1A[2K(node:6641) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[2/2] [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:38:9 › All-modules reject → edit → resubmit › CXO: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @CXO
+[1A[2K[nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:38:9 › All-modules reject → edit → resubmit › CXO: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @CXO
+✓ BRF auto-populated: "Dont Touch"
+
+[1A[2K[CXO] Submitted → Pending Approval
+
+[1A[2K[CXO] Saving CXO code: CXO-FNSE-26-227  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5522/overview
+
+[1A[2K[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-227"
+
+[1A[2K[CXO] Reject submitted
+
+[1A[2K[RejectEdit] Workflow runs currently: 1
+
+[1A[2K[CXO] Line-item qty changed to 200
+
+[1A[2K[CXO] Rejected CXO edited & resubmitted → title="HG Automation CXO reject edit"
+
+[1A[2K[RejectEdit] Workflow runs before=1 after=2
+
+[1A[2K  2 passed (1.4m)

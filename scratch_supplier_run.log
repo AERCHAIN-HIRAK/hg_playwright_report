@@ -1,0 +1,471 @@
+(node:2644) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 11 tests using 1 worker
+
+[1A[2K(node:2645) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/11] [supplier-setup] › tests/auth.supplier.setup.js:16:6 › CAPP + SAPP login and save combined session
+[1A[2K(node:2694) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[2/11] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:51:9 › Supplier Portal Happy Path › Create CXO with all mandatory fields → Submit → Released @Supplier @CXO
+[1A[2K[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:51:9 › Supplier Portal Happy Path › Create CXO with all mandatory fields → Submit → Released @Supplier @CXO
+✓ BRF auto-populated: "Dont Touch"
+
+[1A[2K[CXO] Approving stage 1...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[1A[2K[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[1A[2K[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[CXO] Approving stage 2...
+
+[1A[2K[CXO] Approving stage 3...
+
+[1A[2K[CXO] Approving stage 4...
+
+[1A[2K[CXO] Status Released after 4 approval(s).
+
+[1A[2K[CXO] Saving CXO code: CXO-FNSE-26-205  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5495/overview
+
+[1A[2K[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-205"
+
+[1A[2K[3/11] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:105:9 › Supplier Portal Happy Path › Create Intake → fill all → Submit → Released @Supplier @Intake
+[1A[2K[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:105:9 › Supplier Portal Happy Path › Create Intake → fill all → Submit → Released @Supplier @Intake
+BRF No. value: "Budget 703"
+
+[1A[2K[Intake] Approving stage 1...
+
+[1A[2K[Intake] No action button at step 2 — reloading (1/2)...
+
+[1A[2K[Intake] No action button at step 3 — reloading (2/2)...
+
+[1A[2K[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[1A[2K[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[Intake] Approving stage 5...
+
+[1A[2K[Intake] Clicking Acknowledge/Accept step 6...
+
+[1A[2K[Intake] Status Released/Active after 6 step(s).
+
+[1A[2K[Intake] Saving Intake code: INT-FNSE-26-249  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2040/overview
+
+[1A[2K[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-249"
+
+[1A[2K[4/11] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:142:9 › Supplier Portal Happy Path › Open Intake → Process → Send for Sourcing → RFX live @Supplier @Sourcing
+[1A[2K[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:142:9 › Supplier Portal Happy Path › Open Intake → Process → Send for Sourcing → RFX live @Supplier @Sourcing
+[Intake] Searching listing for saved intake: INT-FNSE-26-249
+
+[1A[2K[Intake] Opened intake INT-FNSE-26-249 → https://nse-capp-v4-uat.aerchain.io/intakes/2040
+
+[1A[2K[Intake] Clicked Process button
+
+[1A[2K[Intake] Clicked Send for Sourcing
+
+[1A[2K[Sourcing] Expanded all sections
+
+[1A[2K[Sourcing] Payment Terms selected
+
+[1A[2K[Sourcing] Commercial Bid Due Date filled
+
+[1A[2K[Sourcing] Technical Bid Due Date filled
+
+[1A[2K[Sourcing] Expected Delivery Date filled
+
+[1A[2K[Sourcing] Supplier "HG Automation SUPP" added
+
+[1A[2K[Sourcing] Clicked Submit
+
+[1A[2K[Sourcing] Confirmed Process Request popup
+
+[1A[2K[Sourcing] Approving stage 1...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (1/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (2/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (3/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (4/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (5/5)...
+
+[1A[2K[Sourcing] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[1A[2K[Sourcing] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[Sourcing] Approving stage 2...
+
+[1A[2K[Sourcing] RFX live (not Pending Approval) after 2 approval(s).
+
+[1A[2K[Sourcing] Saving Sourcing Event code: RFX-26-134  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1098/overview
+
+[1A[2K[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-134"
+
+[1A[2K[5/11] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:164:9 › Supplier Portal Happy Path › [SAPP] Quote the RFX → Accept → Commercial Quote → Submit @Supplier @SAPP @Quote
+[1A[2K[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:164:9 › Supplier Portal Happy Path › [SAPP] Quote the RFX → Accept → Commercial Quote → Submit @Supplier @SAPP @Quote
+[SAPP RFX] Opening RFX-26-134
+
+[1A[2K[SAPP RFX] Search box not present — clicking row link directly
+
+[1A[2K[SAPP RFX] Opened RFX-26-134 → https://nse-sapp-v4-uat.aerchain.io/supplier-quote-requests/1882
+
+[1A[2K[SAPP RFX] Clicked Accept
+
+[1A[2K[SAPP RFX] Agreed to Terms & Conditions
+
+[1A[2K[SAPP RFX] Confirmed Accept
+
+[1A[2K[SAPP RFX] Clicked Submit Quote
+
+[1A[2K[SAPP RFX] Selected Commercial
+
+[1A[2K[SAPP RFX] Preferred Currency = INR
+
+[1A[2K[SAPP RFX] Unit Rate = 2000
+
+[1A[2K[SAPP RFX] Clicked Submit Quote (form)
+
+[1A[2K[SAPP RFX] Confirmed submission
+
+[1A[2K[SAPP RFX] Status = Quoted
+
+[1A[2K[6/11] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:184:9 › Supplier Portal Happy Path › Award the RFX → foreclose → auto-created PR @Supplier @Award
+[1A[2K[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:184:9 › Supplier Portal Happy Path › Award the RFX → foreclose → auto-created PR @Supplier @Award
+[Quote] On Quote Request listing page
+
+[1A[2K[Quote] Searching quote requests for: RFX-26-134
+
+[1A[2K[Quote] Opened sourcing event RFX-26-134 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1098
+
+[1A[2K[Award] Clicked Foreclose
+
+[1A[2K[Award] Foreclose submitted
+
+[1A[2K[Award] On Analysis tab
+
+[1A[2K[Award] Clicked Award
+
+[1A[2K[Award] Pending Awarded Quantity: "100.00" → entering 100
+
+[1A[2K[Award] Allocated quantity filled: 100
+
+[1A[2K[Award] Clicked Award
+
+[1A[2K[Award] Workflow Summary submitted
+
+[1A[2K[Award] Workflow Stages → overall status: "Active" → NOT completed
+
+[1A[2K[Award] Approving (round 1)...
+
+[1A[2K[Award] Workflow Stages → overall status: "Active" → NOT completed
+
+[1A[2K[Award] Approve button not visible for 4s — reloading (1/1)...
+
+[1A[2K[Award] No Approve button — reassigning approver to NSEF Support Admin...
+
+[1A[2K[Award] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[Award] Approving (round 2)...
+
+[1A[2K[Award] Workflow Stages → overall status: "Completed" → Completed
+
+[1A[2K[Award] Clicked back button beside award code
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (1/10)...
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (2/10)...
+
+[1A[2K[Award] Requisition code displayed: PR-DRAFT
+
+[1A[2K[Award] Requisition "PR-DRAFT" opened in new tab → https://nse-capp-uat.aerchain.io/requisitions/945
+
+[1A[2K[Award] Saved to NSEFoundationData.json → savedRequisition.code = "PR-DRAFT"
+
+[1A[2K[7/11] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:206:9 › Supplier Portal Happy Path › PR edit → submit → Submitted @Supplier @PR
+[1A[2K[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:206:9 › Supplier Portal Happy Path › PR edit → submit → Submitted @Supplier @PR
+[PR] Opening saved requisition PR-DRAFT → https://nse-capp-uat.aerchain.io/requisitions/945
+
+[1A[2K[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/945
+
+[1A[2K[PR] Clicked Edit
+
+[1A[2K[PR] Edit page loaded
+
+[1A[2K[PR] Effective from date filled with today: 2026-07-22
+
+[1A[2K[PR] Effective to date filled
+
+[1A[2K[PR] Purchase Type selected: First time/New
+
+[1A[2K[PR] Inward Required → Yes
+
+[1A[2K[PR] Inward Matching Criterion → Quantity
+
+[1A[2K[PR] Clicked Submit
+
+[1A[2K[PR] Confirmed Approvers popup
+
+[1A[2K[PR] Requisition status is Submitted
+
+[1A[2K[PR] Saved to NSEFoundationData.json → savedRequisition.code = "PR-NSEFN-26-76"
+
+[1A[2K[8/11] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:225:9 › Supplier Portal Happy Path › Submitted PR → PRC (Processed) → PO (Completed) @Supplier @PRC @PO
+[1A[2K[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:225:9 › Supplier Portal Happy Path › Submitted PR → PRC (Processed) → PO (Completed) @Supplier @PRC @PO
+[PR] Opening saved requisition PR-NSEFN-26-76 → https://nse-capp-uat.aerchain.io/requisitions/945
+
+[1A[2K[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/945
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (1/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (2/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (3/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (4/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (5/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (6/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (7/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (8/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (9/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (10/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (11/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (12/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (13/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (14/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (15/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (16/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (17/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (18/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (19/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (20/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (21/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (22/60)...
+
+[1A[2K[PR] Status not "Processed" yet — reloading in 10s (23/60)...
+
+[1A[2K[PR] Status is "Processed".
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (1/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (2/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (3/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (4/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (5/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (6/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (7/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (8/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (9/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (10/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (11/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (12/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (13/60)...
+
+[1A[2K[PR] Status not "Completed" yet — reloading in 10s (14/60)...
+
+[1A[2K[PR] Status is "Completed".
+
+[1A[2K[9/11] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:240:9 › Supplier Portal Happy Path › PO approve → [SAPP] Accept PO → [CAPP] Create GRN → Inwarded @Supplier @SAPP @GRN
+[1A[2K[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:240:9 › Supplier Portal Happy Path › PO approve → [SAPP] Accept PO → [CAPP] Create GRN → Inwarded @Supplier @SAPP @GRN
+[PR] Opening saved requisition PR-NSEFN-26-76 → https://nse-capp-uat.aerchain.io/requisitions/945
+
+[1A[2K[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/945
+
+[1A[2K[PR] Opened Transactions tab
+
+[1A[2K[PR] Expanded Conversions section
+
+[1A[2K[PRC] Opened PRC-NSEFN-26-68 (Requisition Conversion View)
+
+[1A[2K[PO] Opened PO-NSEFN-26-138 in new tab → https://nse-capp-uat.aerchain.io/purchase-orders/899
+
+[1A[2K[PO] Approving stage 1...
+
+[1A[2K[PO] Approved a stage
+
+[1A[2K[PO] Approving stage 2...
+
+[1A[2K[PO] Approved a stage
+
+[1A[2K[PO] Approving stage 3...
+
+[1A[2K[PO] Approved a stage
+
+[1A[2K[PO] Approvals complete (Create available) after 3 approval(s).
+
+[1A[2K[SAPP PO] Searching for PO-NSEFN-26-138
+
+[1A[2K[SAPP PO] Opened PO-NSEFN-26-138 → https://nse-sapp-uat.aerchain.io/purchase-orders/899
+
+[1A[2K[SAPP PO] Clicked Accept
+
+[1A[2K[SAPP PO] Confirmed Accept
+
+[1A[2K[PO] Opening saved PO PO-NSEFN-26-138 → https://nse-capp-uat.aerchain.io/purchase-orders/899
+
+[1A[2K[PO] On PO page: https://nse-capp-uat.aerchain.io/purchase-orders/899
+
+[1A[2K[GRN] Create → GRN clicked
+
+[1A[2K[GRN] Submitted Select PO Items popup
+
+[1A[2K[GRN] On Create GRN page: https://nse-capp-uat.aerchain.io/pending-inwards/po/899/inward
+
+[1A[2K[GRN] Filled Invoice Number + Delivery challan
+
+[1A[2K[GRN] Filled Delivery Note Reference + Document Date (2026-07-22 → "22/07/2026")
+
+[1A[2K[GRN] Line item — PO Quantity=100, Received=100
+
+[1A[2K[GRN] Clicked Submit
+
+[1A[2K[GRN] Confirmed Workflow Summary popup
+
+[1A[2K[GRN] GRN created → https://nse-capp-uat.aerchain.io/inwards/466
+
+[1A[2K[GRN] Saved to NSEFoundationData.json → savedGrn.code = "INW-NSEFN-26-49"
+
+[1A[2K[GRN] Approving stage 1...
+
+[1A[2K[GRN] Approved a stage
+
+[1A[2K[GRN] Status Inwarded after 1 approval(s).
+
+[1A[2K[GRN] Status is Inwarded
+
+[1A[2K[10/11] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:281:9 › Supplier Portal Happy Path › [SAPP] Create Invoice for PO → [CAPP] review → Pending Sync @Supplier @SAPP @Invoice
+[1A[2K[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:281:9 › Supplier Portal Happy Path › [SAPP] Create Invoice for PO → [CAPP] review → Pending Sync @Supplier @SAPP @Invoice
+[SAPP PO] Searching for PO-NSEFN-26-138
+
+[1A[2K[SAPP PO] Opened PO-NSEFN-26-138 → https://nse-sapp-uat.aerchain.io/purchase-orders/899
+
+[1A[2K[SAPP PO] Create present, no Accept — PO already accepted
+
+[1A[2K[SAPP PO] Create → Invoice
+
+[1A[2K[SAPP Invoice] Submitted "Select PO Items" dialog
+
+[1A[2K[SAPP Invoice] Confirmed "Confirm Invoice Creation" → Proceed
+
+[1A[2K[SAPP Invoice] Invoice number bumped: INV-AUTO-021 → INV-AUTO-022
+
+[1A[2K[SAPP Invoice] Invoice Date set to today (22/07/2026)
+
+[1A[2K[SAPP Invoice] Period based Invoicing → No
+
+[1A[2K[SAPP Invoice] Extra billing → No
+
+[1A[2K[SAPP Invoice] Filled form (Invoice Number=INV-AUTO-022, date=today, Period/Extra=No, document uploaded)
+
+[1A[2K[SAPP Invoice] Clicked Submit (attempt 1)
+
+[1A[2K[SAPP Invoice] Clicked Submit (attempt 2)
+
+[1A[2K[SAPP Invoice] Validations popup → Proceed
+
+[1A[2K[SAPP Invoice] Approvers popup → Submit
+
+[1A[2K[SAPP Invoice] Invoice created → https://nse-sapp-uat.aerchain.io/invoices/984
+
+[1A[2K[SAPP Invoice] Saved savedInvoice.code="Invoice-FNSE-26-147", CAPP url=https://nse-capp-uat.aerchain.io/invoices/984
+
+[1A[2K[INV] Opening saved invoice Invoice-FNSE-26-147 → https://nse-capp-uat.aerchain.io/invoices/984
+
+[1A[2K[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/984
+
+[1A[2K[INV] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[INV] Added GRN INW-NSEFN-26-49 in Item Matching
+
+[1A[2K[INV] Submitted Item Matching
+
+[1A[2K[INV] Clicked Review → opening invoice in edit mode
+
+[1A[2K[INV] Clicked review Submit (attempt 1)
+
+[1A[2K[INV] Clicked review Submit (attempt 2)
+
+[1A[2K[INV] Validations popup → Proceed
+
+[1A[2K[INV] Approvers popup → Submit
+
+[1A[2K[INV] No Approve button and not Pending Approval — reloading to re-check status...
+
+[1A[2K[INV] Approving stage 2...
+
+[1A[2K[INV] Approved a stage
+
+[1A[2K[INV] Approving stage 3...
+
+[1A[2K[INV] Approved a stage
+
+[1A[2K[INV] Approving stage 4...
+
+[1A[2K[INV] Approved a stage
+
+[1A[2K[INV] Approving stage 5...
+
+[1A[2K[INV] Approved a stage
+
+[1A[2K[INV] Status Pending Sync after 5 approval(s).
+
+[1A[2K[INV] Status is Pending Sync
+
+[1A[2K[11/11] [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:307:9 › Supplier Portal Happy Path › Acknowledge the Pending Sync invoice via API → Accounted @Supplier @Ack
+[1A[2K[supplier-tests] › tests/testSuiteSupplierPortal.spec.js:307:9 › Supplier Portal Happy Path › Acknowledge the Pending Sync invoice via API → Accounted @Supplier @Ack
+[ACK] POST https://nse-api-uat.aerchain.io/invoice/ack → EXPENSE_RECORD_NO="Invoice-FNSE-26-147", response_body_reference="INV-AUTO-022"
+
+[1A[2K[ACK] Response 200: {"success":true,"error":null,"errors":[],"data":{}}
+
+[1A[2K[INV] Opening saved invoice Invoice-FNSE-26-147 → https://nse-capp-uat.aerchain.io/invoices/984
+
+[1A[2K[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/984
+
+[1A[2K[INV] Status is Accounted
+
+[1A[2K  Slow test file: [supplier-tests] › tests/testSuiteSupplierPortal.spec.js (18.6m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  11 passed (18.8m)

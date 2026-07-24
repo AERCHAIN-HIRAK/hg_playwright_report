@@ -1,0 +1,153 @@
+(node:4423) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+[1A[2K(node:4424) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/2] [supplier-setup] › tests/auth.supplier.setup.js:16:6 › CAPP + SAPP login and save combined session
+[1A[2K(node:4456) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[2/2] [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:114:9 › All-modules reject → edit → resubmit › RFX: intake → sourcing → reject → edit (qty↓) → resubmit → intake re-convertible @RejectEdit @RFX
+[1A[2K[supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:114:9 › All-modules reject → edit → resubmit › RFX: intake → sourcing → reject → edit (qty↓) → resubmit → intake re-convertible @RejectEdit @RFX
+✓ BRF auto-populated: "Dont Touch"
+
+[1A[2K[CXO] Approving stage 1...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[1A[2K[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[1A[2K[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[CXO] Approving stage 2...
+
+[1A[2K[CXO] Approving stage 3...
+
+[1A[2K[CXO] Approving stage 4...
+
+[1A[2K[CXO] Status Released after 4 approval(s).
+
+[1A[2K[CXO] Saving CXO code: CXO-FNSE-26-222  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5517/overview
+
+[1A[2K[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-222"
+
+[1A[2KBRF No. value: "Dont Touch"
+
+[1A[2K[Intake] Approving stage 1...
+
+[1A[2K[Intake] No action button at step 2 — reloading (1/2)...
+
+[1A[2K[Intake] No action button at step 3 — reloading (2/2)...
+
+[1A[2K[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[1A[2K[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[Intake] Approving stage 5...
+
+[1A[2K[Intake] Clicking Acknowledge/Accept step 6...
+
+[1A[2K[Intake] Status Released/Active after 6 step(s).
+
+[1A[2K[Intake] Saving Intake code: INT-FNSE-26-270  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2064/overview
+
+[1A[2K[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-270"
+
+[1A[2K[Intake] Searching listing for saved intake: INT-FNSE-26-270
+
+[1A[2K[Intake] Opened intake INT-FNSE-26-270 → https://nse-capp-v4-uat.aerchain.io/intakes/2064/overview
+
+[1A[2K[Intake] Clicked Process button
+
+[1A[2K[Intake] Clicked Send for Sourcing
+
+[1A[2K[Sourcing] Expanded all sections
+
+[1A[2K[Sourcing] Payment Terms selected
+
+[1A[2K[Sourcing] Commercial Bid Due Date filled
+
+[1A[2K[Sourcing] Technical Bid Due Date filled
+
+[1A[2K[Sourcing] Expected Delivery Date filled
+
+[1A[2K[Sourcing] Supplier "HG Automation SUPP" added
+
+[1A[2K[Sourcing] Clicked Submit
+
+[1A[2K[Sourcing] Confirmed Process Request popup
+
+[1A[2K[Sourcing] Saving Sourcing Event code: RFX-26-141  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1107/overview
+
+[1A[2K[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-141"
+
+[1A[2K[RFX] Reject submitted
+
+[1A[2K[RejectEdit] Workflow runs currently: 1
+
+[1A[2K[Sourcing] Clicked Submit
+
+[1A[2K[Sourcing] Confirmed Process Request popup
+
+[1A[2K[RFX] Rejected RFX edited (qty→50) & resubmitted
+
+[1A[2K[RejectEdit] Workflow runs before=1 after=2
+
+[1A[2K[Intake] Searching listing for saved intake: INT-FNSE-26-270
+
+[1A[2K[Intake] Opened intake INT-FNSE-26-270 → https://nse-capp-v4-uat.aerchain.io/intakes/2064
+
+[1A[2K[Intake] Clicked Process button
+
+[1A[2K[Intake] Clicked Send for Sourcing
+
+[1A[2K  1) [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:114:9 › All-modules reject → edit → resubmit › RFX: intake → sourcing → reject → edit (qty↓) → resubmit → intake re-convertible @RejectEdit @RFX 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('50').first()
+    Expected: visible
+    Timeout: 20000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 20000ms[22m
+    [2m  - waiting for getByText('50').first()[22m
+
+
+      166 |         await a.clickSendForSourcing();
+      167 |         await expect(page.getByText(LOWER_QTY, { exact: false }).first())
+    > 168 |             .toBeVisible({ timeout: 20000 });
+          |              ^
+      169 |         await a.takeScreenshot('re_rfx_intake_reconvertible');
+      170 |     });
+      171 |
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteallmodulesrejectedit.spec.js:168:14
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-ab9ef--convertible-RejectEdit-RFX-supplier-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-ab9ef--convertible-RejectEdit-RFX-supplier-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteallmodulesrejecte-ab9ef--convertible-RejectEdit-RFX-supplier-tests/error-context.md
+
+
+[1A[2K  1 failed
+    [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:114:9 › All-modules reject → edit → resubmit › RFX: intake → sourcing → reject → edit (qty↓) → resubmit → intake re-convertible @RejectEdit @RFX 
+  1 passed (5.0m)

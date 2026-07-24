@@ -1,0 +1,173 @@
+(node:7062) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+[1A[2K(node:7063) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/2] [nsef-setup] › tests/auth.nsef.setup.js:9:6 › NSEF login and save session
+[1A[2K(node:7088) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[2/2] [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:174:9 › All-modules reject → edit → resubmit › GRN: build to GRN → reject → edit (qty↓) → reduced qty available for GRN @RejectEdit @GRN
+[1A[2K[nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:174:9 › All-modules reject → edit → resubmit › GRN: build to GRN → reject → edit (qty↓) → reduced qty available for GRN @RejectEdit @GRN
+✓ BRF auto-populated: "Dont Touch"
+
+[1A[2K[CXO] Approving stage 1...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[1A[2K[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[1A[2K[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[CXO] Approving stage 2...
+
+[1A[2K[CXO] Approving stage 3...
+
+[1A[2K[CXO] Approving stage 4...
+
+[1A[2K[CXO] Status Released after 4 approval(s).
+
+[1A[2K[CXO] Saving CXO code: CXO-FNSE-26-228  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5523/overview
+
+[1A[2K[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-228"
+
+[1A[2KBRF No. value: "Dont Touch"
+
+[1A[2K[Intake] Approving stage 1...
+
+[1A[2K[Intake] No action button at step 2 — reloading (1/2)...
+
+[1A[2K[Intake] No action button at step 3 — reloading (2/2)...
+
+[1A[2K[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[1A[2K[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[Intake] Approving stage 5...
+
+[1A[2K[Intake] Clicking Acknowledge/Accept step 6...
+
+[1A[2K[Intake] Status Released/Active after 6 step(s).
+
+[1A[2K[Intake] Saving Intake code: INT-FNSE-26-276  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2070/overview
+
+[1A[2K[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-276"
+
+[1A[2K[Intake] Searching listing for saved intake: INT-FNSE-26-276
+
+[1A[2K[Intake] Opened intake INT-FNSE-26-276 → https://nse-capp-v4-uat.aerchain.io/intakes/2070/overview
+
+[1A[2K[Intake] Clicked Process button
+
+[1A[2K[Intake] Clicked Send for Sourcing
+
+[1A[2K[Sourcing] Expanded all sections
+
+[1A[2K[Sourcing] Payment Terms selected
+
+[1A[2K[Sourcing] Commercial Bid Due Date filled
+
+[1A[2K[Sourcing] Technical Bid Due Date filled
+
+[1A[2K[Sourcing] Expected Delivery Date filled
+
+[1A[2K[Sourcing] Supplier "HG Automation SUPP" added
+
+[1A[2K[Sourcing] Clicked Submit
+
+[1A[2K[Sourcing] Confirmed Process Request popup
+
+[1A[2K[Sourcing] Approving stage 1...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (1/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (2/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (3/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (4/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (5/5)...
+
+[1A[2K[Sourcing] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[1A[2K[Sourcing] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[Sourcing] Approving stage 2...
+
+[1A[2K[Sourcing] RFX live (not Pending Approval) after 2 approval(s).
+
+[1A[2K[Sourcing] Saving Sourcing Event code: RFX-26-146  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1112/overview
+
+[1A[2K[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-146"
+
+[1A[2K  1) [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:174:9 › All-modules reject → edit → resubmit › GRN: build to GRN → reject → edit (qty↓) → reduced qty available for GRN @RejectEdit @GRN 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//a[@href="/quote-requests"] | //*[@role="menuitem"][contains(normalize-space(.),"Quote Request")] | //*[normalize-space(text())="Quote Request"]').first()[22m
+    [2m    - locator resolved to <a class="active" aria-current="page" data-discover="true" href="/quote-requests">…</a>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <html lang="en" data-theme="light">…</html> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <html lang="en" data-theme="light">…</html> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    9 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <html lang="en" data-theme="light">…</html> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 500ms[22m
+
+
+       at ../pages/NSEFoundationActions.js:3133
+
+      3131 |         const item = this.page.locator(`xpath=${L.quoteRequestMenuItem}`).first();
+      3132 |         await item.waitFor({ state: 'visible', timeout: 10000 });
+    > 3133 |         await item.click();
+           |                    ^
+      3134 |         await this.page.waitForURL(/\/quote-requests/, { timeout: 15000 });
+      3135 |         // Listing shows a "Checking permissions..." loader before rendering
+      3136 |         await this.page.locator('table').first().waitFor({ state: 'visible', timeout: 60000 });
+        at NSEFoundationActions.clickQuoteRequestMenu (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:3133:20)
+        at buildToPoViaCapp (/Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteallmodulesrejectedit.spec.js:297:5)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteallmodulesrejectedit.spec.js:181:9
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-c1c61-able-for-GRN-RejectEdit-GRN-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-c1c61-able-for-GRN-RejectEdit-GRN-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteallmodulesrejecte-c1c61-able-for-GRN-RejectEdit-GRN-nsef-tests/error-context.md
+
+
+[1A[2K  1 failed
+    [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:174:9 › All-modules reject → edit → resubmit › GRN: build to GRN → reject → edit (qty↓) → reduced qty available for GRN @RejectEdit @GRN 
+  1 passed (5.2m)

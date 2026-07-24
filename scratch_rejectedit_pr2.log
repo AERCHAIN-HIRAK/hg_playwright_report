@@ -1,0 +1,273 @@
+(node:5167) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+[1A[2K(node:5168) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/2] [supplier-setup] › tests/auth.supplier.setup.js:16:6 › CAPP + SAPP login and save combined session
+[1A[2K(node:5200) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[2/2] [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:176:9 › All-modules reject → edit → resubmit › Requisition: build to PR → edit (qty↓, subject) → parent RFX shows lowered qty @RejectEdit @PR
+[1A[2K[supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:176:9 › All-modules reject → edit → resubmit › Requisition: build to PR → edit (qty↓, subject) → parent RFX shows lowered qty @RejectEdit @PR
+✓ BRF auto-populated: "Dont Touch"
+
+[1A[2K[CXO] Approving stage 1...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (1/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (2/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (3/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (4/5)...
+
+[1A[2K[CXO] Approve button not visible for 4s — reloading (5/5)...
+
+[1A[2K[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[1A[2K[CXO] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[CXO] Approving stage 2...
+
+[1A[2K[CXO] Approving stage 3...
+
+[1A[2K[CXO] Approving stage 4...
+
+[1A[2K[CXO] Status Released after 4 approval(s).
+
+[1A[2K[CXO] Saving CXO code: CXO-FNSE-26-225  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5520/overview
+
+[1A[2K[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-225"
+
+[1A[2KBRF No. value: "Dont Touch"
+
+[1A[2K[Intake] Approving stage 1...
+
+[1A[2K[Intake] No action button at step 2 — reloading (1/2)...
+
+[1A[2K[Intake] No action button at step 3 — reloading (2/2)...
+
+[1A[2K[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+
+[1A[2K[Intake] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[Intake] Approving stage 5...
+
+[1A[2K[Intake] Clicking Acknowledge/Accept step 6...
+
+[1A[2K[Intake] Status Released/Active after 6 step(s).
+
+[1A[2K[Intake] Saving Intake code: INT-FNSE-26-273  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2067/overview
+
+[1A[2K[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-273"
+
+[1A[2K[Intake] Searching listing for saved intake: INT-FNSE-26-273
+
+[1A[2K[Intake] Opened intake INT-FNSE-26-273 → https://nse-capp-v4-uat.aerchain.io/intakes/2067/overview
+
+[1A[2K[Intake] Clicked Process button
+
+[1A[2K[Intake] Clicked Send for Sourcing
+
+[1A[2K[Sourcing] Expanded all sections
+
+[1A[2K[Sourcing] Payment Terms selected
+
+[1A[2K[Sourcing] Commercial Bid Due Date filled
+
+[1A[2K[Sourcing] Technical Bid Due Date filled
+
+[1A[2K[Sourcing] Expected Delivery Date filled
+
+[1A[2K[Sourcing] Supplier "HG Automation SUPP" added
+
+[1A[2K[Sourcing] Clicked Submit
+
+[1A[2K[Sourcing] Confirmed Process Request popup
+
+[1A[2K[Sourcing] Approving stage 1...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (1/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (2/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (3/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (4/5)...
+
+[1A[2K[Sourcing] Approve button not visible for 4s — reloading (5/5)...
+
+[1A[2K[Sourcing] Approve button missing — reassigning approver to NSEF Support Admin...
+
+[1A[2K[Sourcing] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[Sourcing] Approving stage 2...
+
+[1A[2K[Sourcing] RFX live (not Pending Approval) after 2 approval(s).
+
+[1A[2K[Sourcing] Saving Sourcing Event code: RFX-26-144  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1110/overview
+
+[1A[2K[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-144"
+
+[1A[2K[SAPP RFX] Opening RFX-26-144
+
+[1A[2K[SAPP RFX] Search box not present — clicking row link directly
+
+[1A[2K[SAPP RFX] Opened RFX-26-144 → https://nse-sapp-v4-uat.aerchain.io/supplier-quote-requests/1901
+
+[1A[2K[SAPP RFX] Clicked Accept
+
+[1A[2K[SAPP RFX] Agreed to Terms & Conditions
+
+[1A[2K[SAPP RFX] Confirmed Accept
+
+[1A[2K[SAPP RFX] Clicked Submit Quote
+
+[1A[2K[SAPP RFX] Selected Commercial
+
+[1A[2K[SAPP RFX] Preferred Currency = INR
+
+[1A[2K[SAPP RFX] Unit Rate = 2000
+
+[1A[2K[SAPP RFX] Clicked Submit Quote (form)
+
+[1A[2K[SAPP RFX] Confirmed submission
+
+[1A[2K[SAPP RFX] Status = Quoted
+
+[1A[2K[Quote] On Quote Request listing page
+
+[1A[2K[Quote] Searching quote requests for: RFX-26-144
+
+[1A[2K[Quote] Opened sourcing event RFX-26-144 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1110
+
+[1A[2K[Award] Clicked Foreclose
+
+[1A[2K[Award] Foreclose submitted
+
+[1A[2K[Award] On Analysis tab
+
+[1A[2K[Award] Clicked Award
+
+[1A[2K[Award] Pending Awarded Quantity: "100.00" → entering 100
+
+[1A[2K[Award] Allocated quantity filled: 100
+
+[1A[2K[Award] Clicked Award
+
+[1A[2K[Award] Workflow Summary submitted
+
+[1A[2K[Award] Workflow Stages → overall status: "Active" → NOT completed
+
+[1A[2K[Award] Approving (round 1)...
+
+[1A[2K[Award] Workflow Stages → overall status: "Active" → NOT completed
+
+[1A[2K[Award] Approve button not visible for 4s — reloading (1/1)...
+
+[1A[2K[Award] No Approve button — reassigning approver to NSEF Support Admin...
+
+[1A[2K[Award] Workflow approver reassigned to NSEF Support Admin
+
+[1A[2K[Award] Approving (round 2)...
+
+[1A[2K[Award] Workflow Stages → overall status: "Completed" → Completed
+
+[1A[2K[Award] Clicked back button beside award code
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (1/10)...
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (2/10)...
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (3/10)...
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (4/10)...
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (5/10)...
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (6/10)...
+
+[1A[2K[Award] Requisition field shows "Processing..." — reloading in 30s (7/10)...
+
+[1A[2K[Award] Requisition code displayed: PR-DRAFT
+
+[1A[2K[Award] Requisition "PR-DRAFT" opened in new tab → https://nse-capp-uat.aerchain.io/requisitions/957
+
+[1A[2K[Award] Saved to NSEFoundationData.json → savedRequisition.code = "PR-DRAFT"
+
+[1A[2K[PR] Opening saved requisition PR-DRAFT → https://nse-capp-uat.aerchain.io/requisitions/957
+
+[1A[2K[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/957
+
+[1A[2K[PR] Clicked Edit
+
+[1A[2K[PR] Edit page loaded
+
+[1A[2K[PR] Line-item qty 100 → 50
+
+[1A[2K[PR] Subject annotated with " reject edit"
+
+[1A[2K[PR] Effective from date filled with today: 2026-07-24
+
+[1A[2K[PR] Effective to date filled
+
+[1A[2K[PR] Purchase Type selected: First time/New
+
+[1A[2K[PR] Inward Required → Yes
+
+[1A[2K[PR] Inward Matching Criterion → Quantity
+
+[1A[2K[PR] Clicked Submit
+
+[1A[2K[PR] Confirmed Approvers popup
+
+[1A[2K[PR] Requisition status is Submitted
+
+[1A[2K  1) [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:176:9 › All-modules reject → edit → resubmit › Requisition: build to PR → edit (qty↓, subject) → parent RFX shows lowered qty @RejectEdit @PR 
+
+    TimeoutError: locator.waitFor: Timeout 15000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//*[@role="tab" or @data-slot="tabs-trigger"][contains(normalize-space(.),"Sourcing")]').first() to be visible[22m
+
+
+       at ../pages/NSEFoundationActions.js:3125
+
+      3123 |     async hoverSourcingTab() {
+      3124 |         const tab = this.page.locator(`xpath=${L.sourcingNavTab}`).first();
+    > 3125 |         await tab.waitFor({ state: 'visible', timeout: 15000 });
+           |                   ^
+      3126 |         await tab.hover();
+      3127 |         await this.page.waitForTimeout(800);
+      3128 |     }
+        at NSEFoundationActions.hoverSourcingTab (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:3125:19)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteallmodulesrejectedit.spec.js:204:17
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-50628-s-lowered-qty-RejectEdit-PR-supplier-tests/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-50628-s-lowered-qty-RejectEdit-PR-supplier-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-50628-s-lowered-qty-RejectEdit-PR-supplier-tests/video-1.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #4: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-50628-s-lowered-qty-RejectEdit-PR-supplier-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteallmodulesrejecte-50628-s-lowered-qty-RejectEdit-PR-supplier-tests/error-context.md
+
+
+[1A[2K  Slow test file: [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js (10.3m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  1 failed
+    [supplier-tests] › tests/testSuiteallmodulesrejectedit.spec.js:176:9 › All-modules reject → edit → resubmit › Requisition: build to PR → edit (qty↓, subject) → parent RFX shows lowered qty @RejectEdit @PR 
+  1 passed (11.1m)
