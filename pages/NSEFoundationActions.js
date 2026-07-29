@@ -3955,6 +3955,9 @@ export class NSEFoundationActions {
     async submitSelectPoItemsPopup() {
         const submit = this.page.locator(`xpath=${L.selectPoItemsSubmitBtn}`).first();
         await submit.waitFor({ state: 'visible', timeout: 10000 });
+        // Submit renders disabled until the dialog's PO-item grid has loaded its
+        // (pre-selected) rows — a slow grid otherwise reads as a click timeout.
+        await expect(submit).toBeEnabled({ timeout: 30000 });
         await submit.click();
         console.log('[GRN] Submitted Select PO Items popup');
         await this.page.waitForURL(/\/inward/, { timeout: 30000 });
@@ -4207,7 +4210,13 @@ export class NSEFoundationActions {
     }
 
     // FIX → Item Matching popup → Add GRN (the PO's GRN) → Submit
-    async matchGrnInItemMatching() {
+    //
+    // `reselect` — the GRN is ALREADY ticked in the Add GRN multi-select when the
+    // popup is reopened on a rejected invoice's edit form, so the first click
+    // DESELECTS it and the invoice resubmits unmatched. The option's selected state
+    // drives the clicking where the DOM exposes it; where it doesn't, this flag is
+    // the fallback (click twice: off → on, leaving it matched again).
+    async matchGrnInItemMatching({ reselect = false } = {}) {
         const fix = this.page.locator(`xpath=${L.invoiceFixBtn}`).first();
         await fix.scrollIntoViewIfNeeded();
         await fix.click();
@@ -4226,9 +4235,31 @@ export class NSEFoundationActions {
             ? this.page.locator(`xpath=${L.itemMatchingGrnOption(grnCode)}`).first()
             : this.page.locator(`xpath=//li[@role='option'][contains(normalize-space(.),'INW-')]`).first();
         await opt.waitFor({ state: 'visible', timeout: 8000 });
-        await opt.click();
-        console.log(`[INV] Selected GRN ${grnCode || '(first)'} in Item Matching`);
-        await this.page.waitForTimeout(800);
+
+        // 'true' / 'false' when the option reports its state, null when it doesn't.
+        const selectedState = async () => {
+            const aria = await opt.getAttribute('aria-selected').catch(() => null);
+            if (aria === 'true' || aria === 'false') return aria === 'true';
+            const cls = (await opt.getAttribute('class').catch(() => null)) ?? '';
+            if (/Mui-selected/.test(cls)) return true;
+            const box = opt.locator(`input[type='checkbox']`).first();
+            if (await box.count().catch(() => 0)) return await box.isChecked().catch(() => null);
+            return null;
+        };
+
+        const before = await selectedState();
+        const clicks = before === null ? (reselect ? 2 : 1) : 4; // known state → click until ticked
+        for (let i = 0; i < clicks; i++) {
+            await opt.click();
+            await this.page.waitForTimeout(800);
+            if (before !== null && await selectedState() === true) break;
+        }
+        const after = await selectedState();
+        if (after === false) {
+            throw new Error(`[INV] GRN ${grnCode || '(first)'} stayed deselected in Item Matching — it would resubmit unmatched.`);
+        }
+        console.log(`[INV] Selected GRN ${grnCode || '(first)'} in Item Matching`
+            + ` (was ${before === null ? 'state-unknown' : before ? 'already ticked' : 'unticked'})`);
 
         // Close the multi-select dropdown by clicking the dialog heading, then Submit
         await this.page.locator(`xpath=(//div[@role='dialog']//*[contains(normalize-space(text()),'Item Matching')])[1]`)
@@ -4267,9 +4298,12 @@ export class NSEFoundationActions {
         } else {
             console.log('[INV] Workflow Summary popup did not appear');
         }
-        await this.page.waitForURL(/\/invoices\/\d+/, { timeout: 30000 });
+        // Must land on the invoice detail page. The old /\/invoices\/\d+/ pattern
+        // also matched /invoices/<id>/edit, so a submit that never left the edit
+        // form was logged as a success and failed much later instead.
+        await this.page.waitForURL(/\/invoices\/\d+(?:$|\/(?!edit))/, { timeout: 30000 });
         await this.page.waitForTimeout(3000);
-        console.log(`[INV] Invoice created → ${this.page.url()}`);
+        console.log(`[INV] Invoice submitted → ${this.page.url()}`);
     }
 
     // Approve the invoice through all stages until it reaches "Pending Sync".
@@ -4847,13 +4881,39 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(1500);
     }
 
-    /** Open the edit form of a rejected old-capp doc (GRN/Invoice): try the
-     *  top-level Edit button first, then the More dropdown → Edit (the rejected
-     *  doc's header exposes only More / Overview / Transactions). Dumps buttons
-     *  if neither is found. Returns true when an edit was opened. */
+    /** Old-capp detail pages can sit on the app spinner long after the reject →
+     *  reload (the Invoice one especially). Wait for the header toolbar to
+     *  render — "More" is always there — reloading if it stays blank. */
+    async waitForCappDetailLoaded(tag = 'DOC') {
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const rendered = await this.page.locator(`xpath=${IL.intakeMoreBtn}`).first()
+                .waitFor({ state: 'visible', timeout: 30000 })
+                .then(() => true).catch(() => false);
+            if (rendered) return true;
+            console.log(`[${tag}] Detail page still on the spinner — reloading (${attempt + 1})`);
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+            await this.page.waitForTimeout(3000);
+        }
+        console.log(`[${tag}] Detail page never rendered its header toolbar`);
+        return false;
+    }
+
+    /** Open the edit form of a rejected old-capp doc (GRN/Invoice). The header
+     *  exposes the edit as an unlabelled pencil icon (img[alt='Edit']); there is
+     *  no text "Edit" button and More holds only "Reassign User". Tries the icon,
+     *  then a text Edit, then More → Edit. Dumps buttons if none is found.
+     *  Returns true when an edit was opened. */
     async openCappEditForm(tag = 'DOC') {
+        await this.waitForCappDetailLoaded(tag);
+        const iconBtn = this.page.locator(`xpath=${L.cappEditIconBtn}`).first();
+        if (await iconBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
+            await iconBtn.click();
+            await this.page.waitForTimeout(2500);
+            console.log(`[${tag}] Opened edit via header pencil icon`);
+            return true;
+        }
         const editBtn = this.page.locator(`xpath=${L.cappEditBtn}`).first();
-        if (await editBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
+        if (await editBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
             await editBtn.click();
             await this.page.waitForTimeout(2500);
             return true;
@@ -4871,8 +4931,12 @@ export class NSEFoundationActions {
                 return true;
             }
             console.log(`[${tag}] More opened but no Edit option — dumping`);
+            // Dismiss the popover: its backdrop otherwise intercepts every later
+            // click/dblclick and the real failure surfaces as a bogus timeout.
+            await this.page.keyboard.press('Escape').catch(() => {});
+            await this.page.waitForTimeout(500);
         }
-        console.log(`[${tag}] Edit not found (top-level or More) — dumping`);
+        console.log(`[${tag}] Edit not found (icon, text or More) — dumping`);
         await this.dumpEditableFields(`${tag}-DETAIL`);
         return false;
     }
@@ -4880,7 +4944,9 @@ export class NSEFoundationActions {
     /** Rejected GRN → Edit → lower the Received qty (AG-grid cell), annotate the
      *  Invoice Number with " reject edit" → resubmit. */
     async editGrnReceivedLowerQtyAndSubmit(newQty = '50') {
-        await this.openCappEditForm('GRN');
+        if (!await this.openCappEditForm('GRN')) {
+            throw new Error('[GRN] Could not open the edit form on the rejected GRN — see the field/button dump above.');
+        }
         await this.page.waitForTimeout(500);
 
         // Lower the Received qty in the AG-grid cell (double-click → edit → type).
@@ -4924,25 +4990,76 @@ export class NSEFoundationActions {
     /** Rejected Invoice → Edit → lower the qty (AG-grid cell), annotate the invoice
      *  number with " reject edit" → resubmit. */
     async editInvoiceLowerQtyAndSubmit(newQty = '50') {
-        await this.openCappEditForm('INV');
-        await this.page.waitForTimeout(500);
-
-        // The invoice qty cell / field is not yet automated — dump for discovery,
-        // then best-effort set it via the same AG-grid pattern as the GRN.
-        const cell = this.page.locator(`xpath=${L.grnReceivedCell}`).first();
-        if (await cell.isVisible({ timeout: 6000 }).catch(() => false)) {
-            await cell.dblclick();
-            await this.page.waitForTimeout(400);
-            await this.page.keyboard.press('ControlOrMeta+a');
-            await this.page.keyboard.press('Delete');
-            await this.page.keyboard.type(String(newQty));
-            await this.page.keyboard.press('Enter');
-            console.log(`[INV] Qty lowered to ${newQty}`);
-        } else {
-            console.log('[INV] Qty cell not found on invoice edit — dumping');
-            await this.dumpEditableFields('INV-EDIT');
+        if (!await this.openCappEditForm('INV')) {
+            throw new Error('[INV] Could not open the edit form on the rejected Invoice — see the field/button dump above.');
         }
         await this.page.waitForTimeout(500);
+
+        // Invoice qty lives in its own AG-grid column (line_items_quantity).
+        const cell = this.page.locator(`xpath=${L.invoiceQtyCell}`).first();
+        if (!await cell.isVisible({ timeout: 8000 }).catch(() => false)) {
+            console.log('[INV] Qty cell not found on invoice edit — dumping');
+            await this.dumpEditableFields('INV-EDIT');
+            // Resubmitting at the original qty leaves nothing for the downstream
+            // "reduced qty available" check and fails far from the real cause.
+            throw new Error('[INV] Invoice qty cell (line_items_quantity) not found on the edit form.');
+        }
+
+        // What the cell currently displays, digits only ("50.000" → "50").
+        const cellQty = async () => {
+            const txt = (await cell.textContent().catch(() => '')) ?? '';
+            const m = txt.replace(/,/g, '').match(/\d+(?:\.\d+)?/);
+            return m ? String(parseFloat(m[0])) : '';
+        };
+
+        // Type into the cell and confirm it stuck. The keystrokes silently no-op if
+        // the grid isn't ready for editing, so never trust a single attempt.
+        const setQty = async () => {
+            for (let i = 0; i < 3; i++) {
+                await cell.scrollIntoViewIfNeeded();
+                await cell.dblclick();
+                await this.page.waitForTimeout(500);
+                const editor = cell.locator('input').first();
+                if (await editor.count().catch(() => 0)) {
+                    await editor.fill(String(newQty)).catch(() => {});
+                } else {
+                    await this.page.keyboard.press('ControlOrMeta+a');
+                    await this.page.keyboard.press('Delete');
+                    await this.page.keyboard.type(String(newQty));
+                }
+                await this.page.keyboard.press('Enter');
+                await this.page.waitForTimeout(800);
+                const now = await cellQty();
+                if (now === String(newQty)) {
+                    console.log(`[INV] Qty lowered to ${newQty} (cell reads "${now}")`);
+                    return true;
+                }
+                console.log(`[INV] Qty did not stick (cell reads "${now}") — retrying (${i + 1}/3)`);
+            }
+            return false;
+        };
+
+        if (!await setQty()) {
+            throw new Error(`[INV] Could not set the invoice qty to ${newQty} — the cell kept its original value.`);
+        }
+        await this.page.waitForTimeout(500);
+
+        // Lowering the qty breaks the existing GRN match, so the invoice must be
+        // re-matched (FIX → Item Matching → GRN) before it can be resubmitted —
+        // without this the Submit silently leaves the form on /invoices/<id>/edit.
+        // The GRN is still ticked here from the original submit, hence reselect.
+        await this.matchGrnInItemMatching({ reselect: true });
+        await this.page.waitForTimeout(500);
+
+        // Re-matching can push the GRN's matched qty back into the row, so confirm
+        // the lowered qty survived and re-apply it if it was overwritten.
+        const afterMatch = await cellQty();
+        if (afterMatch !== String(newQty)) {
+            console.log(`[INV] Item Matching reset the qty to "${afterMatch}" — re-applying ${newQty}`);
+            if (!await setQty()) {
+                throw new Error(`[INV] Invoice qty reverted to "${afterMatch}" after Item Matching and could not be re-set.`);
+            }
+        }
 
         await this.submitInvoice();
     }

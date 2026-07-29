@@ -246,9 +246,92 @@ test.describe('All-modules reject → edit → resubmit', () => {
         await a.editInvoiceLowerQtyAndSubmit(LOWER_QTY);
         await a.takeScreenshot('re_inv_edited');
 
+        // The resubmit re-triggers the approval workflow: approve it through to
+        // Pending Sync, then POST the external acknowledgement so it flips to
+        // Accounted. Only a fully accounted invoice releases the balance qty.
+        await a.approveInvoiceUntilPendingSync('Approved by automation');
+        await a.assertInvoicePendingSync();
+        await a.acknowledgeInvoice(data);
+        await a.openSavedInvoice(data);
+        await a.assertInvoiceAccounted();
+        await a.takeScreenshot('re_inv_accounted');
+
         // Confirm the reduced qty is available for creating an Invoice on the PO.
         await a.assertPoQtyAvailableForInvoice(LOWER_QTY, data);
         await a.takeScreenshot('re_inv_qty_available');
+    });
+
+    // ── 5b. Invoice (resume) ────────────────────────────────────────────────────
+    // Same as test 5 but SKIPS the CXO → … → PO → GRN build, resuming from the
+    // Invoice-creation step against the PO/GRN already saved in
+    // NSEFoundationData.json (savedPurchaseOrder / savedGrn). Use for iterating on
+    // the invoice reject → edit → re-invoice portion without the ~15 min chain.
+    // Requires: savedPurchaseOrder points at an open PO whose savedGrn is Inwarded.
+    test('Invoice (resume from saved PO): create Invoice → reject → edit (qty↓) → reduced qty available @RejectEdit @InvoiceOnly', async ({ page }) => {
+        test.setTimeout(1200000); // 20 min — create + reject + edit + approvals + ack
+        const a = await openApp(page);
+
+        // Create the Invoice against the saved PO (matched to its saved GRN).
+        await a.openSavedPurchaseOrder(data);
+        await a.clickPoCreateInvoice();
+        await a.submitSelectPoItemsForInvoice();
+        await a.confirmInvoiceCreation();
+        await a.uploadInvoiceDocument(data);
+        await a.fillInvoiceDetails(data);
+        await a.setInvoiceGeneralDetailsNo();
+        await a.matchGrnInItemMatching();
+        await a.submitInvoice();
+        await a.saveInvoiceCode();
+        await a.takeScreenshot('re_inv_resume_created');
+
+        // Reject the Invoice during approval.
+        await a.rejectCappDoc('Rejected by automation', 'INV');
+        await a.takeScreenshot('re_inv_resume_rejected');
+
+        // Edit → lower the qty + annotate → resubmit.
+        await a.editInvoiceLowerQtyAndSubmit(LOWER_QTY);
+        await a.takeScreenshot('re_inv_resume_edited');
+
+        // Resubmit re-triggers approvals → approve to Pending Sync → acknowledge
+        // via the external API → Accounted.
+        await a.approveInvoiceUntilPendingSync('Approved by automation');
+        await a.assertInvoicePendingSync();
+        await a.acknowledgeInvoice(data);
+        await a.openSavedInvoice(data);
+        await a.assertInvoiceAccounted();
+        await a.takeScreenshot('re_inv_resume_accounted');
+
+        // Confirm the reduced qty is available for creating an Invoice on the PO.
+        await a.assertPoQtyAvailableForInvoice(LOWER_QTY, data);
+        await a.takeScreenshot('re_inv_resume_qty_available');
+    });
+
+    // ── 5c. Invoice (resume from the rejected invoice) ───────────────────────────
+    // Starts at the EDIT step on the already-rejected invoice saved in
+    // NSEFoundationData.json (savedInvoice) — no build, no create, no reject. Use
+    // for iterating on the edit → re-match → resubmit → approve → ack portion.
+    // Requires: savedInvoice is Rejected and belongs to savedPurchaseOrder/savedGrn.
+    test('Invoice (resume from rejected invoice): edit (qty↓) → resubmit → approve → ack → reduced qty available @RejectEdit @InvoiceEditOnly', async ({ page }) => {
+        test.setTimeout(900000); // 15 min
+        const a = await openApp(page);
+
+        // Open the rejected invoice, then edit → lower the qty + re-match → resubmit.
+        await a.openSavedInvoice(data);
+        await a.editInvoiceLowerQtyAndSubmit(LOWER_QTY);
+        await a.takeScreenshot('re_inv_edit_only_edited');
+
+        // Resubmit re-triggers approvals → approve to Pending Sync → acknowledge
+        // via the external API → Accounted.
+        await a.approveInvoiceUntilPendingSync('Approved by automation');
+        await a.assertInvoicePendingSync();
+        await a.acknowledgeInvoice(data);
+        await a.openSavedInvoice(data);
+        await a.assertInvoiceAccounted();
+        await a.takeScreenshot('re_inv_edit_only_accounted');
+
+        // Confirm the reduced qty is available for creating an Invoice on the PO.
+        await a.assertPoQtyAvailableForInvoice(LOWER_QTY, data);
+        await a.takeScreenshot('re_inv_edit_only_qty_available');
     });
 });
 

@@ -257,9 +257,15 @@ export const NSEFoundation_Locators = {
     cappRejectBtn:        `//button[normalize-space(.)='Reject']`,
     cappRejectConfirmBtn: `(//div[@role='dialog']//button[normalize-space(.)='Reject'])[1] | (//textarea[@placeholder='Write your notes here']/following::button[normalize-space(.)='Reject'])[1]`,
     cappEditBtn:          `//button[normalize-space(.)='Edit']`,
+    // Rejected GRN/Invoice expose no text "Edit" (More holds only "Reassign
+    // User") — the edit affordance is an unlabelled header pencil icon button.
+    cappEditIconBtn:      `//button[.//img[@alt='Edit']]`,
     // GRN Received-qty cell (AG grid col-id, row 0)
     grnReceivedCell:      `//div[@role='grid'][.//*[@role='columnheader'][contains(normalize-space(.),'Received')]]//div[@class='ag-row' or contains(@class,'ag-row')][@row-index='0']//div[@col-id='line_items_received']`,
     grnInwardedOrRejected: `//*[normalize-space(text())='Rejected' or normalize-space(text())='Inwarded']`,
+    // Invoice line-item qty (AG grid, row 0) — the "* Invoice" column under the
+    // QUANTITY group. Distinct from the GRN's line_items_received.
+    invoiceQtyCell:       `//div[@role='grid']//div[contains(@class,'ag-row')][@row-index='0']//div[@col-id='line_items_quantity']`,
 
     // ── PO → Invoice (Create → Invoice → /invoices/new) ───────────────────────
     poCreateInvoiceOption: `//li[@role='menuitem'][normalize-space(.)='Invoice'] | //*[@role='menuitem'][normalize-space(.)='Invoice']`,
