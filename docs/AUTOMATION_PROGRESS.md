@@ -893,3 +893,47 @@ reject-edit suite) renders a **blank page** for both. Neither PO offers
 **progressively** — a fixed 9s wait missed the `Create` button on one run of
 three. Any test here must wait on the locator, never on a timeout. Same class of
 bug as the GRN-listing false skip fixed earlier today.
+
+## 2026-09-03 — Advance payments (102); 126/127 blocked
+
+New suite `tests/testSuiteAdvancePayments.spec.js`, new page object
+`pages/advanceActions.js`. **2 passed (1m).**
+
+| # | Scenario | Status |
+|---|---|---|
+| 102 | Payments listed in the Advance transaction tab | **DONE** |
+| 126 | Duplicate invoice reference on edit | **BLOCKED — needs data** |
+| 127 | Invoice subject 240-char limit on edit | **BLOCKED — needs data** |
+
+### Finding the module at all
+Advances have **no module-switcher entry** like the other v3 listings. `/advances`
+is the listing; `/advance` resolves to a *different* tabbed view; `/advance-payments`
+404s.
+
+### Accounted does NOT imply paid
+| Advance | Status | Amount | Payments |
+|---|---|---|---|
+| FNSE-26-4 | Paid | ₹1,000 | Payment-FNSE-26-23 ₹1,000 |
+| FNSE-26-2 | Paid | ₹500 | Payment-FNSE-26-18 ₹500 |
+| FNSE-26-1 | Utilised | ₹1,500 | Payment-FNSE-26-12 ₹1,500 |
+| FNSE-26-5 | **Accounted** | ₹4,234 | **none** |
+
+So the test filters on **Paid/Utilised**. Asserting "every advance lists a
+payment" would fail on entirely correct behaviour.
+
+### The oracle is reconciliation, not presence
+Payment amounts must **sum to the advance's own amount**. Counting rows would
+pass even if the tab rendered a different advance's payment. All three reconcile
+exactly. A contrast test asserts a non-paid advance shows an empty tab, so the
+positive case cannot pass merely because the tab always lists something.
+
+### 126 / 127 — no invoice in this tenant is editable
+Probed thoroughly rather than assuming:
+- Rejected invoices (1122, 1131) offer **Cancel + More only** — no Edit. More
+  holds Reassign User / Download Document / Regenerate Document.
+- `/invoices/{id}/edit` redirects to the view page; `/invoices/{id}/update`
+  renders **zero inputs**.
+- The **Draft** and **Parked Invoices** tabs both report **"No data"**.
+
+Both need an invoice in an editable state. The reject-edit suite only reaches one
+by building the whole chain first.
