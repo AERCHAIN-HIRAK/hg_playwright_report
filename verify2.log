@@ -1,0 +1,136 @@
+(node:6371) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 4 tests using 1 worker
+
+(node:6373) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓  1 [nsef-setup] › tests/auth.nsef.setup.js:9:6 › NSEF login and save session (5.9s)
+(node:6397) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-366  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5738/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-366"
+[NONPO] V3 home → https://nse-capp-uat.aerchain.io/home?user=476817af-4349-4254-8476-553c0c9726e4
+[NONPO] modules panel opened (attempt 1)
+[NONPO] invoice listing → https://nse-capp-uat.aerchain.io/invoices (match 1/3)
+[NONPO] on /invoices/new (upload dropzone shown)
+[NONPO] attached /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png (attempt 1)
+[NONPO] form rendered (Templates picker present)
+[NONPO] template → "CXO Template (Dev)"
+[NONPO] section "General Details" already expanded
+[NONPO] expanded section "Additional Details"
+[NONPO] section "Invoice Details" already expanded
+[NONPO] section "Line Items" already expanded
+[NONPO] Select CXO Transaction → "CXO-FNSE-26-366"
+[NONPO] Department → "Premises"
+[NONPO] Function → "Legal"
+[NONPO] Expense Nature (for approval triggers) → "Non-CSR Process"
+[NONPO] Project Name → "NA"
+[NONPO] Vertical → "Legal"
+[NONPO] Nature of Expense (budget level) → "Opex"
+[NONPO] GL Account → "NA"
+[NONPO] Profit Center → "NA"
+[NONPO] Cost Center → "NA"
+[NONPO] SEBI Categorization → "NA"
+[NONPO] Sub Segment → "NA"
+[NONPO] Project Category → "NA"
+[NONPO] budget combination set
+[NONPO] BRF → "Dont Touch/HG Auomation PURPOSE" (of 1 options)
+[NONPO] Supplier → "HG Automation SUPP (FNSE-26-2993)"
+[NONPO] Subject → "HG Automation Non-PO Invoice"
+[INV] Invoice number bumped: INV-AUTO-101 → INV-AUTO-102
+[NONPO] Invoice Number → "INV-AUTO-102"
+[NONPO] Delivery Address → "Test"
+[NONPO] Currency → "INR"
+[NONPO] Payment Spoc → "Srinitesh"
+[NONPO] Payment Terms → "Payable quarterly within 60 days of date of receipt of tax invoice"
+[NONPO] auto-filled Company = "National Stock Exchange Foundation"
+[NONPO] auto-filled Billing Address = "Test"
+[NONPO] invoice details filled
+[NONPO] Product → "Manpower (T&M) / 484" (searched "Manpower", 10 options)
+[NONPO] UOM → "EA" (from option list)
+[NONPO] line item row → {"product":"Manpower (T&M)","uom":"EA","quantity":"100","price":"2000","amount":"2,00,000"}
+[INV] Clicked Submit (create page)
+[INV] Proceeded Validations popup
+[INV] Confirmed Workflow Summary popup
+[INV] Invoice submitted → https://nse-capp-uat.aerchain.io/invoices/1117
+[INV] Saved to NSEFoundationData.json → savedInvoice.code = "Invoice-FNSE-26-338"
+[INV] Opening saved invoice Invoice-FNSE-26-338 → https://nse-capp-uat.aerchain.io/invoices/1117
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/1117
+[NONPO-INV] Reject not visible — reloading (1)
+[NONPO-INV] Reject not visible — reloading (2)
+[NONPO-INV] Reject missing — reassigning approver to NSEF Support Admin...
+[NONPO-INV] No More button — cannot reassign.
+[NONPO-INV] Reject not visible — reloading (4)
+[NONPO-INV] Reject not visible — reloading (5)
+[NONPO-INV] Reject still not found — dumping buttons for discovery
+[NONPO-INV-DETAIL] editable fields:
+[]
+[NONPO-INV-DETAIL] buttons: ["Settle Advances","More","Overview","Transactions"]
+  ✘  2 [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:241:9 › Non-PO (CXO) Invoice › Rejection keeps budget consumed; cancellation releases it @NonPO @Budget @Reject @Cancel (3.8m)
+(node:6508) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+BRF No. value: "Budget 703"
+[Intake] Reject submitted
+[Intake] Document regenerated
+[Intake] Downloaded document: intake-2225-2026-08-25_11-10-07.pdf
+[Intake] PDF "intake-2225-2026-08-25_11-10-07.pdf" → Status: "REJECTED"
+  ✓  3 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:284:9 › Intake Negative › Rejected: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document (1.0m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Submitted → Pending Approval
+[CXO] Saving CXO code: CXO-FNSE-26-367  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5739/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-367"
+[CXO] Reject submitted
+[CXO] Document regenerated
+[CXO] Downloaded document: transaction-5739-2026-08-25_11-11-20.pdf
+[CXO] PDF "transaction-5739-2026-08-25_11-11-20.pdf" → Status: "REJECTED"
+  ✓  4 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:429:9 › CXO — Document (Regenerate + Download) › Rejected: Regenerate → Download → PDF shows correct status + fields @CXO @Document (1.2m)
+
+
+  1) [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:241:9 › Non-PO (CXO) Invoice › Rejection keeps budget consumed; cancellation releases it @NonPO @Budget @Reject @Cancel 
+
+    TimeoutError: locator.waitFor: Timeout 8000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//button[normalize-space(.)=\'Reject\']').first() to be visible[22m
+
+
+       at ../pages/NSEFoundationActions.js:4915
+
+      4913 |             await this.dumpEditableFields(`${tag}-DETAIL`);
+      4914 |         }
+    > 4915 |         await rejectBtn.waitFor({ state: 'visible', timeout: 8000 });
+           |                         ^
+      4916 |         await rejectBtn.click();
+      4917 |
+      4918 |         const notes = this.page.locator(`xpath=${L.poApproveNotesField}`).first();
+        at NSEFoundationActions.rejectCappDoc (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:4915:25)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteCxoInvoice.spec.js:263:9
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteCxoInvoice-Non-PO-544a0--NonPO-Budget-Reject-Cancel-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteCxoInvoice-Non-PO-544a0--NonPO-Budget-Reject-Cancel-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteCxoInvoice-Non-PO-544a0--NonPO-Budget-Reject-Cancel-nsef-tests/error-context.md
+
+  1 failed
+    [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:241:9 › Non-PO (CXO) Invoice › Rejection keeps budget consumed; cancellation releases it @NonPO @Budget @Reject @Cancel 
+  3 passed (6.7m)

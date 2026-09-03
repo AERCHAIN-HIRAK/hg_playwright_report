@@ -64,8 +64,16 @@ export class NSEFoundationActions {
      * test, while still working if run without the stored state.
      */
     async openApp(data) {
-        await this.page.goto(`${data.loginUrl}/`);
-        await this.page.waitForLoadState('domcontentloaded');
+        // The app root routinely takes longer than the config's 15s
+        // navigationTimeout under a headed run — it was the single biggest
+        // source of spurious failures on 2026-08-31, surfacing as whatever
+        // assertion happened to run next. `domcontentloaded` (not the default
+        // `load`) plus an explicit budget keeps this from failing tests for
+        // reasons that have nothing to do with what they assert.
+        await this.page.goto(`${data.loginUrl}/`, {
+            waitUntil: 'domcontentloaded',
+            timeout: 60000,
+        });
         const emailField = this.page.locator(L.loginEmailField);
         if (await emailField.isVisible({ timeout: 6000 }).catch(() => false)) {
             await this.fillLoginEmail(data);
@@ -130,8 +138,8 @@ export class NSEFoundationActions {
     // ── Expand all sections at once ───────────────────────────────────────────
 
     async expandAllSections() {
-        // Click the ^ expand-all toggle anchored to the title field container
-        await this.page.locator(`xpath=${L.cxoExpandAllSections}`).click();
+        // Click the expand-all toggle (CSS locator — icon-anchored, not xpath)
+        await this.page.locator(L.cxoExpandAllSections).click();
         await this.page.waitForTimeout(1000);
     }
 
@@ -181,8 +189,13 @@ export class NSEFoundationActions {
         await this._selectDropdown(L.cxoFunction, data.cxo.function);
     }
 
+    // Currency is no longer selectable — the app pre-fills it and renders the
+    // combobox disabled, so clicking it can never succeed. Assert the pre-filled
+    // value matches the expected currency instead.
     async selectCxoCurrency(data) {
-        await this._selectDropdown(L.cxoCurrency, data.cxo.currency);
+        const field = this.page.locator(`xpath=${L.cxoCurrency}`).first();
+        await expect(field).toBeDisabled();
+        await expect(field).toHaveText(data.cxo.currency);
     }
 
     async selectCxoType(data) {
@@ -722,7 +735,15 @@ export class NSEFoundationActions {
     /** More → Reassign Workflow Approver → NSEF Support Admin → reason → Submit.
      *  Generic across CXO/award (same v4 header More menu). */
     async reassignWorkflowApprover(reason = 'Reassigned for automated testing', tag = 'Workflow') {
-        const moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
+        // IL.intakeMoreBtn is the EXACT "More" actions trigger. L.rfxMoreBtn is a
+        // contains(.,'More') match, which on these detail pages also hits the
+        // header "More info" button — clicking that opens no menu, so the reassign
+        // silently found no options. Exact first, contains only as a fallback.
+        await this.waitForCappDetailLoaded(tag);
+        let moreBtn = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        if (!(await moreBtn.isVisible({ timeout: 8000 }).catch(() => false))) {
+            moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
+        }
         if (!(await moreBtn.isVisible({ timeout: 8000 }).catch(() => false))) {
             console.log(`[${tag}] No More button — cannot reassign.`);
             return false;
@@ -1380,19 +1401,14 @@ export class NSEFoundationActions {
         }
     }
 
+    // Currency is no longer selectable — the app pre-fills it and renders the
+    // combobox disabled, so the old open-dropdown-and-pick loop could never
+    // succeed (and, being unbounded, spun until the test timed out). Assert the
+    // pre-filled value instead.
     async selectIntakeCurrency(data) {
         const trigger = this.page.locator(IL.intakeCurrency).first();
-        let selected = false;
-        while (!selected) {
-            await this._openDropdown(trigger, { hasSearch: true });
-            const searchBox = this.page.locator(IL.intakeCurrencySearch).last();
-            await searchBox.fill(data.intake.currency);
-            const opt = this.page.locator(IL.intakeCurrencyOpt).first();
-            await opt.waitFor({ state: 'visible', timeout: 10000 });
-            await opt.click();
-            await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(data.intake.currency, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
-        }
+        await expect(trigger).toBeDisabled();
+        await expect(trigger).toContainText(data.intake.currency);
     }
 
     async selectIntakeFunction(data) {
@@ -4310,9 +4326,16 @@ export class NSEFoundationActions {
     // After the final approval the Approve button disappears and the status flips
     // to "Pending Sync" — the terminal state for this test. (It only becomes
     // "Accounted" after an external acknowledgement, which is out of scope.)
-    async approveInvoiceUntilPendingSync(comments = 'Approved by automation') {
-        const pendingSync = async (t = 1500) =>
-            await this.page.locator(`xpath=${L.invoicePendingSyncStatus}`).first().isVisible({ timeout: t }).catch(() => false);
+    async approveInvoiceUntilPendingSync(comments = 'Approved by automation', { acceptSyncFailed = false } = {}) {
+        // acceptSyncFailed: Non-PO invoices in UAT finish approvals on "Sync Failed"
+        // (no EBS integration for that template) and are still ackable to Accounted.
+        const pendingSync = async (t = 1500) => {
+            if (await this.page.locator(`xpath=${L.invoicePendingSyncStatus}`).first()
+                    .isVisible({ timeout: t }).catch(() => false)) return true;
+            if (!acceptSyncFailed) return false;
+            return await this.page.locator(`xpath=${L.invoiceSyncFailedStatus}`).first()
+                .isVisible({ timeout: t }).catch(() => false);
+        };
         const pendingApproval = async (t = 1500) =>
             await this.page.locator(`xpath=${L.invoicePendingApprovalStatus}`).first().isVisible({ timeout: t }).catch(() => false);
 
@@ -4339,7 +4362,11 @@ export class NSEFoundationActions {
             await this.page.reload({ waitUntil: 'domcontentloaded' });
             await this.page.waitForTimeout(3000);
         }
-        if (!(await pendingSync())) throw new Error('Invoice did not reach Pending Sync status');
+        if (!(await pendingSync())) {
+            throw new Error(acceptSyncFailed
+                ? 'Invoice reached neither Pending Sync nor Sync Failed'
+                : 'Invoice did not reach Pending Sync status');
+        }
     }
 
     async assertInvoicePendingSync() {
@@ -4429,6 +4456,41 @@ export class NSEFoundationActions {
     }
 
     /** Assert the invoice status is "Accounted" (reload-retry — the flip can lag the ack). */
+    /** Read every status chip currently rendered on an old-capp detail page.
+     *  Used to report what state a doc is ACTUALLY in when a precondition fails. */
+    async _readDocStatusChips() {
+        const known = ['Draft', 'Pending Approval', 'Approved', 'Rejected', 'Cancelled',
+            'Accounted', 'Pending Sync', 'Sync Failed', 'Completed', 'Inwarded',
+            'Released', 'Processed', 'Partially Processed', 'Recalled'];
+        return await this.page.evaluate((known) => {
+            const out = new Set();
+            for (const el of document.querySelectorAll('*')) {
+                if (el.children.length) continue;
+                const t = (el.innerText || '').trim();
+                if (known.includes(t)) out.add(t);
+            }
+            return [...out];
+        }, known);
+    }
+
+    /** Assert an old-capp doc's header status reads `status`, tolerating the late
+     *  chip render with a few reloads. On a miss it reports the status the page
+     *  DOES show — a wrong-state precondition otherwise surfaces only as an
+     *  opaque "element is not enabled" timeout further down the test. */
+    async assertCappDocStatus(status, tag = 'DOC') {
+        const chip = this.page.locator(`xpath=//*[normalize-space(text())='${status}']`).first();
+        for (let i = 0; i < 4; i++) {
+            if (await chip.isVisible({ timeout: 2500 }).catch(() => false)) {
+                console.log(`[${tag}] Status is ${status}`);
+                return;
+            }
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+            await this.page.waitForTimeout(2500);
+        }
+        throw new Error(`[${tag}] expected status "${status}" but the page shows ` +
+            JSON.stringify(await this._readDocStatusChips()));
+    }
+
     async assertInvoiceAccounted() {
         const accounted = async (t = 2000) =>
             await this.page.locator(`xpath=${L.invoiceAccountedStatus}`).first().isVisible({ timeout: t }).catch(() => false);
@@ -4849,9 +4911,20 @@ export class NSEFoundationActions {
      *  header Reject → notes → confirm. Reassigns the approver to NSEF Support
      *  Admin and retries if Reject isn't available (same pattern as approvals). */
     async rejectCappDoc(reason = 'Rejected by automation', tag = 'DOC') {
+        // Wait for the V3 header toolbar to render FIRST. Without this the Non-PO
+        // invoice page is still on its spinner, so Reject *and* the More menu used
+        // to reassign the approver both look absent and the retry loop below burns
+        // out against an unrendered page ("No More button — cannot reassign",
+        // 2026-08-25). Verified live: on a rendered page this user is the creator,
+        // gets no Reject, and reassigning the workflow approver to itself makes
+        // both Reject and Approve appear.
         const rejectBtn = this.page.locator(`xpath=${L.cappRejectBtn}`).first();
         let ready = false;
         for (let attempt = 0; attempt < 5 && !ready; attempt++) {
+            // Re-wait EVERY pass: each reload below drops the toolbar back to blank,
+            // so checking straight after one sees no Reject and no More and the
+            // reassign fallback misfires on an empty page (buttons: []).
+            await this.waitForCappDetailLoaded(tag);
             if (await rejectBtn.isVisible({ timeout: 4000 }).catch(() => false)) { ready = true; break; }
             if (attempt === 2) {
                 console.log(`[${tag}] Reject missing — reassigning approver to NSEF Support Admin...`);
@@ -4989,20 +5062,20 @@ export class NSEFoundationActions {
 
     /** Rejected Invoice → Edit → lower the qty (AG-grid cell), annotate the invoice
      *  number with " reject edit" → resubmit. */
-    async editInvoiceLowerQtyAndSubmit(newQty = '50') {
-        if (!await this.openCappEditForm('INV')) {
-            throw new Error('[INV] Could not open the edit form on the rejected Invoice — see the field/button dump above.');
-        }
-        await this.page.waitForTimeout(500);
-
+    /** Handles for the invoice qty AG-grid cell (line_items_quantity), shared by
+     *  the CREATE Invoice page and the rejected-invoice EDIT form. Returns the
+     *  cell plus cellQty() (what it currently displays) and setQty() (type the
+     *  value and confirm it stuck). `tag` only labels the dump if the cell is
+     *  missing. */
+    async _invoiceQtyOps(newQty, tag = 'INV-EDIT') {
         // Invoice qty lives in its own AG-grid column (line_items_quantity).
         const cell = this.page.locator(`xpath=${L.invoiceQtyCell}`).first();
         if (!await cell.isVisible({ timeout: 8000 }).catch(() => false)) {
-            console.log('[INV] Qty cell not found on invoice edit — dumping');
-            await this.dumpEditableFields('INV-EDIT');
+            console.log(`[INV] Qty cell not found on invoice ${tag} — dumping`);
+            await this.dumpEditableFields(tag);
             // Resubmitting at the original qty leaves nothing for the downstream
             // "reduced qty available" check and fails far from the real cause.
-            throw new Error('[INV] Invoice qty cell (line_items_quantity) not found on the edit form.');
+            throw new Error('[INV] Invoice qty cell (line_items_quantity) not found.');
         }
 
         // What the cell currently displays, digits only ("50.000" → "50").
@@ -5039,6 +5112,41 @@ export class NSEFoundationActions {
             return false;
         };
 
+        return { cell, cellQty, setQty };
+    }
+
+    /** Set the qty on the CREATE Invoice page. A 2nd invoice against a partially
+     *  consumed PO defaults to the FULL PO qty, which the app then refuses to
+     *  submit SILENTLY (stays on /invoices/new, no error in the DOM), so it must
+     *  be lowered to the PO's remaining balance before Submit. */
+    async setInvoiceQty(newQty) {
+        const { setQty } = await this._invoiceQtyOps(newQty, 'INV-CREATE');
+        if (!await setQty()) {
+            throw new Error(`[INV] Could not set the invoice qty to ${newQty} on the create page.`);
+        }
+        await this.page.waitForTimeout(500);
+    }
+
+    /** Item Matching can push the GRN's matched qty back into the row, so confirm
+     *  the qty survived and re-apply it if it was overwritten. */
+    async ensureInvoiceQty(newQty) {
+        const { cellQty, setQty } = await this._invoiceQtyOps(newQty, 'INV-CREATE');
+        const now = await cellQty();
+        if (now === String(newQty)) return;
+        console.log(`[INV] Item Matching reset the qty to "${now}" — re-applying ${newQty}`);
+        if (!await setQty()) {
+            throw new Error(`[INV] Invoice qty reverted to "${now}" after Item Matching and could not be re-set.`);
+        }
+    }
+
+    async editInvoiceLowerQtyAndSubmit(newQty = '50') {
+        if (!await this.openCappEditForm('INV')) {
+            throw new Error('[INV] Could not open the edit form on the rejected Invoice — see the field/button dump above.');
+        }
+        await this.page.waitForTimeout(500);
+
+        const { cellQty, setQty } = await this._invoiceQtyOps(newQty, 'INV-EDIT');
+
         if (!await setQty()) {
             throw new Error(`[INV] Could not set the invoice qty to ${newQty} — the cell kept its original value.`);
         }
@@ -5071,6 +5179,2560 @@ export class NSEFoundationActions {
         await this.clickPoCreateInvoice();
         await this.page.waitForTimeout(1500);
         await this.assertQtyVisibleOnPage(qty, 'INV', 'Select PO Items (qty available for Invoice)');
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Non-PO ("CXO") Invoice — §4 of the NSE Customer Flow Document
+    //
+    // CXO → direct Invoice: no Intake, no RFX, no PO. The only invoice type that
+    // consumes budget straight from the CXO, so it is where the §2.4 parent-check
+    // ceiling is enforced.
+    //
+    // Route: this flow LEAVES V4 for the V3 Ant app —
+    //   nse-capp-v4-uat → Home → nse-capp-uat/home → Modules → /invoices
+    // The V3 shell is Ant (spans/divs, not buttons); the invoice form is MUI, and
+    // the in-grid Product editor is Ant again. All selectors below were captured
+    // live on 2026-08-19.
+    // ═════════════════════════════════════════════════════════════════════════
+
+    _ac(label) {
+        return this.page.locator(`xpath=${L.muiAcInputFor(label)}`).first();
+    }
+
+    async _acOptions(label) {
+        const inp = this._ac(label);
+        await inp.waitFor({ state: 'visible', timeout: 20000 });
+        await inp.click();
+        await this.page.waitForTimeout(1200);
+        const opts = await this.page.locator(L.muiAcOption).allInnerTexts().catch(() => []);
+        return opts.map(o => o.trim()).filter(Boolean);
+    }
+
+    /** Pick `value` from the autocomplete labelled `label` (typing to filter first —
+     *  these lists are long). No value ⇒ take the first option. */
+    async _selectFromAc(label, value = null, { exact = true } = {}) {
+        const inp = this._ac(label);
+        await inp.waitFor({ state: 'visible', timeout: 20000 });
+        await inp.click();
+        await this.page.waitForTimeout(800);
+        if (value) {
+            await inp.fill(value);
+            await this.page.waitForTimeout(1500);
+        }
+        const options = this.page.locator(L.muiAcOption);
+        await options.first().waitFor({ state: 'visible', timeout: 15000 });
+        const target = value
+            ? (exact
+                ? options.filter({ hasText: new RegExp(`^\\s*${value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`) }).first()
+                : options.filter({ hasText: value }).first())
+            : options.first();
+        const picked = (await target.innerText().catch(() => '')).trim();
+        await target.click();
+        await this.page.waitForTimeout(1500);
+        console.log(`[NONPO] ${label} → "${picked}"`);
+        return picked;
+    }
+
+    // ── Navigation: V4 → V3 → Invoices → + Create Invoice ────────────────────
+
+    /** Click "Home" in the top bar — this crosses to the V3 domain, which renders
+     *  noticeably slower than V4, so wait for the Ant header, not just the URL. */
+    async clickV3Home() {
+        await this.page.locator(`xpath=${L.v3HomeLink}`).first().click();
+        await this.page.waitForURL(/nse-capp-uat\.aerchain\.io/, { timeout: 60000 });
+        await this.page.locator(L.v3ModulesToggle).first()
+            .waitFor({ state: 'visible', timeout: 60000 });
+        await this.page.waitForTimeout(1500);
+        console.log(`[NONPO] V3 home → ${this.page.url()}`);
+    }
+
+    /** Open the all-modules panel (Ant appstore icon).
+     *  The V3 shell hydrates lazily, so a click that lands too early is swallowed —
+     *  and because the control is a TOGGLE, a blind second click would close a panel
+     *  that did open. Check before re-clicking. */
+    async openModulesPanel() {
+        const toggle = this.page.locator(L.v3ModulesToggle).first();
+        const invoices = this.page.locator(`xpath=${L.v3ModuleInvoices}`).first();
+        await toggle.waitFor({ state: 'visible', timeout: 60000 });
+
+        for (let attempt = 1; attempt <= 4; attempt++) {
+            if (await invoices.isVisible({ timeout: 2000 }).catch(() => false)) {
+                await this.page.waitForTimeout(800);
+                return;
+            }
+            await toggle.click({ timeout: 15000 }).catch(() => {});
+            if (await invoices.isVisible({ timeout: 8000 }).catch(() => false)) {
+                await this.page.waitForTimeout(800);
+                console.log(`[NONPO] modules panel opened (attempt ${attempt})`);
+                return;
+            }
+            console.log(`[NONPO] modules panel not open yet (attempt ${attempt}) — retrying`);
+            await this.page.waitForTimeout(2500);
+        }
+        throw new Error('[NONPO] Modules panel never revealed the Invoices entry after 4 attempts');
+    }
+
+    /** Click "Invoices" in the panel. Several nodes carry that exact text (recently
+     *  visited, the group heading, the child link) and the heading is not navigable,
+     *  so try each until the URL actually changes. */
+    async openInvoiceModule() {
+        const links = this.page.locator(`xpath=${L.v3ModuleInvoices}`);
+        const n = await links.count();
+        if (n === 0) throw new Error('[NONPO] No "Invoices" entry in the modules panel');
+        for (let i = 0; i < n; i++) {
+            await links.nth(i).click({ timeout: 10000 }).catch(() => {});
+            const ok = await this.page.waitForURL(/\/invoices(\?|$|\/)/, { timeout: 15000 })
+                .then(() => true).catch(() => false);
+            if (ok) {
+                await this.page.waitForLoadState('networkidle').catch(() => {});
+                await this.page.waitForTimeout(2000);
+                console.log(`[NONPO] invoice listing → ${this.page.url()} (match ${i + 1}/${n})`);
+                return;
+            }
+        }
+        throw new Error(`[NONPO] Clicked all ${n} "Invoices" nodes but never reached /invoices`);
+    }
+
+    async clickCreateNewInvoice() {
+        await this.page.locator(`xpath=${L.invoiceCreateNewBtn}`).first().click();
+        await this.page.waitForURL(/\/invoices\/new/, { timeout: 60000 });
+        await this.page.locator(`xpath=${L.nonPoUploadDropzoneText}`)
+            .first().waitFor({ state: 'visible', timeout: 30000 });
+        console.log('[NONPO] on /invoices/new (upload dropzone shown)');
+    }
+
+    /** Composite: dashboard → Home → Modules → Invoices → + Create Invoice.
+     *  Re-entrant: negative tests call this again after a submit, when the V4 shell's
+     *  "Home" link is gone. `direct` skips the shell walk entirely and loads
+     *  /invoices/new — needed for a SECOND invoice, where the previous form's state
+     *  stopped the Templates picker from appearing. */
+    async openNonPoInvoiceCreatePage({ direct = false } = {}) {
+        if (direct) {
+            await this.page.goto('https://nse-capp-uat.aerchain.io/invoices/new');
+            await this.page.waitForLoadState('networkidle').catch(() => {});
+            await this.page.locator(`xpath=${L.nonPoUploadDropzoneText}`)
+                .first().waitFor({ state: 'visible', timeout: 30000 });
+            console.log('[NONPO] loaded /invoices/new directly');
+            return;
+        }
+        if (!/nse-capp-uat\.aerchain\.io/.test(this.page.url())) {
+            await this.clickV3Home();
+        }
+        const viaPanel = await this.openModulesPanel()
+            .then(() => this.openInvoiceModule())
+            .then(() => true)
+            .catch((e) => {
+                console.log(`[NONPO] modules-panel route unavailable (${e.message.split('\n')[0]}) — using the listing URL`);
+                return false;
+            });
+        if (!viaPanel) {
+            await this.page.goto('https://nse-capp-uat.aerchain.io/invoices');
+            await this.page.waitForLoadState('networkidle').catch(() => {});
+            await this.page.waitForTimeout(2500);
+        }
+        await this.clickCreateNewInvoice();
+    }
+
+    // ── The progressive form ─────────────────────────────────────────────────
+
+    /** Upload the invoice document. The form is PROGRESSIVE — only the dropzone
+     *  renders until a document is attached. Extraction time varies a lot and it
+     *  occasionally does not start, so allow a long wait and retry the attach once.
+     *  Uses a locator timeout because a waitForFunction timeout gets clamped by the
+     *  file-scoped default. */
+    async uploadNonPoInvoiceDocument(data) {
+        const filePath = path.resolve(data.invoice.documentPath);
+        const templateInput = this.page.locator(L.nonPoTemplateInput).first();
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            // Only attach while the dropzone still exists. When extraction fails the
+            // dialog REPLACES it, so the old unconditional re-attach threw
+            // "setInputFiles: Timeout 20000ms" waiting for an input that had gone —
+            // masking the real cause (2026-08-25).
+            const fileInput = this.page.locator(L.invoiceUploadInput).first();
+            if (await fileInput.count().then(c => c > 0).catch(() => false)) {
+                await fileInput.setInputFiles(filePath);
+                console.log(`[NONPO] attached ${filePath} (attempt ${attempt})`);
+            } else {
+                console.log(`[NONPO] dropzone gone (attempt ${attempt}) — not re-attaching`);
+            }
+            const rendered = await templateInput.waitFor({ state: 'visible', timeout: 120000 })
+                .then(() => true).catch(() => false);
+            if (rendered) {
+                await this.page.waitForTimeout(2000);
+                console.log('[NONPO] form rendered (Templates picker present)');
+                return;
+            }
+            if (!(await this._handleExtractionFailed())) {
+                const seen = (await this.page.locator('body').innerText().catch(() => '')).slice(0, 200);
+                console.log(`[NONPO] form did not render on attempt ${attempt}. Page shows: ${JSON.stringify(seen)}`);
+            }
+            await this.page.waitForTimeout(3000);
+        }
+        throw new Error('[NONPO] Invoice document uploaded but the form never rendered (no Templates picker)');
+    }
+
+    /** The V3 upload intermittently answers with "Extraction Failed — Document
+     *  extraction was unsuccessful. Please choose how to proceed" instead of the
+     *  extracted form. Re-uploading is impossible (the dropzone is gone), so the
+     *  only way on is the dialog's own action. Logs the buttons it finds, so an
+     *  unexpected variant is self-diagnosing next time.
+     *  Returns true when such a dialog was found and actioned. */
+    async _handleExtractionFailed() {
+        const body = await this.page.locator('body').innerText().catch(() => '');
+        if (!/Extraction Failed/i.test(body)) return false;
+        const labels = [...new Set((await this.page.locator('button').allTextContents())
+            .map(t => t.trim()).filter(t => t && t.length < 40))];
+        console.log('[NONPO] Extraction Failed dialog — buttons: ' + JSON.stringify(labels));
+        for (const pattern of [/manual|proceed|continue|without|skip/i, /retry|again|re-?upload/i]) {
+            const btn = this.page.locator('button').filter({ hasText: pattern }).first();
+            if (await btn.isVisible({ timeout: 4000 }).catch(() => false)) {
+                const label = ((await btn.textContent()) || '').trim();
+                await btn.click().catch(() => {});
+                console.log(`[NONPO] Extraction Failed → clicked "${label}"`);
+                await this.page.waitForTimeout(3000);
+                return true;
+            }
+        }
+        console.log('[NONPO] Extraction Failed dialog offered no recognised way forward');
+        return false;
+    }
+
+    /** Choose the CXO invoice template. Options seen: "RC Invoice",
+     *  "PO Invoice NSEF", "CXO Template (Dev)", "NSEF Credit Note". */
+    async selectNonPoTemplate(data) {
+        const name = data.nonPoInvoice.template;
+        const inp = this.page.locator(L.nonPoTemplateInput).first();
+        await inp.waitFor({ state: 'visible', timeout: 30000 });
+        await inp.click();
+        await this.page.waitForTimeout(1000);
+        await this.page.locator(L.muiAcOption).filter({ hasText: name }).first().click();
+        await this.page.waitForTimeout(4000); // template choice re-renders the form
+        console.log(`[NONPO] template → "${name}"`);
+    }
+
+    /** Expand the form's sections. They are MUI Accordions: fields inside a
+     *  collapsed one are present and enabled but carry visibility:hidden via
+     *  MuiCollapse, so Playwright rightly refuses to act on them. The header is a
+     *  TOGGLE, so read aria-expanded and only click when needed. */
+    async expandNonPoSections() {
+        for (const title of ['General Details', 'Additional Details', 'Invoice Details', 'Line Items']) {
+            const header = this.page.locator(`xpath=//*[normalize-space(text())="${title}"]`).first();
+            if (!await header.isVisible({ timeout: 2000 }).catch(() => false)) continue;
+            const summary = this.page.locator(
+                `xpath=//*[normalize-space(text())="${title}"]/ancestor-or-self::*[@aria-expanded][1]`
+            ).first();
+            const expanded = await summary.getAttribute('aria-expanded').catch(() => null);
+            if (expanded === 'true') {
+                console.log(`[NONPO] section "${title}" already expanded`);
+                continue;
+            }
+            await header.click({ timeout: 8000 }).catch(() => {});
+            await this.page.waitForTimeout(800);
+            if (await summary.getAttribute('aria-expanded').catch(() => null) === 'false') {
+                await header.click({ timeout: 8000 }).catch(() => {});
+                await this.page.waitForTimeout(800);
+            }
+            console.log(`[NONPO] expanded section "${title}"`);
+        }
+        await this.page.waitForTimeout(1000);
+    }
+
+    /** Resolve a control to the VISIBLE match. Two traps, both observed: the same id
+     *  can appear more than once (so .first() may grab a hidden twin), and sections
+     *  are accordions (so a field can be present but collapsed). */
+    async _resolveVisible(selector, label) {
+        const all = this.page.locator(selector);
+        const firstVisible = async () => {
+            const n = await all.count();
+            for (let i = 0; i < n; i++) {
+                if (await all.nth(i).isVisible().catch(() => false)) return all.nth(i);
+            }
+            return null;
+        };
+        let el = await firstVisible();
+        if (el) return el;
+        await this.expandNonPoSections();
+        el = await firstVisible();
+        if (el) return el;
+        throw new Error(
+            `[NONPO] "${label}" has ${await all.count()} match(es) but none visible, even ` +
+            'after expanding the form sections.');
+    }
+
+    /** Pick a value from an autocomplete addressed by its id (= its visible label). */
+    async _selectAcById(label, value = null, { exact = true, waitEnabledMs = 0 } = {}) {
+        const inp = await this._resolveVisible(L.nonPoFieldById(label), label);
+        // Some fields start disabled and are enabled by an earlier selection —
+        // Currency only becomes editable once a Supplier is chosen.
+        for (let waited = 0; waited < waitEnabledMs && await inp.isDisabled().catch(() => false); waited += 1000) {
+            await this.page.waitForTimeout(1000);
+        }
+        if (await inp.isDisabled().catch(() => false)) {
+            const existing = await inp.inputValue().catch(() => '');
+            console.log(`[NONPO] ${label} is disabled (system-populated) → "${existing}" — skipped`);
+            return existing;
+        }
+        await inp.scrollIntoViewIfNeeded().catch(() => {});
+        await inp.click();
+        await this.page.waitForTimeout(600);
+        if (value) await inp.fill(String(value));
+
+        // These lists load asynchronously and several cascade off the dimensions
+        // chosen before them, so a fixed pause is not enough — a 1.2s wait made
+        // "Project Category" intermittently report zero options. Poll, and re-open
+        // the picker once before concluding it is genuinely empty.
+        const opts = this.page.locator(L.muiAcOption);
+        const pollForOptions = async (ms) => {
+            for (let waited = 0; waited < ms; waited += 500) {
+                if (await opts.count() > 0) return true;
+                await this.page.waitForTimeout(500);
+            }
+            return false;
+        };
+        let n = 0;
+        if (await pollForOptions(15000)) {
+            n = await opts.count();
+        } else {
+            await inp.click();
+            if (value) await inp.fill(String(value));
+            if (await pollForOptions(10000)) n = await opts.count();
+        }
+        if (n === 0) {
+            throw new Error(`[NONPO] "${label}" offered no options${value ? ` for "${value}"` : ''}`);
+        }
+
+        // MUI filters by SUBSTRING, so a short value silently matches the wrong row —
+        // "NA" matches "Ma(na)ged/Hosting services", which broke the budget
+        // combination and left BRF empty. Require an exact match when a value was
+        // asked for; only take the first option when it wasn't.
+        let target = opts.first();
+        if (value) {
+            const texts = (await opts.allInnerTexts()).map(t => t.trim());
+            const want = String(value).toLowerCase();
+            let idx = texts.findIndex(t => t.toLowerCase() === want);
+            if (idx === -1 && !exact) idx = texts.findIndex(t => t.toLowerCase().includes(want));
+            if (idx === -1) {
+                throw new Error(
+                    `[NONPO] "${label}" has no option exactly equal to "${value}". ` +
+                    `Options offered: ${JSON.stringify(texts.slice(0, 15))}`);
+            }
+            target = opts.nth(idx);
+        }
+        const picked = (await target.innerText()).trim();
+        await target.click();
+        await this.page.waitForTimeout(700);
+        console.log(`[NONPO] ${label} → "${picked}"`);
+        return picked;
+    }
+
+    async _fillTextById(label, value) {
+        const inp = await this._resolveVisible(L.nonPoTextById(label), label);
+        await inp.scrollIntoViewIfNeeded().catch(() => {});
+        await inp.fill(String(value));
+        console.log(`[NONPO] ${label} → "${value}"`);
+    }
+
+    /** For a mandatory field that may be auto-populated by an earlier selection:
+     *  wait briefly for it to become enabled, then set it only if still empty. A
+     *  field that filled itself is left alone (overwriting a supplier-derived value
+     *  would be wrong); one that stays disabled and empty is reported. */
+    async _selectIfEmptyAndEnabled(label, value = null) {
+        const inp = await this._resolveVisible(L.nonPoFieldById(label), label);
+        for (let waited = 0; waited < 15000; waited += 1000) {
+            if (!await inp.isDisabled().catch(() => false)) break;
+            if ((await inp.inputValue().catch(() => '')).trim()) break;
+            await this.page.waitForTimeout(1000);
+        }
+        const existing = (await inp.inputValue().catch(() => '')).trim();
+        if (existing) {
+            console.log(`[NONPO] ${label} already set → "${existing}"`);
+            return existing;
+        }
+        if (await inp.isDisabled().catch(() => false)) {
+            console.log(`[NONPO] WARNING: mandatory "${label}" is disabled and empty — cannot be set`);
+            return '';
+        }
+        return await this._selectAcById(label, value || null, { exact: !!value });
+    }
+
+    /** Select the CXO at the invoice header. Defaults to the CXO this run created
+     *  (savedCxo, read fresh from disk — the imported data object is stale once
+     *  createAndReleaseCxo() rewrote the JSON). */
+    async selectNonPoCxo(code = null) {
+        return await this._selectFromAc(L.nonPoCxoLabel, code || this.getSavedCxoCode());
+    }
+
+    /** The CXO codes currently offered — used to assert that only Submitted CXOs
+     *  with available value are selectable (§4 Step 2). */
+    async getSelectableCxoCodes() {
+        const opts = await this._acOptions(L.nonPoCxoLabel);
+        await this.page.keyboard.press('Escape');
+        return opts;
+    }
+
+    /** Additional Details → the budget-defining dimension combination.
+     *  MUST be set before BRF - Description offers anything: the budget list is the
+     *  intersection of the user's dimension access and the CXO's budget (§4 Step 3),
+     *  so a mismatched combination yields an empty list. Values mirror the CXO line
+     *  item so the same BRF resolves. */
+    async fillNonPoBudgetCombination(data) {
+        const li = data.lineItem;
+        await this._selectAcById('Department', data.cxo.department);
+        await this._selectAcById('Function', data.cxo.function);
+        await this._selectAcById('Expense Nature (for approval triggers)', data.cxo.expenseNature);
+        await this._selectAcById('Project Name', li.projectName);
+        await this._selectAcById('Vertical', li.vertical);
+        await this._selectAcById('Nature of Expense (budget level)', li.natureOfExpense);
+        await this._selectAcById('GL Account', li.glAccount);
+        await this._selectAcById('Profit Center', li.profitCenter);
+        await this._selectAcById('Cost Center', li.costCenter);
+        await this._selectAcById('SEBI Categorization', li.sebiCategorization);
+        await this._selectAcById('Sub Segment', li.subSegment);
+        await this._selectAcById('Project Category', li.projectCategory);
+        console.log('[NONPO] budget combination set');
+    }
+
+    /** Select the single header-level budget item. Does NOT auto-populate from the
+     *  CXO, and ships DISABLED until the dimension combination resolves. */
+    async selectNonPoBrf(data) {
+        const inp = this.page.locator(L.nonPoBrfInput).first();
+        await inp.waitFor({ state: 'attached', timeout: 30000 });
+        if (await inp.isDisabled().catch(() => false)) {
+            await inp.waitFor({ state: 'visible', timeout: 20000 }).catch(() => {});
+            if (await inp.isDisabled().catch(() => false)) {
+                throw new Error(
+                    '[NONPO] "BRF - Description" is still disabled — the dimension ' +
+                    'combination has not resolved to a budget item. Call ' +
+                    'fillNonPoBudgetCombination() first and check the values match ' +
+                    'the CXO line item.');
+            }
+        }
+        await inp.click();
+        await this.page.waitForTimeout(1500);
+        const opts = this.page.locator(L.muiAcOption);
+        const n = await opts.count();
+        if (n === 0) {
+            throw new Error(
+                '[NONPO] No BRF options. Per §4 the budget list is the intersection ' +
+                'of the user dimension combination and the CXO budget — check the ' +
+                'dimension fields are set and the CXO carries a matching budget item.');
+        }
+        const picked = (await opts.first().innerText()).trim();
+        await opts.first().click();
+        await this.page.waitForTimeout(1500);
+        console.log(`[NONPO] BRF → "${picked}" (of ${n} options)`);
+        return picked;
+    }
+
+    /** Invoice Details. Field states verified from the form's accessibility tree:
+     *    editable → Supplier, Subject, Invoice Number, Invoice Date, Delivery Address
+     *    disabled → Company, Billing Address, Supplier/Customer Tax Number
+     *  Supplier goes FIRST: the auto-populated fields derive from it, and Payment
+     *  Spoc/Terms and Currency only become settable afterwards (§12.3 maps a Payment
+     *  SPOC per supplier — picking a SPOC first filtered the supplier list). */
+    async fillNonPoInvoiceDetails(data) {
+        const inv = data.nonPoInvoice;
+        await this._selectAcById('Supplier', data.sourcing.supplierSearch, { exact: false });
+        await this._fillTextById('Subject', inv.subject);
+        // Duplicate invoice numbers are rejected, so take a fresh one each run.
+        await this._fillTextById('Invoice Number', this._nextInvoiceNumber());
+
+        const dateInput = this.page.locator(L.nonPoDateByPh('Enter Invoice Date')).first();
+        await this._pickReactDate(dateInput, inv.invoiceDate);
+
+        await this._selectAcById('Delivery Address');
+        await this._selectAcById('Currency', inv.currency, { waitEnabledMs: 15000 });
+        await this._selectIfEmptyAndEnabled('Payment Spoc', inv.paymentSpoc);
+        await this._selectIfEmptyAndEnabled('Payment Terms', inv.paymentTerms);
+
+        this.nonPoAutoFilled = await this.reportNonPoAutoFilled(['Company', 'Billing Address']);
+        console.log('[NONPO] invoice details filled');
+    }
+
+    /** Mandatory-but-disabled fields, populated by the app from the CXO + supplier.
+     *  Reported, not asserted — failing on an assumption about fill timing would
+     *  mask the real behaviour. */
+    async reportNonPoAutoFilled(labels) {
+        const values = {};
+        for (const label of labels) {
+            const inp = this.page.locator(L.nonPoFieldById(label)).first();
+            let value = '';
+            for (let i = 0; i < 6; i++) {
+                value = (await inp.inputValue().catch(() => '')).trim();
+                if (value) break;
+                await this.page.waitForTimeout(1000);
+            }
+            values[label] = value;
+            console.log(value
+                ? `[NONPO] auto-filled ${label} = "${value}"`
+                : `[NONPO] WARNING: mandatory field "${label}" is disabled AND empty — submission may be blocked`);
+        }
+        return values;
+    }
+
+    /** WORKAROUND for a known app bug (reported by NSE QA 2026-08-19, dev fixing):
+     *  clicking "Add Item" CLEARS the mandatory Currency field. The wipe blocks
+     *  submission silently — no validation message, no API call; Submit throws
+     *  "Cannot read properties of undefined (reading 'exchangeRate')" internally.
+     *  Remove this call once the fix lands; it becomes a no-op either way. */
+    async reapplyFieldsClearedByAddItem(data) {
+        const inv = data.nonPoInvoice;
+        for (const [label, value] of [
+            ['Currency', inv.currency],
+            ['Payment Spoc', inv.paymentSpoc],
+            ['Payment Terms', inv.paymentTerms],
+        ]) {
+            const inp = this.page.locator(L.nonPoFieldById(label)).first();
+            if (!await inp.count().then(n => n > 0).catch(() => false)) continue;
+            if ((await inp.inputValue().catch(() => '')).trim()) continue;
+            console.log(`[NONPO] KNOWN BUG: "${label}" was cleared by Add Item — re-applying`);
+            if (await inp.isDisabled().catch(() => false)) {
+                console.log(`[NONPO] WARNING: "${label}" is blank AND disabled after Add Item — cannot re-apply`);
+                continue;
+            }
+            await this._selectAcById(label, value || null, { exact: !!value });
+        }
+    }
+
+    // ── Line items (AG grid) ─────────────────────────────────────────────────
+
+    /** Add one line item. */
+    async addNonPoLineItem(data, { qty, price } = {}) {
+        const C = L.nonPoGridColIds;
+        await this.page.locator(L.nonPoAddItemBtn).first().click();
+        await this.page.waitForTimeout(1500);
+
+        await this._setGridProduct(data.intake.itemName, data.intake.itemNameOption);
+        await this._setGridCell(C.quantity, qty ?? data.nonPoInvoice.fullQty);
+        await this._setGridCell(C.price, price ?? data.nonPoInvoice.fullPrice);
+        await this.page.waitForTimeout(2000);
+
+        // Read the row back: an AG-grid edit that never committed leaves the cell
+        // blank and would silently invoice zero.
+        const readCell = async (colId) =>
+            (await this.page.locator(`xpath=${L.nonPoGridCell(colId)}`).first()
+                .innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+        const row = {
+            product: await readCell(C.product),
+            uom: await readCell(C.uom),
+            quantity: await readCell(C.quantity),
+            price: await readCell(C.price),
+            amount: await readCell(C.amount),
+        };
+        console.log(`[NONPO] line item row → ${JSON.stringify(row)}`);
+        for (const [k, v] of Object.entries({ product: row.product, quantity: row.quantity, price: row.price })) {
+            if (!v) throw new Error(`[NONPO] line item "${k}" did not commit — grid cell is empty. Row: ${JSON.stringify(row)}`);
+        }
+
+        await this.reapplyFieldsClearedByAddItem(data);
+        return row;
+    }
+
+    /** Select the line-item Product from the item master.
+     *  NSE forbids free-text products (§5.5), so the option MUST be clicked —
+     *  typing + Enter leaves raw text, the row stays invalid, and Submit then fails
+     *  client-side with no error and no API call. The editor is an ANT AutoComplete,
+     *  so options are .ant-select-item-option in a body-level portal, not MUI. */
+    async _setGridProduct(typed, wanted = null) {
+        const cell = this.page.locator(`xpath=${L.nonPoGridCell(L.nonPoGridColIds.product)}`).first();
+        await cell.scrollIntoViewIfNeeded().catch(() => {});
+        await cell.waitFor({ state: 'visible', timeout: 20000 });
+        await cell.dblclick();
+
+        const input = this.page.locator(L.nonPoProductEditorInput).first();
+        await input.waitFor({ state: 'visible', timeout: 20000 });
+        await input.fill(String(typed));
+
+        const opts = this.page.locator(L.nonPoAntOption);
+        await opts.first().waitFor({ state: 'visible', timeout: 25000 }).catch(() => {});
+        const texts = (await opts.allInnerTexts()).map(t => t.trim()).filter(Boolean);
+        if (!texts.length) {
+            throw new Error(`[NONPO] Product search "${typed}" returned no options from the item master`);
+        }
+        let idx = 0;
+        if (wanted) {
+            const want = String(wanted).toLowerCase();
+            const exact = texts.findIndex(t => t.toLowerCase() === want);
+            idx = exact !== -1 ? exact : texts.findIndex(t => t.toLowerCase().includes(want));
+            if (idx === -1) {
+                throw new Error(`[NONPO] Product "${wanted}" not among options: ${JSON.stringify(texts.slice(0, 10))}`);
+            }
+        }
+        await opts.nth(idx).click();
+        await this.page.waitForTimeout(2500);
+        console.log(`[NONPO] Product → "${texts[idx]}" (searched "${typed}", ${texts.length} options)`);
+
+        // NOTE: UOM does NOT auto-populate here. §5.5's "UOM auto-populates and
+        // locks" is documented for Intake; on this template the cell keeps its
+        // "Enter UOM" placeholder even after a real master item is selected.
+        await this._setGridUomIfEmpty();
+        return texts[idx];
+    }
+
+    /** Fill the line-item UOM if it still shows its placeholder. The editor type is
+     *  not fixed (Ant select or plain input), so handle both. */
+    async _setGridUomIfEmpty(fallback = 'Nos') {
+        const uomCell = this.page.locator(`xpath=${L.nonPoGridCell(L.nonPoGridColIds.uom)}`).first();
+        const current = (await uomCell.innerText().catch(() => '')).trim();
+        if (current && !/^enter uom$/i.test(current)) {
+            console.log(`[NONPO] UOM already set → "${current}"`);
+            return current;
+        }
+        await uomCell.dblclick();
+        await this.page.waitForTimeout(1200);
+        for (const opts of [this.page.locator(L.nonPoAntOption), this.page.locator(L.muiAcOption)]) {
+            if (await opts.count() > 0 && await opts.first().isVisible().catch(() => false)) {
+                const picked = (await opts.first().innerText()).trim();
+                await opts.first().click();
+                await this.page.waitForTimeout(1200);
+                console.log(`[NONPO] UOM → "${picked}" (from option list)`);
+                return picked;
+            }
+        }
+        await this.page.keyboard.type(String(fallback), { delay: 60 });
+        await this.page.waitForTimeout(1000);
+        const late = this.page.locator(L.nonPoAntOption);
+        if (await late.count() > 0 && await late.first().isVisible().catch(() => false)) {
+            const picked = (await late.first().innerText()).trim();
+            await late.first().click();
+            console.log(`[NONPO] UOM → "${picked}" (after typing "${fallback}")`);
+        } else {
+            await this.page.keyboard.press('Enter');
+            console.log(`[NONPO] UOM typed → "${fallback}"`);
+        }
+        await this.page.waitForTimeout(1200);
+        return (await uomCell.innerText().catch(() => '')).trim();
+    }
+
+    /** Type into one AG-grid cell. Cells commit on Enter; on macOS the clear
+     *  shortcut must be ControlOrMeta+a (Control+a alone does not select). */
+    async _setGridCell(colId, value) {
+        const cell = this.page.locator(`xpath=${L.nonPoGridCell(colId)}`).first();
+        await cell.scrollIntoViewIfNeeded().catch(() => {});
+        await cell.waitFor({ state: 'visible', timeout: 20000 });
+        await cell.dblclick();
+        await this.page.waitForTimeout(600);
+        await this.page.keyboard.press('ControlOrMeta+a').catch(() => {});
+        await this.page.keyboard.type(String(value), { delay: 60 });
+        await this.page.waitForTimeout(1200);
+        await this.page.keyboard.press('Enter');
+        await this.page.waitForTimeout(600);
+    }
+
+    // ── Totals ───────────────────────────────────────────────────────────────
+
+    /** Parse an Indian-formatted amount, including the abbreviated forms this UI
+     *  uses: "2.00L" = 200000, "1.5Cr" = 15000000, "20K" = 20000. Takes the LAST
+     *  number, since the label precedes the value. */
+    _parseIndianAmount(text, label = 'amount') {
+        const matches = [...String(text).matchAll(/([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\b/gi)];
+        if (!matches.length) throw new Error(`[NONPO] no number in "${label}" text: "${text}"`);
+        const [, num, unit] = matches[matches.length - 1];
+        const mult = { cr: 1e7, l: 1e5, k: 1e3 }[(unit || '').toLowerCase()] ?? 1;
+        return parseFloat(num.replace(/,/g, '')) * mult;
+    }
+
+    /** Read a value off the totals strip. The label and its amount are separate
+     *  nodes at no fixed depth, so walk up from the label until an ancestor holds a
+     *  number. */
+    async readNonPoTotal(label = 'Grand Total') {
+        const value = await this.page.evaluate((label) => {
+            const leaf = [...document.querySelectorAll('*')]
+                .find(e => !e.children.length && (e.innerText || '').trim() === label);
+            if (!leaf) return { error: 'label not found' };
+            let n = leaf;
+            for (let i = 0; i < 5 && n; i++, n = n.parentElement) {
+                const t = (n.innerText || '').replace(/\s+/g, ' ').trim();
+                if (/[\d]/.test(t)) return { raw: t.slice(0, 120) };
+            }
+            return { error: 'no number near label', raw: (leaf.parentElement?.innerText || '').slice(0, 120) };
+        }, label);
+        if (value.error) {
+            throw new Error(`[NONPO] could not read "${label}": ${value.error} (raw ${JSON.stringify(value.raw || '')})`);
+        }
+        const parsed = this._parseIndianAmount(value.raw, label);
+        console.log(`[NONPO] ${label} = ${parsed}  (raw "${value.raw}")`);
+        return parsed;
+    }
+
+    async assertNonPoGrandTotal(expected) {
+        expect(await this.readNonPoTotal('Grand Total')).toBeCloseTo(Number(expected), 2);
+    }
+
+    // ── Submit / assertions ──────────────────────────────────────────────────
+
+    /** Submit a Non-PO invoice that is EXPECTED to be refused.
+     *
+     *  submitInvoice() is built for the happy path: it walks the Validations popup,
+     *  then the Workflow Summary popup, then waits for navigation. A refused invoice
+     *  reaches none of those, so that helper hangs on a dialog that never appears.
+     *
+     *  Per NSE QA a budget breach is reported in the WORKFLOW SUMMARY POPUP, only
+     *  after Proceed — and there can be more than one Proceed in the chain. So click
+     *  through each, re-reading the dialog after every click, stopping as soon as a
+     *  budget message appears. Never requires navigation.
+     *  @returns {Promise<{url: string, messages: string[], dialogText: string}>} */
+    async submitNonPoInvoiceExpectingRejection({ settleMs = 8000 } = {}) {
+        await this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first().click({ timeout: 20000 });
+        console.log('[NONPO] clicked Submit (expecting rejection)');
+
+        const dialog = this.page.locator(`xpath=${L.muiDialog}`).last();
+        const readDialog = async () =>
+            (await dialog.innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+
+        let dialogText = '';
+        for (let step = 1; step <= 3; step++) {
+            const current = await readDialog();
+            if (current) {
+                dialogText = current;
+                console.log(`[NONPO] dialog (step ${step}) → "${current.slice(0, 220)}"`);
+                if (/budget/i.test(current)) break;
+            }
+            const proceed = this.page.locator(`xpath=${L.invoiceValidationProceedBtn}`).first();
+            const dialogSubmit = this.page.locator(`xpath=${L.invoiceWorkflowSummarySubmitBtn}`).first();
+            let clicked = false;
+            if (await proceed.isVisible({ timeout: 6000 }).catch(() => false)) {
+                await proceed.click().catch(() => {});
+                console.log(`[NONPO] clicked Proceed (step ${step})`);
+                clicked = true;
+            } else if (await dialogSubmit.isVisible({ timeout: 4000 }).catch(() => false)) {
+                await dialogSubmit.click().catch(() => {});
+                console.log(`[NONPO] clicked the dialog Submit (step ${step})`);
+                clicked = true;
+            }
+            if (!clicked) {
+                console.log(`[NONPO] nothing left to click (step ${step})`);
+                break;
+            }
+            await this.page.waitForTimeout(6000);
+        }
+        dialogText = (await readDialog()) || dialogText;
+        await this.page.waitForTimeout(settleMs);
+
+        const messages = await this.page.evaluate(() => {
+            const out = new Set();
+            for (const el of document.querySelectorAll('*')) {
+                if (el.children.length) continue;
+                const t = (el.innerText || '').trim();
+                if (t && t.length < 160 &&
+                    /error|exceed|insufficient|not available|budget|mandat|requir|invalid|fail/i.test(t)) {
+                    out.add(t);
+                }
+            }
+            return [...out];
+        });
+        const url = this.page.url();
+        console.log(`[NONPO] after Submit → ${url}`);
+        console.log(`[NONPO] on-screen messages → ${JSON.stringify(messages.slice(0, 12))}`);
+        return { url, messages, dialogText };
+    }
+
+    /** Budget ceiling breach (§2.4). The breach is reported inside the Workflow
+     *  Summary popup, so search that text as well as the page. On a miss, fail WITH
+     *  both, so one run pins the real wording. */
+    async assertBudgetExceeded(observed = null) {
+        const messages = observed?.messages ?? await this.page.evaluate(() => {
+            const out = new Set();
+            for (const el of document.querySelectorAll('*')) {
+                if (el.children.length) continue;
+                const t = (el.innerText || '').trim();
+                if (t && t.length < 160) out.add(t);
+            }
+            return [...out];
+        });
+        const haystack = [observed?.dialogText || '', ...messages];
+        const hit = haystack.find(m =>
+            /budget/i.test(m) && /exceed|insufficient|not available|no available|limit|over/i.test(m));
+        if (!hit) {
+            throw new Error(
+                '[NONPO] no budget-exceeded message found.\n  Workflow Summary popup: ' +
+                JSON.stringify((observed?.dialogText || '(not captured)').slice(0, 300)) +
+                '\n  Page messages: ' + JSON.stringify(messages.slice(0, 25)));
+        }
+        console.log(`[NONPO] budget ceiling enforced → "${hit}"`);
+        return hit;
+    }
+
+    /** After an empty Submit the app renders "<Field> is Mandatory" helper texts and
+     *  an "Atleast one row is required" toast for the grid. */
+    async assertNonPoMandatoryErrorsShown() {
+        const helpers = this.page.locator(`xpath=${L.nonPoMandatoryHelperText}`);
+        await expect(helpers.first()).toBeVisible({ timeout: 20000 });
+        const texts = (await helpers.allInnerTexts()).map(t => t.trim()).filter(Boolean);
+        console.log(`[NONPO] mandatory errors: ${JSON.stringify(texts.slice(0, 12))}`);
+        for (const field of ['Company', 'Supplier', 'Subject', 'Invoice Number',
+                             'Invoice Date', 'Delivery Address', 'Billing Address', 'Currency']) {
+            expect(texts.join(' | ')).toContain(`${field} is Mandatory`);
+        }
+        return texts;
+    }
+
+    // ── CXO linkage verification ─────────────────────────────────────────────
+
+    /** Open a CXO overview by code. */
+    async openCxoByCode(code) {
+        const current = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const saved = current.savedCxo || {};
+        if (saved.code === code && saved.url) {
+            await this.page.goto(saved.url);
+        } else {
+            await this.page.goto(`${current.loginUrl}/cxos`);
+            await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+            await this.page.locator(`xpath=//*[normalize-space(text())="${code}"]`).first()
+                .click({ timeout: 30000 });
+        }
+        await this.page.waitForURL(/\/cxos\/[^\/]+\/overview/, { timeout: 60000 }).catch(() => {});
+        await this.page.waitForLoadState('networkidle').catch(() => {});
+        await this.page.waitForTimeout(3000);
+        console.log(`[NONPO] CXO overview → ${this.page.url()}`);
+    }
+
+    /** Open the CXO's Transactions tab. */
+    async openCxoTransactionsTab() {
+        // normalize-space(text()) reads only the FIRST text node — the tab renders an
+        // icon before its label, so that node is whitespace and never matches.
+        const tabs = this.page.locator(`xpath=//*[normalize-space(.)="Transactions"]`);
+        let n = 0;
+        for (let waited = 0; waited < 30000; waited += 1000) {
+            n = await tabs.count();
+            if (n > 0) {
+                let anyVisible = false;
+                for (let i = 0; i < n && !anyVisible; i++) {
+                    anyVisible = await tabs.nth(i).isVisible().catch(() => false);
+                }
+                if (anyVisible) break;
+            }
+            await this.page.waitForTimeout(1000);
+        }
+        for (let i = 0; i < n; i++) {
+            const t = tabs.nth(i);
+            if (!await t.isVisible().catch(() => false)) continue;
+            await t.click({ timeout: 15000 }).catch(() => {});
+            await this.page.waitForTimeout(4000);
+            console.log(`[NONPO] opened CXO Transactions tab (match ${i + 1}/${n})`);
+            return;
+        }
+        throw new Error(`[NONPO] no visible "Transactions" tab among ${n} matches`);
+    }
+
+    /** Verify the CXO records the downstream invoice.
+     *  NOTE: the CXO overview does NOT expose a consumed/available figure — only
+     *  "CXO Total Value" (verified live). So consumption is verified structurally
+     *  here, and behaviourally by the Budget Exceeded tests. */
+    async assertCxoListsInvoice(invoiceCode) {
+        await this.openCxoTransactionsTab();
+        const row = this.page.locator(`xpath=//*[contains(normalize-space(.),"${invoiceCode}")]`).first();
+        await expect(row, `CXO Transactions tab should list invoice ${invoiceCode}`)
+            .toBeVisible({ timeout: 20000 });
+        console.log(`[NONPO] CXO Transactions tab lists ${invoiceCode}`);
+    }
+
+    getSavedInvoiceCode() {
+        const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        return fresh.savedInvoice?.code;
+    }
+
+    /** List the actions available on the current invoice — reports precisely what
+     *  exists when an expected control is missing. */
+    async _listInvoiceActions() {
+        return await this.page.evaluate(() => {
+            const btns = [...document.querySelectorAll('button,[role="menuitem"],a')]
+                .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; })
+                .map(e => (e.innerText || '').trim())
+                .filter(t => t && t.length < 40);
+            return [...new Set(btns)];
+        });
+    }
+
+    /** Reject the invoice. PROVISIONAL: there is no header "Reject" on a Non-PO
+     *  invoice (actions are ["Settle Advances", "More", ...]), so it falls back to
+     *  the More menu; the real steps are still to be confirmed by NSE QA. */
+    async rejectInvoice(reason = 'Rejected by automation') {
+        let btn = this.page.locator(`xpath=//button[normalize-space(.)="Reject"]`).first();
+        if (!await btn.isVisible({ timeout: 8000 }).catch(() => false)) {
+            const more = this.page.locator(`xpath=//button[contains(normalize-space(.),"More")]`).first();
+            if (!await more.isVisible({ timeout: 10000 }).catch(() => false)) {
+                throw new Error('[NONPO] neither "Reject" nor "More" on the invoice. Available actions: ' +
+                    JSON.stringify(await this._listInvoiceActions()));
+            }
+            await more.click();
+            await this.page.waitForTimeout(1500);
+            btn = this.page.locator(`xpath=//*[@role="menuitem"][normalize-space(.)="Reject"]`).first();
+            if (!await btn.isVisible({ timeout: 8000 }).catch(() => false)) {
+                throw new Error('[NONPO] no "Reject" under More. Menu shows: ' +
+                    JSON.stringify(await this._listInvoiceActions()));
+            }
+        }
+        await btn.click();
+        const box = this.page.locator('textarea').last();
+        await box.fill(reason);
+        await this.page.locator(`xpath=//div[@role="dialog"]//button[normalize-space(.)="Reject"]`)
+            .first().click({ timeout: 20000 });
+        await this.page.waitForTimeout(3000);
+        console.log('[NONPO] invoice rejected');
+    }
+
+    /** Cancel the invoice (More → Cancel + mandatory reason). PROVISIONAL. */
+    async cancelInvoice(reason = 'Cancelled by automation') {
+        // Cancel sits in the header toolbar on some states (seen on a Rejected /
+        // Accounted invoice) and under More on others — try the header first,
+        // otherwise this throws "no Cancel under More" while the button is on screen.
+        const headerBtn = this.page.locator(`xpath=//button[normalize-space(.)="Cancel"]`).first();
+        if (await headerBtn.isVisible({ timeout: 6000 }).catch(() => false)) {
+            await headerBtn.click();
+            await this._confirmCancelDialog(reason);
+            console.log('[NONPO] invoice cancelled (header button)');
+            return;
+        }
+        const more = this.page.locator(`xpath=//button[contains(normalize-space(.),"More")]`).first();
+        if (!await more.isVisible({ timeout: 15000 }).catch(() => false)) {
+            throw new Error('[NONPO] no "More" menu on the invoice. Available actions: ' +
+                JSON.stringify(await this._listInvoiceActions()));
+        }
+        await more.click();
+        await this.page.waitForTimeout(1500);
+        const item = this.page.locator(`xpath=//*[@role="menuitem"][normalize-space(.)="Cancel"]`).first();
+        if (!await item.isVisible({ timeout: 8000 }).catch(() => false)) {
+            throw new Error('[NONPO] no "Cancel" item under More. Menu shows: ' +
+                JSON.stringify(await this._listInvoiceActions()));
+        }
+        await item.click();
+        await this._confirmCancelDialog(reason);
+        console.log('[NONPO] invoice cancelled (More menu)');
+    }
+
+    /** Fill the mandatory reason and confirm the cancel dialog.
+     *  Everything is scoped to the dialog: a page-wide `textarea` lookup picked up
+     *  the wrong (hidden) box, so "Cancellation Notes" stayed empty, Confirm was
+     *  refused by validation, and the cancel silently did nothing while the caller
+     *  logged success (2026-08-25 — the doc stayed Rejected). The dialog closing is
+     *  therefore the only proof the cancel was accepted. */
+    async _confirmCancelDialog(reason) {
+        const dialog = this.page.locator('[role="dialog"]').last();
+        await dialog.waitFor({ state: 'visible', timeout: 12000 });
+        const notes = dialog.locator('textarea').first();
+        if (await notes.isVisible({ timeout: 6000 }).catch(() => false)) {
+            await notes.fill(reason);
+        }
+        await dialog.locator('button')
+            .filter({ hasText: /^(Confirm|Submit|Yes|Cancel Invoice)$/ })
+            .first().click({ timeout: 20000 });
+        await dialog.waitFor({ state: 'hidden', timeout: 20000 });
+        await this.page.waitForTimeout(2500);
+    }
+
+    /** Non-PO terminal check before acking: Pending Sync, or (in UAT) Sync Failed.
+     *  Logs which, so a change in environment behaviour is visible. */
+    async assertNonPoInvoiceReadyForAck() {
+        const sync = this.page.locator(`xpath=${L.invoicePendingSyncStatus}`).first();
+        const failed = this.page.locator(`xpath=${L.invoiceSyncFailedStatus}`).first();
+        if (await sync.isVisible({ timeout: 10000 }).catch(() => false)) {
+            console.log('[NONPO] invoice status = Pending Sync');
+            return 'Pending Sync';
+        }
+        if (await failed.isVisible({ timeout: 10000 }).catch(() => false)) {
+            console.log('[NONPO] invoice status = Sync Failed (expected in UAT — ack still applies)');
+            return 'Sync Failed';
+        }
+        throw new Error('[NONPO] invoice is neither Pending Sync nor Sync Failed');
+    }
+
+    // ── v4 detail-page "More" dropdown + Transactions tab ─────────────────────
+    //
+    // CXO, Intake and RFX all render the same shadcn/radix header on the v4 app,
+    // so these helpers are module-agnostic. The CXO-named wrappers below are
+    // kept because existing tests call them.
+    //
+    // Radix marks an unavailable item with aria-disabled="true" + data-disabled.
+    // Do NOT test for a "disabled" substring in className — every item's
+    // Tailwind class list contains `data-[disabled]:` utilities, so that check
+    // is always true.
+
+    async openV4MoreMenu() {
+        const items = this.page.locator(`xpath=${L.anyCxoMenuItem}`);
+        if (await items.first().isVisible().catch(() => false)) return;
+        await this.page.locator(`xpath=${L.cxoMoreButton}`).first().click();
+        await items.first().waitFor({ state: 'visible', timeout: 15000 });
+        await this.page.waitForTimeout(400);
+    }
+
+    async closeV4MoreMenu() {
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(400);
+    }
+
+    /** Labels of every item currently in the v4 "More" dropdown. */
+    async getV4MoreMenuItems() {
+        await this.openV4MoreMenu();
+        const items = this.page.locator(`xpath=${L.anyCxoMenuItem}`);
+        const n = await items.count();
+        const out = [];
+        for (let i = 0; i < n; i++) out.push(((await items.nth(i).innerText()) ?? '').trim());
+        return out;
+    }
+
+    /**
+     * true = present but disabled, false = present and enabled,
+     * null = not in the menu at all. The three states matter: some actions are
+     * DISABLED once unavailable (CXO Cancel) while others are REMOVED entirely
+     * (Intake Cancel once Processed), and a test that conflates them proves
+     * nothing.
+     */
+    async isV4MenuItemDisabled(label) {
+        const item = this.page.locator(`xpath=${L.cxoMenuItem(label)}`).first();
+        if (await item.count() === 0) return null;
+        const aria = await item.getAttribute('aria-disabled');
+        const data = await item.getAttribute('data-disabled');
+        return aria === 'true' || data !== null;
+    }
+
+    /** Is a header action button (e.g. "Process") rendered on this page? */
+    async hasV4HeaderButton(label) {
+        return (await this.page.locator(`xpath=//button[normalize-space()="${label}"]`).count()) > 0;
+    }
+
+    /**
+     * Read a v4 Transactions tab. Each linked-transaction group is its own
+     * heading + table, so a single row count across the page would conflate
+     * them.
+     */
+    async readV4TransactionSections(headings) {
+        await this.page.waitForTimeout(1500);
+        return this.page.evaluate((wanted) => {
+            const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+            const sections = {};
+            for (const heading of wanted) {
+                const h = [...document.querySelectorAll('*')]
+                    .filter(e => e.children.length === 0 && norm(e.textContent) === heading)[0];
+                if (!h) { sections[heading] = null; continue; }
+                let host = h;
+                for (let i = 0; i < 8 && host; i++) {
+                    if (host.querySelector('table')) break;
+                    host = host.parentElement;
+                }
+                const table = host && host.querySelector('table');
+                const rows = table ? [...table.querySelectorAll('tbody tr')] : [];
+                sections[heading] = {
+                    present: true,
+                    rowCount: rows.length,
+                    codes: rows.map(r => norm((r.querySelectorAll('td')[1] || {}).textContent)).filter(Boolean),
+                    emptyText: table ? norm(table.textContent).slice(0, 120) : '',
+                };
+            }
+            return sections;
+        }, headings);
+    }
+
+    // ── CXO wrappers (sheet scenarios 3 & 8) ──────────────────────────────────
+
+    async openCxoMoreMenu()  { return this.openV4MoreMenu(); }
+    async closeCxoMoreMenu() { return this.closeV4MoreMenu(); }
+    async getCxoMoreMenuItems() {
+        const items = this.page.locator(`xpath=${L.anyCxoMenuItem}`);
+        const n = await items.count();
+        const out = [];
+        for (let i = 0; i < n; i++) out.push(((await items.nth(i).innerText()) ?? '').trim());
+        return out;
+    }
+    async isCxoMenuItemDisabled(label) { return this.isV4MenuItemDisabled(label); }
+
+    async assertCxoMenuItemDisabled(label) {
+        const state = await this.isV4MenuItemDisabled(label);
+        if (state === null) throw new Error(`[CXO] "${label}" is not present in the More menu`);
+        expect(state, `[CXO] expected "${label}" to be disabled`).toBeTruthy();
+        console.log(`[CXO] More → "${label}" is disabled, as expected`);
+    }
+
+    async assertCxoMenuItemEnabled(label) {
+        const state = await this.isV4MenuItemDisabled(label);
+        if (state === null) throw new Error(`[CXO] "${label}" is not present in the More menu`);
+        expect(state, `[CXO] expected "${label}" to be enabled`).toBeFalsy();
+    }
+
+    async readCxoTransactionSections() {
+        return this.readV4TransactionSections(['Linked Intakes', 'Linked Non-PO Invoices']);
+    }
+
+    async assertCxoTransactionsTabStructure() {
+        const s = await this.readCxoTransactionSections();
+        expect(s['Linked Intakes'], 'Linked Intakes section missing').not.toBeNull();
+        expect(s['Linked Non-PO Invoices'], 'Linked Non-PO Invoices section missing').not.toBeNull();
+        console.log(`[CXO] Transactions → intakes=${s['Linked Intakes'].rowCount}, non-PO invoices=${s['Linked Non-PO Invoices'].rowCount}`);
+        return s;
+    }
+
+    // ── Intake Transactions tab (sheet scenario 9) ────────────────────────────
+
+    /** Open an intake straight from its id, bypassing the listing. */
+    async openIntakeById(id, tab = 'overview') {
+        const cfg = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        await this.page.goto(`${cfg.loginUrl}/intakes/${id}/${tab}`, { waitUntil: 'domcontentloaded' });
+        await this.page.waitForTimeout(3500);
+    }
+
+    /** Status chip text on an intake/CXO overview (e.g. "Processed"). */
+    async readV4StatusChip() {
+        const lines = (await this.page.locator('body').innerText()).split('\n').map(t => t.trim());
+        const known = ['Draft', 'Pending Approval', 'Released', 'Processed', 'Partially Processed',
+                       'Rejected', 'Cancelled', 'Awarded', 'Quoted'];
+        return lines.find(t => known.includes(t)) ?? '';
+    }
+
+    async readIntakeTransactionSections() {
+        return this.readV4TransactionSections(
+            ['Linked Requisitions', 'Linked Negotiations', 'Linked Quote Requests'],
+        );
+    }
+
+    async assertIntakeTransactionsTabStructure() {
+        const s = await this.readIntakeTransactionSections();
+        for (const key of ['Linked Requisitions', 'Linked Negotiations', 'Linked Quote Requests']) {
+            expect(s[key], `${key} section missing`).not.toBeNull();
+        }
+        console.log(`[INTAKE] Transactions → requisitions=${s['Linked Requisitions'].rowCount}, negotiations=${s['Linked Negotiations'].rowCount}, quote requests=${s['Linked Quote Requests'].rowCount}`);
+        return s;
+    }
+
+    // ── Activity Log panel (sheet scenarios 38-40) ────────────────────────────
+
+    /** Open the Activity Log sheet from any v4 detail page. */
+    async openActivityLogPanel() {
+        await this.page.locator(`xpath=${L.activityLogButton}`).first().click();
+        await this.page.locator(`xpath=${L.activityLogPanel}`).first()
+            .waitFor({ state: 'visible', timeout: 15000 });
+        await this.page.waitForTimeout(1500);
+    }
+
+    async closeActivityLogPanel() {
+        const x = this.page.locator(`xpath=${L.activityLogCloseBtn}`).first();
+        if (await x.count() > 0) await x.click().catch(() => {});
+        else await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(600);
+    }
+
+    async activityLogEntryCount() {
+        return this.page.locator(`xpath=${L.activityLogEntries}`).count();
+    }
+
+    /**
+     * Download one artefact from an open Activity Log panel.
+     *
+     * @param {'Download Activities'|'Download Comments'} label
+     *
+     * Two traps here, both verified live 2026-08-31:
+     *  - The download control is a DROPDOWN TRIGGER. Clicking it only opens a
+     *    menu; the actual export needs a second click on the menu item.
+     *  - The file is built in the browser (Blob → <a download>) and fires NO
+     *    network request, so Playwright's `download` event is the only signal —
+     *    waiting on a response would hang until the test times out.
+     */
+    async downloadActivityLogItem(label, moduleTag = 'v4') {
+        const trigger = this.page.locator(`xpath=${L.activityLogDownloadBtn}`).first();
+        await trigger.waitFor({ state: 'visible', timeout: 15000 });
+        await trigger.click();
+
+        const item = this.page.locator(`xpath=${L.activityLogDownloadItem(label)}`).first();
+        await item.waitFor({ state: 'visible', timeout: 10000 });
+
+        const [download] = await Promise.all([
+            this.page.waitForEvent('download', { timeout: 30000 }),
+            item.click(),
+        ]);
+
+        const name = download.suggestedFilename();
+        fs.mkdirSync('downloads', { recursive: true });
+        const target = `downloads/activity_${moduleTag}_${label.replace(/\s+/g, '_')}_${Date.now()}_${name}`;
+        await download.saveAs(target);
+        const size = fs.statSync(target).size;
+        expect(size, `"${label}" download ("${name}") is empty`).toBeGreaterThan(0);
+        console.log(`[ACTIVITY] ${moduleTag} → ${label}: ${name} (${size} bytes)`);
+        return { name, path: target, size };
+    }
+
+    /** Labels offered by the Activity Log download dropdown. */
+    async getActivityDownloadOptions() {
+        await this.page.locator(`xpath=${L.activityLogDownloadBtn}`).first().click();
+        await this.page.waitForTimeout(1200);
+        const items = this.page.locator(`xpath=//*[@role="menuitem"]`);
+        const n = await items.count();
+        const out = [];
+        for (let i = 0; i < n; i++) {
+            if (await items.nth(i).isVisible().catch(() => false)) {
+                out.push(((await items.nth(i).innerText()) ?? '').trim());
+            }
+        }
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(400);
+        return out;
+    }
+
+    // ── RFX Analysis tab (sheet scenarios 23, 25, 26, 27, 30) ─────────────────
+
+    async openRfxAnalysisTab() {
+        await this.page.locator(`xpath=${L.rfxAnalysisTabBtn}`).first().click();
+        await this.page.waitForURL(/\/analysis/, { timeout: 30000 }).catch(() => {});
+        await this.page.locator(`xpath=${L.analysisBaseCurrencySwitch}`).first()
+            .waitFor({ state: 'visible', timeout: 30000 });
+        await this.page.waitForTimeout(1500);
+    }
+
+    async getAnalysisSwitchState(label) {
+        const sw = this.page.locator(`xpath=${L.analysisSwitch(label)}`).first();
+        await sw.waitFor({ state: 'visible', timeout: 15000 });
+        return sw.getAttribute('data-state');   // 'checked' | 'unchecked'
+    }
+
+    async toggleAnalysisSwitch(label) {
+        const before = await this.getAnalysisSwitchState(label);
+        await this.page.locator(`xpath=${L.analysisSwitch(label)}`).first().click();
+        await this.page.waitForTimeout(2500);
+        const after = await this.getAnalysisSwitchState(label);
+        expect(after, `"${label}" switch did not change state`).not.toBe(before);
+        return { before, after };
+    }
+
+    /** Every currency amount rendered on the analysis grid, in document order. */
+    async readAnalysisAmounts() {
+        return this.page.evaluate(() => {
+            const t = document.body.innerText;
+            return (t.match(/[₹$€£]\s?[\d,]+(?:\.\d+)?/g) || []);
+        });
+    }
+
+    /** Currency symbols currently shown on the analysis grid. */
+    async readAnalysisCurrencySymbols() {
+        const amounts = await this.readAnalysisAmounts();
+        return [...new Set(amounts.map(a => a.trim()[0]))];
+    }
+
+    async getAnalysisDownloadOptions() {
+        await this.page.locator(`xpath=${L.analysisDownloadBtn}`).first().click();
+        await this.page.waitForTimeout(1500);
+        const items = this.page.locator(`xpath=//*[@role="menuitem"]`);
+        const n = await items.count();
+        const out = [];
+        for (let i = 0; i < n; i++) {
+            if (await items.nth(i).isVisible().catch(() => false)) {
+                out.push(((await items.nth(i).innerText()) ?? '').trim());
+            }
+        }
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(500);
+        return out;
+    }
+
+    /**
+     * Download one export from the Analysis tab's download dropdown.
+     * Like the Activity Log export this is produced client-side, so the
+     * `download` event is the only signal.
+     */
+    async downloadAnalysisFile(label) {
+        await this.page.locator(`xpath=${L.analysisDownloadBtn}`).first().click();
+        const item = this.page.locator(`xpath=${L.analysisDownloadItem(label)}`).first();
+        await item.waitFor({ state: 'visible', timeout: 10000 });
+
+        const [download] = await Promise.all([
+            this.page.waitForEvent('download', { timeout: 45000 }),
+            item.click(),
+        ]);
+
+        const name = download.suggestedFilename();
+        fs.mkdirSync('downloads', { recursive: true });
+        const target = `downloads/rfx_analysis_${label.replace(/\s+/g, '_')}_${Date.now()}_${name}`;
+        await download.saveAs(target);
+        const size = fs.statSync(target).size;
+        expect(size, `"${label}" download ("${name}") is empty`).toBeGreaterThan(0);
+        console.log(`[ANALYSIS] ${label} → ${name} (${size} bytes)`);
+        return { name, path: target, size };
+    }
+
+    /**
+     * Attempt an Analysis export and report what actually happened.
+     *
+     * Not every export is available on every RFX: "Download Benchmarks" returns
+     * HTTP 400 with {"success":0,"reason":"No benchmark fields configured for
+     * download"} when the RFX has no benchmark fields — and the UI shows NOTHING
+     * for it (verified live on RFX-26-231, 2026-08-31). So a plain
+     * waitForEvent('download') just hangs until timeout, telling you nothing
+     * about why.
+     *
+     * Races the download event against the API response so the caller can tell
+     * "worked", "legitimately unavailable" and "broken" apart.
+     *
+     * @returns {{ok:true, file:{name,path,size}} | {ok:false, status:number, reason:string}}
+     */
+    async tryDownloadAnalysisFile(label) {
+        await this.page.locator(`xpath=${L.analysisDownloadBtn}`).first().click();
+        const item = this.page.locator(`xpath=${L.analysisDownloadItem(label)}`).first();
+        await item.waitFor({ state: 'visible', timeout: 10000 });
+
+        const downloadP = this.page.waitForEvent('download', { timeout: 45000 })
+            .then(d => ({ kind: 'download', d })).catch(() => null);
+        const failureP = this.page.waitForResponse(
+            r => /excel-download|download/i.test(r.url()) && !r.ok(),
+            { timeout: 45000 },
+        ).then(r => ({ kind: 'failure', r })).catch(() => null);
+
+        await item.click();
+        const result = await Promise.race([
+            downloadP,
+            failureP,
+            new Promise(r => setTimeout(() => r(null), 47000)),
+        ]);
+
+        if (result && result.kind === 'download') {
+            const name = result.d.suggestedFilename();
+            fs.mkdirSync('downloads', { recursive: true });
+            const target = `downloads/rfx_analysis_${label.replace(/\s+/g, '_')}_${Date.now()}_${name}`;
+            await result.d.saveAs(target);
+            const size = fs.statSync(target).size;
+            console.log(`[ANALYSIS] ${label} → ${name} (${size} bytes)`);
+            return { ok: true, file: { name, path: target, size } };
+        }
+
+        if (result && result.kind === 'failure') {
+            let reason = '';
+            try { reason = (await result.r.json())?.reason ?? ''; } catch { /* non-JSON body */ }
+            console.log(`[ANALYSIS] ${label} → HTTP ${result.r.status()} "${reason}"`);
+            return { ok: false, status: result.r.status(), reason };
+        }
+
+        return { ok: false, status: 0, reason: 'no download and no error response' };
+    }
+
+    /** Any user-visible toast / alert text currently on screen. */
+    async readVisibleToasts() {
+        return this.page.evaluate(() => {
+            const sel = '[class*=oast],[class*=nackbar],[role=status],[role=alert]';
+            return [...document.querySelectorAll(sel)]
+                .map(e => (e.textContent || '').trim())
+                .filter(t => t && t.length < 300);
+        });
+    }
+
+    async getAnalysisViewTypes() {
+        await this.page.locator(`xpath=${L.analysisViewTypeBtn}`).first().click();
+        await this.page.waitForTimeout(1500);
+        const items = this.page.locator(`xpath=//*[@role="menuitem"] | //*[@role="option"]`);
+        const n = await items.count();
+        const out = [];
+        for (let i = 0; i < n; i++) {
+            if (await items.nth(i).isVisible().catch(() => false)) {
+                out.push(((await items.nth(i).innerText()) ?? '').trim());
+            }
+        }
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(500);
+        return out.filter(Boolean);
+    }
+
+    /** Open the inline Compare panel (it is NOT a dialog). */
+    async openAnalysisCompare() {
+        await this.page.locator(`xpath=${L.analysisCompareBtn}`).first().click();
+        await this.page.locator(`xpath=${L.analysisCompareNote}`).first()
+            .waitFor({ state: 'visible', timeout: 15000 });
+        await this.page.waitForTimeout(1000);
+    }
+
+    // ── Save → edit → submit during creation (sheet scenarios 14-18) ──────────
+
+    /**
+     * Fill the Intake create form and Save it as a Draft (no workflow submit).
+     * Mirrors createCxoDraft. Lands on the intake overview and persists the code.
+     */
+    async createIntakeDraft(data) {
+        await this.closeAskAieraIfVisible();
+        await this.expandIntakeSections();
+
+        await this.fillIntakeTitle(data);
+        await this.fillIntakeSummary(data);
+        await this.selectIntakeCompany1();
+        await this.selectIntakeCompany2();
+        await this.selectIntakeDepartment(data);
+        await this.selectIntakeExpenseNatureApproval(data);
+        await this.selectIntakeCurrency(data);
+        await this.selectIntakeFunction(data);
+        await this.selectIntakeVertical(data);
+        await this.selectIntakeProjectName();
+        await this.selectIntakeNatureOfExpense(data);
+        await this.selectIntakeGLAccount();
+        await this.selectIntakeProfitCenter();
+        await this.selectIntakeCostCenter();
+        await this.selectIntakeSEBICategorization();
+        await this.selectIntakeSubSegment();
+        await this.selectIntakeProjectCategory();
+        await this.selectIntakeCXOType(data);
+        await this.selectIntakeCXOTransaction(data);
+
+        await this.addIntakeLineRow();
+        await this.fillIntakeLineItem(data);
+        await this.fillIntakePotentialSuppliers(data);
+
+        const save = this.page.locator(`xpath=${L.v4SaveDraftBtn}`).first();
+        await save.waitFor({ state: 'visible', timeout: 15000 });
+        await save.click();
+
+        await this.page.waitForURL(/\/intakes\/[^\/]+\/overview/, { timeout: 30000 });
+        await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+        await this.page.waitForTimeout(2500);
+        console.log('[INTAKE] Saved as Draft → overview');
+        await this.saveIntakeCode();
+    }
+
+    /**
+     * Draft CXO → More → Edit → change the title → Submit.
+     *
+     * A Draft has no header Edit button; the action lives in the More dropdown,
+     * same as the rejected-CXO path.
+     */
+    async editDraftCxoAndSubmit(suffix = ' - draft edit') {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+
+        const editOpt = this.page.locator(`xpath=${IL.intakeEditOption}`).first();
+        await editOpt.waitFor({ state: 'visible', timeout: 10000 });
+        await editOpt.click();
+
+        await this.page.waitForURL(/\/cxos\/[^\/]+\/edit/, { timeout: 20000 });
+        await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+        await this.waitForCreatePageLoaded().catch(() => {});
+        await this.page.waitForTimeout(1500);
+
+        const current = await this.getTitleValue();
+        const newTitle = `${current}${suffix}`;
+        await this.typeTitle(newTitle);
+        await this.page.waitForTimeout(500);
+
+        await this.clickSubmit();
+        await expect(this.page).toHaveURL(/\/cxos\/[^\/]+\/overview/, { timeout: 30000 });
+        await this.page.waitForTimeout(2000);
+        console.log(`[CXO] Draft edited & submitted → title="${newTitle}"`);
+        return newTitle;
+    }
+
+    /** Is a Save-as-draft control present on the current create page? */
+    async hasSaveDraftButton() {
+        return (await this.page.locator(`xpath=${L.v4SaveDraftBtn}`).count()) > 0;
+    }
+
+    // ── User's Dashboard (sheet scenarios 22, 89, 92) ─────────────────────────
+
+    async openDashboard(data) {
+        await this.page.goto(`${data.loginUrl}/`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.locator(`xpath=${L.dashboardHeading}`).first()
+            .waitFor({ state: 'visible', timeout: 30000 });
+        await this.page.waitForTimeout(2000);
+    }
+
+    /**
+     * Switch a v4 tab by accessible role.
+     *
+     * The dashboard and listings render their tab bar twice (desktop + mobile).
+     * A plain XPath/text match can resolve the inert copy and silently do
+     * nothing, which is exactly how a "My Pending Approval" click left the All
+     * tab active while still looking like it had worked.
+     */
+    async clickV4Tab(name) {
+        await this.page.getByRole('tab', { name, exact: true }).first().click();
+        await this.page.waitForTimeout(4000);
+    }
+
+    async getActiveV4TabNames() {
+        return this.page.evaluate(() =>
+            [...document.querySelectorAll('[data-slot="tabs-trigger"]')]
+                .filter(t => t.getAttribute('data-state') === 'active')
+                .map(t => (t.textContent || '').trim()));
+    }
+
+    /** Total row count from the "Showing X – Y of Z entries" footer. */
+    async getListingTotalEntries() {
+        const info = this.page.locator(`xpath=${L.dashboardPaginationInfo}`).first();
+        await info.waitFor({ state: 'visible', timeout: 20000 });
+        const text = (await info.innerText()) ?? '';
+        const m = text.match(/of\s+([\d,]+)\s+entries/i);
+        return m ? parseInt(m[1].replace(/,/g, ''), 10) : null;
+    }
+
+    /** Rows on the current dashboard page: {code, type, status}. */
+    async readDashboardRows() {
+        return this.page.evaluate(() => {
+            const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+            const ths = [...document.querySelectorAll('th')].map(t => norm(t.textContent));
+            const idx = (label) => ths.findIndex(h => h.startsWith(label));
+            const ci = idx('Code'), ti = idx('Transaction Type'), si = idx('Status');
+            return [...document.querySelectorAll('tbody tr')].map(r => {
+                const td = r.querySelectorAll('td');
+                return {
+                    code:   ci >= 0 ? norm((td[ci] || {}).textContent) : '',
+                    type:   ti >= 0 ? norm((td[ti] || {}).textContent) : '',
+                    status: si >= 0 ? norm((td[si] || {}).textContent) : '',
+                };
+            });
+        });
+    }
+
+    /**
+     * Walk every page of the current dashboard grid and tally rows by
+     * Transaction Type. Bounded by `maxPages` so a data explosion cannot turn
+     * this into an unbounded crawl.
+     */
+    async tallyDashboardByType(maxPages = 12) {
+        const tally = {};
+        let pages = 0;
+
+        for (; pages < maxPages; pages++) {
+            for (const row of await this.readDashboardRows()) {
+                if (!row.type) continue;
+                tally[row.type] = (tally[row.type] ?? 0) + 1;
+            }
+            const next = this.page.getByRole('button', { name: 'Next' }).first();
+            if (await next.count() === 0) break;
+            if (await next.isDisabled().catch(() => true)) break;
+            await next.click();
+            await this.page.waitForTimeout(3000);
+        }
+        return { tally, pagesWalked: pages + 1 };
+    }
+
+    /**
+     * Walk every page of the CURRENT listing and return rows whose status is
+     * terminal — a record that can no longer be approved has no business
+     * sitting in a "My Pending Approval" queue.
+     */
+    async findTerminalStatusRowsAcrossPages(maxPages = 12) {
+        const TERMINAL = ['Cancelled', 'Rejected', 'Amend Rejected', 'Budget Rejected', 'Completed', 'Processed'];
+        const found = [];
+
+        for (let i = 0; i < maxPages; i++) {
+            const rows = await this.page.evaluate(() => {
+                const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+                const ths = [...document.querySelectorAll('th')].map(t => norm(t.textContent));
+                const si = ths.findIndex(h => h.startsWith('Status'));
+                return [...document.querySelectorAll('tbody tr')].map(r => {
+                    const td = r.querySelectorAll('td');
+                    return {
+                        code:   norm((td[0] || {}).textContent),
+                        status: si >= 0 ? norm((td[si] || {}).textContent) : '',
+                    };
+                });
+            });
+            for (const r of rows) {
+                if (TERMINAL.includes(r.status)) found.push(`${r.code} (${r.status})`);
+            }
+
+            const next = this.page.getByRole('button', { name: 'Next' }).first();
+            if (await next.count() === 0) break;
+            if (await next.isDisabled().catch(() => true)) break;
+            await next.click();
+            await this.page.waitForTimeout(3000);
+        }
+        return found;
+    }
+
+    // ── Invoice acknowledgement rules (sheet scenarios 115, 116) ──────────────
+
+    /**
+     * Call the invoice ack API for an ARBITRARY invoice code and return the
+     * outcome WITHOUT asserting success.
+     *
+     * acknowledgeInvoice() asserts a 2xx because the happy path expects one.
+     * Scenarios 115/116 need the opposite: proof that a Cancelled or Rejected
+     * invoice is refused. A refusal can arrive either as a non-2xx OR as HTTP
+     * 200 carrying success:0 — this app does both — so the caller gets the
+     * status, the parsed success flag and the reason.
+     */
+    async tryAcknowledgeInvoiceCode(data, expenseRecordNo, responseBodyRef = null) {
+        const apiKey = process.env.NSEF_INVOICE_ACK_KEY || data.invoice.ackApiKey;
+        if (!apiKey) throw new Error('Invoice ack API key missing');
+
+        const payload = {
+            transactionData: {
+                EXPENSE_RECORD_NO: expenseRecordNo,
+                success: true,
+                operation: 'create',
+                response_body_reference: responseBodyRef ?? data.invoice.invoiceNumber,
+                templateId: data.invoice.ackTemplateId ?? 1233,
+            },
+        };
+        const resp = await this.page.request.post(data.invoice.ackUrl, {
+            headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+            data: payload,
+        });
+        const text = await resp.text().catch(() => '');
+        let json = null;
+        try { json = JSON.parse(text); } catch { /* non-JSON body */ }
+
+        const result = {
+            status: resp.status(),
+            ok: resp.ok(),
+            success: json?.success,
+            reason: json?.reason ?? json?.message ?? '',
+            body: text.slice(0, 400),
+        };
+        console.log(`[ACK] ${expenseRecordNo} → HTTP ${result.status} success=${result.success} reason="${result.reason}"`);
+        return result;
+    }
+
+    /**
+     * Read an invoice's status from its detail page.
+     *
+     * POLLS rather than waiting a fixed interval: on the first navigation of a
+     * run the v3 detail page can still be rendering after 5s, and a single read
+     * then returns "" — which looked like "the invoice is not Cancelled" and
+     * failed a test for a reason that had nothing to do with the invoice
+     * (2026-08-31).
+     */
+    async readInvoiceStatusByPath(hrefPath, timeout = 45000) {
+        const KNOWN = ['Draft', 'Pending-approval', 'Pending Approval', 'Rejected', 'Cancelled',
+                       'Pending-sync', 'Pending Sync', 'Accounted', 'Sync-failed', 'Disputed',
+                       'To-review', 'To-enrich', 'Submitted', 'Completed', 'Partially Processed'];
+
+        await this.page.goto(`https://nse-capp-uat.aerchain.io${hrefPath}`, {
+            waitUntil: 'domcontentloaded', timeout: 60000,
+        });
+
+        const deadline = Date.now() + timeout;
+        for (;;) {
+            const status = await this.page.evaluate((known) => {
+                const lines = document.body.innerText.split('\n').map(t => t.trim());
+                return lines.find(t => known.includes(t)) ?? '';
+            }, KNOWN);
+            if (status) return status;
+            if (Date.now() > deadline) return '';
+            await this.page.waitForTimeout(1500);
+        }
+    }
+
+    /** First invoice on the listing whose Status matches, as {code, href}. */
+    async findInvoiceWithStatus(statusPattern) {
+        await this.page.goto('https://nse-capp-uat.aerchain.io/invoices', {
+            waitUntil: 'domcontentloaded', timeout: 60000,
+        });
+        await this.page.waitForFunction(
+            () => document.querySelectorAll('tbody tr').length > 0,
+            null, { timeout: 30000 },
+        );
+        await this.page.waitForTimeout(1500);
+        return this.page.evaluate((pattern) => {
+            const re = new RegExp(pattern, 'i');
+            const ths = [...document.querySelectorAll('th')].map(t => (t.textContent || '').trim());
+            const si = ths.findIndex(h => h.startsWith('Status'));
+            if (si === -1) return null;
+            for (const r of document.querySelectorAll('tbody tr')) {
+                const td = r.querySelectorAll('td');
+                if (!re.test(((td[si] || {}).textContent || '').trim())) continue;
+                const a = r.querySelector('a');
+                if (a) return {
+                    code: ((td[0] || {}).textContent || '').trim(),
+                    href: a.getAttribute('href'),
+                    status: ((td[si] || {}).textContent || '').trim(),
+                };
+            }
+            return null;
+        }, statusPattern);
+    }
+
+    // ── CXO clone reference rules (sheet scenarios 107, 108) ──────────────────
+
+    /** First CXO on the listing whose Status matches, as {code, href, status}. */
+    async findCxoWithStatus(statusPattern) {
+        const cfg = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        await this.page.goto(`${cfg.loginUrl}/cxos`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.waitForFunction(
+            () => document.querySelectorAll('tbody tr').length > 0,
+            null, { timeout: 30000 },
+        );
+        await this.page.waitForTimeout(1500);
+        return this.page.evaluate((pattern) => {
+            const re = new RegExp(`^${pattern}$`, 'i');
+            const ths = [...document.querySelectorAll('th')].map(t => (t.textContent || '').trim());
+            const si = ths.findIndex(h => h.startsWith('Status'));
+            if (si === -1) return null;
+            for (const r of document.querySelectorAll('tbody tr')) {
+                const td = r.querySelectorAll('td');
+                const status = ((td[si] || {}).textContent || '').trim();
+                if (!re.test(status)) continue;
+                const a = r.querySelector('a');
+                if (a) return { code: ((td[0] || {}).textContent || '').trim(), href: a.getAttribute('href'), status };
+            }
+            return null;
+        }, statusPattern);
+    }
+
+    /** Open a CXO and start a clone; lands on /cxos/{id}/clone. */
+    async startCxoClone(hrefPath) {
+        const cfg = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        await this.page.goto(`${cfg.loginUrl}${hrefPath}/overview`, {
+            waitUntil: 'domcontentloaded', timeout: 60000,
+        });
+        await this.page.waitForTimeout(4000);
+
+        await this.page.locator(`xpath=${L.cxoMoreButton}`).first().click();
+        const clone = this.page.locator(`xpath=${L.cxoMenuItem('Clone')}`).first();
+        await clone.waitFor({ state: 'visible', timeout: 15000 });
+        await clone.click();
+
+        await this.page.waitForURL(/\/clone/, { timeout: 30000 });
+        await this.page.waitForTimeout(4000);
+    }
+
+    /**
+     * Submit the open clone form untouched and report what happened.
+     *
+     * Returns { created, url, toasts } — `created` is true when the app
+     * navigated to a NEW cxo id, which is the only reliable signal: the success
+     * toast is transient and a blocked submit leaves you on /clone.
+     */
+    async submitCloneUnchanged(maxAttempts = 3) {
+        const before = this.page.url();
+        const submit = () => this.page.getByRole('button', { name: 'Submit', exact: true }).first().click();
+
+        let toasts = [];
+        // The first Submit click frequently does nothing visible on this form —
+        // it appears to run validation / expand sections — and only a second
+        // click actually posts. Observed by hand: click 1 left the page on
+        // /clone with no toast; click 2 produced "CXO request created
+        // successfully". The same two-click quirk affects the PR item panel.
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            await submit();
+            for (let i = 0; i < 8; i++) {
+                const found = await this.readVisibleToasts();
+                if (found.length) toasts = [...new Set([...toasts, ...found])];
+                if (!/\/clone/.test(this.page.url())) break;
+                await this.page.waitForTimeout(1000);
+            }
+            if (!/\/clone/.test(this.page.url())) break;
+            await this.page.waitForTimeout(1500);
+        }
+
+        const after = this.page.url();
+        const created = !/\/clone/.test(after) && /\/cxos\/\d+/.test(after);
+        console.log(`[CLONE] ${before} -> ${after} | created=${created} | toasts=${JSON.stringify(toasts)}`);
+        return { created, url: after, toasts };
+    }
+
+
+    // ── RFX supplier reminders (sheet scenario 34) ────────────────────────────
+
+    /**
+     * Open the newest RFX whose Status is one of `statuses`.
+     * Returns { code, url } or null when the first listing page has none.
+     */
+    async openRfxWithStatus(statuses, baseUrl) {
+        await this.page.goto(`${baseUrl}/quote-requests`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.waitForFunction(
+            () => document.querySelectorAll('tbody tr').length > 0,
+            null, { timeout: 30000 },
+        );
+        await this.page.waitForTimeout(1200);
+
+        const hit = await this.page.evaluate((wanted) => {
+            const ths = [...document.querySelectorAll('th')].map(t => (t.textContent || '').trim());
+            const si = ths.indexOf('Status');
+            if (si === -1) return null;
+            for (const r of [...document.querySelectorAll('tbody tr')]) {
+                const tds = r.querySelectorAll('td');
+                const st = ((tds[si] || {}).textContent || '').trim();
+                if (!wanted.includes(st)) continue;
+                const a = r.querySelector('a');
+                if (!a) continue;
+                return { code: ((tds[0] || {}).textContent || '').trim(), href: a.getAttribute('href'), status: st };
+            }
+            return null;
+        }, statuses);
+
+        if (!hit) return null;
+        await this.page.goto(`${baseUrl}${hit.href}/overview`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.waitForTimeout(3000);
+        return hit;
+    }
+
+    async hasBulkReminderButton() {
+        return (await this.page.getByRole('button', { name: /Bulk Reminder/i }).count()) > 0;
+    }
+
+    /**
+     * Click Bulk Reminder and return the HTTP status of the send.
+     * The app shows no toast, so the API call is the only observable signal.
+     */
+    async clickBulkReminder() {
+        const resp = this.page.waitForResponse(
+            r => /send-reminder-to-all-suppliers/.test(r.url()),
+            { timeout: 60000 },
+        );
+        await this.page.getByRole('button', { name: /Bulk Reminder/i }).first().click();
+        const r = await resp;
+        await this.page.waitForTimeout(1500);
+        return r.status();
+    }
+
+    // ── RFX → Convert to Auction (sheet scenario 32) ──────────────────────────
+
+    /**
+     * "Convert to Auction" only appears once a QUOTED RFX has been FORECLOSED.
+     * Confirmed on UAT 2026-09-01: RFX-26-233 (Quoted, not foreclosed) offers
+     * Foreclose and no auction option, while RFX-26-222 (quoted then
+     * foreclosed) offers Convert to Auction and no Foreclose.
+     */
+    async hasV4MenuItem(label) {
+        await this.openV4MoreMenu();
+        const items = await this.getV4MoreMenuItems();
+        return items.some(t => new RegExp(label, 'i').test(t));
+    }
+
+    async clickV4MenuItem(label) {
+        const item = this.page.getByRole('menuitem', { name: new RegExp(label, 'i') }).first();
+
+        // Opening the menu is not reliable on a freshly navigated page: the
+        // More button renders before the page finishes hydrating, so the first
+        // click can be swallowed and the item never appears. Retry the OPEN
+        // rather than waiting longer on an item that was never rendered.
+        let opened = false;
+        for (let attempt = 1; attempt <= 3 && !opened; attempt++) {
+            await this.openV4MoreMenu().catch(() => {});
+            opened = await item.waitFor({ state: 'visible', timeout: 10000 })
+                .then(() => true).catch(() => false);
+            if (!opened) {
+                await this.page.keyboard.press('Escape').catch(() => {});
+                await this.page.waitForTimeout(1500);
+            }
+        }
+        if (!opened) throw new Error(`More menu never offered "${label}"`);
+
+        await item.click({ timeout: 20000 });
+        await this.page.waitForTimeout(2000);
+    }
+
+    /**
+     * Confirm the Convert to Auction dialog. Its confirm button repeats the
+     * dialog title, so it must be picked by ROLE inside the dialog — a text
+     * match alone also hits the heading.
+     */
+    async confirmConvertToAuction() {
+        const dialog = this.page.getByRole('dialog').filter({ hasText: /Convert to Auction/i }).first();
+        await expect(dialog).toBeVisible({ timeout: 20000 });
+
+        // The confirm button starts DISABLED (pointer-events:none, opacity .5)
+        // until at least one line item is selected.
+        //
+        // Tick each checkbox at most ONCE. An earlier version clicked with
+        // Playwright and then "fell back" to a DOM click when the button had
+        // not enabled yet — which simply toggled the box straight back off, so
+        // the confirm never enabled and it looked like the control was broken.
+        const confirmEnabled = async () => this.page.evaluate(() => {
+            const d = [...document.querySelectorAll('[role=dialog]')]
+                .filter(e => e.offsetWidth > 100)[0];
+            if (!d) return false;
+            const b = [...d.querySelectorAll('button')]
+                .find(x => (x.innerText || '').trim() === 'Convert to Auction');
+            return !!b && !b.disabled;
+        });
+
+        const boxes = dialog.getByRole('checkbox');
+        await expect(boxes.first()).toBeVisible({ timeout: 15000 });
+        const n = await boxes.count();
+
+        for (let i = 0; i < n; i++) {
+            if (await confirmEnabled()) break;
+            const box = boxes.nth(i);
+            if ((await box.getAttribute('aria-checked')) === 'true') continue;
+
+            await box.click({ timeout: 10000 }).catch(() => {});
+            await this.page.waitForTimeout(900);
+
+            // Only fall back to a DOM click if the box is STILL unchecked —
+            // never on top of a successful tick.
+            if ((await box.getAttribute('aria-checked')) !== 'true') {
+                await this.page.evaluate((idx) => {
+                    const d = [...document.querySelectorAll('[role=dialog]')]
+                        .filter(e => e.offsetWidth > 100)[0];
+                    const cb = d && d.querySelectorAll('[role=checkbox]')[idx];
+                    if (cb) cb.click();
+                }, i);
+                await this.page.waitForTimeout(900);
+            }
+        }
+
+        const ready = await confirmEnabled();
+        console.log(`[Auction] confirm enabled = ${ready}`);
+        if (!ready) throw new Error('Convert to Auction stayed disabled — no line item could be selected');
+
+
+        const resp = this.page.waitForResponse(
+            r => /auction/i.test(r.url()) && r.request().method() !== 'GET',
+            { timeout: 60000 },
+        ).catch(() => null);
+
+        const confirm = dialog.getByRole('button', { name: /^Convert to Auction$/i }).first();
+        await confirm.waitFor({ state: 'visible', timeout: 20000 });
+        await confirm.click({ timeout: 20000 });
+        const r = await resp;
+        await this.page.waitForTimeout(4000);
+        return r ? r.status() : null;
+    }
+
+    /** All RFX rows on the first listing page whose Status is in `statuses`. */
+    async listRfxByStatus(statuses, baseUrl) {
+        await this.page.goto(`${baseUrl}/quote-requests`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.waitForFunction(
+            () => document.querySelectorAll('tbody tr').length > 0,
+            null, { timeout: 30000 },
+        );
+        await this.page.waitForTimeout(1200);
+        return this.page.evaluate((wanted) => {
+            const ths = [...document.querySelectorAll('th')].map(t => (t.textContent || '').trim());
+            const si = ths.indexOf('Status');
+            const out = [];
+            for (const r of [...document.querySelectorAll('tbody tr')]) {
+                const tds = r.querySelectorAll('td');
+                const st = ((tds[si] || {}).textContent || '').trim();
+                const a = r.querySelector('a');
+                if (wanted.includes(st) && a) {
+                    out.push({ code: ((tds[0] || {}).textContent || '').trim(), href: a.getAttribute('href'), status: st });
+                }
+            }
+            return out;
+        }, statuses);
+    }
+
+    // ── RFX clone → 2 suppliers → quote both → foreclose (sheet scenario 32) ──
+    //
+    // QA (2026-09-01) asked for scenario 32 to run on data it creates itself
+    // rather than hunting for an already-foreclosed RFX, so the test cannot
+    // silently skip when UAT happens to hold none.
+
+    /** addSourcingSupplier, but for an explicitly named supplier. */
+    async addSourcingSupplierNamed(name) {
+        // Do NOT expandSourcingSections() here: on the clone form that TOGGLES
+        // the already-open sections shut and hides the date fields. Just scroll
+        // the Add Supplier control into view.
+        const addBtn = this.page.locator(`xpath=${L.sourcingAddSupplierBtn}`).first();
+        await addBtn.waitFor({ state: 'visible', timeout: 30000 });
+        await addBtn.scrollIntoViewIfNeeded();
+        await addBtn.click();
+
+        const search = this.page.locator(`xpath=${L.sourcingSupplierSearch}`).first();
+        await search.waitFor({ state: 'visible', timeout: 15000 });
+        await search.fill(name);
+        await this.page.waitForTimeout(2000);
+
+        const option = this.page.locator(`xpath=${L.sourcingSupplierOption(name)}`).first();
+        await option.waitFor({ state: 'visible', timeout: 15000 });
+        await option.click();
+
+        const submit = this.page.locator(`xpath=${L.sourcingSupplierPopupSubmit}`).first();
+        await submit.waitFor({ state: 'visible', timeout: 15000 });
+        await submit.click();
+        await this.page.waitForTimeout(2000);
+        console.log(`[Sourcing] Supplier "${name}" added`);
+    }
+
+    /** How many supplier rows still offer "Submit Quote". */
+    async countPendingQuotes() {
+        return this.page.locator(`xpath=${L.rfxSubmitQuoteBtn}`).count();
+    }
+
+    /** Surrogate-quote whichever supplier row is next in line. */
+    async quoteNextSupplier(data) {
+        await this.clickSupplierSubmitQuote();
+        await this.clickCommercialQuoteOption();
+        await this.selectQuotePreferredCurrency(data);
+        await this.fillQuoteUnitRate(data);
+        await this.submitQuote();
+        await this.page.waitForTimeout(2500);
+    }
+
+    /**
+     * More → Clone on the RFX currently open, fill the bid dates the clone
+     * does not carry over, add `extraSupplier`, and submit.
+     * Returns the cloned RFX's overview URL.
+     */
+    async cloneRfxAddSupplierAndSubmit(data, extraSupplier) {
+        await this.clickV4MenuItem('Clone');
+        await this.page.waitForURL(/\/quote-requests\/\d+\/clone/, { timeout: 30000 });
+        await this.page.waitForTimeout(5000);
+
+        // The clone drops the BID dates (the originals are in the past) but
+        // carries the expected delivery date on the line items, so that field
+        // is not always rendered on the clone form — treat it as optional
+        // rather than failing the whole flow on a field the clone did not need.
+        await this.fillSourcingCommercialBidDueDate(data);
+        await this.fillSourcingTechnicalBidDueDate(data);
+        await this.fillSourcingExpectedDeliveryDate(data)
+            .catch(() => console.log('[Sourcing] Expected Delivery Date not present on clone — carried over'));
+
+        await this.addSourcingSupplierNamed(extraSupplier);
+
+        // submitSourcingEvent already handles the Process Request popup. Do NOT
+        // wait for an /overview URL here: the clone can land on a different
+        // route and the wait then burns 60s before failing on a submit that
+        // actually succeeded. Settle, then report wherever it landed.
+        await this.submitSourcingEvent();
+        await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+        await this.page.waitForTimeout(6000);
+        const url = this.page.url();
+        console.log(`[Sourcing] Clone landed on ${url}`);
+        return url;
+    }
+
+    // ── Double-submit protection (sheet scenario 113) ─────────────────────────
+
+    /**
+     * Submit a filled CXO create form, clicking the workflow popup's Submit
+     * TWICE in quick succession, and report every create request the app made.
+     *
+     * A user double-clicking must not produce two transactions. Counting the
+     * POSTs is the only reliable way to see that: the UI shows one overview
+     * either way, so a duplicate would be silently created behind it.
+     *
+     * Returns EVERY non-GET call so the caller can both assert and diagnose.
+     * The create itself is `POST /api/capp/v4/transactions/` — verified live
+     * 2026-09-01. The submit also fires budget-items/validate-items and
+     * workflow/stages/eligible-users, which are NOT creates; counting all
+     * non-GET traffic would report a passing app as broken.
+     */
+    async submitCxoTwiceAndCountCreates() {
+        const calls = [];
+        const listener = (resp) => {
+            const req = resp.request();
+            if (req.method() !== 'GET') {
+                calls.push({ method: req.method(), url: resp.url(), status: resp.status() });
+            }
+        };
+        this.page.on('response', listener);
+
+        await this.page.locator(L.submitBtn).first().click();
+        await this.page.waitForTimeout(2000);
+
+        const popupSubmit = this.page.locator(
+            'div[role="dialog"] button:has-text("Submit"), [class*="modal"] button:has-text("Submit"), [class*="dialog"] button:has-text("Submit")',
+        ).first();
+
+        if (await popupSubmit.isVisible({ timeout: 8000 }).catch(() => false)) {
+            // Two clicks as fast as the page allows — the second is the one a
+            // real double-click would land.
+            await popupSubmit.click({ timeout: 15000 }).catch(() => {});
+            await popupSubmit.click({ timeout: 3000 }).catch(() => {});
+        }
+
+        await this.page.waitForTimeout(8000);
+        this.page.off('response', listener);
+        return calls;
+    }
+
+    // ── RFX Extend Deadline (sheet scenario 36) ───────────────────────────────
+    //
+    // Quoting closes when the Quote Deadline passes: the supplier row then shows
+    // neither "Submit Quote" nor "Update Quote". Extending the deadline reopens
+    // it. Verified live 2026-09-02 on RFX-26-233 — deadline 2026-08-31 (past),
+    // no quote action; after extending to 2026-09-25 the row offered
+    // "Update Quote" again.
+    //
+    // The dialog carries TWO date triggers whose label is their current value,
+    // and Update stays disabled until a date really changes. The calendar itself
+    // renders in a Radix popper OUTSIDE the dialog, and it opens on the CURRENT
+    // MONTH regardless of the deadline being months away — days before today are
+    // disabled, everything from today on (including dates EARLIER than the
+    // current deadline) is selectable.
+
+    /** The Quote Deadline printed in the RFX header, e.g. "2026-09-25, 05:44 PM". */
+    async readRfxQuoteDeadline() {
+        return this.page.evaluate(() => {
+            const t = [...document.body.innerText.split('\n')].map(x => x.trim()).filter(Boolean);
+            const i = t.findIndex(x => /^Quote Deadline:$/.test(x));
+            return i === -1 ? null : t[i + 1];
+        });
+    }
+
+    /** How many supplier rows still offer a quote action (Submit or Update). */
+    async countRfxQuoteActions() {
+        return this.page.locator(`xpath=${L.rfxQuoteActionBtn}`).count();
+    }
+
+    /** Foreclosed RFXs lose "Foreclose" from More and gain "Convert to Auction". */
+    async isRfxForeclosed() {
+        await this.openV4MoreMenu();
+        const items = await this.getV4MoreMenuItems();
+        await this.page.keyboard.press('Escape').catch(() => {});
+        await this.page.waitForTimeout(800);
+        return !items.some(t => /^Foreclose$/i.test(t.trim()));
+    }
+
+    /**
+     * Extend both deadlines to `day` of the month the calendar opens on, then
+     * submit with `remarks`. Returns the HTTP status of the save — the app shows
+     * no toast, so the API call is the only reliable signal.
+     */
+    async extendRfxDeadline(day, remarks = 'Extended by automation') {
+        await this.page.locator(`xpath=${L.rfxExtendDeadlineBtn}`).first().click();
+        await this.page.waitForTimeout(3000);
+
+        const dateBtns = this.page.locator(`xpath=${L.extendDeadlineDateBtns}`);
+        const n = await dateBtns.count();
+        if (!n) throw new Error('Extend Deadlines dialog exposed no date triggers');
+
+        for (let i = 0; i < n; i++) {
+            await dateBtns.nth(i).click();
+            await this.page.waitForTimeout(1800);
+
+            // `.last()` because the leading greyed-out days of the previous month
+            // repeat the same numbers as the tail of this one.
+            const cell = this.page.locator(`xpath=${L.datePickerDay(day)}`).last();
+            await cell.waitFor({ state: 'visible', timeout: 15000 });
+            if (await cell.isDisabled()) throw new Error(`day ${day} is not selectable`);
+            await cell.click();
+            await this.page.waitForTimeout(1500);
+
+            // The popper overlays the dialog — leaving it open swallows the
+            // Update click, which silently loses the whole change.
+            await this.page.keyboard.press('Escape');
+            await this.page.waitForTimeout(800);
+        }
+
+        await this.page.locator(`xpath=${L.extendDeadlineRemarks}`).first().fill(remarks);
+        await this.page.waitForTimeout(500);
+
+        const update = this.page.locator(`xpath=${L.extendDeadlineUpdateBtn}`).first();
+        if (await update.isDisabled()) throw new Error('Update stayed disabled — no deadline change registered');
+
+        const saved = this.page.waitForResponse(
+            r => /update-deadlines-for-quote/.test(r.url()) && r.request().method() === 'POST',
+            { timeout: 60000 },
+        );
+        await update.click();
+        const resp = await saved;
+        const status = resp.status();
+        console.log(`[RFX] update-deadlines-for-quote → ${status} ${(await resp.text().catch(() => '')).slice(0, 120)}`);
+        await this.page.waitForTimeout(6000);
+        return status;
+    }
+
+
+    // ── RFX Evaluation (sheet scenario 35) ────────────────────────────────────
+    //
+    // QA (2026-09-02): the Evaluation is added DURING the Intake → RFX
+    // conversion; the supplier then answers that section while quoting, and only
+    // after the quote + foreclose can the evaluator score the answers.
+    //
+    // The Create Evaluation dialog is identical on the conversion page and on an
+    // RFX that has not been quoted yet: an #label input and four Radix
+    // comboboxes in a FIXED ORDER — Section, Assigned Users, Rating Type,
+    // Approval Type. Each combobox's visible text is its current value, so after
+    // the first pick it can no longer be found by its placeholder; index is the
+    // only stable handle. Do NOT press Escape after choosing: a single-select
+    // closes itself, and the stray Escape closes the whole dialog with it.
+
+    /** Close a dropdown popper still hanging over the dialog, if there is one. */
+    async _closeStrayPopper() {
+        if (await this.page.locator('[data-radix-popper-content-wrapper]').count() > 0) {
+            await this.page.keyboard.press('Escape');
+            await this.page.waitForTimeout(900);
+        }
+    }
+
+    /** Choose `text` in the `idx`-th combobox of the Create Evaluation dialog. */
+    async _pickEvaluationOption(idx, text) {
+        // The Assigned Users control is a MULTI-select: its cmdk popper stays
+        // open after a pick and then intercepts the click on the next trigger.
+        // It is a Radix popper, not a [role=listbox], so that is what to look
+        // for. One Escape closes just the popper; a second would close the whole
+        // dialog, so never send it blind.
+        await this._closeStrayPopper();
+        const combo = this.page.locator(`xpath=${L.evalCombos}`).nth(idx);
+        await combo.waitFor({ state: 'visible', timeout: 20000 });
+        await combo.click();
+        await this.page.waitForTimeout(1800);
+
+        const option = this.page.locator('[role="option"]').filter({ hasText: text }).first();
+        if (!await option.count()) {
+            const all = await this.page.locator('[role="option"]').allInnerTexts();
+            throw new Error(`Evaluation option "${text}" not offered — got ${JSON.stringify(all)}`);
+        }
+        await option.click();
+        await this.page.waitForTimeout(1800);
+    }
+
+    /**
+     * Add an Evaluation from the conversion page / RFX overview.
+     * Returns the label used, so the test can find the card again later.
+     */
+    async addRfxEvaluation({ label, section, evaluator, ratingType = 'Rating', approvalType = 'Any Approver' }) {
+        const addBtn = this.page.locator(`xpath=${L.rfxAddEvaluationBtn}`).first();
+        await addBtn.scrollIntoViewIfNeeded();
+        await addBtn.click();
+        await this.page.waitForTimeout(3500);
+        await expect(this.page.locator(`xpath=${L.evalCreateDialog}`).first()).toBeVisible({ timeout: 20000 });
+
+        await this.page.locator(`xpath=${L.evalLabelInput}`).first().fill(label);
+        await this._pickEvaluationOption(0, section);
+        await this._pickEvaluationOption(1, evaluator);
+        await this._pickEvaluationOption(2, ratingType);
+        await this._pickEvaluationOption(3, approvalType);
+
+        await this._closeStrayPopper();
+
+        const create = this.page.locator(`xpath=${L.evalCreateBtn}`).first();
+        await create.click();
+        await this.page.waitForTimeout(4000);
+        console.log(`[Eval] Created evaluation "${label}" on section "${section}" (${ratingType} / ${approvalType} / ${evaluator})`);
+        return label;
+    }
+
+
+    // ── Quote form — questionnaire (sheet scenario 35, step 3) ────────────────
+    //
+    // Every question in a Technical section renders as a Radix combobox reading
+    // "Select an option", with Yes / No behind it. Verified live 2026-09-02 on
+    // RFX-26-220: 4 questions across "RFP T&C - Letter of Commitment" and
+    // "Delivery Lead Time - Letter of Commitment", all answered by this loop.
+    //
+    // They must be answered before the quote is submitted — an unanswered
+    // section leaves nothing for the evaluator to score afterwards.
+
+    /** Answer every unanswered question on the quote form. Returns the count. */
+    async answerQuoteQuestions(answer = 'Yes') {
+        let answered = 0;
+        for (let guard = 0; guard < 20; guard++) {
+            const open = this.page.locator('button[role="combobox"]', { hasText: /^Select an option$/ });
+            if (!await open.count()) break;
+
+            const first = open.first();
+            await first.scrollIntoViewIfNeeded();
+            await first.click();
+            await this.page.waitForTimeout(1500);
+
+            const choice = this.page.locator('[role="option"]', { hasText: new RegExp(`^${answer}$`) }).first();
+            if (await choice.count()) {
+                await choice.click();
+                answered++;
+            } else {
+                // Not a Yes/No question — leave it and stop, rather than looping
+                // forever on a control this helper cannot fill.
+                await this.page.keyboard.press('Escape');
+                break;
+            }
+            await this.page.waitForTimeout(1500);
+        }
+        console.log(`[Quote] Answered ${answered} question(s) with "${answer}"`);
+        return answered;
+    }
+
+    // ── Evaluations tab — scoring (sheet scenario 35, steps 5-6) ──────────────
+    //
+    // Confirmed by QA and reproduced live 2026-09-02 on RFX-26-236:
+    //   expand the card → Evaluate → for EACH answer: hover it, click the star,
+    //   type a reason, click that answer's tick → then the tick on the header
+    //   line beside the evaluation name, which submits the whole thing.
+    //
+    // The mechanics that make this hard to drive, all learned the hard way:
+    //  · The stars EXIST ONLY WHILE THE ANSWER CELL IS HOVERED and are rendered
+    //    in an overlay, so they have to be read off the page after the hover
+    //    rather than located inside the cell.
+    //  · The widget tracks pointer MOVEMENT — glide across the stars before
+    //    clicking; a teleporting click can be ignored.
+    //  · Per-answer ticks save NOTHING to the server. The ratings are held in
+    //    the browser and the header tick POSTs them in one go to
+    //    /quote-requests/<id>/evaluations/<evalId>. Watching for a request after
+    //    each answer is therefore misleading.
+    //  · A scored answer STILL SHOWS ITS ANSWER TEXT ("Yes"), so "which answers
+    //    are left" cannot be read from the text — that mistake made an earlier
+    //    version re-rate row 1 forever and never reach rows 2 and 3, leaving the
+    //    header tick with an incomplete evaluation to submit, which it ignores.
+    //    Iterate the table rows BY INDEX; the marker for an already-scored
+    //    answer is a `lucide-user-round-check` icon in the cell.
+    //  · The comment popover overlaps the row below and hides its text, which is
+    //    another reason not to count by text.
+    //
+    // Once submitted: status → Completed, every answer cell turns green
+    // (background rgb(230,243,229), text rgb(3,135,0)) and picks up the
+    // user-round-check icon, and the Activity Log records
+    // "Evaluation has been submitted by <user>".
+
+    /** Expand the evaluation card with the given label. */
+    async openEvaluationCard(label) {
+        const card = this.page.locator('button').filter({ hasText: label }).first();
+        await card.waitFor({ state: 'visible', timeout: 30000 });
+        // Only click if it is collapsed — clicking an open card closes it.
+        if (!await this.page.locator('table tbody tr').count()) {
+            await card.click();
+            await this.page.waitForTimeout(4000);
+        }
+    }
+
+    /** The status chip printed next to an evaluation's label. */
+    async readEvaluationStatus(label) {
+        return this.page.evaluate((lbl) => {
+            const t = document.body.innerText.split('\n').map(x => x.trim()).filter(Boolean);
+            const i = t.indexOf(lbl);
+            return i === -1 ? null : t[i + 1];
+        }, label);
+    }
+
+    /**
+     * Row indexes whose answer has NO rating saved against it.
+     *
+     * The only trustworthy marker is the `user-round-check` icon the app adds to
+     * a scored cell (it also turns the cell green). Everything else lies:
+     *  · the answer TEXT ("Yes") stays put whether the row is scored or not, and
+     *  · hovering an UNSCORED row still renders all five stars filled — verified
+     *    on RFX-26-235, whose answer 1 has no rating at all yet hovers "FFFFF".
+     */
+    async _unscoredRowIndexes() {
+        return this.page.evaluate(() => {
+            const out = [];
+            [...document.querySelectorAll('table tbody tr')].forEach((r, i) => {
+                const tds = [...r.querySelectorAll('td')];
+                if (!tds.length) return;
+                if (!tds[tds.length - 1].querySelector('svg.lucide-user-round-check')) out.push(i);
+            });
+            return out;
+        });
+    }
+
+    /** Answer cells the app has painted green, i.e. the ones that were scored. */
+    async countGreenAnswers() {
+        return this.page.evaluate(() => [...document.querySelectorAll('table tbody tr')]
+            .filter(r => {
+                const tds = [...r.querySelectorAll('td')];
+                if (!tds.length) return false;
+                const m = getComputedStyle(tds[tds.length - 1]).backgroundColor
+                    .match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                if (!m) return false;
+                const [r0, g0, b0] = [+m[1], +m[2], +m[3]];
+                return g0 > r0 && g0 > b0;          // a green tint, whatever the exact shade
+            }).length);
+    }
+
+    /** Put the card into scoring mode. Reads "Re-evaluate" once it has a score. */
+    async _enterScoringMode() {
+        const btn = this.page.getByRole('button', { name: /^(Re-)?evaluate$/i }).first();
+        if (await btn.count()) {
+            await btn.click();
+            await this.page.waitForTimeout(6000);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Rate ONE answer row. Returns true only once the star click is confirmed.
+     *
+     * The confirmation is the comment popover: it opens if and only if the star
+     * actually registered. Without that check a swallowed first click passes
+     * silently, the header tick then submits an incomplete set, and the
+     * evaluation lands on "Partially Completed" — exactly what happened to
+     * answer 1 of RFX-26-235 on 2026-09-02.
+     */
+    async _rateAnswerRow(rowIndex, stars, reason) {
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            const tds = this.page.locator('xpath=//table//tbody/tr').nth(rowIndex).locator('td');
+            const cell = tds.nth(await tds.count() - 1);
+            await cell.scrollIntoViewIfNeeded();
+            const box = await cell.boundingBox();
+            if (!box) return false;
+
+            // Approach from off-cell so the hover is a real enter event, then
+            // hover the answer text rather than the cell centre (the centre sits
+            // under the star overlay itself).
+            await this.page.mouse.move(10, 10);
+            await this.page.waitForTimeout(500);
+            await this.page.mouse.move(box.x + 25, box.y + box.height / 2);
+            await this.page.waitForTimeout(2000);
+
+            // Keep only the stars belonging to THIS row — the overlay is drawn
+            // outside the <td>, so an unrelated row's strip would otherwise do.
+            const starBoxes = await this.page.evaluate(({ top, bottom }) =>
+                [...document.querySelectorAll('svg.lucide-star')]
+                    .map(s => { const r = s.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })
+                    .filter(p => p.y >= top && p.y <= bottom),
+                { top: box.y - 10, bottom: box.y + box.height + 10 });
+
+            if (starBoxes.length < stars) {
+                console.log(`[Eval] row ${rowIndex + 1}: only ${starBoxes.length} stars on hover (try ${attempt})`);
+                continue;
+            }
+
+            for (const s of starBoxes) {
+                await this.page.mouse.move(s.x, s.y);
+                await this.page.waitForTimeout(150);
+            }
+            await this.page.mouse.click(starBoxes[stars - 1].x, starBoxes[stars - 1].y);
+
+            const comment = this.page.getByPlaceholder('Leave a comment...').first();
+            const opened = await comment.waitFor({ state: 'visible', timeout: 8000 })
+                .then(() => true).catch(() => false);
+            if (!opened) {
+                console.log(`[Eval] row ${rowIndex + 1}: star click did not take (try ${attempt})`);
+                await this.page.keyboard.press('Escape').catch(() => {});
+                await this.page.waitForTimeout(1200);
+                continue;
+            }
+
+            const cb = await comment.boundingBox();
+            await this.page.mouse.click(cb.x + 40, cb.y + cb.height / 2);
+            await this.page.keyboard.type(`${reason} (answer ${rowIndex + 1})`);
+            await this.page.waitForTimeout(700);
+
+            const tick = await this._tickBelowHeader();
+            if (!tick) {
+                console.log(`[Eval] row ${rowIndex + 1}: no confirm tick (try ${attempt})`);
+                continue;
+            }
+            await this.page.mouse.click(tick.x, tick.y);
+            await this.page.waitForTimeout(3000);
+            console.log(`[Eval] row ${rowIndex + 1} rated ${stars}/5`);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Score every answer of `label` and submit. Self-healing: after the header
+     * tick it RELOADS and re-reads which answers the server actually kept, and
+     * rates any that were dropped, up to `passes` times. That is what stops a
+     * single swallowed click leaving the evaluation "Partially Completed".
+     */
+    async evaluateRfxEvaluation(label, { stars = 5, reason = 'Rated by automation', passes = 3 } = {}) {
+        let saveStatus = null;
+        let scored = 0;
+        let missedRows = [];
+
+        for (let pass = 1; pass <= passes; pass++) {
+            await this.openEvaluationCard(label);
+
+            const pending = await this._unscoredRowIndexes();
+            const total = await this.page.locator('table tbody tr').count();
+            console.log(`[Eval] pass ${pass}: ${pending.length} of ${total} answer(s) unscored`);
+            if (!pending.length) break;
+
+            await this._enterScoringMode();
+
+            missedRows = [];
+            for (const rowIndex of pending) {
+                if (await this._rateAnswerRow(rowIndex, stars, reason)) scored++;
+                else missedRows.push(rowIndex + 1);
+            }
+            if (missedRows.length) {
+                console.log(`[Eval] pass ${pass}: could not rate answer(s) ${JSON.stringify(missedRows)}`);
+            }
+
+            const header = await this._tickOnHeaderLine();
+            if (header) {
+                const saved = this.page.waitForResponse(
+                    r => /\/evaluations\/\d+/.test(r.url()) && r.request().method() !== 'GET',
+                    { timeout: 60000 },
+                ).catch(() => null);
+                await this.page.mouse.click(header.x, header.y);
+                const resp = await saved;
+                if (resp) saveStatus = resp.status();
+                await this.page.waitForTimeout(7000);
+            }
+
+            // Re-read the truth from the server before deciding to stop.
+            await this.page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+            await this.page.waitForTimeout(8000);
+        }
+
+        await this.openEvaluationCard(label);
+        const result = {
+            scored,
+            saveStatus,
+            missedRows,
+            unscored: (await this._unscoredRowIndexes()).map(i => i + 1),
+            status: await this.readEvaluationStatus(label),
+            greenAnswers: await this.countGreenAnswers(),
+            totalAnswers: await this.page.locator('table tbody tr').count(),
+        };
+        console.log(`[Eval] ${JSON.stringify(result)}`);
+        return result;
+    }
+
+    /** The tick inside an answer's rating popover (below the card header). */
+    async _tickBelowHeader() {
+        return this.page.evaluate(() => {
+            const b = [...document.querySelectorAll('button')]
+                .filter(x => x.querySelector('svg.lucide-check') && x.getBoundingClientRect().y > 340);
+            if (!b.length) return null;
+            const r = b[b.length - 1].getBoundingClientRect();
+            return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+        });
+    }
+
+    /** The tick on the evaluation's header line — submits the evaluation. */
+    async _tickOnHeaderLine() {
+        return this.page.evaluate(() => {
+            const b = [...document.querySelectorAll('button')].filter(x =>
+                x.querySelector('svg.lucide-check')
+                && x.getBoundingClientRect().y < 340
+                && x.getBoundingClientRect().x > 1000);
+            if (!b.length) return null;
+            const r = b[0].getBoundingClientRect();
+            return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+        });
+    }
+
+    /** Lines of the RFX Activity Log panel. */
+    async readRfxActivityTimeline() {
+        await this.openActivityLogPanel();
+        const lines = await this.page.locator(`xpath=${L.activityLogPanel}`).first().innerText();
+        await this.closeActivityLogPanel();
+        return lines.split('\n').map(s => s.trim()).filter(Boolean);
+    }
+
+
+    // ── RFX — Cancel after foreclosure (sheet scenario 98) ────────────────────
+    //
+    // A foreclosed RFX keeps "Cancel" in its More menu (verified live 2026-09-02:
+    // a foreclosed RFX offers Audit Logs · Amend · Workflow Stages · Clone ·
+    // Regenerate/Download Document · Convert to Auction · Reassign User · Cancel,
+    // with Foreclose gone). The dialog is the same reason + Submit shape as
+    // Foreclose.
+
+    /** Is this RFX foreclosed? Foreclosed ones lose "Foreclose" from More. */
+    async rfxOffersForeclose() {
+        const moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
+        await moreBtn.waitFor({ state: 'visible', timeout: 20000 });
+        await moreBtn.click();
+        await this.page.waitForTimeout(1500);
+        const items = (await this.page.locator('[role="menuitem"]').allInnerTexts())
+            .map(t => t.trim());
+        await this.page.keyboard.press('Escape').catch(() => {});
+        await this.page.waitForTimeout(700);
+        return { items, hasForeclose: items.some(t => /^Foreclose$/i.test(t)) };
+    }
+
+    /** More → Cancel → reason → Submit. Returns the menu items seen. */
+    async cancelRfx(reason = 'Cancelled by automation') {
+        const moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
+        await moreBtn.waitFor({ state: 'visible', timeout: 20000 });
+        await moreBtn.click();
+        await this.page.waitForTimeout(1500);
+
+        const cancel = this.page.locator(`xpath=${L.rfxCancelOption}`).first();
+        await cancel.waitFor({ state: 'visible', timeout: 15000 });
+        await cancel.click();
+        await this.page.waitForTimeout(2500);
+
+        const field = this.page.locator(`xpath=${L.rfxForecloseReasonField}`).first();
+        await field.waitFor({ state: 'visible', timeout: 15000 });
+        await field.fill(reason);
+        await this.page.waitForTimeout(600);
+
+        const submit = this.page.locator(`xpath=${L.rfxForecloseSubmitBtn}`).first();
+        await submit.click();
+        console.log('[RFX] Cancel submitted');
+        await this.page.waitForTimeout(6000);
+    }
+
+    /** The status chip in the RFX header. */
+    async readRfxStatus() {
+        return this.page.evaluate(() => {
+            const t = document.body.innerText.split('\n').map(s => s.trim()).filter(Boolean);
+            const i = t.findIndex(x => /^RFX-\d/.test(x));
+            return i === -1 ? null : t[i + 1];
+        });
     }
 
 }

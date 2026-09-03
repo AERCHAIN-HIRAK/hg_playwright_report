@@ -100,7 +100,11 @@ exports.intakeCreate_Locators = {
 
     askAieraCross: "(//div[@class='flex gap-[7px]']/button)[5]", // xpath
     sectionExpand: "//div[@class='flex gap-[7px]']/button[1]", // xpath — button[1] inside EACH section header (not one global button)
-    intakeTitle: '[placeholder="Title of the document goes here"]', // CSS
+    // Title textarea now has an EMPTY placeholder (the hint is a sibling overlay
+    // div so the red * can be styled) — anchor on text-[18px], unique to the title
+    // (section titles are 12.25px, summary 14px). Survives typing, unlike an
+    // overlay-text anchor which vanishes once the field has a value.
+    intakeTitle: 'textarea[class*="text-[18px]"]', // CSS
     intakeSummary: '[placeholder="Summary of the document"]', // CSS
 
     // ── Header Detail dropdowns — label-based XPath ───────────────────────────

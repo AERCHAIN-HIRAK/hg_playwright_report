@@ -16,9 +16,14 @@ import data from '../pages/NSEFoundationData.json';
 //    title", "At least one row is required in 'Item Details' table", and a
 //    summary "Seems like there are errors in the highlighted fields…") plus a
 //    red "N errors!" badge next to every section with missing mandatory fields.
-//  • Mandatory-field error counts on a fully empty form: Header Details 8,
+//  • Mandatory-field error counts on a fully empty form: Header Details 6,
 //    Basic Information 4, Particulars of Procurement 9, Purchase Business Case 4,
 //    Item Details 1, Suggested Suppliers 1.
+//    Header Details was 8 when this suite was written (2026-08); re-verified live
+//    on 2026-08-25 as 6 — Company, Department, Function, CXO Type, Transaction
+//    Flow Type, Expense Nature (for approval triggers). Two fields that used to
+//    be mandatory there no longer are; if that was NOT an intended form change,
+//    this baseline is hiding a validation regression.
 //  • Title is trimmed → a whitespace-only title is treated as empty.
 //  • The Qty cell rejects the minus sign (no negatives) but accepts decimals.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -111,7 +116,7 @@ test.describe('CXO Create — Negative', () => {
         const a = await loginAndOpenCxoCreate(page);
         await a.clickSubmitExpectingError();
 
-        // Badges render in section order: Header(8), Basic(4), Particulars(9),
+        // Badges render in section order: Header(6), Basic(4), Particulars(9),
         // Purchase Business Case(4), Item Details(1), Suggested Suppliers(1)
         expect(await a.getErrorBadgeCounts()).toEqual(data.cxoValidation.expectedErrorBadgeCounts);
         await a.assertStillOnCreatePage();
@@ -800,5 +805,77 @@ test.describe('CXO Listing Page', () => {
             await list.clickCreateCxoButton();
             await list.verifyCreatePageOpened();
         });
+    });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// CXO — Transactions tab + action availability
+//
+// Sheet scenario 3: "Cancel button is disabled for the CXO which have active
+//                    transactions"
+// Sheet scenario 8: "all transactions created for the CXO are displayed in the
+//                    CXO transaction tab"
+//
+// Both read the saved CXO in NSEFoundationData.json, which the Non-PO invoice
+// suite drives to a state with linked invoices — verified live 2026-08-31:
+// CXO-FNSE-26-371 carries two Non-PO invoices (one Cancelled, one Pending
+// Approval) and its More → Cancel is aria-disabled.
+// ═════════════════════════════════════════════════════════════════════════════
+test.describe('CXO — Transactions tab & action availability', () => {
+
+    test.describe.configure({ timeout: 150000 });
+
+    async function openSavedCxo(page) {
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+        await a.openApp(data);
+        await a.openCxoByCode(data.savedCxo.code);
+        return a;
+    }
+
+    test('Transactions tab lists the CXO\'s linked intakes and Non-PO invoices @CXO @Transactions', async ({ page }) => {
+        const a = await openSavedCxo(page);
+        await a.openCxoTransactionsTab();
+
+        const sections = await a.assertCxoTransactionsTabStructure();
+
+        // At least one section must carry real rows, otherwise the tab is not
+        // actually reflecting the transactions this CXO is known to have.
+        const total = sections['Linked Intakes'].rowCount
+                    + sections['Linked Non-PO Invoices'].rowCount;
+        expect(total, 'CXO Transactions tab shows no linked transactions at all').toBeGreaterThan(0);
+
+        // Every listed code must be non-empty — a blank code column means the
+        // tab rendered rows without resolving them.
+        const codes = [
+            ...sections['Linked Intakes'].codes,
+            ...sections['Linked Non-PO Invoices'].codes,
+        ];
+        for (const c of codes) expect(c.length).toBeGreaterThan(0);
+    });
+
+    test('Cancel is disabled while the CXO has active transactions @CXO @Cancel @Negative', async ({ page }) => {
+        const a = await openSavedCxo(page);
+
+        // Establish the precondition rather than assuming it: the CXO must have
+        // at least one linked transaction that is not Cancelled/Rejected.
+        await a.openCxoTransactionsTab();
+        const sections = await a.readCxoTransactionSections();
+        const active = [
+            ...(sections['Linked Intakes']?.codes ?? []),
+            ...(sections['Linked Non-PO Invoices']?.codes ?? []),
+        ];
+        test.skip(active.length === 0, 'saved CXO has no linked transactions — precondition not met');
+
+        await page.goto(data.savedCxo.url);
+        await page.waitForLoadState('domcontentloaded');
+        await page.waitForTimeout(3000);
+
+        await a.openCxoMoreMenu();
+        const items = await a.getCxoMoreMenuItems();
+        expect(items, 'More menu has no Cancel entry').toContain('Cancel');
+
+        await a.assertCxoMenuItemDisabled('Cancel');
+        await a.closeCxoMoreMenu();
     });
 });

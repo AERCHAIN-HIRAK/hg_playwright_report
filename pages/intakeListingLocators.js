@@ -90,6 +90,8 @@ exports.intakeListing_Locators = {
 
     // ── Detail / Create pages ──────────────────────────────────────────────────
     detailPage_AnyHeading:          '//h1 | (//div[contains(@class,"font-bold")])[1]',
-    createPage_TitleField:          '[placeholder="Title of the document goes here"]',
+    // Title textarea now has an EMPTY placeholder (the hint is a sibling overlay
+    // div so the red * can be styled) — anchor on text-[18px], unique to the title.
+    createPage_TitleField:          'textarea[class*="text-[18px]"]',
 
 };

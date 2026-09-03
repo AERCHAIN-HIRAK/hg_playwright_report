@@ -10,3 +10,6 @@ auth.nsef.json
 auth.supplier.json
 .env
 .playwright-cli/
+downloads/
+.s35-state.json
+.s97-state.json

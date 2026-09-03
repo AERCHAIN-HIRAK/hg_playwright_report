@@ -1,0 +1,2332 @@
+(node:2249) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 207 tests using 1 worker
+
+(node:2251) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓    1 [supplier-setup] › tests/auth.supplier.setup.js:16:6 › CAPP + SAPP login and save combined session (10.7s)
+(node:2294) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓    2 [nsef-setup] › tests/auth.nsef.setup.js:9:6 › NSEF login and save session (5.5s)
+(node:2322) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓    3 [setup] › tests/auth.setup.js:3:6 › Login and save session (5.3s)
+(node:2347) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Submitted → Pending Approval
+[CXO] Saving CXO code: CXO-FNSE-26-345  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5715/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-345"
+[CXO] Reject submitted
+[RejectEdit] Workflow runs currently: 1
+[CXO] Line-item qty changed to 200
+[CXO] Rejected CXO edited & resubmitted → title="HG Automation CXO reject edit"
+[RejectEdit] Workflow runs before=1 after=2
+  ✓    4 [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:47:9 › All-modules reject → edit → resubmit › CXO: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @CXO (1.2m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-346  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5716/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-346"
+BRF No. value: "Dont Touch"
+[Intake] Saving Intake code: INT-FNSE-26-365  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2205/overview
+[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-365"
+[Intake] Reject submitted
+[RejectEdit] Workflow runs currently: 2
+[Intake] Rejected intake edited & resubmitted → title="HG Automation NSEF Intake reject edit"
+[RejectEdit] Workflow runs before=2 after=4
+  ✓    5 [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:76:9 › All-modules reject → edit → resubmit › Intake: reject → edit (qty↓, title) → resubmit → new workflow @RejectEdit @Intake (3.3m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-347  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5717/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-347"
+BRF No. value: "Dont Touch"
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[Intake] Saving Intake code: INT-FNSE-26-366  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2206/overview
+[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-366"
+[Intake] Searching listing for saved intake: INT-FNSE-26-366
+[Intake] Opened intake INT-FNSE-26-366 → https://nse-capp-v4-uat.aerchain.io/intakes/2206/overview
+[Intake] Clicked Process button
+[Intake] Clicked Send for Sourcing
+[Sourcing] Expanded all sections
+[Sourcing] Payment Terms selected
+[Sourcing] Commercial Bid Due Date filled
+[Sourcing] Technical Bid Due Date filled
+[Sourcing] Expected Delivery Date filled
+[Sourcing] Supplier "HG Automation SUPP" added
+[Sourcing] Clicked Submit
+[Sourcing] Confirmed Process Request popup
+[Sourcing] Saving Sourcing Event code: RFX-26-226  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1374/overview
+[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-226"
+[RFX] Reject submitted
+[RejectEdit] Workflow runs currently: 1
+[Sourcing] Clicked Submit
+[Sourcing] Confirmed Process Request popup
+[RFX] Rejected RFX edited (qty→50) & resubmitted
+[RejectEdit] Workflow runs before=1 after=2
+[Intake] Searching listing for saved intake: INT-FNSE-26-366
+[Intake] Opened intake INT-FNSE-26-366 → https://nse-capp-v4-uat.aerchain.io/intakes/2206
+[Intake] Clicked Process button
+[Intake] Clicked Send for Sourcing
+[Sourcing] Expanded all sections
+[RFX] Verified qty 50 shown in the sourcing line item
+  ✓    6 [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:112:9 › All-modules reject → edit → resubmit › RFX: intake → sourcing → reject → edit (qty↓) → resubmit → intake re-convertible @RejectEdit @RFX (4.0m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-348  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5718/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-348"
+BRF No. value: "Dont Touch"
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[Intake] Saving Intake code: INT-FNSE-26-367  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2207/overview
+[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-367"
+[Intake] Searching listing for saved intake: INT-FNSE-26-367
+[Intake] Opened intake INT-FNSE-26-367 → https://nse-capp-v4-uat.aerchain.io/intakes/2207/overview
+[Intake] Clicked Process button
+[Intake] Clicked Send for Sourcing
+[Sourcing] Expanded all sections
+[Sourcing] Payment Terms selected
+[Sourcing] Commercial Bid Due Date filled
+[Sourcing] Technical Bid Due Date filled
+[Sourcing] Expected Delivery Date filled
+[Sourcing] Supplier "HG Automation SUPP" added
+[Sourcing] Clicked Submit
+[Sourcing] Confirmed Process Request popup
+[Sourcing] Approving stage 1...
+[Sourcing] Approve button not visible for 4s — reloading (1/5)...
+[Sourcing] Approve button not visible for 4s — reloading (2/5)...
+[Sourcing] Approve button not visible for 4s — reloading (3/5)...
+[Sourcing] Approve button not visible for 4s — reloading (4/5)...
+[Sourcing] Approve button not visible for 4s — reloading (5/5)...
+[Sourcing] Approve button missing — reassigning approver to NSEF Support Admin...
+[Sourcing] Workflow approver reassigned to NSEF Support Admin
+[Sourcing] Approving stage 2...
+[Sourcing] RFX live (not Pending Approval) after 2 approval(s).
+[Sourcing] RFX code not displayed yet — waiting (1/18)...
+[Sourcing] Saving Sourcing Event code: RFX-26-227  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1376/overview
+[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-227"
+[Quote] On Quote Request listing page
+[Quote] Searching quote requests for: RFX-26-227
+[Quote] Opened sourcing event RFX-26-227 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1376
+[Quote] Clicked Submit Quote on supplier
+[Quote] Selected Commercial Quote
+[Quote] Preferred Currency set to INR
+[Quote] Unit Rate filled: 2000
+[Quote] Clicked Submit Quote
+[Quote] Confirmed quote submission popup
+[Quote] Quote form closed — submission processed
+[Quote] Sourcing status is Quoted
+[Quote] On Quote Request listing page
+[Quote] Searching quote requests for: RFX-26-227
+[Quote] Opened sourcing event RFX-26-227 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1376
+[Award] Clicked Foreclose
+[Award] Foreclose submitted
+[Award] On Analysis tab
+[Award] Clicked Award
+[Award] Pending Awarded Quantity: "100.00" → entering 100
+[Award] Allocated quantity filled: 100
+[Award] Clicked Award
+[Award] Workflow Summary submitted
+[Award] Workflow Stages → overall status: "Active" → NOT completed
+[Award] Approving (round 1)...
+[Award] Workflow Stages → overall status: "Active" → NOT completed
+[Award] Approve button not visible for 4s — reloading (1/1)...
+[Award] No Approve button — reassigning approver to NSEF Support Admin...
+[Award] Workflow approver reassigned to NSEF Support Admin
+[Award] Approving (round 2)...
+[Award] Workflow Stages → overall status: "Completed" → Completed
+[Award] Clicked back button beside award code
+[Award] Requisition code displayed: PR-DRAFT
+[Award] Requisition "PR-DRAFT" opened in new tab → https://nse-capp-uat.aerchain.io/requisitions/1087
+[Award] Saved to NSEFoundationData.json → savedRequisition.code = "PR-DRAFT"
+[PR] Opening saved requisition PR-DRAFT → https://nse-capp-uat.aerchain.io/requisitions/1087
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/1087
+[PR] Clicked Edit
+[PR] Edit page loaded
+[PR] Effective from date filled with today: 2026-08-25
+[PR] Effective to date filled
+[PR] Purchase Type selected: First time/New
+[PR] Inward Required → Yes
+[PR] Inward Matching Criterion → Quantity
+[PR] Clicked Submit
+[PR] Confirmed Approvers popup
+[PR] Requisition status is Submitted
+[PR] Saved to NSEFoundationData.json → savedRequisition.code = "PR-NSEFN-26-123"
+[PR] Status not "Processed" yet — reloading in 10s (1/60)...
+[PR] Status not "Processed" yet — reloading in 10s (2/60)...
+[PR] Status not "Processed" yet — reloading in 10s (3/60)...
+[PR] Status not "Processed" yet — reloading in 10s (4/60)...
+[PR] Status not "Processed" yet — reloading in 10s (5/60)...
+[PR] Status not "Processed" yet — reloading in 10s (6/60)...
+[PR] Status not "Processed" yet — reloading in 10s (7/60)...
+[PR] Status not "Processed" yet — reloading in 10s (8/60)...
+[PR] Status not "Processed" yet — reloading in 10s (9/60)...
+[PR] Status not "Processed" yet — reloading in 10s (10/60)...
+[PR] Status not "Processed" yet — reloading in 10s (11/60)...
+[PR] Status not "Processed" yet — reloading in 10s (12/60)...
+[PR] Status not "Processed" yet — reloading in 10s (13/60)...
+[PR] Status not "Processed" yet — reloading in 10s (14/60)...
+[PR] Status not "Processed" yet — reloading in 10s (15/60)...
+[PR] Status not "Processed" yet — reloading in 10s (16/60)...
+[PR] Status not "Processed" yet — reloading in 10s (17/60)...
+[PR] Status not "Processed" yet — reloading in 10s (18/60)...
+[PR] Status not "Processed" yet — reloading in 10s (19/60)...
+[PR] Status not "Processed" yet — reloading in 10s (20/60)...
+[PR] Status not "Processed" yet — reloading in 10s (21/60)...
+[PR] Status not "Processed" yet — reloading in 10s (22/60)...
+[PR] Status not "Processed" yet — reloading in 10s (23/60)...
+[PR] Status not "Processed" yet — reloading in 10s (24/60)...
+[PR] Status not "Processed" yet — reloading in 10s (25/60)...
+[PR] Status is "Processed".
+[PR] Status not "Completed" yet — reloading in 10s (1/60)...
+[PR] Status not "Completed" yet — reloading in 10s (2/60)...
+[PR] Status not "Completed" yet — reloading in 10s (3/60)...
+[PR] Status not "Completed" yet — reloading in 10s (4/60)...
+[PR] Status not "Completed" yet — reloading in 10s (5/60)...
+[PR] Status not "Completed" yet — reloading in 10s (6/60)...
+[PR] Status not "Completed" yet — reloading in 10s (7/60)...
+[PR] Status not "Completed" yet — reloading in 10s (8/60)...
+[PR] Status not "Completed" yet — reloading in 10s (9/60)...
+[PR] Status not "Completed" yet — reloading in 10s (10/60)...
+[PR] Status not "Completed" yet — reloading in 10s (11/60)...
+[PR] Status not "Completed" yet — reloading in 10s (12/60)...
+[PR] Status not "Completed" yet — reloading in 10s (13/60)...
+[PR] Status not "Completed" yet — reloading in 10s (14/60)...
+[PR] Status is "Completed".
+[PR] Opening saved requisition PR-NSEFN-26-123 → https://nse-capp-uat.aerchain.io/requisitions/1087
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/1087
+[PR] Opened Transactions tab
+[PR] Expanded Conversions section
+[PRC] Opened PRC-NSEFN-26-116 (Requisition Conversion View)
+[PO] Opened PO-NSEFN-26-202 in new tab → https://nse-capp-uat.aerchain.io/purchase-orders/1014
+[PO] Approving stage 1...
+[PO] Approved a stage
+[PO] Approving stage 2...
+[PO] Approved a stage
+[PO] Approving stage 3...
+[PO] Approved a stage
+[PO] Approvals complete (Create available) after 3 approval(s).
+[GRN] Create → GRN clicked
+[GRN] Submitted Select PO Items popup
+[GRN] On Create GRN page: https://nse-capp-uat.aerchain.io/pending-inwards/po/1014/inward
+[GRN] Filled Invoice Number + Delivery challan
+[GRN] Filled Delivery Note Reference + Document Date (2026-08-25 → "25/08/2026")
+[GRN] Clicked Submit
+[GRN] Confirmed Workflow Summary popup
+[GRN] GRN created → https://nse-capp-uat.aerchain.io/inwards/550
+[GRN] Saved to NSEFoundationData.json → savedGrn.code = "INW-NSEFN-26-103"
+[GRN] Reject submitted
+[GRN] Opened edit via header pencil icon
+[GRN] Received qty lowered to 50
+[GRN] Invoice Number annotated with " reject edit"
+[GRN] Clicked Submit
+[GRN] Workflow Summary popup did not appear
+[GRN] GRN created → https://nse-capp-uat.aerchain.io/inwards/550/edit
+[PO] Opening saved PO PO-NSEFN-26-202 → https://nse-capp-uat.aerchain.io/purchase-orders/1014
+[PO] On PO page: https://nse-capp-uat.aerchain.io/purchase-orders/1014
+[GRN] Create → GRN clicked
+[GRN] Verified qty 50 shown in the Select PO Items (qty available for GRN)
+  ✓    7 [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:174:9 › All-modules reject → edit → resubmit › GRN: build to GRN → reject → edit (qty↓) → reduced qty available for GRN @RejectEdit @GRN (16.3m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-349  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5719/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-349"
+BRF No. value: "Dont Touch"
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[Intake] Saving Intake code: INT-FNSE-26-368  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2208/overview
+[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-368"
+[Intake] Searching listing for saved intake: INT-FNSE-26-368
+[Intake] Opened intake INT-FNSE-26-368 → https://nse-capp-v4-uat.aerchain.io/intakes/2208/overview
+[Intake] Clicked Process button
+[Intake] Clicked Send for Sourcing
+[Sourcing] Expanded all sections
+[Sourcing] Payment Terms selected
+[Sourcing] Commercial Bid Due Date filled
+[Sourcing] Technical Bid Due Date filled
+[Sourcing] Expected Delivery Date filled
+[Sourcing] Supplier "HG Automation SUPP" added
+[Sourcing] Clicked Submit
+[Sourcing] Confirmed Process Request popup
+[Sourcing] Approving stage 1...
+[Sourcing] Approve button not visible for 4s — reloading (1/5)...
+[Sourcing] Approve button not visible for 4s — reloading (2/5)...
+[Sourcing] Approve button not visible for 4s — reloading (3/5)...
+[Sourcing] Approve button not visible for 4s — reloading (4/5)...
+[Sourcing] Approve button not visible for 4s — reloading (5/5)...
+[Sourcing] Approve button missing — reassigning approver to NSEF Support Admin...
+[Sourcing] Workflow approver reassigned to NSEF Support Admin
+[Sourcing] Approving stage 2...
+[Sourcing] RFX live (not Pending Approval) after 2 approval(s).
+[Sourcing] RFX code not displayed yet — waiting (1/18)...
+[Sourcing] Saving Sourcing Event code: RFX-26-228  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1377/overview
+[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-228"
+[Quote] On Quote Request listing page
+[Quote] Searching quote requests for: RFX-26-228
+[Quote] Opened sourcing event RFX-26-228 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1377
+[Quote] Clicked Submit Quote on supplier
+[Quote] Selected Commercial Quote
+[Quote] Preferred Currency set to INR
+[Quote] Unit Rate filled: 2000
+[Quote] Clicked Submit Quote
+[Quote] Confirmed quote submission popup
+[Quote] Quote form closed — submission processed
+[Quote] Sourcing status is Quoted
+[Quote] On Quote Request listing page
+[Quote] Searching quote requests for: RFX-26-228
+[Quote] Opened sourcing event RFX-26-228 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1377
+[Award] Clicked Foreclose
+[Award] Foreclose submitted
+[Award] On Analysis tab
+[Award] Clicked Award
+[Award] Pending Awarded Quantity: "100.00" → entering 100
+[Award] Allocated quantity filled: 100
+[Award] Clicked Award
+[Award] Workflow Summary submitted
+[Award] Workflow Stages → overall status: "Active" → NOT completed
+[Award] Approving (round 1)...
+[Award] Workflow Stages → overall status: "Active" → NOT completed
+[Award] Approve button not visible for 4s — reloading (1/1)...
+[Award] No Approve button — reassigning approver to NSEF Support Admin...
+[Award] Workflow approver reassigned to NSEF Support Admin
+[Award] Approving (round 2)...
+[Award] Workflow Stages → overall status: "Completed" → Completed
+[Award] Clicked back button beside award code
+[Award] Requisition code displayed: PR-DRAFT
+[Award] Requisition "PR-DRAFT" opened in new tab → https://nse-capp-uat.aerchain.io/requisitions/1088
+[Award] Saved to NSEFoundationData.json → savedRequisition.code = "PR-DRAFT"
+[PR] Opening saved requisition PR-DRAFT → https://nse-capp-uat.aerchain.io/requisitions/1088
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/1088
+[PR] Clicked Edit
+[PR] Edit page loaded
+[PR] Effective from date filled with today: 2026-08-25
+[PR] Effective to date filled
+[PR] Purchase Type selected: First time/New
+[PR] Inward Required → Yes
+[PR] Inward Matching Criterion → Quantity
+[PR] Clicked Submit
+[PR] Confirmed Approvers popup
+[PR] Requisition status is Submitted
+[PR] Saved to NSEFoundationData.json → savedRequisition.code = "PR-NSEFN-26-124"
+[PR] Status not "Processed" yet — reloading in 10s (1/60)...
+[PR] Status not "Processed" yet — reloading in 10s (2/60)...
+[PR] Status not "Processed" yet — reloading in 10s (3/60)...
+[PR] Status not "Processed" yet — reloading in 10s (4/60)...
+[PR] Status not "Processed" yet — reloading in 10s (5/60)...
+[PR] Status not "Processed" yet — reloading in 10s (6/60)...
+[PR] Status not "Processed" yet — reloading in 10s (7/60)...
+[PR] Status not "Processed" yet — reloading in 10s (8/60)...
+[PR] Status not "Processed" yet — reloading in 10s (9/60)...
+[PR] Status not "Processed" yet — reloading in 10s (10/60)...
+[PR] Status not "Processed" yet — reloading in 10s (11/60)...
+[PR] Status not "Processed" yet — reloading in 10s (12/60)...
+[PR] Status not "Processed" yet — reloading in 10s (13/60)...
+[PR] Status not "Processed" yet — reloading in 10s (14/60)...
+[PR] Status not "Processed" yet — reloading in 10s (15/60)...
+[PR] Status not "Processed" yet — reloading in 10s (16/60)...
+[PR] Status not "Processed" yet — reloading in 10s (17/60)...
+[PR] Status not "Processed" yet — reloading in 10s (18/60)...
+[PR] Status not "Processed" yet — reloading in 10s (19/60)...
+[PR] Status not "Processed" yet — reloading in 10s (20/60)...
+[PR] Status is "Processed".
+[PR] Status not "Completed" yet — reloading in 10s (1/60)...
+[PR] Status not "Completed" yet — reloading in 10s (2/60)...
+[PR] Status not "Completed" yet — reloading in 10s (3/60)...
+[PR] Status not "Completed" yet — reloading in 10s (4/60)...
+[PR] Status not "Completed" yet — reloading in 10s (5/60)...
+[PR] Status not "Completed" yet — reloading in 10s (6/60)...
+[PR] Status not "Completed" yet — reloading in 10s (7/60)...
+[PR] Status not "Completed" yet — reloading in 10s (8/60)...
+[PR] Status not "Completed" yet — reloading in 10s (9/60)...
+[PR] Status not "Completed" yet — reloading in 10s (10/60)...
+[PR] Status not "Completed" yet — reloading in 10s (11/60)...
+[PR] Status not "Completed" yet — reloading in 10s (12/60)...
+[PR] Status not "Completed" yet — reloading in 10s (13/60)...
+[PR] Status is "Completed".
+[PR] Opening saved requisition PR-NSEFN-26-124 → https://nse-capp-uat.aerchain.io/requisitions/1088
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/1088
+[PR] Opened Transactions tab
+[PR] Expanded Conversions section
+[PRC] Opened PRC-NSEFN-26-117 (Requisition Conversion View)
+[PO] Opened PO-NSEFN-26-203 in new tab → https://nse-capp-uat.aerchain.io/purchase-orders/1015
+[PO] Approving stage 1...
+[PO] Approved a stage
+[PO] Approving stage 2...
+[PO] Approved a stage
+[PO] Approving stage 3...
+[PO] Approved a stage
+[PO] Approvals complete (Create available) after 3 approval(s).
+[GRN] Create → GRN clicked
+[GRN] Submitted Select PO Items popup
+[GRN] On Create GRN page: https://nse-capp-uat.aerchain.io/pending-inwards/po/1015/inward
+[GRN] Filled Invoice Number + Delivery challan
+[GRN] Filled Delivery Note Reference + Document Date (2026-08-25 → "25/08/2026")
+[GRN] Clicked Submit
+[GRN] Confirmed Workflow Summary popup
+[GRN] GRN created → https://nse-capp-uat.aerchain.io/inwards/551
+[GRN] Saved to NSEFoundationData.json → savedGrn.code = "INW-NSEFN-26-104"
+[GRN] Approving stage 1...
+[GRN] Approved a stage
+[GRN] Status Inwarded after 1 approval(s).
+[GRN] Status is Inwarded
+[PO] Opening saved PO PO-NSEFN-26-203 → https://nse-capp-uat.aerchain.io/purchase-orders/1015
+[PO] On PO page: https://nse-capp-uat.aerchain.io/purchase-orders/1015
+[INV] Create → Invoice clicked
+[INV] Submitted Select PO Items popup
+[INV] Proceeded Confirm Invoice Creation
+[INV] On Create Invoice page: https://nse-capp-uat.aerchain.io/invoices/new
+[INV] Uploaded invoice document: /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png
+[INV] Invoice number bumped: INV-AUTO-089 → INV-AUTO-090
+[INV] Filled Invoice Number (INV-AUTO-090) + Invoice Date (2026-08-25)
+[INV] Period based Invoicing → No
+[INV] Extra billing → No
+[INV] Clicked FIX → Item Matching
+[INV] Selected GRN INW-NSEFN-26-104 in Item Matching (was unticked)
+[INV] Submitted Item Matching
+[INV] Clicked Submit (create page)
+[INV] Proceeded Validations popup
+[INV] Confirmed Workflow Summary popup
+[INV] Invoice submitted → https://nse-capp-uat.aerchain.io/invoices/1107
+[INV] Saved to NSEFoundationData.json → savedInvoice.code = "Invoice-FNSE-26-318"
+[INV] Opening saved invoice Invoice-FNSE-26-318 → https://nse-capp-uat.aerchain.io/invoices/1107
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/1107
+[INV] Reject not visible — reloading (1)
+[INV] Reject not visible — reloading (2)
+[INV] Reject missing — reassigning approver to NSEF Support Admin...
+[INV] Workflow approver reassigned to NSEF Support Admin
+[INV] Reject submitted
+[INV] Opened edit via header pencil icon
+[INV] Qty lowered to 50 (cell reads "50")
+[INV] Clicked FIX → Item Matching
+[INV] Selected GRN INW-NSEFN-26-104 in Item Matching (was already ticked)
+[INV] Submitted Item Matching
+[INV] Clicked Submit (create page)
+[INV] Proceeded Validations popup
+[INV] Confirmed Workflow Summary popup
+[INV] Invoice submitted → https://nse-capp-uat.aerchain.io/invoices/1107
+[INV] Approving stage 1...
+[INV] Approved a stage
+[INV] Approving stage 2...
+[INV] Approved a stage
+[INV] Approving stage 3...
+[INV] Approved a stage
+[INV] Approving stage 4...
+[INV] Approved a stage
+[INV] Status Pending Sync after 4 approval(s).
+[INV] Status is Pending Sync
+[ACK] POST https://nse-api-uat.aerchain.io/invoice/ack → EXPENSE_RECORD_NO="Invoice-FNSE-26-318", response_body_reference="INV-AUTO-090"
+[ACK] Response 200: {"success":true,"error":null,"errors":[],"data":{}}
+[INV] Opening saved invoice Invoice-FNSE-26-318 → https://nse-capp-uat.aerchain.io/invoices/1107
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/1107
+[INV] Status is Accounted
+[PO] Opening saved PO PO-NSEFN-26-203 → https://nse-capp-uat.aerchain.io/purchase-orders/1015
+[PO] On PO page: https://nse-capp-uat.aerchain.io/purchase-orders/1015
+[INV] Create → Invoice clicked
+[INV] Verified qty 50 shown in the Select PO Items (qty available for Invoice)
+  ✓    8 [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:209:9 › All-modules reject → edit → resubmit › Invoice: build to Invoice → reject → edit (qty↓) → reduced qty available for Invoice @RejectEdit @Invoice (16.5m)
+[PO] Opening saved PO PO-NSEFN-26-203 → https://nse-capp-uat.aerchain.io/purchase-orders/1015
+[PO] On PO page: https://nse-capp-uat.aerchain.io/purchase-orders/1015
+[INV] Create → Invoice clicked
+[INV] Submitted Select PO Items popup
+[INV] Proceeded Confirm Invoice Creation
+[INV] On Create Invoice page: https://nse-capp-uat.aerchain.io/invoices/new
+[INV] Uploaded invoice document: /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png
+[INV] Invoice number bumped: INV-AUTO-090 → INV-AUTO-091
+[INV] Filled Invoice Number (INV-AUTO-091) + Invoice Date (2026-08-25)
+[INV] Period based Invoicing → No
+[INV] Extra billing → No
+[INV] Qty lowered to 50 (cell reads "50")
+[INV] Clicked FIX → Item Matching
+[INV] Selected GRN INW-NSEFN-26-104 in Item Matching (was unticked)
+[INV] Submitted Item Matching
+[INV] Clicked Submit (create page)
+[INV] Proceeded Validations popup
+[INV] Confirmed Workflow Summary popup
+[INV] Invoice submitted → https://nse-capp-uat.aerchain.io/invoices/1108
+[INV] Saved to NSEFoundationData.json → savedInvoice.code = "Invoice-FNSE-26-320"
+[INV] Opening saved invoice Invoice-FNSE-26-320 → https://nse-capp-uat.aerchain.io/invoices/1108
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/1108
+[INV] Reject not visible — reloading (1)
+[INV] Reject not visible — reloading (2)
+[INV] Reject missing — reassigning approver to NSEF Support Admin...
+[INV] Workflow approver reassigned to NSEF Support Admin
+[INV] Reject submitted
+[INV] Opened edit via header pencil icon
+[INV] Qty lowered to 50 (cell reads "50")
+[INV] Clicked FIX → Item Matching
+[INV] Selected GRN INW-NSEFN-26-104 in Item Matching (was already ticked)
+[INV] Submitted Item Matching
+[INV] Clicked Submit (create page)
+[INV] Proceeded Validations popup
+[INV] Confirmed Workflow Summary popup
+[INV] Invoice submitted → https://nse-capp-uat.aerchain.io/invoices/1108
+[INV] Approve missing while Pending Approval — reassigning to NSEF Support Admin...
+[INV] Workflow approver reassigned to NSEF Support Admin
+[INV] Approving stage 2...
+[INV] Approved a stage
+[INV] Approving stage 3...
+[INV] Approved a stage
+[INV] Approving stage 4...
+[INV] Approved a stage
+[INV] Approving stage 5...
+[INV] Approved a stage
+[INV] Status Pending Sync after 5 approval(s).
+[INV] Status is Pending Sync
+[ACK] POST https://nse-api-uat.aerchain.io/invoice/ack → EXPENSE_RECORD_NO="Invoice-FNSE-26-320", response_body_reference="INV-AUTO-091"
+[ACK] Response 200: {"success":true,"error":null,"errors":[],"data":{}}
+[INV] Opening saved invoice Invoice-FNSE-26-320 → https://nse-capp-uat.aerchain.io/invoices/1108
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/1108
+[INV] Status is Accounted
+[PO] Opening saved PO PO-NSEFN-26-203 → https://nse-capp-uat.aerchain.io/purchase-orders/1015
+[PO] On PO page: https://nse-capp-uat.aerchain.io/purchase-orders/1015
+  ✘    9 [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:273:9 › All-modules reject → edit → resubmit › Invoice (resume from saved PO): create Invoice → reject → edit (qty↓) → reduced qty available @RejectEdit @InvoiceOnly (2.3m)
+(node:2767) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[INV] Opening saved invoice Invoice-FNSE-26-320 → https://nse-capp-uat.aerchain.io/invoices/1108
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/1108
+  ✘   10 [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:328:9 › All-modules reject → edit → resubmit › Invoice (resume from rejected invoice): edit (qty↓) → resubmit → approve → ack → reduced qty available @RejectEdit @InvoiceEditOnly (14.1s)
+(node:2842) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-350  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5720/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-350"
+[NONPO] V3 home → https://nse-capp-uat.aerchain.io/home?user=476817af-4349-4254-8476-553c0c9726e4
+[NONPO] modules panel opened (attempt 1)
+[NONPO] invoice listing → https://nse-capp-uat.aerchain.io/invoices (match 1/3)
+[NONPO] on /invoices/new (upload dropzone shown)
+[NONPO] attached /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png (attempt 1)
+[NONPO] form rendered (Templates picker present)
+[NONPO] template → "CXO Template (Dev)"
+[NONPO] section "General Details" already expanded
+[NONPO] expanded section "Additional Details"
+[NONPO] section "Invoice Details" already expanded
+[NONPO] section "Line Items" already expanded
+[NONPO] Select CXO Transaction → "CXO-FNSE-26-350"
+[NONPO] Department → "Premises"
+[NONPO] Function → "Legal"
+[NONPO] Expense Nature (for approval triggers) → "Non-CSR Process"
+[NONPO] Project Name → "NA"
+[NONPO] Vertical → "Legal"
+[NONPO] Nature of Expense (budget level) → "Opex"
+[NONPO] GL Account → "NA"
+[NONPO] Profit Center → "NA"
+[NONPO] Cost Center → "NA"
+[NONPO] SEBI Categorization → "NA"
+[NONPO] Sub Segment → "NA"
+[NONPO] Project Category → "NA"
+[NONPO] budget combination set
+[NONPO] BRF → "Dont Touch/HG Auomation PURPOSE" (of 1 options)
+[NONPO] Supplier → "HG Automation SUPP (FNSE-26-2993)"
+[NONPO] Subject → "HG Automation Non-PO Invoice"
+[INV] Invoice number bumped: INV-AUTO-091 → INV-AUTO-092
+[NONPO] Invoice Number → "INV-AUTO-092"
+[NONPO] Delivery Address → "Test"
+[NONPO] Currency → "INR"
+[NONPO] Payment Spoc → "Srinitesh"
+[NONPO] Payment Terms → "Payable quarterly within 60 days of date of receipt of tax invoice"
+[NONPO] auto-filled Company = "National Stock Exchange Foundation"
+[NONPO] auto-filled Billing Address = "Test"
+[NONPO] invoice details filled
+[NONPO] Product → "Manpower (T&M) / 484" (searched "Manpower", 3 options)
+[NONPO] UOM → "EA" (from option list)
+[NONPO] line item row → {"product":"Manpower (T&M)","uom":"EA","quantity":"100","price":"2000","amount":"2,00,000"}
+[NONPO] Grand Total = 200000  (raw "Grand Total ₹ 2.00L")
+[INV] Clicked Submit (create page)
+[INV] Proceeded Validations popup
+[INV] Confirmed Workflow Summary popup
+[INV] Invoice submitted → https://nse-capp-uat.aerchain.io/invoices/1109
+[INV] Approve missing while Pending Approval — reassigning to NSEF Support Admin...
+[INV] Workflow approver reassigned to NSEF Support Admin
+[INV] Approving stage 2...
+[INV] Approved a stage
+[INV] Approving stage 3...
+[INV] Approved a stage
+[INV] Approving stage 4...
+[INV] Approved a stage
+[INV] Approving stage 5...
+[INV] Approved a stage
+[INV] Status Pending Sync after 5 approval(s).
+[NONPO] invoice status = Pending Sync
+[INV] Saved to NSEFoundationData.json → savedInvoice.code = "Invoice-FNSE-26-322"
+[ACK] POST https://nse-api-uat.aerchain.io/invoice/ack → EXPENSE_RECORD_NO="Invoice-FNSE-26-322", response_body_reference="INV-AUTO-092"
+[ACK] Response 200: {"success":true,"error":null,"errors":[],"data":{}}
+[INV] Opening saved invoice Invoice-FNSE-26-322 → https://nse-capp-uat.aerchain.io/invoices/1109
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/1109
+[INV] Status is Accounted
+[NONPO] CXO overview → https://nse-capp-v4-uat.aerchain.io/cxos/5720/overview
+[NONPO] opened CXO Transactions tab (match 1/1)
+[NONPO] CXO Transactions tab lists Invoice-FNSE-26-322
+  ✓   11 [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:63:9 › Non-PO (CXO) Invoice › CXO → Non-PO invoice for the full CXO value → approve → ack → Accounted @NonPO @Smoke @Budget (4.2m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-351  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5721/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-351"
+[NONPO] V3 home → https://nse-capp-uat.aerchain.io/home?user=476817af-4349-4254-8476-553c0c9726e4
+[NONPO] modules panel opened (attempt 1)
+[NONPO] invoice listing → https://nse-capp-uat.aerchain.io/invoices (match 1/3)
+[NONPO] on /invoices/new (upload dropzone shown)
+[NONPO] attached /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png (attempt 1)
+[NONPO] form rendered (Templates picker present)
+[NONPO] template → "CXO Template (Dev)"
+[NONPO] section "General Details" already expanded
+[NONPO] expanded section "Additional Details"
+[NONPO] section "Invoice Details" already expanded
+[NONPO] section "Line Items" already expanded
+[NONPO] Select CXO Transaction → "CXO-FNSE-26-351"
+[NONPO] Department → "Premises"
+[NONPO] Function → "Legal"
+[NONPO] Expense Nature (for approval triggers) → "Non-CSR Process"
+[NONPO] Project Name → "NA"
+[NONPO] Vertical → "Legal"
+[NONPO] Nature of Expense (budget level) → "Opex"
+[NONPO] GL Account → "NA"
+[NONPO] Profit Center → "NA"
+[NONPO] Cost Center → "NA"
+[NONPO] SEBI Categorization → "NA"
+[NONPO] Sub Segment → "NA"
+[NONPO] Project Category → "NA"
+[NONPO] budget combination set
+[NONPO] BRF → "Dont Touch/HG Auomation PURPOSE" (of 1 options)
+[NONPO] Supplier → "HG Automation SUPP (FNSE-26-2993)"
+[NONPO] Subject → "HG Automation Non-PO Invoice"
+[INV] Invoice number bumped: INV-AUTO-092 → INV-AUTO-093
+[NONPO] Invoice Number → "INV-AUTO-093"
+[NONPO] Delivery Address → "Test"
+[NONPO] Currency → "INR"
+[NONPO] Payment Spoc → "Srinitesh"
+[NONPO] Payment Terms → "Payable quarterly within 60 days of date of receipt of tax invoice"
+[NONPO] auto-filled Company = "National Stock Exchange Foundation"
+[NONPO] auto-filled Billing Address = "Test"
+[NONPO] invoice details filled
+[NONPO] Product → "Manpower (T&M) / 484" (searched "Manpower", 3 options)
+[NONPO] UOM → "EA" (from option list)
+[NONPO] line item row → {"product":"Manpower (T&M)","uom":"EA","quantity":"50","price":"2000","amount":"1,00,000"}
+[INV] Clicked Submit (create page)
+[INV] Proceeded Validations popup
+[INV] Confirmed Workflow Summary popup
+[INV] Invoice submitted → https://nse-capp-uat.aerchain.io/invoices/1110
+[NONPO] invoice shows its CXO CXO-FNSE-26-351
+  ✓   12 [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:93:9 › Non-PO (CXO) Invoice › CXO code is displayed on the invoice @NonPO @Traceability (3.5m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-352  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5722/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-352"
+[NONPO] V3 home → https://nse-capp-uat.aerchain.io/home?user=476817af-4349-4254-8476-553c0c9726e4
+[NONPO] modules panel opened (attempt 1)
+[NONPO] invoice listing → https://nse-capp-uat.aerchain.io/invoices (match 1/3)
+[NONPO] on /invoices/new (upload dropzone shown)
+[NONPO] attached /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png (attempt 1)
+[NONPO] form rendered (Templates picker present)
+[NONPO] template → "CXO Template (Dev)"
+[NONPO] section "General Details" already expanded
+[NONPO] expanded section "Additional Details"
+[NONPO] section "Invoice Details" already expanded
+[NONPO] section "Line Items" already expanded
+[NONPO] Select CXO Transaction → "CXO-FNSE-26-352"
+[NONPO] Department → "Premises"
+[NONPO] Function → "Legal"
+[NONPO] Expense Nature (for approval triggers) → "Non-CSR Process"
+[NONPO] Project Name → "NA"
+[NONPO] Vertical → "Legal"
+[NONPO] Nature of Expense (budget level) → "Opex"
+[NONPO] GL Account → "NA"
+[NONPO] Profit Center → "NA"
+[NONPO] Cost Center → "NA"
+[NONPO] SEBI Categorization → "NA"
+[NONPO] Sub Segment → "NA"
+[NONPO] Project Category → "NA"
+[NONPO] budget combination set
+[NONPO] BRF → "Dont Touch/HG Auomation PURPOSE" (of 1 options)
+[NONPO] Supplier → "HG Automation SUPP (FNSE-26-2993)"
+[NONPO] Subject → "HG Automation Non-PO Invoice"
+[INV] Invoice number bumped: INV-AUTO-093 → INV-AUTO-094
+[NONPO] Invoice Number → "INV-AUTO-094"
+[NONPO] Delivery Address → "Test"
+[NONPO] Currency → "INR"
+[NONPO] Payment Spoc → "Srinitesh"
+[NONPO] Payment Terms → "Payable quarterly within 60 days of date of receipt of tax invoice"
+[NONPO] auto-filled Company = "National Stock Exchange Foundation"
+[NONPO] auto-filled Billing Address = "Test"
+[NONPO] invoice details filled
+[NONPO] Product → "Manpower (T&M) / 484" (searched "Manpower", 10 options)
+[NONPO] UOM → "EA" (from option list)
+[NONPO] line item row → {"product":"Manpower (T&M)","uom":"EA","quantity":"100","price":"2500","amount":"2,50,000"}
+[NONPO] clicked Submit (expecting rejection)
+[NONPO] dialog (step 1) → "Validations Invoice has passed duplicate validation Make Changes Proceed"
+[NONPO] clicked Proceed (step 1)
+[NONPO] dialog (step 2) → "Workflow Summary Show Skipped Conditions Analysed Vertical Legal Expense Nature (for approval triggers) Non-CSR Process Grand Total 250000 Budget Amount is exceeded. Please Contact Budget User. 2 Vertical Checker r The a"
+[NONPO] after Submit → https://nse-capp-uat.aerchain.io/invoices/new
+[NONPO] on-screen messages → ["Nature of Expense (budget level)","Budget Amount is exceeded. Please Contact Budget User."]
+[NONPO] budget ceiling enforced → "Workflow Summary Show Skipped Conditions Analysed Vertical Legal Expense Nature (for approval triggers) Non-CSR Process Grand Total 250000 Budget Amount is exceeded. Please Contact Budget User. 2 Vertical Checker r The approver(s) will be selected automatically upon submission. 3 CommercialAuthorizer Add All Approvers Clear List ​ NS NSEF Support Admin PP Prianshu Prasad 4 Chief FinanceOfficer Add All Approvers Clear List ​ NS NSEF Support Admin 5 Managing Director Add All Approvers Clear List ​ NS NSEF Support Admin NS NSEIL Support User MS Manthan Shah A Aash Go back Discard Submit"
+  ✓   13 [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:114:9 › Non-PO (CXO) Invoice › Invoice value above the CXO value is blocked with Budget Exceeded @NonPO @Budget (3.5m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-353  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5723/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-353"
+[NONPO] V3 home → https://nse-capp-uat.aerchain.io/home?user=476817af-4349-4254-8476-553c0c9726e4
+[NONPO] modules panel opened (attempt 1)
+[NONPO] invoice listing → https://nse-capp-uat.aerchain.io/invoices (match 1/3)
+[NONPO] on /invoices/new (upload dropzone shown)
+[NONPO] attached /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png (attempt 1)
+[NONPO] form rendered (Templates picker present)
+[NONPO] template → "CXO Template (Dev)"
+[NONPO] section "General Details" already expanded
+[NONPO] expanded section "Additional Details"
+[NONPO] section "Invoice Details" already expanded
+[NONPO] section "Line Items" already expanded
+[NONPO] Select CXO Transaction → "CXO-FNSE-26-353"
+[NONPO] Department → "Premises"
+[NONPO] Function → "Legal"
+[NONPO] Expense Nature (for approval triggers) → "Non-CSR Process"
+[NONPO] Project Name → "NA"
+[NONPO] Vertical → "Legal"
+[NONPO] Nature of Expense (budget level) → "Opex"
+[NONPO] GL Account → "NA"
+[NONPO] Profit Center → "NA"
+[NONPO] Cost Center → "NA"
+[NONPO] SEBI Categorization → "NA"
+[NONPO] Sub Segment → "NA"
+[NONPO] Project Category → "NA"
+[NONPO] budget combination set
+[NONPO] BRF → "Dont Touch/HG Auomation PURPOSE" (of 1 options)
+[NONPO] Supplier → "HG Automation SUPP (FNSE-26-2993)"
+[NONPO] Subject → "HG Automation Non-PO Invoice"
+[INV] Invoice number bumped: INV-AUTO-094 → INV-AUTO-095
+[NONPO] Invoice Number → "INV-AUTO-095"
+[NONPO] Delivery Address → "Test"
+[NONPO] Currency → "INR"
+[NONPO] Payment Spoc → "Srinitesh"
+[NONPO] Payment Terms → "Payable quarterly within 60 days of date of receipt of tax invoice"
+[NONPO] auto-filled Company = "National Stock Exchange Foundation"
+[NONPO] auto-filled Billing Address = "Test"
+[NONPO] invoice details filled
+[NONPO] Product → "Manpower (T&M) / 484" (searched "Manpower", 3 options)
+[NONPO] UOM → "EA" (from option list)
+[NONPO] line item row → {"product":"Manpower (T&M)","uom":"EA","quantity":"100","price":"2000","amount":"2,00,000"}
+[INV] Clicked Submit (create page)
+[INV] Proceeded Validations popup
+[INV] Confirmed Workflow Summary popup
+[INV] Invoice submitted → https://nse-capp-uat.aerchain.io/invoices/1111
+[NONPO] loaded /invoices/new directly
+[NONPO] attached /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png (attempt 1)
+[NONPO] form rendered (Templates picker present)
+[NONPO] template → "CXO Template (Dev)"
+[NONPO] section "General Details" already expanded
+[NONPO] expanded section "Additional Details"
+[NONPO] section "Invoice Details" already expanded
+[NONPO] section "Line Items" already expanded
+[NONPO] Select CXO Transaction → "CXO-FNSE-26-353"
+[NONPO] Department → "Premises"
+[NONPO] Function → "Legal"
+[NONPO] Expense Nature (for approval triggers) → "Non-CSR Process"
+[NONPO] Project Name → "NA"
+[NONPO] Vertical → "Legal"
+[NONPO] Nature of Expense (budget level) → "Opex"
+[NONPO] GL Account → "NA"
+[NONPO] Profit Center → "NA"
+[NONPO] Cost Center → "NA"
+[NONPO] SEBI Categorization → "NA"
+[NONPO] Sub Segment → "NA"
+[NONPO] Project Category → "NA"
+[NONPO] budget combination set
+[NONPO] BRF → "Dont Touch/HG Auomation PURPOSE" (of 1 options)
+[NONPO] Supplier → "HG Automation SUPP (FNSE-26-2993)"
+[NONPO] Subject → "HG Automation Non-PO Invoice"
+[INV] Invoice number bumped: INV-AUTO-095 → INV-AUTO-096
+[NONPO] Invoice Number → "INV-AUTO-096"
+[NONPO] Delivery Address → "Test"
+[NONPO] Currency → "INR"
+[NONPO] Payment Spoc → "Srinitesh"
+[NONPO] Payment Terms → "Payable quarterly within 60 days of date of receipt of tax invoice"
+[NONPO] auto-filled Company = "National Stock Exchange Foundation"
+[NONPO] auto-filled Billing Address = "Test"
+[NONPO] invoice details filled
+[NONPO] Product → "Manpower (T&M) / 484" (searched "Manpower", 3 options)
+[NONPO] UOM → "EA" (from option list)
+[NONPO] line item row → {"product":"Manpower (T&M)","uom":"EA","quantity":"1","price":"2000","amount":"2,000"}
+[NONPO] clicked Submit (expecting rejection)
+[NONPO] dialog (step 1) → "Validations Invoice has passed duplicate validation Make Changes Proceed"
+[NONPO] clicked Proceed (step 1)
+[NONPO] dialog (step 2) → "Workflow Summary Show Skipped Conditions Analysed Vertical Legal Expense Nature (for approval triggers) Non-CSR Process Grand Total 2000 Budget Amount is exceeded. Please Contact Budget User. 2 Vertical Checker r The app"
+[NONPO] after Submit → https://nse-capp-uat.aerchain.io/invoices/new
+[NONPO] on-screen messages → ["Nature of Expense (budget level)","Budget Amount is exceeded. Please Contact Budget User."]
+[NONPO] budget ceiling enforced → "Workflow Summary Show Skipped Conditions Analysed Vertical Legal Expense Nature (for approval triggers) Non-CSR Process Grand Total 2000 Budget Amount is exceeded. Please Contact Budget User. 2 Vertical Checker r The approver(s) will be selected automatically upon submission. 3 CommercialAuthorizer Add All Approvers Clear List ​ NS NSEF Support Admin PP Prianshu Prasad 4 Chief FinanceOfficer Add All Approvers Clear List ​ NS NSEF Support Admin 5 Managing Director Add All Approvers Clear List ​ NS NSEF Support Admin NS NSEIL Support User MS Manthan Shah A Aash Go back Discard Submit"
+  ✓   14 [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:131:9 › Non-PO (CXO) Invoice › Second invoice against a fully consumed CXO is blocked @NonPO @Budget (5.0m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-354  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5724/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-354"
+[NONPO] V3 home → https://nse-capp-uat.aerchain.io/home?user=476817af-4349-4254-8476-553c0c9726e4
+[NONPO] modules panel opened (attempt 1)
+[NONPO] invoice listing → https://nse-capp-uat.aerchain.io/invoices (match 1/3)
+[NONPO] on /invoices/new (upload dropzone shown)
+[NONPO] attached /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png (attempt 1)
+[NONPO] form rendered (Templates picker present)
+[NONPO] template → "CXO Template (Dev)"
+[NONPO] section "General Details" already expanded
+[NONPO] expanded section "Additional Details"
+[NONPO] section "Invoice Details" already expanded
+[NONPO] section "Line Items" already expanded
+[NONPO] Select CXO Transaction → "CXO-FNSE-26-354"
+[NONPO] Department → "Premises"
+[NONPO] Function → "Legal"
+[NONPO] Expense Nature (for approval triggers) → "Non-CSR Process"
+[NONPO] Project Name → "NA"
+[NONPO] Vertical → "Legal"
+[NONPO] Nature of Expense (budget level) → "Opex"
+[NONPO] GL Account → "NA"
+[NONPO] Profit Center → "NA"
+[NONPO] Cost Center → "NA"
+[NONPO] SEBI Categorization → "NA"
+[NONPO] Sub Segment → "NA"
+[NONPO] Project Category → "NA"
+[NONPO] budget combination set
+[NONPO] BRF → "Dont Touch/HG Auomation PURPOSE" (of 1 options)
+[NONPO] Supplier → "HG Automation SUPP (FNSE-26-2993)"
+[NONPO] Subject → "HG Automation Non-PO Invoice"
+[INV] Invoice number bumped: INV-AUTO-096 → INV-AUTO-097
+[NONPO] Invoice Number → "INV-AUTO-097"
+[NONPO] Delivery Address → "Test"
+[NONPO] Currency → "INR"
+[NONPO] Payment Spoc → "Srinitesh"
+[NONPO] Payment Terms → "Payable quarterly within 60 days of date of receipt of tax invoice"
+[NONPO] auto-filled Company = "National Stock Exchange Foundation"
+[NONPO] auto-filled Billing Address = "Test"
+[NONPO] invoice details filled
+[NONPO] Product → "Manpower (T&M) / 484" (searched "Manpower", 10 options)
+[NONPO] UOM → "EA" (from option list)
+[NONPO] line item row → {"product":"Manpower (T&M)","uom":"EA","quantity":"50","price":"2000","amount":"1,00,000"}
+[INV] Clicked Submit (create page)
+[INV] Proceeded Validations popup
+[INV] Confirmed Workflow Summary popup
+[INV] Invoice submitted → https://nse-capp-uat.aerchain.io/invoices/1112
+[INV] Approve missing while Pending Approval — reassigning to NSEF Support Admin...
+[INV] Workflow approver reassigned to NSEF Support Admin
+[INV] No Approve button and not Pending Approval — reloading to re-check status...
+[INV] Approving stage 3...
+[INV] Approved a stage
+[INV] Approving stage 4...
+[INV] Approved a stage
+[INV] Approving stage 5...
+[INV] Approved a stage
+[INV] Approving stage 6...
+[INV] Approved a stage
+[INV] Status Pending Sync after 6 approval(s).
+[NONPO] invoice status = Pending Sync
+[INV] Saved to NSEFoundationData.json → savedInvoice.code = "Invoice-FNSE-26-328"
+[NONPO] CXO overview → https://nse-capp-v4-uat.aerchain.io/cxos/5724/overview
+[NONPO] opened CXO Transactions tab (match 1/1)
+[NONPO] CXO Transactions tab lists Invoice-FNSE-26-328
+[NONPO] loaded /invoices/new directly
+[NONPO] attached /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png (attempt 1)
+[NONPO] form rendered (Templates picker present)
+[NONPO] template → "CXO Template (Dev)"
+[NONPO] Select CXO Transaction → "CXO-FNSE-26-354"
+[NONPO] section "General Details" already expanded
+[NONPO] expanded section "Additional Details"
+[NONPO] section "Invoice Details" already expanded
+[NONPO] section "Line Items" already expanded
+[NONPO] Department → "Premises"
+[NONPO] Function → "Legal"
+[NONPO] Expense Nature (for approval triggers) → "Non-CSR Process"
+[NONPO] Project Name → "NA"
+[NONPO] Vertical → "Legal"
+[NONPO] Nature of Expense (budget level) → "Opex"
+[NONPO] GL Account → "NA"
+[NONPO] Profit Center → "NA"
+[NONPO] Cost Center → "NA"
+[NONPO] SEBI Categorization → "NA"
+[NONPO] Sub Segment → "NA"
+[NONPO] Project Category → "NA"
+[NONPO] budget combination set
+[NONPO] BRF → "Dont Touch/HG Auomation PURPOSE" (of 1 options)
+[NONPO] Supplier → "HG Automation SUPP (FNSE-26-2993)"
+[NONPO] Subject → "HG Automation Non-PO Invoice"
+[INV] Invoice number bumped: INV-AUTO-097 → INV-AUTO-098
+[NONPO] Invoice Number → "INV-AUTO-098"
+[NONPO] Delivery Address → "Test"
+[NONPO] Currency → "INR"
+[NONPO] Payment Spoc → "Srinitesh"
+[NONPO] Payment Terms → "Payable quarterly within 60 days of date of receipt of tax invoice"
+[NONPO] auto-filled Company = "National Stock Exchange Foundation"
+[NONPO] auto-filled Billing Address = "Test"
+[NONPO] invoice details filled
+[NONPO] Product → "Manpower (T&M) / 484" (searched "Manpower", 3 options)
+[NONPO] UOM → "EA" (from option list)
+[NONPO] line item row → {"product":"Manpower (T&M)","uom":"EA","quantity":"50","price":"2500","amount":"1,25,000"}
+[NONPO] clicked Submit (expecting rejection)
+[NONPO] dialog (step 1) → "Validations Invoice has passed duplicate validation Make Changes Proceed"
+[NONPO] clicked Proceed (step 1)
+[NONPO] dialog (step 2) → "Workflow Summary Show Skipped Conditions Analysed Vertical Legal Expense Nature (for approval triggers) Non-CSR Process Grand Total 125000 Budget Amount is exceeded. Please Contact Budget User. 2 Vertical Checker r The a"
+[NONPO] after Submit → https://nse-capp-uat.aerchain.io/invoices/new
+[NONPO] on-screen messages → ["Nature of Expense (budget level)","Budget Amount is exceeded. Please Contact Budget User."]
+[NONPO] budget ceiling enforced → "Workflow Summary Show Skipped Conditions Analysed Vertical Legal Expense Nature (for approval triggers) Non-CSR Process Grand Total 125000 Budget Amount is exceeded. Please Contact Budget User. 2 Vertical Checker r The approver(s) will be selected automatically upon submission. 3 CommercialAuthorizer Add All Approvers Clear List ​ NS NSEF Support Admin PP Prianshu Prasad 4 Chief FinanceOfficer Add All Approvers Clear List ​ NS NSEF Support Admin 5 Managing Director Add All Approvers Clear List ​ NS NSEF Support Admin NS NSEIL Support User MS Manthan Shah A Aash Go back Discard Submit"
+  ✓   15 [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:163:9 › Non-PO (CXO) Invoice › Partial consumption reduces available value, then available+1 is blocked @NonPO @Budget (5.7m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Saved as Draft → overview
+[CXO] Saving CXO code: 5725  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5725/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "5725"
+[NONPO] V3 home → https://nse-capp-uat.aerchain.io/home?user=476817af-4349-4254-8476-553c0c9726e4
+[NONPO] modules panel opened (attempt 1)
+[NONPO] invoice listing → https://nse-capp-uat.aerchain.io/invoices (match 1/3)
+[NONPO] on /invoices/new (upload dropzone shown)
+[NONPO] attached /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png (attempt 1)
+[NONPO] form rendered (Templates picker present)
+[NONPO] template → "CXO Template (Dev)"
+  ✓   16 [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:200:9 › Non-PO (CXO) Invoice › Only Submitted CXOs with available value are selectable @NonPO @Validation (1.9m)
+[NONPO] V3 home → https://nse-capp-uat.aerchain.io/home?user=476817af-4349-4254-8476-553c0c9726e4
+[NONPO] modules panel opened (attempt 1)
+[NONPO] invoice listing → https://nse-capp-uat.aerchain.io/invoices (match 1/3)
+[NONPO] on /invoices/new (upload dropzone shown)
+[NONPO] attached /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png (attempt 1)
+[NONPO] form rendered (Templates picker present)
+[NONPO] template → "CXO Template (Dev)"
+[NONPO] clicked Submit (expecting rejection)
+[NONPO] nothing left to click (step 1)
+[NONPO] after Submit → https://nse-capp-uat.aerchain.io/invoices/new
+[NONPO] on-screen messages → ["Company is Mandatory","Supplier is Mandatory","Subject is Mandatory","Invoice Number is Mandatory","Invoice Date is Mandatory","Delivery Address is Mandatory","Billing Address is Mandatory","Currency is Mandatory","Atleast one row is required","Error"]
+[NONPO] mandatory errors: ["Modules\n99+\nN\n\nCreate Invoice\n\nCancel\nSubmit\n 100% \nTemplates\nSelect CXO Transaction\n\nGeneral Details\n\nAdditional Details\n\nInvoice Details\n\nCompany\nCompany is Mandatory\nSupplier\nSupplier is Mandatory\nSubject\nSubject is Mandatory\nInvoice Number\nInvoice Number is Mandatory\nInvoice Date\nInvoice Date is Mandatory\nSupplier Tax Number\nDelivery Address\nDelivery Address is Mandatory\nBilling Address\nBilling Address is Mandatory\nCustomer Tax Number\nCurrency\nCurrency is Mandatory\n\nLine Items\n\n#\n* Product\n* UOM\n* Quantity\n* Price\nHsn\nTax\nNet Tax Percent\nf(x)\nTax Value\nf(x)\n* Amount\nf(x)\nAdd Item\nAtleast one row is required\n\nSub Total\n\n0.00\n\nTotal Taxes\n\n0.00\n\nGrand Total\n\n0.00\n\nPayable\n\n0.00\n\nError\nAtleast one row is required","Modules\n99+\nN\n\nCreate Invoice\n\nCancel\nSubmit\n 100% \nTemplates\nSelect CXO Transaction\n\nGeneral Details\n\nAdditional Details\n\nInvoice Details\n\nCompany\nCompany is Mandatory\nSupplier\nSupplier is Mandatory\nSubject\nSubject is Mandatory\nInvoice Number\nInvoice Number is Mandatory\nInvoice Date\nInvoice Date is Mandatory\nSupplier Tax Number\nDelivery Address\nDelivery Address is Mandatory\nBilling Address\nBilling Address is Mandatory\nCustomer Tax Number\nCurrency\nCurrency is Mandatory\n\nLine Items\n\n#\n* Product\n* UOM\n* Quantity\n* Price\nHsn\nTax\nNet Tax Percent\nf(x)\nTax Value\nf(x)\n* Amount\nf(x)\nAdd Item\nAtleast one row is required\n\nSub Total\n\n0.00\n\nTotal Taxes\n\n0.00\n\nGrand Total\n\n0.00\n\nPayable\n\n0.00\n\nError\nAtleast one row is required","Modules\n99+\nN\n\nCreate Invoice\n\nCancel\nSubmit\n 100% \nTemplates\nSelect CXO Transaction\n\nGeneral Details\n\nAdditional Details\n\nInvoice Details\n\nCompany\nCompany is Mandatory\nSupplier\nSupplier is Mandatory\nSubject\nSubject is Mandatory\nInvoice Number\nInvoice Number is Mandatory\nInvoice Date\nInvoice Date is Mandatory\nSupplier Tax Number\nDelivery Address\nDelivery Address is Mandatory\nBilling Address\nBilling Address is Mandatory\nCustomer Tax Number\nCurrency\nCurrency is Mandatory\n\nLine Items\n\n#\n* Product\n* UOM\n* Quantity\n* Price\nHsn\nTax\nNet Tax Percent\nf(x)\nTax Value\nf(x)\n* Amount\nf(x)\nAdd Item\nAtleast one row is required\n\nSub Total\n\n0.00\n\nTotal Taxes\n\n0.00\n\nGrand Total\n\n0.00\n\nPayable\n\n0.00\n\nError\nAtleast one row is required","Modules\n99+\nN\n\nCreate Invoice\n\nCancel\nSubmit\n 100% \nTemplates\nSelect CXO Transaction\n\nGeneral Details\n\nAdditional Details\n\nInvoice Details\n\nCompany\nCompany is Mandatory\nSupplier\nSupplier is Mandatory\nSubject\nSubject is Mandatory\nInvoice Number\nInvoice Number is Mandatory\nInvoice Date\nInvoice Date is Mandatory\nSupplier Tax Number\nDelivery Address\nDelivery Address is Mandatory\nBilling Address\nBilling Address is Mandatory\nCustomer Tax Number\nCurrency\nCurrency is Mandatory\n\nLine Items\n\n#\n* Product\n* UOM\n* Quantity\n* Price\nHsn\nTax\nNet Tax Percent\nf(x)\nTax Value\nf(x)\n* Amount\nf(x)\nAdd Item\nAtleast one row is required\n\nSub Total\n\n0.00\n\nTotal Taxes\n\n0.00\n\nGrand Total\n\n0.00\n\nPayable\n\n0.00\n\nError\nAtleast one row is required","Modules\n99+\nN\n\nCreate Invoice\n\nCancel\nSubmit\n 100% \nTemplates\nSelect CXO Transaction\n\nGeneral Details\n\nAdditional Details\n\nInvoice Details\n\nCompany\nCompany is Mandatory\nSupplier\nSupplier is Mandatory\nSubject\nSubject is Mandatory\nInvoice Number\nInvoice Number is Mandatory\nInvoice Date\nInvoice Date is Mandatory\nSupplier Tax Number\nDelivery Address\nDelivery Address is Mandatory\nBilling Address\nBilling Address is Mandatory\nCustomer Tax Number\nCurrency\nCurrency is Mandatory\n\nLine Items\n\n#\n* Product\n* UOM\n* Quantity\n* Price\nHsn\nTax\nNet Tax Percent\nf(x)\nTax Value\nf(x)\n* Amount\nf(x)\nAdd Item\nAtleast one row is required\n\nSub Total\n\n0.00\n\nTotal Taxes\n\n0.00\n\nGrand Total\n\n0.00\n\nPayable\n\n0.00\n\nError\nAtleast one row is required","Modules\n99+\nN\n\nCreate Invoice\n\nCancel\nSubmit\n 100% \nTemplates\nSelect CXO Transaction\n\nGeneral Details\n\nAdditional Details\n\nInvoice Details\n\nCompany\nCompany is Mandatory\nSupplier\nSupplier is Mandatory\nSubject\nSubject is Mandatory\nInvoice Number\nInvoice Number is Mandatory\nInvoice Date\nInvoice Date is Mandatory\nSupplier Tax Number\nDelivery Address\nDelivery Address is Mandatory\nBilling Address\nBilling Address is Mandatory\nCustomer Tax Number\nCurrency\nCurrency is Mandatory\n\nLine Items\n\n#\n* Product\n* UOM\n* Quantity\n* Price\nHsn\nTax\nNet Tax Percent\nf(x)\nTax Value\nf(x)\n* Amount\nf(x)\nAdd Item\nAtleast one row is required\n\nSub Total\n\n0.00\n\nTotal Taxes\n\n0.00\n\nGrand Total\n\n0.00\n\nPayable\n\n0.00","Modules\n99+\nN\n\nCreate Invoice\n\nCancel\nSubmit\n 100% \nTemplates\nSelect CXO Transaction\n\nGeneral Details\n\nAdditional Details\n\nInvoice Details\n\nCompany\nCompany is Mandatory\nSupplier\nSupplier is Mandatory\nSubject\nSubject is Mandatory\nInvoice Number\nInvoice Number is Mandatory\nInvoice Date\nInvoice Date is Mandatory\nSupplier Tax Number\nDelivery Address\nDelivery Address is Mandatory\nBilling Address\nBilling Address is Mandatory\nCustomer Tax Number\nCurrency\nCurrency is Mandatory\n\nLine Items\n\n#\n* Product\n* UOM\n* Quantity\n* Price\nHsn\nTax\nNet Tax Percent\nf(x)\nTax Value\nf(x)\n* Amount\nf(x)\nAdd Item\nAtleast one row is required\n\nSub Total\n\n0.00\n\nTotal Taxes\n\n0.00\n\nGrand Total\n\n0.00\n\nPayable\n\n0.00","Create Invoice\n\nCancel\nSubmit\n 100% \nTemplates\nSelect CXO Transaction\n\nGeneral Details\n\nAdditional Details\n\nInvoice Details\n\nCompany\nCompany is Mandatory\nSupplier\nSupplier is Mandatory\nSubject\nSubject is Mandatory\nInvoice Number\nInvoice Number is Mandatory\nInvoice Date\nInvoice Date is Mandatory\nSupplier Tax Number\nDelivery Address\nDelivery Address is Mandatory\nBilling Address\nBilling Address is Mandatory\nCustomer Tax Number\nCurrency\nCurrency is Mandatory\n\nLine Items\n\n#\n* Product\n* UOM\n* Quantity\n* Price\nHsn\nTax\nNet Tax Percent\nf(x)\nTax Value\nf(x)\n* Amount\nf(x)\nAdd Item\nAtleast one row is required\n\nSub Total\n\n0.00\n\nTotal Taxes\n\n0.00\n\nGrand Total\n\n0.00\n\nPayable\n\n0.00","100% \nTemplates\nSelect CXO Transaction\n\nGeneral Details\n\nAdditional Details\n\nInvoice Details\n\nCompany\nCompany is Mandatory\nSupplier\nSupplier is Mandatory\nSubject\nSubject is Mandatory\nInvoice Number\nInvoice Number is Mandatory\nInvoice Date\nInvoice Date is Mandatory\nSupplier Tax Number\nDelivery Address\nDelivery Address is Mandatory\nBilling Address\nBilling Address is Mandatory\nCustomer Tax Number\nCurrency\nCurrency is Mandatory\n\nLine Items\n\n#\n* Product\n* UOM\n* Quantity\n* Price\nHsn\nTax\nNet Tax Percent\nf(x)\nTax Value\nf(x)\n* Amount\nf(x)\nAdd Item\nAtleast one row is required\n\nSub Total\n\n0.00\n\nTotal Taxes\n\n0.00\n\nGrand Total\n\n0.00\n\nPayable\n\n0.00","Templates\nSelect CXO Transaction\n\nGeneral Details\n\nAdditional Details\n\nInvoice Details\n\nCompany\nCompany is Mandatory\nSupplier\nSupplier is Mandatory\nSubject\nSubject is Mandatory\nInvoice Number\nInvoice Number is Mandatory\nInvoice Date\nInvoice Date is Mandatory\nSupplier Tax Number\nDelivery Address\nDelivery Address is Mandatory\nBilling Address\nBilling Address is Mandatory\nCustomer Tax Number\nCurrency\nCurrency is Mandatory\n\nLine Items\n\n#\n* Product\n* UOM\n* Quantity\n* Price\nHsn\nTax\nNet Tax Percent\nf(x)\nTax Value\nf(x)\n* Amount\nf(x)\nAdd Item\nAtleast one row is required\n\nSub Total\n\n0.00\n\nTotal Taxes\n\n0.00\n\nGrand Total\n\n0.00\n\nPayable\n\n0.00","Templates\nSelect CXO Transaction\n\nGeneral Details\n\nAdditional Details\n\nInvoice Details\n\nCompany\nCompany is Mandatory\nSupplier\nSupplier is Mandatory\nSubject\nSubject is Mandatory\nInvoice Number\nInvoice Number is Mandatory\nInvoice Date\nInvoice Date is Mandatory\nSupplier Tax Number\nDelivery Address\nDelivery Address is Mandatory\nBilling Address\nBilling Address is Mandatory\nCustomer Tax Number\nCurrency\nCurrency is Mandatory\n\nLine Items\n\n#\n* Product\n* UOM\n* Quantity\n* Price\nHsn\nTax\nNet Tax Percent\nf(x)\nTax Value\nf(x)\n* Amount\nf(x)\nAdd Item\nAtleast one row is required\n\nSub Total\n\n0.00\n\nTotal Taxes\n\n0.00\n\nGrand Total\n\n0.00\n\nPayable\n\n0.00","General Details\n\nAdditional Details\n\nInvoice Details\n\nCompany\nCompany is Mandatory\nSupplier\nSupplier is Mandatory\nSubject\nSubject is Mandatory\nInvoice Number\nInvoice Number is Mandatory\nInvoice Date\nInvoice Date is Mandatory\nSupplier Tax Number\nDelivery Address\nDelivery Address is Mandatory\nBilling Address\nBilling Address is Mandatory\nCustomer Tax Number\nCurrency\nCurrency is Mandatory\n\nLine Items\n\n#\n* Product\n* UOM\n* Quantity\n* Price\nHsn\nTax\nNet Tax Percent\nf(x)\nTax Value\nf(x)\n* Amount\nf(x)\nAdd Item\nAtleast one row is required"]
+  ✓   17 [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:217:9 › Non-PO (CXO) Invoice › Submitting an empty Non-PO invoice is blocked with field errors @NonPO @Validation (1.4m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-355  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5726/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-355"
+[NONPO] V3 home → https://nse-capp-uat.aerchain.io/home?user=476817af-4349-4254-8476-553c0c9726e4
+[NONPO] modules panel opened (attempt 1)
+[NONPO] invoice listing → https://nse-capp-uat.aerchain.io/invoices (match 1/3)
+[NONPO] on /invoices/new (upload dropzone shown)
+[NONPO] attached /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png (attempt 1)
+[NONPO] form rendered (Templates picker present)
+[NONPO] template → "CXO Template (Dev)"
+[NONPO] section "General Details" already expanded
+[NONPO] expanded section "Additional Details"
+[NONPO] section "Invoice Details" already expanded
+[NONPO] section "Line Items" already expanded
+[NONPO] Select CXO Transaction → "CXO-FNSE-26-355"
+[NONPO] Department → "Premises"
+[NONPO] Function → "Legal"
+[NONPO] Expense Nature (for approval triggers) → "Non-CSR Process"
+[NONPO] Project Name → "NA"
+[NONPO] Vertical → "Legal"
+[NONPO] Nature of Expense (budget level) → "Opex"
+[NONPO] GL Account → "NA"
+[NONPO] Profit Center → "NA"
+[NONPO] Cost Center → "NA"
+[NONPO] SEBI Categorization → "NA"
+[NONPO] Sub Segment → "NA"
+[NONPO] Project Category → "NA"
+[NONPO] budget combination set
+[NONPO] BRF → "Dont Touch/HG Auomation PURPOSE" (of 1 options)
+[NONPO] Supplier → "HG Automation SUPP (FNSE-26-2993)"
+[NONPO] Subject → "HG Automation Non-PO Invoice"
+[INV] Invoice number bumped: INV-AUTO-098 → INV-AUTO-099
+[NONPO] Invoice Number → "INV-AUTO-099"
+[NONPO] Delivery Address → "Test"
+[NONPO] Currency → "INR"
+[NONPO] Payment Spoc → "Srinitesh"
+[NONPO] Payment Terms → "Payable quarterly within 60 days of date of receipt of tax invoice"
+[NONPO] auto-filled Company = "National Stock Exchange Foundation"
+[NONPO] auto-filled Billing Address = "Test"
+[NONPO] invoice details filled
+[NONPO] Product → "Manpower (T&M) / 484" (searched "Manpower", 10 options)
+[NONPO] UOM → "EA" (from option list)
+[NONPO] line item row → {"product":"Manpower (T&M)","uom":"EA","quantity":"50","price":"2000","amount":"1,00,000"}
+[INV] Clicked Submit (create page)
+[INV] Proceeded Validations popup
+[INV] Confirmed Workflow Summary popup
+[INV] Invoice submitted → https://nse-capp-uat.aerchain.io/invoices/1113
+[INV] Saved to NSEFoundationData.json → savedInvoice.code = "Invoice-FNSE-26-330"
+  ✘   18 [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:235:9 › Non-PO (CXO) Invoice › Rejection keeps budget consumed; cancellation releases it @NonPO @Budget @Reject @Cancel (3.5m)
+(node:3102) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓   19 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:27:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should load the intake listing page @Smoke (2.0s)
+  ✓   20 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:31:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display all 5 status summary cards @Smoke (1.8s)
+  ✓   21 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:35:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display the Create Intake button @Smoke (1.7s)
+  ✓   22 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:39:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display pagination info @Smoke (1.9s)
+  ✓   23 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:43:13 › Aerchain NSE - Intake Listing Page › Page Load & Structure › should display at least one table row @Smoke (1.7s)
+  ✓   24 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:54:13 › Aerchain NSE - Intake Listing Page › Status Cards › Draft card is visible @StatusCard (1.7s)
+  ✓   25 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:58:13 › Aerchain NSE - Intake Listing Page › Status Cards › Awaiting Actions card is visible @StatusCard (1.8s)
+  ✓   26 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:62:13 › Aerchain NSE - Intake Listing Page › Status Cards › Active/Released card is visible @StatusCard (1.7s)
+  ✓   27 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:66:13 › Aerchain NSE - Intake Listing Page › Status Cards › Completed/Successful card is visible @StatusCard (2.4s)
+  ✓   28 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:70:13 › Aerchain NSE - Intake Listing Page › Status Cards › Cancelled/Rejected card is visible @StatusCard (1.7s)
+  ✓   29 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:74:13 › Aerchain NSE - Intake Listing Page › Status Cards › clicking a status card refreshes the table @StatusCard (2.5s)
+  ✓   30 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:79:13 › Aerchain NSE - Intake Listing Page › Status Cards › clicking Draft card (0 records) shows empty or 0 rows @StatusCard (2.4s)
+  ✓   31 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:95:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › filter popup opens on clicking Status filter icon @Filter (2.6s)
+  ✓   32 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:103:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › filter popup opens on clicking Created By filter icon @Filter (2.6s)
+  ✓   33 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:111:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › search within filter popup narrows the option list @Filter (2.9s)
+  ✓   34 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:122:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › single filter by Created By — table updates @Filter (3.6s)
+  ✘   35 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:127:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › single filter by Status — table updates @Filter (5.5s)
+(node:3247) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓   36 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:132:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › multi-filter: Status then Created By — table updates @Filter (4.0s)
+  ✓   37 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:139:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › filter clear resets to all records @Filter (3.8s)
+  ✓   38 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:148:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › clear all selections button resets popup state @Filter (2.7s)
+  ✓   39 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:161:17 › Aerchain NSE - Intake Listing Page › Filters › Negative › filter search with non-existent user does not crash popup @Filter (2.0s)
+  ✓   40 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:173:17 › Aerchain NSE - Intake Listing Page › Filters › Edge Cases › special characters in filter search do not crash @Filter (2.2s)
+  ✓   41 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:180:17 › Aerchain NSE - Intake Listing Page › Filters › Edge Cases › long string in filter search does not crash @Filter (2.2s)
+  ✓   42 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:200:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Code column — first click applies a sort @Sort (2.1s)
+  ✓   43 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:205:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Code column — second click still shows records @Sort (2.7s)
+  ✓   44 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:211:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Subject column — applies a sort @Sort (2.1s)
+  ✓   45 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:216:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Subject column — second click still shows records @Sort (2.6s)
+  ✓   46 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:222:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Date column — applies a date sort @Sort (2.0s)
+  ✓   47 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:227:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Date column — second click still shows records @Sort (2.4s)
+  ✓   48 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:233:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sort Status column — applies a sort @Sort (2.1s)
+  ✓   49 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:238:17 › Aerchain NSE - Intake Listing Page › Sorting › Positive › sorting after tab switch still works @Sort (2.6s)
+  ✓   50 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:248:17 › Aerchain NSE - Intake Listing Page › Sorting › Negative › column values remain non-empty after sort (no crash for duplicates) @Sort (2.0s)
+  ✓   51 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:265:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by partial intake code returns results @Search (2.0s)
+  ✓   52 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:270:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by exact intake code returns at least 1 row @Search (2.1s)
+  ✓   53 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:276:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by partial subject returns results @Search (2.1s)
+  ✓   54 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:281:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search by exact subject returns results @Search (2.8s)
+  ✓   55 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:286:17 › Aerchain NSE - Intake Listing Page › Search › Positive › search with different case does not crash the page @Search (3.6s)
+  ✓   56 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:294:17 › Aerchain NSE - Intake Listing Page › Search › Positive › clearing search restores all records @Search (2.7s)
+  ✓   57 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:307:17 › Aerchain NSE - Intake Listing Page › Search › Negative › non-existent search term does not crash the page @Search (2.2s)
+  ✓   58 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:313:17 › Aerchain NSE - Intake Listing Page › Search › Negative › spaces-only search does not crash the page @Search (2.8s)
+  ✓   59 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:318:17 › Aerchain NSE - Intake Listing Page › Search › Negative › SQL injection string in search does not break the page @Search (2.1s)
+  ✓   60 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:323:17 › Aerchain NSE - Intake Listing Page › Search › Negative › XSS payload in search does not inject script @Search (2.1s)
+  ✓   61 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:334:17 › Aerchain NSE - Intake Listing Page › Search › Edge Cases › very long string in search does not crash @Search (2.0s)
+  ✓   62 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:339:17 › Aerchain NSE - Intake Listing Page › Search › Edge Cases › special characters in search do not crash @Search (2.1s)
+  ✓   63 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:344:17 › Aerchain NSE - Intake Listing Page › Search › Edge Cases › unicode characters in search do not crash @Search (2.1s)
+  ✓   64 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:360:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › pagination info shows "Showing X – Y of Z entries" @Pagination (1.7s)
+  ✓   65 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:367:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Previous button is disabled on first page @Pagination (1.7s)
+  ✓   66 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:371:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Next page changes pagination info @Pagination (3.0s)
+  ✓   67 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:379:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Next then Previous returns to original page @Pagination (3.4s)
+  ✓   68 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:388:17 › Aerchain NSE - Intake Listing Page › Pagination › Positive › Next button is disabled on last page @Pagination (15.1s)
+  ✓   69 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:398:17 › Aerchain NSE - Intake Listing Page › Pagination › Negative / Edge Cases › rapid next-page clicks do not break the table @Pagination (4.2s)
+  ✓   70 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:410:17 › Aerchain NSE - Intake Listing Page › Pagination › Pagination after Filter / Search / Sort › search on page 2 does not crash the page @Pagination (3.1s)
+  ✓   71 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:417:17 › Aerchain NSE - Intake Listing Page › Pagination › Pagination after Filter / Search / Sort › table shows correct rows on page 2 after sort @Pagination (3.0s)
+  ✓   72 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:435:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › clicking first row code opens the detail page @Navigation (2.0s)
+  ✓   73 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:440:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › URL changes to detail URL after row click @Navigation (3.0s)
+  ✓   74 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:445:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › browser back from detail page returns to listing @Navigation (2.0s)
+  ✓   75 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:452:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Positive › detail page contains the clicked intake code @Navigation (3.0s)
+  ✓   76 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:466:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Edge Cases › back and re-click the same row is stable @Navigation (3.2s)
+  ✓   77 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:475:17 › Aerchain NSE - Intake Listing Page › Row Navigation › Edge Cases › refreshing the detail page keeps the URL intact @Navigation (2.2s)
+  ✓   78 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:494:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › Create Intake button is visible on listing page @Create (1.8s)
+  ✓   79 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:498:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › Create Intake button navigates to create page @Create (2.1s)
+  ✓   80 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:503:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › URL is /intakes/create after clicking Create Intake @Create (2.4s)
+  ✓   81 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:508:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Positive › browser back from create page returns to listing @Create (2.3s)
+  ✓   82 [nsef-tests] › tests/testSuiteIntakeListing.spec.js:520:17 › Aerchain NSE - Intake Listing Page › Create Intake Button › Edge Cases › navigating back from create page preserves listing rows @Create (3.1s)
+  ✓   83 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:38:9 › Intake Negative › Submit empty intake → blocked on create page with section error badges @IntakeNegative @Validation (6.7s)
+[IntakeNeg] 17 red-bordered fields, 16 "is empty" messages
+  ✓   84 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:56:9 › Intake Negative › Empty submit → expanded sections show red borders + "is empty" messages @IntakeNegative @Validation (6.3s)
+  ✓   85 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:69:9 › Intake Negative › Title + summary only → still blocked (mandatory fields missing) @IntakeNegative @Validation (6.6s)
+  ✓   86 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:86:9 › Intake Negative › Whitespace-only title is treated as empty @IntakeNegative @Title (6.1s)
+  ✓   87 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:102:9 › Intake Negative › Very long title is accepted without breaking the form @IntakeNegative @Title (4.8s)
+  ✓   88 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:119:9 › Intake Negative › Special characters / HTML in title are stored literally @IntakeNegative @Title (4.6s)
+  ✓   89 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:136:9 › Intake Negative › Line-item Qty rejects negatives, accepts decimals @IntakeNegative @LineItem (8.9s)
+  ✓   90 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:156:9 › Intake Negative › Line-item Qty rejects zero / non-numeric only input @IntakeNegative @LineItem (10.0s)
+  ✓   91 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:178:9 › Intake Negative › Line-item Suggested Price rejects negative values @IntakeNegative @LineItem (7.5s)
+BRF No. value: "Budget 703"
+[Intake] Reject submitted
+  ✓   92 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:195:9 › Intake Negative › Create + submit intake → Reject with reason → status Rejected @IntakeNegative @Reject (52.9s)
+BRF No. value: "Budget 703"
+[Recall] Workflow runs after first submit: 2
+[Intake] Recall submitted
+[Recall] Draft workflow states — runs:2 inactive:2 active:0
+[Recall] Workflow runs after resubmit: 4
+  ✓   93 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:214:9 › Intake Negative › Create + submit → Recall → Draft → edit → resubmit re-triggers the workflow @IntakeNegative @Recall (1.4m)
+BRF No. value: "Budget 703"
+[Intake] Document regenerated
+[Intake] Downloaded document: intake-2211-2026-08-25_08-37-28.pdf
+[Intake] PDF "intake-2211-2026-08-25_08-37-28.pdf" → Status: "PENDING-APPROVAL"
+  ✓   94 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:270:9 › Intake Negative › Pending Approval: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document (55.6s)
+BRF No. value: "Budget 703"
+[Intake] Reject submitted
+[Intake] Document regenerated
+[Intake] Downloaded document: intake-2212-2026-08-25_08-38-29.pdf
+[Intake] PDF "intake-2212-2026-08-25_08-38-29.pdf" → Status: "REJECTED"
+  ✓   95 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:284:9 › Intake Negative › Rejected: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document (1.0m)
+BRF No. value: "Budget 703"
+[Intake] Recall submitted
+[Intake] Document regenerated
+[Intake] Downloaded document: intake-2213-2026-08-25_08-39-32.pdf
+[Intake] PDF "intake-2213-2026-08-25_08-39-32.pdf" → Status: "DRAFT"
+  ✓   96 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:299:9 › Intake Negative › Draft: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document (1.0m)
+BRF No. value: "Budget 703"
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[Intake] Document regenerated
+[Intake] Downloaded document: intake-2214-2026-08-25_08-40-58.pdf
+[Intake] PDF "intake-2214-2026-08-25_08-40-58.pdf" → Status: "RELEASED"
+  ✓   97 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:315:9 › Intake Negative › Released: Regenerate → Download → PDF shows correct status + fields @IntakeNegative @Document (1.4m)
+BRF No. value: "Budget 703"
+[Clone] Source intake: INT-FNSE-26-375
+[Intake] Submitted via workflow popup
+[Clone] Cloned intake: INT-FNSE-26-376
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[Clone] Clone workflow runs displayed: 2
+  ✓   98 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:337:9 › Intake Negative › Clone an intake → new intake → submit → approve to Released → only its own new workflows @IntakeNegative @Clone (1.8m)
+BRF No. value: "Budget 703"
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[Intake] Submitted via workflow popup
+[Amend] Amend submitted
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[Amend] Workflow states — completed:4 active:0 pending:1 inactive:0
+[Amend] Audit log — has new title:true has qty 100->150:true
+  ✓   99 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:374:9 › Intake Negative › Amend a Released intake → change qty + title → submit → complete workflow → Workflow Stages Completed @IntakeNegative @Amend (2.3m)
+BRF No. value: "Budget 703"
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[Reassign] Added purchasers: ["Amey Koli","Aniket Ravindra Pawar"]
+[Reassign] Replace dropdown options: ["None (add only)","Amey Koli","Aniket Ravindra Pawar"]
+[Reassign] Replace reassignment done — new purchaser: ["Santosh Harijan"]
+[Reassign] Replace dropdown after replace: ["None (add only)","Aniket Ravindra Pawar","Santosh Harijan"]
+[Reassign] Activity Log (first 1200 chars):
+Activity Log
+Download
+All
+Comments
+Activities
+Audit Logs
+Approvals
+NSEF Support Admin
+25 aug, 2026 at 2:15 pm
+Intake created and sent for approval successfully
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:16 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:16 pm
+Intake has been sent to approval successfully
+Reason: Approved by automation
+NSEF Support Admin
+25 aug, 2026 at 2:16 pm
+Approval has been Reassigned from NSEIL Support User to NSEF Support Admin
+Reason: Reassigned for automated testing
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:16 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:16 pm
+Intake has been sent to approval successfully
+Reason: Approved by automation
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:16 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+NSEF Support Admin
+25 aug, 2026 at 2:16 pm
+NSEF Support Admin has accepted the Purchaser assignment
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:16 pm
+Intake approved and released successfully by NSEF Support Admin
+Reason: Approved by automation
+NSEF Support Adm
+  ✓  100 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:411:9 › Intake Negative › Reassign Purchaser on a Released intake → add two, then replace → Activity Log captures both @IntakeNegative @Reassign (1.6m)
+BRF No. value: "Budget 703"
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[ReassignUser] reassigned to "Aash" — toast confirmed
+[Reassign] Activity Log (first 1200 chars):
+Activity Log
+Download
+All
+Comments
+Activities
+Audit Logs
+Approvals
+NSEF Support Admin
+25 aug, 2026 at 2:17 pm
+Intake created and sent for approval successfully
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:17 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:17 pm
+Intake has been sent to approval successfully
+Reason: Approved by automation
+NSEF Support Admin
+25 aug, 2026 at 2:17 pm
+Approval has been Reassigned from NSEIL Support User to NSEF Support Admin
+Reason: Reassigned for automated testing
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:18 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:18 pm
+Intake has been sent to approval successfully
+Reason: Approved by automation
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:18 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+NSEF Support Admin
+25 aug, 2026 at 2:18 pm
+NSEF Support Admin has accepted the Purchaser assignment
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:18 pm
+Intake approved and released successfully by NSEF Support Admin
+Reason: Approved by automation
+NSEF Support Adm
+  ✓  101 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:443:9 › Intake Negative › Reassign User on a Released intake → select user + reason → Submit @IntakeNegative @ReassignUser (1.5m)
+BRF No. value: "Budget 703"
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[MarkProcessed] submitted
+[Reassign] Activity Log (first 1200 chars):
+Activity Log
+Download
+All
+Comments
+Activities
+Audit Logs
+Approvals
+NSEF Support Admin
+25 aug, 2026 at 2:19 pm
+Intake created and sent for approval successfully
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:19 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:19 pm
+Intake has been sent to approval successfully
+Reason: Approved by automation
+NSEF Support Admin
+25 aug, 2026 at 2:19 pm
+Approval has been Reassigned from NSEIL Support User to NSEF Support Admin
+Reason: Reassigned for automated testing
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:19 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:19 pm
+Intake has been sent to approval successfully
+Reason: Approved by automation
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:19 pm
+Approved by NSEF Support Admin
+Reason: Approved by automation
+NSEF Support Admin
+25 aug, 2026 at 2:19 pm
+NSEF Support Admin has accepted the Purchaser assignment
+Approved by NSEF Support Admin
+25 aug, 2026 at 2:19 pm
+Intake approved and released successfully by NSEF Support Admin
+Reason: Approved by automation
+NSEF Support Adm
+  ✓  102 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:467:9 › Intake Negative › Mark Processed on a Released intake → status Processed → Activity Log captures it @IntakeNegative @MarkProcessed (1.4m)
+  ✓  103 [nsef-tests] › tests/testSuiteIntakeNegative.spec.js:490:9 › Intake Negative › Cancel a partially-filled intake discards and leaves the create page @IntakeNegative @Cancel (7.0s)
+  ✓  104 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:56:9 › CXO Create — Positive › Expand-all reveals the form sections and their fields @CXO @Positive (5.9s)
+  ✓  105 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:75:9 › CXO Create — Negative › Submit empty form is blocked with a "title required" toast @CXO @Negative (5.6s)
+  ✓  106 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:85:9 › CXO Create — Negative › Submit empty form is blocked with an "Item Details row required" toast @CXO @Negative (5.1s)
+  ✓  107 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:96:9 › CXO Create — Negative › Empty form flags every mandatory section with an error badge @CXO @Negative (5.0s)
+  ✘  108 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:108:9 › CXO Create — Negative › Empty form shows the expected mandatory-field error counts per section @CXO @Negative (5.4s)
+(node:3716) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓  109 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:120:9 › CXO Create — Negative › Submit with sections expanded shows a red border on unfilled mandatory fields @CXO @Negative (7.5s)
+  ✓  110 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:134:9 › CXO Create — Negative › Title-only submit clears the title error but stays blocked on other sections @CXO @Negative (5.3s)
+  ✓  111 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:149:9 › CXO Create — Negative › Cancel from the create page leaves the form @CXO @Negative (6.6s)
+  ✓  112 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:166:9 › CXO Create — Edge Cases › Whitespace-only title is accepted as-is (not trimmed, no title error) @CXO @Edge (5.7s)
+  ✓  113 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:184:9 › CXO Create — Edge Cases › Special characters / emoji are accepted in the title @CXO @Edge (4.7s)
+  ✓  114 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:199:9 › CXO Create — Edge Cases › Very long title (300 chars) is accepted in the title field @CXO @Edge (4.7s)
+  ✓  115 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:212:9 › CXO Create — Edge Cases › Qty field rejects negative values (minus sign stripped) @CXO @Edge (7.5s)
+  ✓  116 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:223:9 › CXO Create — Edge Cases › Qty field accepts decimal values @CXO @Edge (7.5s)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-356  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5727/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-356"
+[RevertBudget] Rollback Value = 200000
+[RevertBudget] Submitted revert of 200000 with remarks "Reverted by automation"
+[RevertBudget] Verified: no pending budget remains after revert
+  ✓  117 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:247:9 › CXO — Revert Pending Budget › Create + release a CXO → More → Revert Pending Budget → amount + reason → Submit @CXO @RevertBudget (2.0m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Approving stage 5...
+[CXO] Status Released after 5 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-357  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5728/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-357"
+[CXO] Clone submitted → new CXO on overview
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+  ✓  118 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:278:9 › CXO — More Dropdown (Released CXO) › Clone a Released CXO → pre-filled clone form → Submit → approve until Released @CXO @Clone (3.2m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-359  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5730/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-359"
+[CXO] Amend submitted → overview (Pending Approval)
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Audit Logs opened — content:
+Audit Logs
+NS
+NSEF Support Admin
+Aug 25th 2026, 2:28 PM
+S. No.	Change	From	To
+1	code	CXO-FNSE-26-359	CXO-FNSE-26-359/1
+2	status	released	pending-amend-approval
+3	subject	HG Automation CXO	HG Automation CXO Amended
+Close
+  ✓  119 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:297:9 › CXO — More Dropdown (Released CXO) › Amend a Released CXO → edit title → Submit with reason → approve until Released @CXO @Amend (3.2m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-360  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5731/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-360"
+[CXO] Mark Processed submitted
+  ✓  120 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:320:9 › CXO — More Dropdown (Released CXO) › Mark Processed a Released CXO → More → Mark Processed → reason → status Processed @CXO @MarkProcessed (2.0m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-361  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5732/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-361"
+[CXO] Cancel submitted
+  ✓  121 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:335:9 › CXO — More Dropdown (Released CXO) › Cancel a Released CXO → More → Cancel → reason → status Cancelled @CXO @Cancel (2.0m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Saved as Draft → overview
+[CXO] Saving CXO code: 5733  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5733/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "5733"
+[CXO] Document regenerated
+[CXO] Downloaded document: transaction-5733-2026-08-25_09-05-05.pdf
+[CXO] PDF "transaction-5733-2026-08-25_09-05-05.pdf" → Status: "DRAFT"
+  ✓  122 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:379:9 › CXO — Document (Regenerate + Download) › Draft: Regenerate → Download → PDF shows correct status + fields @CXO @Document (1.1m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Submitted → Pending Approval
+[CXO] Saving CXO code: CXO-FNSE-26-362  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5734/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-362"
+[CXO] Document regenerated
+[CXO] Downloaded document: transaction-5734-2026-08-25_09-06-11.pdf
+[CXO] PDF "transaction-5734-2026-08-25_09-06-11.pdf" → Status: "PENDING-APPROVAL"
+  ✓  123 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:394:9 › CXO — Document (Regenerate + Download) › Pending Approval: Regenerate → Download → PDF shows correct status + fields @CXO @Document (1.1m)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-363  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5735/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-363"
+[CXO] Document regenerated
+[CXO] Downloaded document: transaction-5735-2026-08-25_09-08-20.pdf
+[CXO] PDF "transaction-5735-2026-08-25_09-08-20.pdf" → Status: "RELEASED"
+  ✓  124 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:409:9 › CXO — Document (Regenerate + Download) › Released: Regenerate → Download → PDF shows correct status + fields @CXO @Document (2.1m)
+  ✘  125 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:424:9 › CXO — Document (Regenerate + Download) › Rejected: Regenerate → Download → PDF shows correct status + fields @CXO @Document (5.5s)
+(node:3940) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓  126 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:473:13 › CXO Listing Page › Page Load & Structure › listing page loads with table rows @Listing @Smoke (4.5s)
+  ✓  127 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:479:13 › CXO Listing Page › Page Load & Structure › all listing tabs are visible @Listing @Smoke (4.3s)
+  ✓  128 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:485:13 › CXO Listing Page › Page Load & Structure › Create CXO button and pagination info are visible @Listing @Smoke (4.8s)
+  ✓  129 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:496:13 › CXO Listing Page › Tabs › switching to "My Pending Approval" activates that tab @Listing @Tabs (5.5s)
+  ✓  130 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:503:13 › CXO Listing Page › Tabs › switching to "Draft" activates that tab @Listing @Tabs (4.9s)
+  ✓  131 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:510:13 › CXO Listing Page › Tabs › returning to "All" tab shows records again @Listing @Tabs (5.5s)
+  ✓  132 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:525:21 › CXO Listing Page › Sorting › Positive › sort Code column keeps records (first + second click) @Listing @Sort (5.2s)
+  ✓  133 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:525:21 › CXO Listing Page › Sorting › Positive › sort Subject column keeps records (first + second click) @Listing @Sort (5.3s)
+  ✓  134 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:525:21 › CXO Listing Page › Sorting › Positive › sort Date column keeps records (first + second click) @Listing @Sort (5.0s)
+  ✓  135 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:525:21 › CXO Listing Page › Sorting › Positive › sort Status column keeps records (first + second click) @Listing @Sort (4.9s)
+  ✓  136 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:537:17 › CXO Listing Page › Sorting › Negative › Code column values stay non-empty after sort (handles duplicates) @Listing @Sort (4.6s)
+  ✓  137 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:552:17 › CXO Listing Page › Search › Positive › search by partial code returns results @Listing @Search (4.9s)
+  ✓  138 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:559:17 › CXO Listing Page › Search › Positive › search by exact code returns at least one row @Listing @Search (5.5s)
+  ✓  139 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:566:17 › CXO Listing Page › Search › Positive › search by partial subject returns results @Listing @Search (5.5s)
+  ✓  140 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:573:17 › CXO Listing Page › Search › Positive › different-case search does not crash the page @Listing @Search (5.2s)
+  ✓  141 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:580:17 › CXO Listing Page › Search › Positive › clearing the search restores records @Listing @Search (5.8s)
+  ✓  142 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:590:17 › CXO Listing Page › Search › Negative › non-existent search term shows no results without crashing @Listing @Search (5.2s)
+  ✓  143 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:598:17 › CXO Listing Page › Search › Negative › spaces-only search does not crash the page @Listing @Search (5.0s)
+  ✓  144 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:605:17 › CXO Listing Page › Search › Negative › SQL-injection string does not break the page @Listing @Search (5.0s)
+  ✓  145 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:612:17 › CXO Listing Page › Search › Negative › XSS payload does not inject a script @Listing @Search (5.1s)
+  ✓  146 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:623:17 › CXO Listing Page › Search › Edge Cases › very long search string does not crash @Listing @Search (5.0s)
+  ✓  147 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:630:17 › CXO Listing Page › Search › Edge Cases › special characters in search do not crash @Listing @Search (5.0s)
+  ✓  148 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:637:17 › CXO Listing Page › Search › Edge Cases › unicode characters in search do not crash @Listing @Search (4.9s)
+  ✓  149 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:650:17 › CXO Listing Page › Filters › Positive › Status filter popup opens @Listing @Filter (4.2s)
+  ✓  150 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:657:17 › CXO Listing Page › Filters › Positive › Created By filter popup opens @Listing @Filter (4.2s)
+  ✓  151 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:664:17 › CXO Listing Page › Filters › Positive › filtering by Status updates the table @Listing @Filter (5.4s)
+  ✓  152 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:672:17 › CXO Listing Page › Filters › Positive › filtering by Created By updates the table @Listing @Filter (5.0s)
+  ✓  153 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:681:17 › CXO Listing Page › Filters › Negative / Edge › non-existent user in filter search does not crash the popup @Listing @Filter (4.4s)
+  ✓  154 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:689:17 › CXO Listing Page › Filters › Negative / Edge › special characters in filter search do not crash the popup @Listing @Filter (4.4s)
+  ✓  155 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:703:17 › CXO Listing Page › Pagination › Positive › pagination info shows "Showing X – Y of Z entries" @Listing @Pagination (4.6s)
+  ✓  156 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:712:17 › CXO Listing Page › Pagination › Positive › Previous is disabled on the first page @Listing @Pagination (4.7s)
+  ✓  157 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:718:17 › CXO Listing Page › Pagination › Positive › Next page changes the pagination range @Listing @Pagination (5.0s)
+  ✓  158 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:728:17 › CXO Listing Page › Pagination › Positive › Next then Previous returns to the original range @Listing @Pagination (5.6s)
+  ✓  159 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:739:17 › CXO Listing Page › Pagination › Positive › Next is disabled on the last page @Listing @Pagination (16.9s)
+  ✓  160 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:748:17 › CXO Listing Page › Pagination › Negative / Edge › search on page 2 does not crash the page @Listing @Pagination (5.7s)
+  ✓  161 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:763:17 › CXO Listing Page › Row Navigation › Positive › clicking the first row code opens the detail page @Listing @Navigation (4.2s)
+  ✓  162 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:770:17 › CXO Listing Page › Row Navigation › Positive › browser back from the detail page returns to the listing @Listing @Navigation (4.5s)
+  ✓  163 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:782:17 › CXO Listing Page › Row Navigation › Edge Cases › refreshing the detail page keeps the URL intact @Listing @Navigation (4.5s)
+  ✓  164 [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:797:13 › CXO Listing Page › Create CXO Button › Create CXO button opens the create page @Listing @Create (4.3s)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-364  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5736/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-364"
+  ✓  165 [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:49:9 › NSEF Happy Paths › Create CXO with all mandatory fields → verify BRF auto-populate → Submit @CXO @Smoke (1.9m)
+BRF No. value: "Budget 703"
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[Intake] Saving Intake code: INT-FNSE-26-381  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2222/overview
+[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-381"
+  ✓  166 [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:131:9 › NSEF Happy Paths › Create Intake → fill all details → Submit → approve until Released @Intake @Smoke (1.3m)
+[Intake] Searching listing for saved intake: INT-FNSE-26-381
+[Intake] Opened intake INT-FNSE-26-381 → https://nse-capp-v4-uat.aerchain.io/intakes/2222
+[Intake] Clicked Process button
+[Intake] Clicked Send for Sourcing
+[Sourcing] Expanded all sections
+[Sourcing] Payment Terms selected
+[Sourcing] Commercial Bid Due Date filled
+[Sourcing] Technical Bid Due Date filled
+[Sourcing] Expected Delivery Date filled
+[Sourcing] Supplier "HG Automation SUPP" added
+[Sourcing] Clicked Submit
+[Sourcing] Confirmed Process Request popup
+[Sourcing] Approving stage 1...
+[Sourcing] Approve button not visible for 4s — reloading (1/5)...
+[Sourcing] Approve button not visible for 4s — reloading (2/5)...
+[Sourcing] Approve button not visible for 4s — reloading (3/5)...
+[Sourcing] Approve button not visible for 4s — reloading (4/5)...
+[Sourcing] Approve button not visible for 4s — reloading (5/5)...
+[Sourcing] Approve button missing — reassigning approver to NSEF Support Admin...
+[Sourcing] Workflow approver reassigned to NSEF Support Admin
+[Sourcing] Approving stage 2...
+[Sourcing] RFX live (not Pending Approval) after 2 approval(s).
+[Sourcing] RFX code not displayed yet — waiting (1/18)...
+[Sourcing] Saving Sourcing Event code: RFX-26-229  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1383/overview
+[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-229"
+  ✓  167 [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:184:9 › NSEF Happy Paths › Open saved Intake from listing → Process → Send for Sourcing @Intake @Sourcing (1.4m)
+[Quote] On Quote Request listing page
+[Quote] Searching quote requests for: RFX-26-229
+[Quote] Opened sourcing event RFX-26-229 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1383
+[Quote] Clicked Submit Quote on supplier
+[Quote] Selected Commercial Quote
+[Quote] Preferred Currency set to INR
+[Quote] Unit Rate filled: 2000
+[Quote] Clicked Submit Quote
+[Quote] Confirmed quote submission popup
+[Quote] Quote form closed — submission processed
+[Quote] Sourcing status is Quoted
+  ✓  168 [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:232:9 › NSEF Happy Paths › Quote the RFX → foreclose @Sourcing @Quote (17.7s)
+[Quote] On Quote Request listing page
+[Quote] Searching quote requests for: RFX-26-229
+[Quote] Opened sourcing event RFX-26-229 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1383
+[Award] Clicked Foreclose
+[Award] Foreclose submitted
+[Award] On Analysis tab
+[Award] Clicked Award
+[Award] Pending Awarded Quantity: "100.00" → entering 100
+[Award] Allocated quantity filled: 100
+[Award] Clicked Award
+[Award] Workflow Summary submitted
+[Award] Workflow Stages → overall status: "Active" → NOT completed
+[Award] Approving (round 1)...
+[Award] Workflow Stages → overall status: "Active" → NOT completed
+[Award] Approve button not visible for 4s — reloading (1/1)...
+[Award] No Approve button — reassigning approver to NSEF Support Admin...
+[Award] Workflow approver reassigned to NSEF Support Admin
+[Award] Approving (round 2)...
+[Award] Workflow Stages → overall status: "Completed" → Completed
+[Award] Clicked back button beside award code
+[Award] Requisition code displayed: PR-DRAFT
+[Award] Requisition "PR-DRAFT" opened in new tab → https://nse-capp-uat.aerchain.io/requisitions/1091
+[Award] Saved to NSEFoundationData.json → savedRequisition.code = "PR-DRAFT"
+  ✓  169 [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:264:9 › NSEF Happy Paths › Award the RFX → wait for auto-created Purchase Requisition @Sourcing @Award (1.1m)
+[PR] Opening saved requisition PR-DRAFT → https://nse-capp-uat.aerchain.io/requisitions/1091
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/1091
+[PR] Clicked Edit
+[PR] Edit page loaded
+[PR] Effective from date filled with today: 2026-08-25
+[PR] Effective to date filled
+[PR] Purchase Type selected: First time/New
+[PR] Inward Required → Yes
+[PR] Inward Matching Criterion → Quantity
+[PR] Clicked Submit
+[PR] Confirmed Approvers popup
+[PR] Requisition status is Submitted
+[PR] Saved to NSEFoundationData.json → savedRequisition.code = "PR-NSEFN-26-125"
+  ✓  170 [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:310:9 › NSEF Happy Paths › PR edit → submit → status Submitted @Requisition @PR (27.9s)
+[PR] Opening saved requisition PR-NSEFN-26-125 → https://nse-capp-uat.aerchain.io/requisitions/1091
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/1091
+[PR] Status not "Processed" yet — reloading in 10s (1/60)...
+[PR] Status not "Processed" yet — reloading in 10s (2/60)...
+[PR] Status not "Processed" yet — reloading in 10s (3/60)...
+[PR] Status not "Processed" yet — reloading in 10s (4/60)...
+[PR] Status not "Processed" yet — reloading in 10s (5/60)...
+[PR] Status not "Processed" yet — reloading in 10s (6/60)...
+[PR] Status not "Processed" yet — reloading in 10s (7/60)...
+[PR] Status not "Processed" yet — reloading in 10s (8/60)...
+[PR] Status not "Processed" yet — reloading in 10s (9/60)...
+[PR] Status not "Processed" yet — reloading in 10s (10/60)...
+[PR] Status not "Processed" yet — reloading in 10s (11/60)...
+[PR] Status not "Processed" yet — reloading in 10s (12/60)...
+[PR] Status not "Processed" yet — reloading in 10s (13/60)...
+[PR] Status not "Processed" yet — reloading in 10s (14/60)...
+[PR] Status not "Processed" yet — reloading in 10s (15/60)...
+[PR] Status not "Processed" yet — reloading in 10s (16/60)...
+[PR] Status not "Processed" yet — reloading in 10s (17/60)...
+[PR] Status not "Processed" yet — reloading in 10s (18/60)...
+[PR] Status not "Processed" yet — reloading in 10s (19/60)...
+[PR] Status not "Processed" yet — reloading in 10s (20/60)...
+[PR] Status not "Processed" yet — reloading in 10s (21/60)...
+[PR] Status not "Processed" yet — reloading in 10s (22/60)...
+[PR] Status not "Processed" yet — reloading in 10s (23/60)...
+[PR] Status is "Processed".
+[PR] Status not "Completed" yet — reloading in 10s (1/60)...
+[PR] Status not "Completed" yet — reloading in 10s (2/60)...
+[PR] Status not "Completed" yet — reloading in 10s (3/60)...
+[PR] Status not "Completed" yet — reloading in 10s (4/60)...
+[PR] Status not "Completed" yet — reloading in 10s (5/60)...
+[PR] Status not "Completed" yet — reloading in 10s (6/60)...
+[PR] Status not "Completed" yet — reloading in 10s (7/60)...
+[PR] Status not "Completed" yet — reloading in 10s (8/60)...
+[PR] Status not "Completed" yet — reloading in 10s (9/60)...
+[PR] Status not "Completed" yet — reloading in 10s (10/60)...
+[PR] Status not "Completed" yet — reloading in 10s (11/60)...
+[PR] Status not "Completed" yet — reloading in 10s (12/60)...
+[PR] Status not "Completed" yet — reloading in 10s (13/60)...
+[PR] Status is "Completed".
+  ✓  171 [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:339:9 › NSEF Happy Paths › Submitted PR auto-processes → PRC (Processed) → PO (Completed) @Requisition @PRC @PO (8.2m)
+[PR] Opening saved requisition PR-NSEFN-26-125 → https://nse-capp-uat.aerchain.io/requisitions/1091
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/1091
+[PR] Opened Transactions tab
+[PR] Expanded Conversions section
+[PRC] Opened PRC-NSEFN-26-118 (Requisition Conversion View)
+[PO] Opened PO-NSEFN-26-204 in new tab → https://nse-capp-uat.aerchain.io/purchase-orders/1016
+[PO] Approving stage 1...
+[PO] Approved a stage
+[PO] Approving stage 2...
+[PO] Approved a stage
+[PO] Approving stage 3...
+[PO] Approved a stage
+[PO] Approvals complete (Create available) after 3 approval(s).
+[GRN] Create → GRN clicked
+[GRN] Submitted Select PO Items popup
+[GRN] On Create GRN page: https://nse-capp-uat.aerchain.io/pending-inwards/po/1016/inward
+[GRN] Filled Invoice Number + Delivery challan
+[GRN] Filled Delivery Note Reference + Document Date (2026-08-25 → "25/08/2026")
+[GRN] Line item — PO Quantity=100, Received=100
+[GRN] Clicked Submit
+[GRN] Confirmed Workflow Summary popup
+[GRN] GRN created → https://nse-capp-uat.aerchain.io/inwards/552
+[GRN] Saved to NSEFoundationData.json → savedGrn.code = "INW-NSEFN-26-105"
+[GRN] Approving stage 1...
+[GRN] Approved a stage
+[GRN] Status Inwarded after 1 approval(s).
+[GRN] Status is Inwarded
+  ✓  172 [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:361:9 › NSEF Happy Paths › Completed PR → open PO via conversion → GRN → approve until Inwarded @PO @GRN (57.3s)
+[PO] Opening saved PO PO-NSEFN-26-204 → https://nse-capp-uat.aerchain.io/purchase-orders/1016
+[PO] On PO page: https://nse-capp-uat.aerchain.io/purchase-orders/1016
+[INV] Create → Invoice clicked
+[INV] Submitted Select PO Items popup
+[INV] Proceeded Confirm Invoice Creation
+[INV] On Create Invoice page: https://nse-capp-uat.aerchain.io/invoices/new
+[INV] Uploaded invoice document: /Users/qa-hirak/Desktop/NSE E2E Automation/fixtures/invoice_document.png
+[INV] Invoice number bumped: INV-AUTO-099 → INV-AUTO-100
+[INV] Filled Invoice Number (INV-AUTO-100) + Invoice Date (2026-08-25)
+[INV] Period based Invoicing → No
+[INV] Extra billing → No
+[INV] Clicked FIX → Item Matching
+[INV] Selected GRN INW-NSEFN-26-105 in Item Matching (was unticked)
+[INV] Submitted Item Matching
+[INV] Clicked Submit (create page)
+[INV] Proceeded Validations popup
+[INV] Confirmed Workflow Summary popup
+[INV] Invoice submitted → https://nse-capp-uat.aerchain.io/invoices/1114
+[INV] Saved to NSEFoundationData.json → savedInvoice.code = "Invoice-FNSE-26-332"
+[INV] Approve missing while Pending Approval — reassigning to NSEF Support Admin...
+[INV] Workflow approver reassigned to NSEF Support Admin
+[INV] Approving stage 2...
+[INV] Approved a stage
+[INV] Approving stage 3...
+[INV] Approved a stage
+[INV] Approving stage 4...
+[INV] Approved a stage
+[INV] Approving stage 5...
+[INV] Approved a stage
+[INV] Status Pending Sync after 5 approval(s).
+[INV] Status is Pending Sync
+  ✓  173 [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:412:9 › NSEF Happy Paths › Invoice for the PO (matched to its GRN) → approve until Pending Sync @PO @Invoice (1.2m)
+[ACK] POST https://nse-api-uat.aerchain.io/invoice/ack → EXPENSE_RECORD_NO="Invoice-FNSE-26-332", response_body_reference="INV-AUTO-100"
+[ACK] Response 200: {"success":true,"error":null,"errors":[],"data":{}}
+[INV] Opening saved invoice Invoice-FNSE-26-332 → https://nse-capp-uat.aerchain.io/invoices/1114
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/1114
+[INV] Status is Accounted
+  ✓  174 [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:453:9 › NSEF Happy Paths › Acknowledge the Pending Sync invoice via API → status becomes Accounted @PO @Invoice @Ack (9.4s)
+[INV] Opening saved invoice Invoice-FNSE-26-332 → https://nse-capp-uat.aerchain.io/invoices/1114
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/1114
+[PAY] Paid Amount=200000, UTR=UTR1787650175390, Payment Date=2026-08-25
+[PAY] Success message: SuccessPAYMENT Submitted successfully
+[PAY] Payment UTR1787650175390 shows status Completed
+  ✓  175 [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js:469:9 › NSEF Happy Paths › Pay the Accounted invoice → Submit → payment shows Completed @PO @Invoice @Payment (12.3s)
+[ADMIN] Opened Org Settings (new tab)
+[ADMIN] Expanded User Management
+[ADMIN] Opened Users list
+[ADMIN] Opened user "NSEF Support Admin" (Update User drawer, retry)
+[ADMIN] Dept Full Access started CHECKED → uncheck, then close settings tab
+[ADMIN] Returned to v4 dashboard tab
+[ADMIN] User dashboard displayed
+  ✓  176 [nsef-tests] › tests/testSuiteNSETracksHotfixes.spec.js:32:9 › NSE Tracks & Hotfixes › Tracks › Modules show transactions per user department access @Tracks @DeptAccess (6.4s)
+  ✓  177 [nsef-tests] › tests/testSuiteRFXtests.spec.js:59:9 › RFX Listing Page › listing page loads with table rows @RFX @Listing @Smoke (4.1s)
+  ✓  178 [nsef-tests] › tests/testSuiteRFXtests.spec.js:68:13 › RFX Listing Page › Search — Negative › non-existent search term shows no results without crashing @RFX @Listing @Search (4.9s)
+  ✓  179 [nsef-tests] › tests/testSuiteRFXtests.spec.js:76:13 › RFX Listing Page › Search — Negative › spaces-only search does not crash the page @RFX @Listing @Search (4.6s)
+  ✓  180 [nsef-tests] › tests/testSuiteRFXtests.spec.js:83:13 › RFX Listing Page › Search — Negative › SQL-injection string does not break the page @RFX @Listing @Search (4.6s)
+  ✓  181 [nsef-tests] › tests/testSuiteRFXtests.spec.js:90:13 › RFX Listing Page › Search — Negative › XSS payload does not inject a script @RFX @Listing @Search (4.7s)
+  ✓  182 [nsef-tests] › tests/testSuiteRFXtests.spec.js:102:13 › RFX Listing Page › Search — Edge Cases › very long search string does not crash @RFX @Listing @Search (5.0s)
+  ✓  183 [nsef-tests] › tests/testSuiteRFXtests.spec.js:109:13 › RFX Listing Page › Search — Edge Cases › special characters in search do not crash @RFX @Listing @Search (4.6s)
+  ✓  184 [nsef-tests] › tests/testSuiteRFXtests.spec.js:116:13 › RFX Listing Page › Search — Edge Cases › unicode characters in search do not crash @RFX @Listing @Search (4.7s)
+  ✓  185 [nsef-tests] › tests/testSuiteRFXtests.spec.js:123:13 › RFX Listing Page › Search — Edge Cases › different-case search does not crash the page @RFX @Listing @Search (5.1s)
+  ✓  186 [nsef-tests] › tests/testSuiteRFXtests.spec.js:130:13 › RFX Listing Page › Search — Edge Cases › clearing the search restores records @RFX @Listing @Search (5.5s)
+  ✓  187 [nsef-tests] › tests/testSuiteRFXtests.spec.js:142:13 › RFX Listing Page › Filters — Negative / Edge › non-existent value in Status filter does not crash the popup @RFX @Listing @Filter (5.2s)
+  ✓  188 [nsef-tests] › tests/testSuiteRFXtests.spec.js:150:13 › RFX Listing Page › Filters — Negative / Edge › special characters in Created By filter do not crash the popup @RFX @Listing @Filter (5.1s)
+  ✓  189 [nsef-tests] › tests/testSuiteRFXtests.spec.js:162:13 › RFX Listing Page › Pagination — Negative / Edge › search on page 2 does not crash the page @RFX @Listing @Pagination (5.4s)
+  ✓  190 [nsef-tests] › tests/testSuiteRFXtests.spec.js:175:13 › RFX Listing Page › Row Navigation › clicking the first row opens the RFX detail page @RFX @Listing @Navigation (4.5s)
+  ✓  191 [nsef-tests] › tests/testSuiteRFXtests.spec.js:182:13 › RFX Listing Page › Row Navigation › browser back from the detail page returns to the listing @RFX @Listing @Navigation (4.7s)
+  ✓  192 [nsef-tests] › tests/testSuiteRFXtests.spec.js:192:13 › RFX Listing Page › Row Navigation › refreshing the detail page keeps the URL intact @RFX @Listing @Navigation (4.5s)
+[CXO] Audit Logs opened — content:
+Audit Logs
+No audit logs available
+Close
+  ✓  193 [nsef-tests] › tests/testSuiteRFXtests.spec.js:213:9 › RFX More Dropdown (Quote Request) › More → Audit Logs opens the audit-log dialog @RFX @MoreDropdown (8.9s)
+  ✓  194 [nsef-tests] › tests/testSuiteRFXtests.spec.js:221:9 › RFX More Dropdown (Quote Request) › More → Workflow Stages opens the Workflow Steps panel @RFX @MoreDropdown (9.6s)
+[CXO] Document regenerated
+  ✓  195 [nsef-tests] › tests/testSuiteRFXtests.spec.js:230:9 › RFX More Dropdown (Quote Request) › More → Regenerate Document shows the success toast @RFX @MoreDropdown (12.6s)
+[CXO] Downloaded document: quote-request-1383-2026-08-25_09-31-31.pdf
+  ✓  196 [nsef-tests] › tests/testSuiteRFXtests.spec.js:237:9 › RFX More Dropdown (Quote Request) › More → Download Document downloads the RFX PDF @RFX @MoreDropdown (11.7s)
+BRF No. value: "Budget 703"
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[Intake] Saving Intake code: INT-FNSE-26-382  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2223/overview
+[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-382"
+[Intake] Searching listing for saved intake: INT-FNSE-26-382
+[Intake] Opened intake INT-FNSE-26-382 → https://nse-capp-v4-uat.aerchain.io/intakes/2223/overview
+[Intake] Clicked Process button
+[Intake] Clicked Send for Sourcing
+[Sourcing] Expanded all sections
+[Sourcing] Payment Terms selected
+[Sourcing] Commercial Bid Due Date filled
+[Sourcing] Technical Bid Due Date filled
+[Sourcing] Expected Delivery Date filled
+[Sourcing] Supplier "HG Automation SUPP" added
+[Sourcing] Clicked Submit
+[Sourcing] Confirmed Process Request popup
+[Sourcing] Saving Sourcing Event code: RFX-26-230  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1384/overview
+[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-230"
+[RFX] Reject submitted
+  ✓  197 [nsef-tests] › tests/testSuiteRFXtests.spec.js:256:9 › RFX Reject during workflow › Sourcing event → submit → Reject at Pending Approval → status Rejected @RFX @Reject (1.8m)
+(node:4459) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✓ BRF auto-populated: "Dont Touch"
+[CXO] Approving stage 1...
+[CXO] Approve button not visible for 4s — reloading (1/5)...
+[CXO] Approve button not visible for 4s — reloading (2/5)...
+[CXO] Approve button not visible for 4s — reloading (3/5)...
+[CXO] Approve button not visible for 4s — reloading (4/5)...
+[CXO] Approve button not visible for 4s — reloading (5/5)...
+[CXO] Approve button missing — reassigning approver to NSEF Support Admin...
+[CXO] Workflow approver reassigned to NSEF Support Admin
+[CXO] Approving stage 2...
+[CXO] Approving stage 3...
+[CXO] Approving stage 4...
+[CXO] Status Released after 4 approval(s).
+[CXO] Saving CXO code: CXO-FNSE-26-365  |  URL: https://nse-capp-v4-uat.aerchain.io/cxos/5737/overview
+[CXO] Saved to NSEFoundationData.json → savedCxo.code = "CXO-FNSE-26-365"
+  ✓  198 [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:51:9 › Supplier Portal Happy Path › Create CXO with all mandatory fields → Submit → Released @Supplier @CXO (1.9m)
+BRF No. value: "Budget 703"
+[Intake] Approving stage 1...
+[Intake] No action button at step 2 — reloading (1/2)...
+[Intake] No action button at step 3 — reloading (2/2)...
+[Intake] Still no action button — reassigning approver to NSEF Support Admin...
+[Intake] Workflow approver reassigned to NSEF Support Admin
+[Intake] Approving stage 5...
+[Intake] Clicking Acknowledge/Accept step 6...
+[Intake] Status Released/Active after 6 step(s).
+[Intake] Saving Intake code: INT-FNSE-26-383  |  URL: https://nse-capp-v4-uat.aerchain.io/intakes/2224/overview
+[Intake] Saved to NSEFoundationData.json → savedIntake.code = "INT-FNSE-26-383"
+  ✓  199 [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:105:9 › Supplier Portal Happy Path › Create Intake → fill all → Submit → Released @Supplier @Intake (1.2m)
+[Intake] Searching listing for saved intake: INT-FNSE-26-383
+[Intake] Opened intake INT-FNSE-26-383 → https://nse-capp-v4-uat.aerchain.io/intakes/2224
+[Intake] Clicked Process button
+[Intake] Clicked Send for Sourcing
+[Sourcing] Expanded all sections
+[Sourcing] Payment Terms selected
+[Sourcing] Commercial Bid Due Date filled
+[Sourcing] Technical Bid Due Date filled
+[Sourcing] Expected Delivery Date filled
+[Sourcing] Supplier "HG Automation SUPP" added
+[Sourcing] Clicked Submit
+[Sourcing] Confirmed Process Request popup
+[Sourcing] Approving stage 1...
+[Sourcing] Approve button not visible for 4s — reloading (1/5)...
+[Sourcing] Approve button not visible for 4s — reloading (2/5)...
+[Sourcing] Approve button not visible for 4s — reloading (3/5)...
+[Sourcing] Approve button not visible for 4s — reloading (4/5)...
+[Sourcing] Approve button not visible for 4s — reloading (5/5)...
+[Sourcing] Approve button missing — reassigning approver to NSEF Support Admin...
+[Sourcing] Workflow approver reassigned to NSEF Support Admin
+[Sourcing] Approving stage 2...
+[Sourcing] RFX live (not Pending Approval) after 2 approval(s).
+[Sourcing] RFX code not displayed yet — waiting (1/18)...
+[Sourcing] Saving Sourcing Event code: RFX-26-231  |  URL: https://nse-capp-v4-uat.aerchain.io/quote-requests/1385/overview
+[Sourcing] Saved to NSEFoundationData.json → savedSourcingEvent.code = "RFX-26-231"
+  ✓  200 [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:142:9 › Supplier Portal Happy Path › Open Intake → Process → Send for Sourcing → RFX live @Supplier @Sourcing (1.4m)
+[SAPP RFX] Opening RFX-26-231
+[SAPP RFX] Search box not present — clicking row link directly
+[SAPP RFX] Opened RFX-26-231 → https://nse-sapp-v4-uat.aerchain.io/supplier-quote-requests/2400
+[SAPP RFX] Clicked Accept
+[SAPP RFX] Agreed to Terms & Conditions
+[SAPP RFX] Confirmed Accept
+[SAPP RFX] Clicked Submit Quote
+[SAPP RFX] Selected Commercial
+[SAPP RFX] Preferred Currency = INR
+[SAPP RFX] Unit Rate = 2000
+[SAPP RFX] Clicked Submit Quote (form)
+[SAPP RFX] Confirmed submission
+[SAPP RFX] Status = Quoted
+  ✓  201 [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:164:9 › Supplier Portal Happy Path › [SAPP] Quote the RFX → Accept → Commercial Quote → Submit @Supplier @SAPP @Quote (16.7s)
+[Quote] On Quote Request listing page
+[Quote] Searching quote requests for: RFX-26-231
+[Quote] Opened sourcing event RFX-26-231 → https://nse-capp-v4-uat.aerchain.io/quote-requests/1385
+[Award] Clicked Foreclose
+[Award] Foreclose submitted
+[Award] On Analysis tab
+[Award] Clicked Award
+[Award] Pending Awarded Quantity: "100.00" → entering 100
+[Award] Allocated quantity filled: 100
+[Award] Clicked Award
+[Award] Workflow Summary submitted
+[Award] Workflow Stages → overall status: "Active" → NOT completed
+[Award] Approving (round 1)...
+[Award] Workflow Stages → overall status: "Active" → NOT completed
+[Award] Approve button not visible for 4s — reloading (1/1)...
+[Award] No Approve button — reassigning approver to NSEF Support Admin...
+[Award] Workflow approver reassigned to NSEF Support Admin
+[Award] Approving (round 2)...
+[Award] Workflow Stages → overall status: "Completed" → Completed
+[Award] Clicked back button beside award code
+[Award] Requisition code displayed: PR-DRAFT
+[Award] Requisition "PR-DRAFT" opened in new tab → https://nse-capp-uat.aerchain.io/requisitions/1092
+[Award] Saved to NSEFoundationData.json → savedRequisition.code = "PR-DRAFT"
+  ✓  202 [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:184:9 › Supplier Portal Happy Path › Award the RFX → foreclose → auto-created PR @Supplier @Award (1.1m)
+[PR] Opening saved requisition PR-DRAFT → https://nse-capp-uat.aerchain.io/requisitions/1092
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/1092
+[PR] Clicked Edit
+[PR] Edit page loaded
+[PR] Effective from date filled with today: 2026-08-25
+[PR] Effective to date filled
+[PR] Purchase Type selected: First time/New
+[PR] Inward Required → Yes
+[PR] Inward Matching Criterion → Quantity
+[PR] Clicked Submit
+[PR] Confirmed Approvers popup
+[PR] Requisition status is Submitted
+[PR] Saved to NSEFoundationData.json → savedRequisition.code = "PR-NSEFN-26-126"
+  ✓  203 [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:206:9 › Supplier Portal Happy Path › PR edit → submit → Submitted @Supplier @PR (26.0s)
+[PR] Opening saved requisition PR-NSEFN-26-126 → https://nse-capp-uat.aerchain.io/requisitions/1092
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/1092
+[PR] Status not "Processed" yet — reloading in 10s (1/60)...
+[PR] Status not "Processed" yet — reloading in 10s (2/60)...
+[PR] Status not "Processed" yet — reloading in 10s (3/60)...
+[PR] Status not "Processed" yet — reloading in 10s (4/60)...
+[PR] Status not "Processed" yet — reloading in 10s (5/60)...
+[PR] Status not "Processed" yet — reloading in 10s (6/60)...
+[PR] Status not "Processed" yet — reloading in 10s (7/60)...
+[PR] Status not "Processed" yet — reloading in 10s (8/60)...
+[PR] Status not "Processed" yet — reloading in 10s (9/60)...
+[PR] Status not "Processed" yet — reloading in 10s (10/60)...
+[PR] Status not "Processed" yet — reloading in 10s (11/60)...
+[PR] Status not "Processed" yet — reloading in 10s (12/60)...
+[PR] Status not "Processed" yet — reloading in 10s (13/60)...
+[PR] Status not "Processed" yet — reloading in 10s (14/60)...
+[PR] Status not "Processed" yet — reloading in 10s (15/60)...
+[PR] Status not "Processed" yet — reloading in 10s (16/60)...
+[PR] Status not "Processed" yet — reloading in 10s (17/60)...
+[PR] Status not "Processed" yet — reloading in 10s (18/60)...
+[PR] Status not "Processed" yet — reloading in 10s (19/60)...
+[PR] Status not "Processed" yet — reloading in 10s (20/60)...
+[PR] Status not "Processed" yet — reloading in 10s (21/60)...
+[PR] Status not "Processed" yet — reloading in 10s (22/60)...
+[PR] Status not "Processed" yet — reloading in 10s (23/60)...
+[PR] Status is "Processed".
+[PR] Status not "Completed" yet — reloading in 10s (1/60)...
+[PR] Status not "Completed" yet — reloading in 10s (2/60)...
+[PR] Status not "Completed" yet — reloading in 10s (3/60)...
+[PR] Status not "Completed" yet — reloading in 10s (4/60)...
+[PR] Status not "Completed" yet — reloading in 10s (5/60)...
+[PR] Status not "Completed" yet — reloading in 10s (6/60)...
+[PR] Status not "Completed" yet — reloading in 10s (7/60)...
+[PR] Status not "Completed" yet — reloading in 10s (8/60)...
+[PR] Status not "Completed" yet — reloading in 10s (9/60)...
+[PR] Status not "Completed" yet — reloading in 10s (10/60)...
+[PR] Status not "Completed" yet — reloading in 10s (11/60)...
+[PR] Status not "Completed" yet — reloading in 10s (12/60)...
+[PR] Status not "Completed" yet — reloading in 10s (13/60)...
+[PR] Status is "Completed".
+  ✓  204 [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:225:9 › Supplier Portal Happy Path › Submitted PR → PRC (Processed) → PO (Completed) @Supplier @PRC @PO (8.2m)
+[PR] Opening saved requisition PR-NSEFN-26-126 → https://nse-capp-uat.aerchain.io/requisitions/1092
+[PR] On requisition page: https://nse-capp-uat.aerchain.io/requisitions/1092
+[PR] Opened Transactions tab
+[PR] Expanded Conversions section
+[PRC] Opened PRC-NSEFN-26-119 (Requisition Conversion View)
+[PO] Opened PO-NSEFN-26-205 in new tab → https://nse-capp-uat.aerchain.io/purchase-orders/1017
+[PO] Approving stage 1...
+[PO] Approved a stage
+[PO] Approving stage 2...
+[PO] Approved a stage
+[PO] Approving stage 3...
+[PO] Approved a stage
+[PO] Approvals complete (Create available) after 3 approval(s).
+[SAPP PO] Searching for PO-NSEFN-26-205
+[SAPP PO] Opened PO-NSEFN-26-205 → https://nse-sapp-uat.aerchain.io/purchase-orders/1017
+[SAPP PO] Clicked Accept
+[SAPP PO] Confirmed Accept
+[PO] Opening saved PO PO-NSEFN-26-205 → https://nse-capp-uat.aerchain.io/purchase-orders/1017
+[PO] On PO page: https://nse-capp-uat.aerchain.io/purchase-orders/1017
+[GRN] Create → GRN clicked
+[GRN] Submitted Select PO Items popup
+[GRN] On Create GRN page: https://nse-capp-uat.aerchain.io/pending-inwards/po/1017/inward
+[GRN] Filled Invoice Number + Delivery challan
+[GRN] Filled Delivery Note Reference + Document Date (2026-08-25 → "25/08/2026")
+[GRN] Line item — PO Quantity=100, Received=100
+[GRN] Clicked Submit
+[GRN] Confirmed Workflow Summary popup
+[GRN] GRN created → https://nse-capp-uat.aerchain.io/inwards/553
+[GRN] Saved to NSEFoundationData.json → savedGrn.code = "INW-NSEFN-26-106"
+[GRN] Approving stage 1...
+[GRN] Approved a stage
+[GRN] Status Inwarded after 1 approval(s).
+[GRN] Status is Inwarded
+  ✓  205 [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:240:9 › Supplier Portal Happy Path › PO approve → [SAPP] Accept PO → [CAPP] Create GRN → Inwarded @Supplier @SAPP @GRN (1.2m)
+[SAPP PO] Searching for PO-NSEFN-26-205
+[SAPP PO] Opened PO-NSEFN-26-205 → https://nse-sapp-uat.aerchain.io/purchase-orders/1017
+[SAPP PO] Create present, no Accept — PO already accepted
+[SAPP PO] Create → Invoice
+[SAPP Invoice] Submitted "Select PO Items" dialog
+[SAPP Invoice] Confirmed "Confirm Invoice Creation" → Proceed
+[SAPP Invoice] Invoice number bumped: INV-AUTO-100 → INV-AUTO-101
+[SAPP Invoice] Invoice Date set to today (25/08/2026)
+[SAPP Invoice] Period based Invoicing → No
+[SAPP Invoice] Extra billing → No
+[SAPP Invoice] Filled form (Invoice Number=INV-AUTO-101, date=today, Period/Extra=No, document uploaded)
+[SAPP Invoice] Clicked Submit (attempt 1)
+[SAPP Invoice] Clicked Submit (attempt 2)
+[SAPP Invoice] Validations popup → Proceed
+[SAPP Invoice] Approvers popup → Submit
+[SAPP Invoice] Invoice created → https://nse-sapp-uat.aerchain.io/invoices/1115
+[SAPP Invoice] Saved savedInvoice.code="Invoice-FNSE-26-334", CAPP url=https://nse-capp-uat.aerchain.io/invoices/1115
+[INV] Opening saved invoice Invoice-FNSE-26-334 → https://nse-capp-uat.aerchain.io/invoices/1115
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/1115
+[INV] Workflow approver reassigned to NSEF Support Admin
+[INV] Added GRN INW-NSEFN-26-106 in Item Matching
+[INV] Submitted Item Matching
+[INV] Clicked Review → opening invoice in edit mode
+[INV] Clicked review Submit (attempt 1)
+[INV] Clicked review Submit (attempt 2)
+[INV] Validations popup → Proceed
+[INV] Approvers popup → Submit
+[INV] No Approve button and not Pending Approval — reloading to re-check status...
+[INV] Approve missing while Pending Approval — reassigning to NSEF Support Admin...
+[INV] Workflow approver reassigned to NSEF Support Admin
+[INV] Approving stage 3...
+[INV] Approved a stage
+[INV] Approving stage 4...
+[INV] Approved a stage
+[INV] Approving stage 5...
+[INV] Approved a stage
+[INV] Approving stage 6...
+[INV] Approved a stage
+[INV] Status Pending Sync after 6 approval(s).
+[INV] Status is Pending Sync
+  ✓  206 [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:281:9 › Supplier Portal Happy Path › [SAPP] Create Invoice for PO → [CAPP] review → Pending Sync @Supplier @SAPP @Invoice (1.6m)
+[ACK] POST https://nse-api-uat.aerchain.io/invoice/ack → EXPENSE_RECORD_NO="Invoice-FNSE-26-334", response_body_reference="INV-AUTO-101"
+[ACK] Response 200: {"success":true,"error":null,"errors":[],"data":{}}
+[INV] Opening saved invoice Invoice-FNSE-26-334 → https://nse-capp-uat.aerchain.io/invoices/1115
+[INV] On invoice page: https://nse-capp-uat.aerchain.io/invoices/1115
+[INV] Status is Accounted
+  ✓  207 [supplier-tests] › tests/testSuiteSupplierPortal.spec.js:307:9 › Supplier Portal Happy Path › Acknowledge the Pending Sync invoice via API → Accounted @Supplier @Ack (9.5s)
+
+
+  1) [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:273:9 › All-modules reject → edit → resubmit › Invoice (resume from saved PO): create Invoice → reject → edit (qty↓) → reduced qty available @RejectEdit @InvoiceOnly 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//button[contains(normalize-space(.),\'Create\')]').first()[22m
+
+
+       at ../pages/NSEFoundationActions.js:4124
+
+      4122 |
+      4123 |     async clickPoCreateInvoice() {
+    > 4124 |         await this.page.locator(`xpath=${L.poCreateBtn}`).first().click();
+           |                                                                   ^
+      4125 |         await this.page.waitForTimeout(800);
+      4126 |         const inv = this.page.locator(`xpath=${L.poCreateInvoiceOption}`).first();
+      4127 |         await inv.waitFor({ state: 'visible', timeout: 10000 });
+        at NSEFoundationActions.clickPoCreateInvoice (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:4124:67)
+        at NSEFoundationActions.assertPoQtyAvailableForInvoice (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:5117:20)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteallmodulesrejectedit.spec.js:319:9
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-9cfb3-able-RejectEdit-InvoiceOnly-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-9cfb3-able-RejectEdit-InvoiceOnly-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteallmodulesrejecte-9cfb3-able-RejectEdit-InvoiceOnly-nsef-tests/error-context.md
+
+  2) [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:328:9 › All-modules reject → edit → resubmit › Invoice (resume from rejected invoice): edit (qty↓) → resubmit → approve → ack → reduced qty available @RejectEdit @InvoiceEditOnly 
+
+    TimeoutError: locator.click: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('//button[.//img[@alt=\'Edit\']]').first()[22m
+    [2m    - locator resolved to <button disabled tabindex="-1" type="outlined" progresssize="14" iconposition="right" iconstyle="[object Object]" buttonstyle="[object Object]" class="MuiButtonBase-root MuiButton-root MuiButton-text makeStyles-outLinedButtonDisabled-595 makeStyles-outLinedButtonDisabled-607 undefined MuiButton-textSizeSmall MuiButton-sizeSmall Mui-disabled Mui-disabled">…</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    9 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 500ms[22m
+
+
+       at ../pages/NSEFoundationActions.js:4921
+
+      4919 |         const iconBtn = this.page.locator(`xpath=${L.cappEditIconBtn}`).first();
+      4920 |         if (await iconBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
+    > 4921 |             await iconBtn.click();
+           |                           ^
+      4922 |             await this.page.waitForTimeout(2500);
+      4923 |             console.log(`[${tag}] Opened edit via header pencil icon`);
+      4924 |             return true;
+        at NSEFoundationActions.openCappEditForm (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:4921:27)
+        at NSEFoundationActions.editInvoiceLowerQtyAndSubmit (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:5081:14)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteallmodulesrejectedit.spec.js:334:9
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-926b5--RejectEdit-InvoiceEditOnly-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteallmodulesrejecte-926b5--RejectEdit-InvoiceEditOnly-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteallmodulesrejecte-926b5--RejectEdit-InvoiceEditOnly-nsef-tests/error-context.md
+
+  3) [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:235:9 › Non-PO (CXO) Invoice › Rejection keeps budget consumed; cancellation releases it @NonPO @Budget @Reject @Cancel 
+
+    Error: [NONPO] no "Reject" under More. Menu shows: ["Settle Advances","More","Overview","Transactions","CXO-FNSE-26-355","HG Automation SUPP","invoice_document.png","Manpower (T&M)","Reassign Workflow Approver","Reassign User","Recall","Generate Document"]
+
+       at ../pages/NSEFoundationActions.js:5963
+
+      5961 |             btn = this.page.locator(`xpath=//*[@role="menuitem"][normalize-space(.)="Reject"]`).first();
+      5962 |             if (!await btn.isVisible({ timeout: 8000 }).catch(() => false)) {
+    > 5963 |                 throw new Error('[NONPO] no "Reject" under More. Menu shows: ' +
+           |                       ^
+      5964 |                     JSON.stringify(await this._listInvoiceActions()));
+      5965 |             }
+      5966 |         }
+        at NSEFoundationActions.rejectInvoice (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:5963:23)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteCxoInvoice.spec.js:249:9
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteCxoInvoice-Non-PO-544a0--NonPO-Budget-Reject-Cancel-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteCxoInvoice-Non-PO-544a0--NonPO-Budget-Reject-Cancel-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteCxoInvoice-Non-PO-544a0--NonPO-Budget-Reject-Cancel-nsef-tests/error-context.md
+
+  4) [nsef-tests] › tests/testSuiteIntakeListing.spec.js:127:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › single filter by Status — table updates @Filter 
+
+    TimeoutError: page.goto: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - navigating to "https://nse-capp-v4-uat.aerchain.io/intakes", waiting until "load"[22m
+
+
+       at ../pages/intakeListingActions.js:78
+
+      76 |
+      77 |     async navigateToListingPage(baseUrl = 'https://nse-capp-v4-uat.aerchain.io') {
+    > 78 |         await this.page.goto(`${baseUrl}/intakes`);
+         |                         ^
+      79 |         await this.waitForListingPageLoad();
+      80 |     }
+      81 |
+        at intakeListingActions.navigateToListingPage (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/intakeListingActions.js:78:25)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteIntakeListing.spec.js:19:23
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-1c8a8-atus-—-table-updates-Filter-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteIntakeListing-Aer-1c8a8-atus-—-table-updates-Filter-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteIntakeListing-Aer-1c8a8-atus-—-table-updates-Filter-nsef-tests/error-context.md
+
+  5) [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:108:9 › CXO Create — Negative › Empty form shows the expected mandatory-field error counts per section @CXO @Negative 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 1[39m
+
+    [33m@@ -1,7 +1,7 @@[39m
+    [2m  Array [[22m
+    [32m-   8,[39m
+    [31m+   6,[39m
+    [2m    4,[22m
+    [2m    9,[22m
+    [2m    4,[22m
+    [2m    1,[22m
+    [2m    1,[22m
+
+      114 |         // Badges render in section order: Header(8), Basic(4), Particulars(9),
+      115 |         // Purchase Business Case(4), Item Details(1), Suggested Suppliers(1)
+    > 116 |         expect(await a.getErrorBadgeCounts()).toEqual(data.cxoValidation.expectedErrorBadgeCounts);
+          |                                               ^
+      117 |         await a.assertStillOnCreatePage();
+      118 |     });
+      119 |
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteNsefCXOtest.spec.js:116:47
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteNsefCXOtest-CXO-C-5494f-ts-per-section-CXO-Negative-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteNsefCXOtest-CXO-C-5494f-ts-per-section-CXO-Negative-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteNsefCXOtest-CXO-C-5494f-ts-per-section-CXO-Negative-nsef-tests/error-context.md
+
+  6) [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:424:9 › CXO — Document (Regenerate + Download) › Rejected: Regenerate → Download → PDF shows correct status + fields @CXO @Document 
+
+    TimeoutError: page.goto: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - navigating to "https://nse-capp-v4-uat.aerchain.io/", waiting until "load"[22m
+
+
+       at ../pages/NSEFoundationActions.js:67
+
+      65 |      */
+      66 |     async openApp(data) {
+    > 67 |         await this.page.goto(`${data.loginUrl}/`);
+         |                         ^
+      68 |         await this.page.waitForLoadState('domcontentloaded');
+      69 |         const emailField = this.page.locator(L.loginEmailField);
+      70 |         if (await emailField.isVisible({ timeout: 6000 }).catch(() => false)) {
+        at NSEFoundationActions.openApp (/Users/qa-hirak/Desktop/NSE E2E Automation/pages/NSEFoundationActions.js:67:25)
+        at loginAndOpenCxoCreate (/Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteNsefCXOtest.spec.js:34:13)
+        at /Users/qa-hirak/Desktop/NSE E2E Automation/tests/testSuiteNsefCXOtest.spec.js:427:19
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/testSuiteNsefCXOtest-CXO-—-d3d4a--status-fields-CXO-Document-nsef-tests/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/testSuiteNsefCXOtest-CXO-—-d3d4a--status-fields-CXO-Document-nsef-tests/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/testSuiteNsefCXOtest-CXO-—-d3d4a--status-fields-CXO-Document-nsef-tests/error-context.md
+
+  Slow test file: [nsef-tests] › tests/testSuiteCxoInvoice.spec.js (28.8m)
+  Slow test file: [supplier-tests] › tests/testSuiteSupplierPortal.spec.js (17.5m)
+  Slow test file: [nsef-tests] › tests/testSuiteNSEFhappyPATHS.spec.js (17.1m)
+  Slow test file: [nsef-tests] › tests/testSuiteIntakeNegative.spec.js (16.5m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  6 failed
+    [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:273:9 › All-modules reject → edit → resubmit › Invoice (resume from saved PO): create Invoice → reject → edit (qty↓) → reduced qty available @RejectEdit @InvoiceOnly 
+    [nsef-tests] › tests/testSuiteallmodulesrejectedit.spec.js:328:9 › All-modules reject → edit → resubmit › Invoice (resume from rejected invoice): edit (qty↓) → resubmit → approve → ack → reduced qty available @RejectEdit @InvoiceEditOnly 
+    [nsef-tests] › tests/testSuiteCxoInvoice.spec.js:235:9 › Non-PO (CXO) Invoice › Rejection keeps budget consumed; cancellation releases it @NonPO @Budget @Reject @Cancel 
+    [nsef-tests] › tests/testSuiteIntakeListing.spec.js:127:17 › Aerchain NSE - Intake Listing Page › Filters › Positive › single filter by Status — table updates @Filter 
+    [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:108:9 › CXO Create — Negative › Empty form shows the expected mandatory-field error counts per section @CXO @Negative 
+    [nsef-tests] › tests/testSuiteNsefCXOtest.spec.js:424:9 › CXO — Document (Regenerate + Download) › Rejected: Regenerate → Download → PDF shows correct status + fields @CXO @Document 
+  201 passed (2.6h)

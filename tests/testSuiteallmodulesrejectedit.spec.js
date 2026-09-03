@@ -34,6 +34,18 @@ import data from '../pages/NSEFoundationData.json';
 const CHANGE_QTY = '200'; // CXO & Intake — change quantity
 const LOWER_QTY = '50';   // RFX, Requisition, PO — decrease quantity
 
+// Tests 5b/5c are RESUME helpers: they skip the ~15 min build and start from the
+// savedPurchaseOrder / savedInvoice already in NSEFoundationData.json. That makes
+// them useless in a whole-suite run — test 5 runs first and overwrites BOTH keys
+// with documents it has itself driven to Accounted, destroying their
+// preconditions. Whole-suite run 2026-08-25 proved it: 5b died on the final
+// assert because its PO was fully consumed (no "Create Invoice" action left), and
+// 5c died clicking a greyed-out Edit because savedInvoice was Accounted, not
+// Rejected. So they are opt-in:
+//
+//   RESUME=1 npx playwright test -g "@InvoiceOnly" --project=nsef-tests
+const RESUME = process.env.RESUME === '1';
+
 async function openApp(page) {
     const a = new NSEFoundationActions(page);
     await page.setViewportSize({ width: 1800, height: 900 });
@@ -238,7 +250,10 @@ test.describe('All-modules reject → edit → resubmit', () => {
         await a.saveInvoiceCode();
         await a.takeScreenshot('re_inv_created');
 
-        // Reject the Invoice during approval.
+        // Reject the Invoice during approval. The invoice must be OPEN first: after
+        // submitInvoice/saveInvoiceCode the browser is still on the PR/PO page, so the
+        // header 'Reject' never renders and the reject step timed out on the wrong doc.
+        await a.openSavedInvoice(data);
         await a.rejectCappDoc('Rejected by automation', 'INV');
         await a.takeScreenshot('re_inv_rejected');
 
@@ -268,6 +283,7 @@ test.describe('All-modules reject → edit → resubmit', () => {
     // the invoice reject → edit → re-invoice portion without the ~15 min chain.
     // Requires: savedPurchaseOrder points at an open PO whose savedGrn is Inwarded.
     test('Invoice (resume from saved PO): create Invoice → reject → edit (qty↓) → reduced qty available @RejectEdit @InvoiceOnly', async ({ page }) => {
+        test.skip(!RESUME, 'resume helper — needs savedPurchaseOrder to be an OPEN PO with an Inwarded savedGrn; run with RESUME=1');
         test.setTimeout(1200000); // 20 min — create + reject + edit + approvals + ack
         const a = await openApp(page);
 
@@ -279,12 +295,23 @@ test.describe('All-modules reject → edit → resubmit', () => {
         await a.uploadInvoiceDocument(data);
         await a.fillInvoiceDetails(data);
         await a.setInvoiceGeneralDetailsNo();
+
+        // 2nd invoice on a partially consumed PO: the form defaults to the FULL PO
+        // qty, which the app then refuses to submit silently (stays on
+        // /invoices/new with no error), so lower it to the PO's remaining balance
+        // first. Item Matching can push the GRN's qty back in, hence the re-assert.
+        await a.setInvoiceQty(LOWER_QTY);
         await a.matchGrnInItemMatching();
+        await a.ensureInvoiceQty(LOWER_QTY);
+
         await a.submitInvoice();
         await a.saveInvoiceCode();
         await a.takeScreenshot('re_inv_resume_created');
 
-        // Reject the Invoice during approval.
+        // Reject the Invoice during approval. The invoice must be OPEN first: after
+        // submitInvoice/saveInvoiceCode the browser is still on the PR/PO page, so the
+        // header 'Reject' never renders and the reject step timed out on the wrong doc.
+        await a.openSavedInvoice(data);
         await a.rejectCappDoc('Rejected by automation', 'INV');
         await a.takeScreenshot('re_inv_resume_rejected');
 
@@ -312,11 +339,15 @@ test.describe('All-modules reject → edit → resubmit', () => {
     // for iterating on the edit → re-match → resubmit → approve → ack portion.
     // Requires: savedInvoice is Rejected and belongs to savedPurchaseOrder/savedGrn.
     test('Invoice (resume from rejected invoice): edit (qty↓) → resubmit → approve → ack → reduced qty available @RejectEdit @InvoiceEditOnly', async ({ page }) => {
+        test.skip(!RESUME, 'resume helper — needs savedInvoice to be a REJECTED invoice; run with RESUME=1');
         test.setTimeout(900000); // 15 min
         const a = await openApp(page);
 
         // Open the rejected invoice, then edit → lower the qty + re-match → resubmit.
         await a.openSavedInvoice(data);
+        // Precondition check: a non-Rejected invoice has its Edit greyed out, which
+        // otherwise surfaces as an opaque "element is not enabled" click timeout.
+        await a.assertCappDocStatus('Rejected', 'INV');
         await a.editInvoiceLowerQtyAndSubmit(LOWER_QTY);
         await a.takeScreenshot('re_inv_edit_only_edited');
 

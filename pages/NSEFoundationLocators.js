@@ -13,13 +13,18 @@ export const NSEFoundation_Locators = {
     createCxoBtn:  'button:has-text("Create CXO")',
 
     // ── CXO Create – Title / Summary ─────────────────────────────────────────
-    cxoTitle:   '[placeholder="Title of the document goes here"]',
+    // The title textarea's placeholder is now EMPTY — the hint is a sibling
+    // overlay div (so the red * can be styled). Anchor on text-[18px], unique to
+    // the title (sections are 12.25px, summary 14px) and it survives typing;
+    // anchoring on the overlay text breaks as soon as the field has a value.
+    cxoTitle:   'textarea[class*="text-[18px]"]',
     cxoSummary: '[placeholder="Summary of the document"]',
 
     // ── Expand ALL sections at once ───────────────────────────────────────────
-    // The ^ toggle is the first button in the same container as the title field.
-    // Anchor off the title placeholder so it's stable regardless of Ask Aiera bar.
-    cxoExpandAllSections: '//*[@placeholder="Title of the document goes here"]/ancestor::div[3]//button[1]',
+    // The expand/collapse-all toggle, top-right of the document header. Anchored
+    // on its chevrons-up-down icon: unique on the page and index-free, unlike a
+    // positional match which drifts when the header renders extra hidden buttons.
+    cxoExpandAllSections: 'button:has(svg.lucide-chevrons-up-down)',
 
     // ── Header Details dropdowns (label-following XPath) ─────────────────────
     // Pattern reused from allLocators.js: find label text → next combobox in DOM
@@ -137,6 +142,9 @@ export const NSEFoundation_Locators = {
     rfxForecloseOption:     `//*[@role='menuitem'][contains(normalize-space(.),'Foreclose')] | //button[contains(normalize-space(.),'Foreclose')]`,
     rfxForecloseReasonField: `//div[@role='dialog']//textarea | //div[@role='dialog']//input[not(@type='file') and not(@type='hidden')]`,
     rfxForecloseSubmitBtn:  `//div[@role='dialog']//button[contains(normalize-space(.),'Submit') or normalize-space(.)='Confirm' or normalize-space(.)='Foreclose']`,
+    // Cancel reuses the same reason-dialog shape as Foreclose (sheet scenario 98).
+    rfxCancelOption:        `//*[@role='menuitem'][normalize-space(.)='Cancel']`,
+    rfxCancelledBadge:      `//*[normalize-space()='Cancelled']`,
 
     // RFX — Award flow
     rfxAnalysisTab:          `//*[@role='tab' or @data-slot='tabs-trigger'][contains(normalize-space(.),'Analysis')]`,
@@ -303,6 +311,10 @@ export const NSEFoundation_Locators = {
     invoicePendingApprovalStatus: `//*[normalize-space(text())='Pending Approval']`,
     // After the external acknowledgement API call, the invoice flips to "Accounted".
     invoiceAccountedStatus:       `//*[normalize-space(text())='Accounted']`,
+    // Non-PO invoices in UAT end approvals on "Sync Failed" rather than "Pending
+    // Sync" (EBS integration not wired for this template). The ack API still
+    // drives them to Accounted — verified live on Invoice-FNSE-26-255.
+    invoiceSyncFailedStatus:      `//*[normalize-space(text())='Sync Failed']`,
 
     // ── Invoice payment ("+ Payment" → Converting to Payment drawer) ───────────
     // "Invoice Amount" value on the invoice Overview header (e.g. "₹ 2,00,000.00").
@@ -332,6 +344,11 @@ export const NSEFoundation_Locators = {
     // or aria-label) sitting immediately after the "AI Polish" button in the
     // header action group — anchor on AI Polish and take the next sibling button.
     cxoSaveDraftBtn: `xpath=//button[normalize-space(.)='AI Polish']/following-sibling::button[1]`,
+
+    // Icon-only Save on the v4 create pages (CXO and Intake both have one).
+    // Anchoring on the icon rather than sibling position survives a change in
+    // the button row's layout.
+    v4SaveDraftBtn: `//button[.//*[contains(@class,"lucide-save")]]`,
     cxoSavedToast: 'saved successfully',
 
     // ── CXO create – validation (negative / edge tests) ───────────────────────
@@ -340,7 +357,7 @@ export const NSEFoundation_Locators = {
     // next to its title, plus transient toasts. NOTE: section titles are
     // <textarea>s, so they cannot be anchored on by text — match the badge spans
     // directly. On a fully empty form the badges render in document order with
-    // counts [8, 4, 9, 4, 1, 1] = Header Details, Basic Information,
+    // counts [6, 4, 9, 4, 1, 1] = Header Details, Basic Information,
     // Particulars of Procurement, Purchase Business Case, Item Details,
     // Suggested Suppliers.
     cxoErrorBadgeRegex: /^\d+ errors?!$/,
@@ -386,7 +403,224 @@ export const NSEFoundation_Locators = {
     updateBtn:           '//div[contains(@class,"MuiPaper-root")]//button[normalize-space(.)="Update"]',
     // Success toast after Update
     userUpdatedToast:    'User updated successfully',
+    // ── Non-PO ("CXO") Invoice — §4 of the NSE Customer Flow Document ─────────
+    // CAPTURED LIVE 2026-08-19. This flow leaves V4 (nse-capp-v4-uat) for the V3
+    // Ant Design app (nse-capp-uat), so the shell selectors below are Ant while
+    // the invoice form itself is MUI.
+    //
+    // Route: V4 dashboard → "Home" → /home (V3) → Modules panel → Invoice
+    //        → /invoices → "Create New" → /invoices/new
+    v3HomeLink:              `//*[normalize-space(text())="Home"]`,
+    // The all-modules icon: an Ant appstore glyph inside div.modules-toggle.
+    v3ModulesToggle:         '.modules-toggle, [aria-label="appstore"]',
+    // NOTE: the module is "Invoices" (plural) — there is no exact "Invoice" text.
+    // Three nodes match: Recently-visited, the All-Modules group heading, and the
+    // child link. openInvoiceModule() tries each until the URL actually changes.
+    v3ModuleInvoices:        `//*[normalize-space(text())="Invoices"]`,
+    v3ModulesFindInput:      'input[placeholder="Find Modules"]',
+    // Real label is "+ Create Invoice" (MUI button) — NOT "Create New".
+    invoiceCreateNewBtn:     `//button[contains(normalize-space(.),"Create Invoice")]`,
+
+    // The create form is PROGRESSIVE: only the upload dropzone renders until a
+    // document is attached — template/CXO/details appear afterwards.
+    nonPoUploadDropzoneText: `//*[contains(normalize-space(text()),"Upload Invoice Document")]`,
+
+    // Every picker on this form is a MUI Autocomplete. Options render in a
+    // document-level portal as li.MuiAutocomplete-option.
+    muiAcOption:             'li.MuiAutocomplete-option',
+    // Generic: the <input> of the autocomplete whose label (or any descendant
+    // text) contains `label`. Used by NSEFoundationActions._ac().
+    muiAcInputFor: (label) =>
+        `//*[contains(@class,"MuiAutocomplete-root")][.//label[contains(normalize-space(.),"${label}")]` +
+        ` or contains(normalize-space(.),"${label}")]//input`,
+    // Templates picker — placeholder is "Choose Template". Options observed:
+    // "RC Invoice", "PO Invoice NSEF", "CXO Template (Dev)", "NSEF Credit Note".
+    nonPoTemplateInput:      'input[placeholder="Choose Template"]',
+    // CXO selection at the invoice header (§4 Step 2). Lists CXO codes.
+    nonPoCxoLabel:           'Select CXO Transaction',
+    // Single budget item at header level (§4 Step 3). Does NOT auto-populate from
+    // the CXO — it is the intersection of user dimension access + the CXO budget.
+    nonPoBrfInput:           'input[placeholder="Select Budget Items"]',
+
+    // Every control on this form carries a STABLE id equal to its visible label
+    // (captured 2026-08-19) — no label-proximity guessing needed:
+    //   autocompletes / selects : id="Department", id="GL Account", id="BRF - Description"
+    //   plain text inputs       : id="Subject-2hUeVYKM8oeG"  (random suffix → prefix match)
+    //   date pickers            : no id; addressed by placeholder
+    nonPoFieldById:   (label) => `[id="${label}"]`,
+    nonPoTextById:    (label) => `[id^="${label}-"]`,
+    nonPoDateByPh:    (ph)    => `input[placeholder="${ph}"]`,
+
+    // Line-item AG grid. Real col-ids captured from the live grid.
+    nonPoAddItemBtn:  'button.add-item-button',
+    // Any MUI dialog — the Workflow Summary popup is where a budget-ceiling breach
+    // is reported (per NSE QA), not on the create page.
+    muiDialog:        `//div[@role='dialog'] | //div[contains(@class,'MuiDialog-container')]`,
+    // The in-grid Product editor is an ANT AutoComplete (not MUI): its options
+    // render in a body-level portal. Captured live from the cell editor markup.
+    nonPoProductEditorInput: '.product-auto-complete input.ant-select-selection-search-input',
+    nonPoAntOption:          '.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option',
+    nonPoGridCell:    (colId, row = 0) =>
+        `//div[@role='grid']//div[contains(@class,'ag-row')][@row-index='${row}']//div[@col-id='${colId}']`,
+    nonPoGridColIds: {
+        product: 'line_items_product',
+        uom: 'line_items_uom',
+        quantity: 'line_items_quantity',
+        price: 'line_items_price',
+        hsn: 'line_items_hsn',
+        tax: 'line_items_tax',
+        netTaxPercentage: 'line_items_net_tax_percentage',
+        taxValue: 'line_items_tax_value',
+        amount: 'line_items_amount',
+    },
+
+    // Totals strip: the label and its value are siblings inside one container.
+    nonPoTotalFor: (label) =>
+        `//*[normalize-space(text())="${label}"]/parent::*`,
+
+    // Mandatory-field validation, as worded by the app: "<Field> is Mandatory"
+    // helper texts plus an "Atleast one row is required" toast for the grid.
+    nonPoMandatoryHelperText: `//*[contains(normalize-space(.),"is Mandatory")]`,
+    nonPoNoRowsToast:         `//*[contains(normalize-space(.),"Atleast one row is required")]`,
+
+    // Budget ceiling breach (§2.4 hard parent check). PROVISIONAL — text not yet
+    // observed live; matched loosely so the real wording still trips it.
+    budgetExceededError:     `//*[contains(translate(normalize-space(.),"BUDGETEXCD","budgetexcd"),"budget exceed")]`,
+
     // Cross (X) icon closing the drawer — MUI icon button wrapping a lucide-x svg
     panelCloseIcon:      'div.MuiPaper-root button:has(svg.lucide-x)',
+
+    // ── CXO "More" dropdown + Transactions tab (sheet scenarios 3 & 8) ────────
+    // Radix dropdown: items are [role=menuitem]; an unavailable action carries
+    // aria-disabled="true" AND data-disabled="". Do NOT test for a "disabled"
+    // substring in className — every item's Tailwind class list contains
+    // `data-[disabled]:` utilities, so that check is always true.
+    cxoMoreButton:            `//button[contains(normalize-space(.),'More')]`,
+    cxoMenuItem:              (label) => `//*[@role="menuitem"][normalize-space()="${label}"]`,
+    cxoMenuItemDisabled:      (label) => `//*[@role="menuitem"][normalize-space()="${label}"][@aria-disabled="true"]`,
+    anyCxoMenuItem:           `//*[@role="menuitem"]`,
+
+    // Transactions tab renders two sections, each with its own table.
+    cxoTxnLinkedIntakesHeading:     `//*[normalize-space()="Linked Intakes"]`,
+    cxoTxnLinkedNonPoHeading:       `//*[normalize-space()="Linked Non-PO Invoices"]`,
+    cxoTxnNoIntakes:                `//*[contains(normalize-space(.),"No intakes found")]`,
+    cxoTxnAnyRow:                   `//tbody/tr`,
+
+    // ── Activity Log panel (sheet scenarios 38-40) ────────────────────────────
+    // Present on every v4 detail page (CXO, Intake, RFX). The trigger is an
+    // icon-only clock button; the panel is a radix sheet with role="dialog" and
+    // a download button in its header.
+    //
+    // The download is generated CLIENT-SIDE (Blob → <a download>) — it fires NO
+    // network request, so it can only be asserted via Playwright's `download`
+    // event, never by watching for a response.
+    activityLogButton:        `//button[.//*[contains(@class,"lucide-clock")]]`,
+    activityLogPanel:         `//*[@role="dialog"][.//*[normalize-space()="Activity Log"]]`,
+    activityLogTitle:         `//*[normalize-space()="Activity Log"]`,
+    // The download control is a DROPDOWN TRIGGER, not a direct download — the
+    // button pairs a download icon with a chevron and opens a two-item menu:
+    // "Download Activities" and "Download Comments". Clicking the trigger alone
+    // fires no download event and no network request.
+    activityLogDownloadBtn:   `//*[@role="dialog"]//button[.//*[contains(@class,"lucide-download")]]`,
+    activityLogDownloadItem:  (label) => `//*[@role="menuitem"][normalize-space()="${label}"]`,
+    activityLogCloseBtn:      `//*[@role="dialog"]//button[.//*[contains(@class,"lucide-x")]]`,
+    activityLogEntries:       `//*[@role="dialog"]//*[contains(@class,"lucide-circle-check-big")]`,
+
+    // ── RFX Analysis tab (sheet scenarios 23, 25, 26, 27, 30) ─────────────────
+    // Verified live on RFX-26-231 (2026-08-31).
+    rfxAnalysisTabBtn:          `//button[normalize-space()="Analysis"]`,
+    rfxEvaluationsTabBtn:       `//button[normalize-space()="Evaluations"]`,
+    rfxAwardsTabBtn:            `//button[normalize-space()="Awards"]`,
+    rfxExtendDeadlineBtn:       `//button[normalize-space()="Extend Deadline"]`,
+    rfxAddEvaluationBtn:        `//button[normalize-space()="Add Evaluation"]`,
+
+    // ── Extend Deadlines dialog (sheet scenario 36) ───────────────────────────
+    // Two date TRIGGER BUTTONS (Quote Deadline / Technical Quote Deadline) whose
+    // label IS the current value, a #remarks textarea and Cancel / Update.
+    // Update stays DISABLED until a date actually changes.
+    extendDeadlineDialog:       `//*[@role="dialog"][.//*[contains(normalize-space(),"Extend Deadline")]]`,
+    extendDeadlineDateBtns:     `//*[@role="dialog"]//button[starts-with(normalize-space(),"20")]`,
+    extendDeadlineRemarks:      `//*[@role="dialog"]//textarea[@id="remarks"]`,
+    extendDeadlineUpdateBtn:    `//*[@role="dialog"]//button[normalize-space()="Update"]`,
+    // The calendar renders in a Radix popper OUTSIDE the dialog, so day cells
+    // must be matched there — not under the dialog node.
+    datePickerPopper:           `//*[@data-radix-popper-content-wrapper]`,
+    datePickerDay:              (d) => `//*[@data-radix-popper-content-wrapper]//button[normalize-space()="${d}"]`,
+
+    // ── Create Evaluation dialog (sheet scenario 35) ──────────────────────────
+    // Same dialog on the Intake → RFX conversion page and on an RFX that has not
+    // been quoted yet. Four Radix comboboxes in a fixed order:
+    //   0 Section · 1 Assigned Users · 2 Rating Type · 3 Approval Type
+    // Their label IS their current value, so they cannot be matched by a static
+    // placeholder once something has been picked — index is the stable handle.
+    evalCreateDialog:           `//*[@role="dialog"][.//*[normalize-space()="Create Evaluation"]]`,
+    evalLabelInput:             `//*[@role="dialog"]//input[@id="label"]`,
+    evalCombos:                 `//*[@role="dialog"]//*[@role="combobox"]`,
+    evalCreateBtn:              `//*[@role="dialog"]//button[normalize-space()="Create"]`,
+
+    // ── Evaluations tab ───────────────────────────────────────────────────────
+    evalCardByLabel:            (label) => `//*[contains(normalize-space(),"${label}")][not(*)]`,
+    evalEvaluateBtn:            `//button[normalize-space()="Evaluate"]`,
+    evalSubmitBtn:              `//button[normalize-space()="Submit"]`,
+
+    // Header line above the tabs; the value is the sibling text node.
+    rfxQuoteDeadlineLabel:      `//*[normalize-space()="Quote Deadline:"]`,
+    // Either action means the supplier can still quote.
+    rfxQuoteActionBtn:          `//button[normalize-space()="Submit Quote" or normalize-space()="Update Quote"]`,
+
+    // Radix switches carry no accessible label of their own — the label text
+    // lives in the PARENT element, so anchor on that.
+    analysisSwitch:             (label) => `//*[@role="switch"][parent::*[normalize-space()="${label}"]]`,
+    analysisBaseCurrencySwitch: `//*[@role="switch"][parent::*[normalize-space()="Show in base currency"]]`,
+    analysisDeletedItemsSwitch: `//*[@role="switch"][parent::*[normalize-space()="Show deleted items"]]`,
+
+    // Download here is a DROPDOWN TRIGGER offering four exports:
+    // Analysis / Versions / Benchmarks / Questionnaire.
+    analysisDownloadBtn:        `//button[.//*[contains(@class,"lucide-download")]]`,
+    analysisDownloadItem:       (label) => `//*[@role="menuitem"][normalize-space()="${label}"]`,
+
+    analysisViewTypeBtn:        `//button[normalize-space()="Select View Type"]`,
+    analysisSupplierConfigBtn:  `//button[.//*[contains(@class,"lucide-user-cog")]]`,
+    analysisColumnConfigBtn:    `//button[.//*[contains(@class,"lucide-columns3-cog")]]`,
+
+    // Compare renders INLINE on the analysis page (not in a dialog).
+    analysisCompareBtn:         `//button[normalize-space()="Compare"]`,
+    analysisCompareSupplier:    `//*[contains(normalize-space(),"Select suppliers")]`,
+    analysisCompareVersions:    `//*[contains(normalize-space(),"Select versions")]`,
+    analysisCompareNote:        `//*[contains(normalize-space(),"Select up to 2 versions of a single field")]`,
+
+    // ── User's Dashboard (sheet scenarios 22, 89, 92) ─────────────────────────
+    // The v4 root ("/") IS the dashboard. Its tabs are rendered TWICE (a desktop
+    // and a mobile copy), and an XPath match can land on the copy that does not
+    // respond to clicks — use getByRole('tab', …) instead, which resolves the
+    // live one. Verified 2026-08-31: an XPath click left All active and the grid
+    // showing 1586 rows; getByRole switched it and the count dropped to 164.
+    dashboardHeading:        `//*[normalize-space()="User's Dashboard"]`,
+    aerchainLogoLink:        `//a[@href="/"][.//img[@alt="Logo"]]`,
+    aerchainLogo:            `//img[@alt="Logo"]`,
+    dashboardPaginationInfo: `//p[contains(.,"Showing") and contains(.,"entries")]`,
+
+    // ── CXO listing side panel (sheet scenario 4) ─────────────────────────────
+    // Opens by clicking the ROW (e.g. the Subject cell) — NOT the code link,
+    // which navigates to the detail page instead. Confirmed by QA 2026-09-01.
+    // The panel is a fixed-position sheet on the right (~640px wide) carrying
+    // Subject, Reference Code, Supplier, Created On and the approval actions.
+    cxoListingRowBody:      `(//tbody/tr)[1]/td[2]`,
+    cxoListingPanel:        `//*[@role="dialog"][.//*[contains(normalize-space(),"Reference Code")]]`,
+    cxoPanelReferenceCode:  `//*[@role="dialog"]//*[normalize-space()="Reference Code"]`,
+
+    // ── RFX Transactions tab (sheet scenarios 31, 32) ─────────────────────────
+    // Three sections: Linked Auctions, Linked Negotiations, Linked Intakes.
+    rfxTransactionsTabBtn:  `//button[normalize-space()="Transactions"]`,
+    rfxLinkedIntakes:       `//*[normalize-space()="Linked Intakes"]`,
+    rfxLinkedAuctions:      `//*[normalize-space()="Linked Auctions"]`,
+    rfxLinkedNegotiations:  `//*[normalize-space()="Linked Negotiations"]`,
+
+    // ── PO document download (sheet scenario 43) ──────────────────────────────
+    // Lives in the General Details section as a "PO Document" field with a
+    // Download anchor. The anchor has NO href — it is JS-driven — so the click
+    // must be observed via a download event or a new tab.
+    poDocumentLabel:        `//*[normalize-space()="PO Document"]`,
+    poDocumentDownload:     `//a[normalize-space()="Download"]`,
 
 };

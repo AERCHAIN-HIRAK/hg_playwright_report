@@ -501,3 +501,144 @@ test.describe('Intake Negative', () => {
     });
 
 });
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Intake — Transactions tab + action availability by status
+//
+// Sheet scenario   5: "if Intake is processed then cancel button is disabled"
+// Sheet scenario   9: "transactions created from Intake are displayed in the
+//                      transaction tab of the Intake"
+// Sheet scenario 120: "Process button is not displayed after Intake is
+//                      processed with full quantity"
+//
+// Verified live 2026-08-31 by comparing a Released intake against a Processed
+// one. IMPORTANT nuance for scenario 5: once an intake is Processed the Cancel
+// action is REMOVED from the More menu entirely, not merely greyed out — unlike
+// the CXO, where Cancel stays visible with aria-disabled="true". Each test
+// therefore establishes the contrast (Released has it, Processed does not)
+// rather than asserting a single page in isolation, which would pass even if
+// the menu were empty for an unrelated reason.
+// ═════════════════════════════════════════════════════════════════════════════
+test.describe('Intake — Transactions tab & action availability', () => {
+
+    test.describe.configure({ timeout: 180000 });
+
+    const RELEASED_STATUSES  = ['Released'];
+    const PROCESSED_STATUSES = ['Processed'];
+
+    /** Find an intake in one of `statuses` from the listing; null when none. */
+    async function findIntakeWithStatus(page, statuses) {
+        await page.goto(`${data.loginUrl}/intakes`, { waitUntil: 'domcontentloaded' });
+        await page.waitForFunction(
+            () => document.querySelectorAll('tbody tr').length > 0,
+            null, { timeout: 30000 },
+        );
+        await page.waitForTimeout(1500);
+        return page.evaluate((wanted) => {
+            const ths = [...document.querySelectorAll('th')];
+            const si = ths.findIndex(t => (t.textContent || '').trim().startsWith('Status'));
+            if (si === -1) return null;
+            for (const r of document.querySelectorAll('tbody tr')) {
+                const tds = r.querySelectorAll('td');
+                const st = ((tds[si] || {}).textContent || '').trim();
+                if (!wanted.includes(st)) continue;
+                const a = r.querySelector('a');
+                if (!a) continue;
+                return { code: (tds[0].textContent || '').trim(), href: a.getAttribute('href'), status: st };
+            }
+            return null;
+        }, statuses);
+    }
+
+    async function openApp(page) {
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+        await a.openApp(data);
+        return a;
+    }
+
+    test('Transactions tab lists the Intake\'s linked requisitions, negotiations and quote requests @Intake @Transactions', async ({ page }) => {
+        const a = await openApp(page);
+
+        const target = await findIntakeWithStatus(page, [...PROCESSED_STATUSES, ...RELEASED_STATUSES]);
+        test.skip(!target, 'no Processed or Released intake available');
+
+        const id = target.href.split('/').pop();
+        await a.openIntakeById(id, 'transactions');
+
+        const sections = await a.assertIntakeTransactionsTabStructure();
+
+        // A Processed intake must have produced at least one downstream
+        // transaction, otherwise the tab is not reflecting reality.
+        const total = sections['Linked Requisitions'].rowCount
+                    + sections['Linked Negotiations'].rowCount
+                    + sections['Linked Quote Requests'].rowCount;
+        if (PROCESSED_STATUSES.includes(target.status)) {
+            expect(total, `${target.code} is Processed but shows no linked transactions`)
+                .toBeGreaterThan(0);
+        }
+
+        for (const key of Object.keys(sections)) {
+            for (const code of sections[key].codes) expect(code.length).toBeGreaterThan(0);
+        }
+    });
+
+    test('Process button and Cancel are available on a Released intake @Intake @Process @Baseline', async ({ page }) => {
+        const a = await openApp(page);
+
+        const released = await findIntakeWithStatus(page, RELEASED_STATUSES);
+        test.skip(!released, 'no Released intake available to establish the baseline');
+
+        await a.openIntakeById(released.href.split('/').pop());
+
+        // Baseline for scenarios 5 + 120: both affordances exist BEFORE processing.
+        expect(await a.hasV4HeaderButton('Process'),
+            `${released.code} is Released but shows no Process button`).toBeTruthy();
+
+        const items = await a.getV4MoreMenuItems();
+        expect(items, `${released.code} More menu has no Cancel`).toContain('Cancel');
+        expect(await a.isV4MenuItemDisabled('Cancel'),
+            `${released.code} is Released — Cancel should be actionable`).toBeFalsy();
+        await a.closeV4MoreMenu();
+    });
+
+    test('Processed intake no longer offers Cancel @Intake @Cancel @S5', async ({ page }) => {
+        const a = await openApp(page);
+
+        const processed = await findIntakeWithStatus(page, PROCESSED_STATUSES);
+        test.skip(!processed, 'no Processed intake available');
+
+        await a.openIntakeById(processed.href.split('/').pop());
+        expect(await a.readV4StatusChip()).toBe('Processed');
+
+        const items = await a.getV4MoreMenuItems();
+        await a.closeV4MoreMenu();
+
+        // The action is removed rather than disabled on this build — assert the
+        // outcome (not cancellable) without over-fitting to either mechanism.
+        const state = await a.isV4MenuItemDisabled('Cancel');
+        const notCancellable = state === null || state === true;
+        expect(notCancellable,
+            `${processed.code} is Processed but Cancel is still actionable (menu: ${items.join(', ')})`)
+            .toBeTruthy();
+        console.log(`[INTAKE] ${processed.code} Processed → Cancel ${state === null ? 'absent' : 'disabled'}`);
+    });
+
+    test('Processed intake no longer shows the Process button @Intake @Process @S115', async ({ page }) => {
+        const a = await openApp(page);
+
+        const processed = await findIntakeWithStatus(page, PROCESSED_STATUSES);
+        test.skip(!processed, 'no Processed intake available');
+
+        await a.openIntakeById(processed.href.split('/').pop());
+        expect(await a.readV4StatusChip()).toBe('Processed');
+
+        expect(await a.hasV4HeaderButton('Process'),
+            `${processed.code} is Processed but still shows a Process button`).toBeFalsy();
+
+        // "Mark Processed" must be gone too — it is the menu equivalent.
+        const items = await a.getV4MoreMenuItems();
+        await a.closeV4MoreMenu();
+        expect(items).not.toContain('Mark Processed');
+    });
+});

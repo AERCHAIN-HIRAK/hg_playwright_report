@@ -1,0 +1,493 @@
+{
+  "config": {
+    "configFile": "/Users/qa-hirak/Desktop/NSE E2E Automation/playwright.config.js",
+    "rootDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "setup",
+        "name": "setup",
+        "testDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/auth\\.setup\\.js/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "tests",
+        "name": "tests",
+        "testDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/testSuite(?!NSEFhappyPATHS|CxoInvoice|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests|SupplierPortal|allmodulesrejectedit|InvoiceDisputed).*\\.spec\\.js/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "nsef-setup",
+        "name": "nsef-setup",
+        "testDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/auth\\.nsef\\.setup\\.js/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "nsef-tests",
+        "name": "nsef-tests",
+        "testDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/testSuite(NSEFhappyPATHS|CxoInvoice|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests|allmodulesrejectedit|InvoiceDisputed)\\.spec\\.js/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "supplier-setup",
+        "name": "supplier-setup",
+        "testDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/auth\\.supplier\\.setup\\.js/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "supplier-tests",
+        "name": "supplier-tests",
+        "testDir": "/Users/qa-hirak/Desktop/NSE E2E Automation/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/testSuiteSupplierPortal\\.spec\\.js/"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "html",
+        {
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 5,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "auth.supplier.setup.js",
+      "file": "auth.supplier.setup.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "CAPP + SAPP login and save combined session",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "supplier-setup",
+              "projectName": "supplier-setup",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "1da40fab4598db598d69-f141ff54ee370c6147b7",
+          "file": "auth.supplier.setup.js",
+          "line": 16,
+          "column": 6
+        }
+      ]
+    },
+    {
+      "title": "auth.nsef.setup.js",
+      "file": "auth.nsef.setup.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "NSEF login and save session",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "nsef-setup",
+              "projectName": "nsef-setup",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "aaf394e4fdef1db4b656-42fc3370d65d231e2a16",
+          "file": "auth.nsef.setup.js",
+          "line": 9,
+          "column": 6
+        }
+      ]
+    },
+    {
+      "title": "testSuiteallmodulesrejectedit.spec.js",
+      "file": "testSuiteallmodulesrejectedit.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "All-modules reject → edit → resubmit",
+          "file": "testSuiteallmodulesrejectedit.spec.js",
+          "line": 44,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Invoice: build to Invoice → reject → edit (qty↓) → reduced qty available for Invoice @RejectEdit @Invoice",
+              "ok": true,
+              "tags": [
+                "RejectEdit",
+                "Invoice"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "nsef-tests",
+                  "projectName": "nsef-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff2d8fbb2e496a7a5884-f39d3849984c7b8de8bd",
+              "file": "testSuiteallmodulesrejectedit.spec.js",
+              "line": 209,
+              "column": 9
+            },
+            {
+              "title": "Invoice (resume from saved PO): create Invoice → reject → edit (qty↓) → reduced qty available @RejectEdit @InvoiceOnly",
+              "ok": true,
+              "tags": [
+                "RejectEdit",
+                "InvoiceOnly"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "nsef-tests",
+                  "projectName": "nsef-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff2d8fbb2e496a7a5884-8c10c1aaadd9f7372f35",
+              "file": "testSuiteallmodulesrejectedit.spec.js",
+              "line": 270,
+              "column": 9
+            },
+            {
+              "title": "Invoice (resume from rejected invoice): edit (qty↓) → resubmit → approve → ack → reduced qty available @RejectEdit @InvoiceEditOnly",
+              "ok": true,
+              "tags": [
+                "RejectEdit",
+                "InvoiceEditOnly"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "nsef-tests",
+                  "projectName": "nsef-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff2d8fbb2e496a7a5884-b308fdc65591916150ea",
+              "file": "testSuiteallmodulesrejectedit.spec.js",
+              "line": 314,
+              "column": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "testSuiteCxoInvoice.spec.js",
+      "file": "testSuiteCxoInvoice.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Non-PO (CXO) Invoice",
+          "file": "testSuiteCxoInvoice.spec.js",
+          "line": 59,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Rejection keeps budget consumed; cancellation releases it @NonPO @Budget @Reject @Cancel",
+              "ok": true,
+              "tags": [
+                "NonPO",
+                "Budget",
+                "Reject",
+                "Cancel"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "nsef-tests",
+                  "projectName": "nsef-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ff236eba4530ade7253-f6107b0e3f882aeee7e6",
+              "file": "testSuiteCxoInvoice.spec.js",
+              "line": 235,
+              "column": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "testSuiteNsefCXOtest.spec.js",
+      "file": "testSuiteNsefCXOtest.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CXO Create — Negative",
+          "file": "testSuiteNsefCXOtest.spec.js",
+          "line": 73,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Empty form shows the expected mandatory-field error counts per section @CXO @Negative",
+              "ok": true,
+              "tags": [
+                "CXO",
+                "Negative"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "nsef-tests",
+                  "projectName": "nsef-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "44ff674d1aa690d60cc4-c69c05571a11f401c4e8",
+              "file": "testSuiteNsefCXOtest.spec.js",
+              "line": 108,
+              "column": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "testSuiteNSEFhappyPATHS.spec.js",
+      "file": "testSuiteNSEFhappyPATHS.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "NSEF Happy Paths",
+          "file": "testSuiteNSEFhappyPATHS.spec.js",
+          "line": 47,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Invoice for the PO (matched to its GRN) → approve until Pending Sync @PO @Invoice",
+              "ok": true,
+              "tags": [
+                "PO",
+                "Invoice"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "nsef-tests",
+                  "projectName": "nsef-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "c47c2b408e26469bf16c-a1f8cd3e49d7f936e2fd",
+              "file": "testSuiteNSEFhappyPATHS.spec.js",
+              "line": 412,
+              "column": 9
+            },
+            {
+              "title": "Acknowledge the Pending Sync invoice via API → status becomes Accounted @PO @Invoice @Ack",
+              "ok": true,
+              "tags": [
+                "PO",
+                "Invoice",
+                "Ack"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "nsef-tests",
+                  "projectName": "nsef-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "c47c2b408e26469bf16c-7bc55b8da2fc5fd9453f",
+              "file": "testSuiteNSEFhappyPATHS.spec.js",
+              "line": 453,
+              "column": 9
+            },
+            {
+              "title": "Pay the Accounted invoice → Submit → payment shows Completed @PO @Invoice @Payment",
+              "ok": true,
+              "tags": [
+                "PO",
+                "Invoice",
+                "Payment"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "nsef-tests",
+                  "projectName": "nsef-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "c47c2b408e26469bf16c-446f06863f212839d2ef",
+              "file": "testSuiteNSEFhappyPATHS.spec.js",
+              "line": 469,
+              "column": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "testSuiteSupplierPortal.spec.js",
+      "file": "testSuiteSupplierPortal.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Supplier Portal Happy Path",
+          "file": "testSuiteSupplierPortal.spec.js",
+          "line": 48,
+          "column": 15,
+          "specs": [
+            {
+              "title": "[SAPP] Create Invoice for PO → [CAPP] review → Pending Sync @Supplier @SAPP @Invoice",
+              "ok": true,
+              "tags": [
+                "Supplier",
+                "SAPP",
+                "Invoice"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "supplier-tests",
+                  "projectName": "supplier-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7ce0ab192419dae4faed-6281cbfc67cb096701c4",
+              "file": "testSuiteSupplierPortal.spec.js",
+              "line": 281,
+              "column": 9
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-08-20T06:17:22.528Z",
+    "duration": 631.4459999999999,
+    "expected": 0,
+    "skipped": 11,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

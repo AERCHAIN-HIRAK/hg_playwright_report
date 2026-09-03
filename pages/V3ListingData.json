@@ -1,0 +1,62 @@
+{
+  "baseUrl": "https://nse-capp-uat.aerchain.io",
+  "negativeSearch": {
+    "nonExistent": "XXXXXX_NONEXISTENT_99999",
+    "emptySpaces": "   ",
+    "sqlInjection": "' OR '1'='1",
+    "xssPayload": "<script>alert('xss')</script>",
+    "longString": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "specialChars": "!@#$%^&*()",
+    "unicodeChars": "αβγδ日本語"
+  },
+  "modules": {
+    "requisition": {
+      "slug": "requisitions",
+      "name": "Requisition",
+      "detailPath": "/requisitions",
+      "tabs": ["All", "My Requisitions", "My Pending Approval", "I am purchaser", "Draft"],
+      "secondTab": "My Requisitions",
+      "sortableColumns": ["Date"],
+      "filterableColumns": ["Status", "Creator/Owner", "Department"],
+      "statusColumn": "Status",
+      "codeColumn": "Code",
+      "subjectColumn": "Subject"
+    },
+    "purchaseOrder": {
+      "slug": "purchase-orders",
+      "name": "Purchase Order",
+      "detailPath": "/purchase-orders",
+      "tabs": ["All", "My Purchase Orders", "Pending My Approval", "Draft", "Active"],
+      "secondTab": "My Purchase Orders",
+      "sortableColumns": [],
+      "filterableColumns": ["Status", "Creator/Owner", "Department"],
+      "statusColumn": "Status",
+      "codeColumn": "Code",
+      "subjectColumn": "Subject"
+    },
+    "grn": {
+      "slug": "inwards",
+      "name": "GRN",
+      "detailPath": "/inwards",
+      "tabs": ["All", "My GRNs"],
+      "secondTab": "My GRNs",
+      "sortableColumns": ["Date"],
+      "filterableColumns": ["Status", "Type", "Department"],
+      "statusColumn": "Status",
+      "codeColumn": "Code",
+      "subjectColumn": null
+    },
+    "invoice": {
+      "slug": "invoices",
+      "name": "Invoice",
+      "detailPath": "/invoices",
+      "tabs": ["All", "My Invoices", "My Pending Approval", "Draft", "Parked Invoices"],
+      "secondTab": "My Invoices",
+      "sortableColumns": [],
+      "filterableColumns": ["Status", "Type", "Department"],
+      "statusColumn": "Status",
+      "codeColumn": "Code",
+      "subjectColumn": "Subject"
+    }
+  }
+}
