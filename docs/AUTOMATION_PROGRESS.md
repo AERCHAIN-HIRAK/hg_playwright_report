@@ -548,3 +548,42 @@ rows show the literal code `PR-DRAFT` — no code is assigned until submit — s
 draft is identifiable **only by the id in its anchor href**. The listing's
 `Source` column ("awards" vs "intakes") is what distinguishes an award-created
 PR from an intake-created one.
+
+## 2026-09-03 — PRC / Requisition Conversion View (39, 44)
+
+New suite `tests/testSuitePrcView.spec.js`; PRC navigation added to
+`v3DetailActions` (`openPrcConversionView`, `openAnyPrcConversionView`) so the
+existing MUI menu/dialog helpers are reused rather than duplicated.
+**1 passed, 1 skipped (1.1m).**
+
+| # | Scenario | Status |
+|---|---|---|
+| 44 | Reassign user for the PRC | **DONE** — dialog opens with 13 candidates |
+| 39 | Regenerate + download document from the PRC view | **BLOCKED — confirmed app gap** |
+
+Both had been parked as *"PRC has no listing; reachable only via a
+Requisition's conversion view"*. That is accurate, and it is no longer a
+blocker — the walk is PR → Transactions → Conversions → the `PRC-…` link.
+
+### Three shape facts that make a PRC unlike every other v3 module
+- **No listing and no URL of its own.** The conversion view renders **in
+  place**, so `page.url()` still reads `/requisitions/{id}` once it is open. A
+  PRC test cannot navigate by URL.
+- **The header shows the PARENT PR's code** with a `Converted` chip, never the
+  PRC code — so the PRC code must be captured off the link *before* clicking it.
+  Asserting the PRC code in the header would always fail.
+- **`//button[.//*[normalize-space()="More"]]` matches TWICE** on this view
+  (nested elements at the same coordinates). Both resolve to the same menu, so
+  `.first()` is correct, but a count-based assertion would be misleading.
+
+### Scenario 39 — the PRC has no document actions at all
+Its More menu holds **`Reassign User` only**. The header's two icon buttons are
+`img[alt="Reload"]` and `img[alt="clock"]` (Activity Log) — and **Reload is a
+plain refresh**: clicking it fires **zero non-GET requests**, so it is not a
+disguised regenerate. Same shape as the GRN gap already recorded for scenario
+41.
+
+Rather than skip blind, the test **positively asserts the menu equals
+`['Reassign User']`** before skipping, so it **flips to failing** the day the
+actions are added — which is the signal worth having. Needs either the app
+change or a QA decision to retire the scenario.

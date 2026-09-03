@@ -102,6 +102,11 @@ NOTE: QA described adding the Evaluation on the CONVERSION page - that control e
 2. Read the More menu to confirm the actions exist.
 3. Regenerate Document -> assert POST .../regenerate-document returns 2xx.
 4. Regenerate again, then Download -> capture the resulting document and assert it is non-empty.",The document can be regenerated and downloaded from the Requisition view page.,"PASS (2/2). Log: '[Requisition] document via tab: requisition-1102-2026-08-31_08-29-45.pdf (62,350 bytes)'. NOTE: Regenerate shows NO toast - the only signal is the POST. Download opens the PDF in a NEW TAB via an S3 presigned URL; it does not fire a browser download event.",PASS
+39,Verify that document can be regenerated and downloaded from the view page of PRC,testSuitePrcView.spec.js,document regeneration / download on the PRC view,"1. Open the Requisition listing (v3) and pick a Completed/Converted PR.
+2. Open its Transactions tab -> expand Conversions -> click the PRC-... link.
+3. Assert the ""Requisition Conversion View"" opened.
+4. Read every item in the PRC More menu.
+5. Assert the menu holds ONLY ""Reassign User"" (guard: this test flips to FAILING the day document actions are added).",Regenerate Document and Download are offered on the PRC view page.,"SKIPPED - CONFIRMED APP GAP. The PRC conversion view exposes NO Regenerate Document and NO Download: its More menu holds ""Reassign User"" only, and the header carries just Reload + Activity Log. The Reload icon is a plain refresh - clicking it fires zero non-GET requests. Same shape as the GRN gap in scenario 41. Needs the actions added to the app, or QA to retire the scenario.",Blocked - app gap
 40,Verify that document can be regenerated and downloaded from the view page of Purchase Order,testSuiteQaClarified.spec.js / testSuiteCrossModuleDocs.spec.js,the PO document downloads from General Details / Purchase Order: Regenerate Document,"1. Open a PO in any status except Cancelled.
 2. Assert the General Details section shows a 'PO Document' field with a Download link.
 3. Click Download and capture either a download event or a new document tab.
@@ -117,6 +122,12 @@ NOTE: QA described adding the Evaluation on the CONVERSION page - that control e
 2. Open More -> Reassign User.
 3. Assert the dialog opens and is titled 'Reassign User'.
 4. Assert either a Reassign button or the documented empty state.",A user can be reassigned for the Requisition.,"PASS. NOTE: on a Completed requisition the dialog legitimately reports 'No users are available to be reassigned for the transaction'; the test seeks an in-flight record first and treats the empty state as a recorded outcome, not a silent pass.",PASS
+44,Verify user can be reassigned for the PRC.,testSuitePrcView.spec.js,Reassign User is available on the PRC view,"1. Open the Requisition listing (v3) and pick a Completed/Converted PR.
+2. Open its Transactions tab -> expand Conversions -> click the PRC-... link.
+3. Assert the ""Requisition Conversion View"" opened.
+4. Assert the More menu offers ""Reassign User"" and open it.
+5. Assert the dialog is titled ""Reassign User"" and that Select User offers real candidates.
+6. Close without reassigning (same non-destructive convention as the other Reassign tests).",The Reassign User dialog opens from the PRC view and offers eligible users.,"PASS. PRC-NSEFN-26-122 via PR-NSEFN-26-129. More menu = ""Reassign User"" only. Dialog opened with 13 reassignment candidates (Amey Koli, Aniket Ravindra Pawar, Pranali Devlekar, ...). Closed without reassigning.",Automated
 45,Verify user can be reassigned for the Purchase Order.,testSuiteCrossModuleDocs.spec.js,Purchase Order: Reassign User dialog opens,"1. Find a PO in an in-flight status; fall back to the first row.
 2. Open More -> Reassign User.
 3. Assert the dialog opens and is titled 'Reassign User'.",A user can be reassigned for the Purchase Order.,PASS.,PASS

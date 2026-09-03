@@ -88,4 +88,21 @@ exports.v3Detail_Locators = {
     itemDetailsDrawer:     '.MuiDrawer-root',
     itemDetailsPaper:      '.MuiDrawer-paper[class*="makeStyles"]',
     itemDetailsTabText:    'Details',
+
+    // ── PRC / Requisition Conversion View (sheet scenarios 39, 44) ────────────
+    // A PRC has NO listing of its own — it is reachable only through a parent
+    // Requisition's Transactions tab → Conversions → the PRC-… link, and it
+    // renders IN PLACE (the URL stays /requisitions/{id}), headed by the PARENT
+    // PR's code with the status chip "Converted". So a PRC test cannot navigate
+    // by URL and cannot assert on the PRC code in the header.
+    prcTransactionsTab:    '//button[normalize-space()="Transactions"]',
+    prcConversionsSection: '//*[normalize-space(text())="Conversions"]',
+    prcCodeLink:           "//*[starts-with(normalize-space(.),'PRC-')]",
+    prcConversionViewHeading: '//*[normalize-space()="Requisition Conversion View"]',
+    prcConversionDetailsHeading: '//*[normalize-space()="Requisition Conversion Details"]',
+    // The conversion view's header carries only these two icon buttons plus
+    // More. `Reload` is a PLAIN REFRESH — clicking it fires zero non-GET
+    // requests (verified live), so it is NOT a document regeneration.
+    prcReloadIcon:         '//button[.//img[@alt="Reload"]]',
+    prcActivityLogIcon:    '//button[.//img[@alt="clock"]]',
 };

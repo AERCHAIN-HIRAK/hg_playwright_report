@@ -249,6 +249,83 @@ export class v3DetailActions {
         await item.click({ timeout: 15000 });
     }
 
+
+    // ── PRC / Requisition Conversion View ─────────────────────────────────────
+
+    /**
+     * Open a PRC by walking its parent Requisition: Transactions tab →
+     * Conversions → the PRC-… link.
+     *
+     * A PRC has no listing and no URL of its own — the conversion view renders
+     * IN PLACE, so `page.url()` still reads /requisitions/{id} afterwards and
+     * the header shows the PARENT PR's code with a "Converted" chip. The only
+     * proof the view actually opened is its own section heading, which is what
+     * this asserts.
+     *
+     * Returns the PRC code read off the link before clicking it (it is not
+     * displayed in the header once open).
+     */
+    async openPrcConversionView(requisitionId, baseUrl = V3_BASE_URL) {
+        await this.page.goto(`${baseUrl}/requisitions/${requisitionId}`,
+            { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.waitForTimeout(7000);
+
+        await this.page.locator(L.prcTransactionsTab).first().click();
+        await this.page.waitForTimeout(3500);
+
+        const conversions = this.page.locator(L.prcConversionsSection).first();
+        if (await conversions.count()) {
+            await conversions.scrollIntoViewIfNeeded();
+            await conversions.click();
+            await this.page.waitForTimeout(2000);
+        }
+
+        const link = this.page.locator(L.prcCodeLink).last();
+        if (!(await link.count())) return null;
+        const code = ((await link.textContent()) || '').trim();
+        await link.click();
+
+        await expect(this.page.locator(L.prcConversionViewHeading).first(),
+            'the Requisition Conversion View did not open')
+            .toBeVisible({ timeout: 30000 });
+        await this.page.waitForTimeout(2500);
+        console.log(`[PRC] opened ${code} (conversion view of requisition ${requisitionId})`);
+        return code;
+    }
+
+    /**
+     * Find a Completed/Converted requisition that actually HAS a PRC, and open
+     * it. Returns { requisitionId, prcCode } or null.
+     *
+     * Not every PR converts, so this walks the listing rather than trusting one
+     * hardcoded id to survive UAT data churn.
+     */
+    async openAnyPrcConversionView(baseUrl = V3_BASE_URL, maxCandidates = 5) {
+        await this.page.goto(`${baseUrl}/requisitions`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.waitForTimeout(7000);
+
+        const headers = await this.page.$$eval('thead th',
+            ths => ths.map(t => (t.innerText || '').trim()));
+        const iStatus = headers.indexOf('Status');
+
+        const candidates = await this.page.$$eval('tbody tr', (trs, iStatus) => trs.map(tr => {
+            const tds = tr.querySelectorAll('td');
+            const href = tds[0]?.querySelector('a')?.getAttribute('href') || '';
+            return {
+                id: (href.match(/\/requisitions\/(\d+)/) || [])[1] || null,
+                code: (tds[0]?.innerText || '').trim(),
+                status: iStatus >= 0 ? (tds[iStatus]?.innerText || '').trim() : '',
+            };
+        }).filter(r => r.id && /completed|converted|processed/i.test(r.status)), iStatus);
+
+        for (const c of candidates.slice(0, maxCandidates)) {
+            const prcCode = await this.openPrcConversionView(c.id, baseUrl);
+            if (prcCode) return { requisitionId: c.id, prcCode, requisitionCode: c.code };
+            console.log(`[PRC] requisition ${c.code} has no PRC conversion — trying the next`);
+        }
+        return null;
+    }
+
     // ── Documents ─────────────────────────────────────────────────────────────
 
     /**
