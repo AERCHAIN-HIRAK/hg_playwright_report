@@ -937,3 +937,32 @@ Probed thoroughly rather than assuming:
 
 Both need an invoice in an editable state. The reject-edit suite only reaches one
 by building the whole chain first.
+
+## 2026-09-03 — Attachments downloadable (91)
+
+New suite `tests/testSuiteAttachments.spec.js`; attachment helpers added to
+`v3DetailActions`. **1 passed (3.3m).**
+
+### Two traps that make this look broken if you guess
+- **It fires NO Playwright download event.** Clicking an attachment opens a
+  **new tab** at a presigned S3 URL — the file is *opened*, not downloaded. A
+  test written around `page.waitForEvent('download')` times out and reports a
+  working feature as broken. Capture the popup instead.
+- **The anchors have no `href`, no `download` and no `target`** — navigation is
+  JS-driven. They can only be recognised by the **filename in their text**; an
+  href-based locator finds nothing.
+
+### Fetching the URL is the actual assertion
+An **expired** presigned link still opens a tab perfectly happily and returns
+**403 with zero bytes**. Only fetching it distinguishes "downloadable" from "a
+link that goes nowhere". Verified: `image.png` → **200 · 38,344 bytes ·
+image/png**.
+
+### ⚠️ Coverage limit
+Only the **Invoice** module is actually exercised. Requisition, Purchase Order
+and GRN carry **no attachment** on any of the first four transactions checked —
+all render "No Attachments.". The loop already walks all four modules, so
+attaching a file to a PR / PO / GRN makes them verify with **no code change**.
+
+The test asserts at least one module was verified, so it cannot pass vacuously
+in a tenant where nothing has an attachment.

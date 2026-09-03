@@ -416,6 +416,89 @@ export class v3DetailActions {
         return menu.some(m => /^Cancel$/i.test(m));
     }
 
+
+    // ── Attachments (sheet scenario 91) ───────────────────────────────────────
+
+    /**
+     * Attachment file links on the open transaction.
+     *
+     * They are anchors with NO href, NO download attribute and NO target — the
+     * navigation is JS-driven — so they can only be recognised by the FILENAME
+     * in their text. A locator keyed on href would find nothing.
+     */
+    async findAttachmentLinks() {
+        return this.page.$$eval('a', els => els
+            .filter(e => e.getBoundingClientRect().width > 0)
+            .map(e => (e.innerText || '').trim())
+            .filter(t => /\.(pdf|png|jpe?g|xlsx?|docx?|csv|txt)$/i.test(t)));
+    }
+
+    /**
+     * Click an attachment and verify the file is actually served.
+     *
+     * It does NOT fire a Playwright download event — clicking opens a NEW TAB at
+     * a presigned S3 URL, so waiting on `page.waitForEvent('download')` times out
+     * and looks like a broken feature. Capture the popup, then fetch the URL to
+     * prove real bytes come back rather than a 403 on an expired signature.
+     */
+    async openAttachmentAndVerify(filename) {
+        const link = this.page.locator('a', { hasText: filename }).first();
+        await expect(link, `attachment "${filename}" is not on the page`).toBeVisible({ timeout: 15000 });
+
+        const [popup] = await Promise.all([
+            this.page.context().waitForEvent('page', { timeout: 25000 }),
+            link.click(),
+        ]);
+        await popup.waitForLoadState('domcontentloaded').catch(() => {});
+        const url = popup.url();
+
+        const res = await this.page.context().request.get(url);
+        const body = await res.body();
+        await popup.close().catch(() => {});
+
+        const out = {
+            url,
+            status: res.status(),
+            bytes: body.length,
+            contentType: res.headers()['content-type'] || '',
+        };
+        console.log(`[ATTACH] ${filename} → ${out.status} ${out.bytes}B ${out.contentType}`);
+        return out;
+    }
+
+    /**
+     * Walk the first `max` transactions on this module's listing until one is
+     * found that carries an attachment. Returns { code, attachments } or null.
+     */
+    async findTransactionWithAttachment(baseUrl = V3_BASE_URL, max = 4) {
+        await this.page.goto(`${baseUrl}/${this.module.slug}`,
+            { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.locator('tbody tr').first().waitFor({ state: 'visible', timeout: 90000 });
+        await this.page.waitForTimeout(2500);
+
+        const rows = await this.page.$$eval('tbody tr', trs => trs.map(tr => {
+            const tds = tr.querySelectorAll('td');
+            return {
+                href: tds[0]?.querySelector('a')?.getAttribute('href') || '',
+                code: (tds[0]?.innerText || '').trim(),
+            };
+        }).filter(r => r.href));
+
+        for (const row of rows.slice(0, max)) {
+            await this.page.goto(`${baseUrl}${row.href}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+            await this.page.locator('xpath=//button[normalize-space()="Overview"]').first()
+                .waitFor({ state: 'visible', timeout: 60000 }).catch(() => {});
+            await this.page.waitForTimeout(5000);
+            const attachments = await this.findAttachmentLinks();
+            if (attachments.length) {
+                console.log(`[ATTACH] ${this.module.name} ${row.code} has: ${attachments.join(', ')}`);
+                return { code: row.code, attachments };
+            }
+        }
+        console.log(`[ATTACH] ${this.module.name}: none of the first ${max} transactions carry an attachment`);
+        return null;
+    }
+
     // ── Documents ─────────────────────────────────────────────────────────────
 
     /**
