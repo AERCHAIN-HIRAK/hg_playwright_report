@@ -848,3 +848,48 @@ radix tooltip vs a popover — **cannot be observed**. No test was written: a
 guessed assertion against an unverified mechanism can pass or fail for the wrong
 reason, which is worse than an honest gap. Needs an award performed with long
 Justification text; the check is small once that exists.
+
+## 2026-09-03 — Invoice cancel (81); 95/96/117 blocked on data
+
+New suite `tests/testSuiteInvoiceCancel.spec.js`. **1 passed (23s).**
+
+| # | Scenario | Status |
+|---|---|---|
+| 81 | An accounted invoice can be cancelled | **DONE** (dialog; confirm withheld) |
+| 95 | Auction joined-live details displayed | **BLOCKED — needs data** |
+| 96 | Auction joined-live details downloadable | **BLOCKED — needs data** |
+| 117 | Correct PO number through PO→GRN→Invoice | **BLOCKED — needs data** |
+
+### 81 — Accounted invoices are not where you would look
+They are **not on page 1** of the Invoice listing, which is dominated by
+Pending-approval / Cancelled / Rejected. The suite filters the Status column to
+`Accounted` (one of 28 options that filter offers) rather than hoping one turns
+up. `Invoice-FNSE-26-334` offers `Cancel · + Payment · More · Overview ·
+Transactions · Match Line Item`, and Cancel opens a **Cancellation Notes** dialog
+with an `Enter Reason` textarea and Confirm.
+
+**The confirmation is deliberately withheld.** Cancelling an *Accounted* invoice
+reverses a posted financial document — the most destructive action on this sheet
+— and running it in CI would eat the tenant's accounted invoices. The test proves
+the action is offered **and actionable** (dialog opens with its reason field and
+Confirm), then backs out, with every non-GET request aborted and asserted absent
+so even a misclick cannot post it. Completing it needs a QA-designated throwaway
+invoice, as arranged for 147 and 98.
+
+### 95 / 96 — there is no auctions listing
+`/auctions` and `/auction` on v4, and `/auctions` on v3, all return **404**.
+Auctions are reachable only from an RFX. No existing auction was found, and the
+`testSuiteAuctionFlow` builder that would create one is still `fixme`. Both need
+a **live** (95) and then **ended** (96) auction with **sealed bid = NO**.
+
+### 117 — Create → GRN is a silent no-op on the POs available
+On PO-NSEFN-26-210 and PO 1046, `Create` offers `GRN` and `Request Advance`;
+clicking **GRN** does nothing observable — no navigation, no new tab, no error
+toast. The direct `/pending-inwards/po/<id>/inward` route (used by the
+reject-edit suite) renders a **blank page** for both. Neither PO offers
+`Create → Invoice` at all. Needs a PO with open quantity left to inward.
+
+**Also worth carrying forward:** the PO detail page renders its action buttons
+**progressively** — a fixed 9s wait missed the `Create` button on one run of
+three. Any test here must wait on the locator, never on a timeout. Same class of
+bug as the GRN-listing false skip fixed earlier today.
