@@ -655,3 +655,51 @@ homes before concluding:
 The test asserts the absence **positively** (and first proves the page rendered,
 so it cannot pass on a blank page), then skips — so it flips to failing the day
 the feature ships.
+
+## 2026-09-03 — GRN Cancel vs invoice matching (67, 68)
+
+New suite `tests/testSuiteGrnCancel.spec.js`; GRN match-state helpers added to
+`v3DetailActions`. **1 passed, 1 skipped (45s).**
+
+| # | Scenario | Status |
+|---|---|---|
+| 67 | Cancel unavailable once a GRN is FULLY matched | **DONE** |
+| 68 | Cancel unavailable once a GRN is PARTIALLY matched | **BLOCKED — needs data** |
+
+### The "Matched" column is an ICON with no text
+```html
+<span class="progress-completed">   fully matched
+<span class="progress-pending">     not matched
+```
+Reading it with `innerText` returns `''` for every row — which is precisely why
+a first pass concluded *"no GRN is matched to an invoice"* while **12 of 20**
+rows were. Match state must come from the icon class.
+
+### The listing's INV Code column is empty even when matched
+Every row reads `-` while 12 carried the matched icon. The invoice linkage is
+only visible on the GRN's **own** page, so `readGrnActions` collects `INV-`
+codes from there. A first version of the test required the listing value and
+skipped every time.
+
+### An unmatched GRN does NOT necessarily offer Cancel
+`/inwards/565` (INW-NSEFN-26-107, unmatched) offers no Cancel either. So
+"Cancel is absent on a matched GRN" is **not evidence on its own** — the test
+first DISCOVERS a live baseline (an unmatched GRN that really does offer Cancel)
+and skips rather than passing hollowly if none exists. Live baseline was
+INW-NSEFN-26-108: `New Reversal · Cancel · More`.
+
+Result: INW-NSEFN-26-106, matched to **INV-AUTO-001**, offers only
+`More · Overview · Transactions` — no Cancel. Cancel is a **top-level button**
+on a GRN, never a More-menu item (that menu holds `Reassign User` only).
+
+### A blind wait cost a false skip — fixed
+`listGrnsWithMatchState` originally waited a flat 10s and returned **zero rows
+on one run of two** (this listing carries charts and ~19 columns). An empty read
+looks exactly like "no matched GRN exists", so the test skipped for the wrong
+reason and looked green. It now waits for `tbody tr` to be visible.
+
+### Scenario 68 needs purpose-built data
+There is no partial state in the Matched column, so a partially-matched GRN
+cannot be identified from the listing. The test is written and will run as soon
+as a GRN exists that is matched to an invoice for **less than its full
+quantity**.

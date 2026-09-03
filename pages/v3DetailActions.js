@@ -326,6 +326,96 @@ export class v3DetailActions {
         return null;
     }
 
+
+    // ── GRN match state (sheet scenarios 67, 68) ──────────────────────────────
+
+    /**
+     * Read the GRN (Inwards) listing with each row's MATCH state.
+     *
+     * The listing's "Matched" column renders an ICON and no text at all —
+     * `<span class="progress-completed">` when the GRN is fully matched to an
+     * invoice, `<span class="progress-pending">` when it is not. Reading that
+     * column with innerText returns '' for every row, which is why a first pass
+     * concluded "no GRN is matched" when several were.
+     *
+     * Returns [{ id, code, status, matched: 'completed'|'pending'|'', invoice }].
+     */
+    async listGrnsWithMatchState(baseUrl = V3_BASE_URL) {
+        await this.page.goto(`${baseUrl}/inwards`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        // WAIT FOR ROWS, not a fixed delay. A blind 10s wait returned ZERO rows
+        // on one run of two (the charts + ~19 columns make this listing slow),
+        // and an empty read looks exactly like "no matched GRN exists" — the
+        // test then skipped for the wrong reason.
+        await this.page.locator('tbody tr').first()
+            .waitFor({ state: 'visible', timeout: 90000 });
+        await this.page.waitForTimeout(3000);
+
+        const headers = await this.page.$$eval('thead th',
+            ths => ths.map(t => (t.innerText || '').trim()));
+        const idx = {
+            status: headers.indexOf('Status'),
+            matched: headers.indexOf('Matched'),
+            invoice: headers.indexOf('INV Code'),
+        };
+
+        const rows = await this.page.$$eval('tbody tr', (trs, idx) => trs.map(tr => {
+            const tds = tr.querySelectorAll('td');
+            const href = tds[0]?.querySelector('a')?.getAttribute('href') || '';
+            const matchCell = tds[idx.matched];
+            let matched = '';
+            if (matchCell) {
+                if (matchCell.querySelector('.progress-completed')) matched = 'completed';
+                else if (matchCell.querySelector('.progress-pending')) matched = 'pending';
+            }
+            const invoice = (tds[idx.invoice]?.innerText || '').trim();
+            return {
+                id: (href.match(/\/inwards\/(\d+)/) || [])[1] || null,
+                code: (tds[0]?.innerText || '').trim(),
+                status: idx.status >= 0 ? (tds[idx.status]?.innerText || '').trim() : '',
+                matched,
+                invoice: invoice === '-' ? '' : invoice,
+            };
+        }).filter(r => r.id), idx);
+
+        console.log(`[GRN] ${rows.length} row(s); matched=completed: ` +
+            rows.filter(r => r.matched === 'completed').map(r => r.code).join(', '));
+        return rows;
+    }
+
+    /** Open a GRN and report which header actions it offers. */
+    async readGrnActions(id, baseUrl = V3_BASE_URL) {
+        await this.page.goto(`${baseUrl}/inwards/${id}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.waitForTimeout(9000);
+        const buttons = await this.page.$$eval('button', els => els
+            .filter(e => e.getBoundingClientRect().width > 0)
+            .map(e => ({
+                label: (e.innerText || '').trim(),
+                disabled: e.disabled || e.getAttribute('aria-disabled') === 'true',
+            }))
+            .filter(b => b.label));
+        const menu = await this.getMoreMenuItems().catch(() => []);
+        await this.closeMenu().catch(() => {});
+
+        // The listing's "INV Code" column is EMPTY even for a matched GRN
+        // (verified: every row read '-' while 12 rows carried the
+        // progress-completed match icon). The invoice linkage is only visible on
+        // the GRN's own page, so it is read here rather than from the listing.
+        const invoiceCodes = await this.page.$$eval('*', els => Array.from(new Set(els
+            .filter(e => e.children.length === 0 && /^INV-/.test((e.textContent || '').trim()))
+            .map(e => (e.textContent || '').trim()))));
+
+        console.log(`[GRN] ${id} buttons: ${buttons.map(b => b.label + (b.disabled ? '(disabled)' : '')).join(' · ')}` +
+            ` | More: ${menu.join(' · ')} | invoices: ${invoiceCodes.join(', ') || 'none'}`);
+        return { buttons, menu, invoiceCodes };
+    }
+
+    /** Cancel is a TOP-LEVEL button on a GRN, not a More-menu item. */
+    grnCanBeCancelled({ buttons, menu }) {
+        const btn = buttons.find(b => /^Cancel$/i.test(b.label));
+        if (btn) return !btn.disabled;
+        return menu.some(m => /^Cancel$/i.test(m));
+    }
+
     // ── Documents ─────────────────────────────────────────────────────────────
 
     /**
