@@ -765,24 +765,48 @@ export class NSEFoundationActions {
         // reassign dialog uses a combobox ("New Reassign Approver", placeholder
         // "Select Approver as Replacement") with <li role=option> options. Try the
         // dropdown first, then fall back to the combobox.
+        //
+        // CONTRACT: this method RETURNS FALSE when the reassign cannot be done —
+        // every caller is written that way ("Reassign unavailable — stopping
+        // approval loop"). It used to return false for a missing More button and
+        // a missing menu option but THROW here if the picker never rendered,
+        // which took the whole chain down with an opaque 8s locator timeout deep
+        // inside a helper. Observed 2026-09-03 on CXO-5778: More → Reassign
+        // Workflow Approver opened NO dialog at all (the failure snapshot
+        // contains no dialog node), and the throw aborted a 45-minute chain.
+        // Failing soft here lets the caller stop with a message that names the
+        // real problem instead.
         const userDropdown = this.page.locator(`xpath=${L.reassignUserDropdown}`).first();
+        const combo = this.page.locator(`xpath=//div[@role='dialog']//input[contains(@placeholder,'Select Approver')]`).first();
+
         if (await userDropdown.isVisible({ timeout: 4000 }).catch(() => false)) {
             await userDropdown.click({ force: true });
-        } else {
-            const combo = this.page.locator(`xpath=//div[@role='dialog']//input[contains(@placeholder,'Select Approver')]`).first();
-            await combo.waitFor({ state: 'visible', timeout: 8000 });
+        } else if (await combo.isVisible({ timeout: 8000 }).catch(() => false)) {
             await combo.click({ force: true });
+        } else {
+            const dialogs = await this.page.locator('[role="dialog"]').count();
+            console.log(`[${tag}] Reassign picker never rendered (${dialogs} dialog(s) on page) — cannot reassign.`);
+            await this.page.keyboard.press('Escape').catch(() => {});
+            return false;
         }
         await this.page.waitForTimeout(700);
         const adminOpt = this.page.locator(L.reassignAdminOption)
             .or(this.page.locator(`xpath=//li[@role='option'][normalize-space(.)='NSEF Support Admin']`))
             .first();
-        await adminOpt.waitFor({ state: 'visible', timeout: 10000 });
+        if (!(await adminOpt.isVisible({ timeout: 10000 }).catch(() => false))) {
+            console.log(`[${tag}] "NSEF Support Admin" is not an option in the reassign picker — cannot reassign.`);
+            await this.page.keyboard.press('Escape').catch(() => {});
+            return false;
+        }
         await adminOpt.click();
         await this.page.waitForTimeout(400);
 
         const reasonField = this.page.locator(`xpath=${L.reassignReasonField}`).first();
-        await reasonField.waitFor({ state: 'visible', timeout: 5000 });
+        if (!(await reasonField.isVisible({ timeout: 5000 }).catch(() => false))) {
+            console.log(`[${tag}] Reassign dialog has no reason field — cannot reassign.`);
+            await this.page.keyboard.press('Escape').catch(() => {});
+            return false;
+        }
         await reasonField.fill(reason);
         await this.page.locator(`xpath=${L.reassignSubmitBtn}`).first().click();
         console.log(`[${tag}] Workflow approver reassigned to NSEF Support Admin`);
