@@ -6097,6 +6097,54 @@ export class NSEFoundationActions {
     }
 
     /** Cancel the invoice (More → Cancel + mandatory reason). PROVISIONAL. */
+    /**
+     * Recall an invoice that is still Pending Approval, so it can be cancelled.
+     *
+     * WHY THIS IS NEEDED: a Pending-Approval invoice has NO Cancel action at all.
+     * Its actions are `Settle Advances · More · Overview · Transactions ·
+     * Match Line Item`, and More holds `Reassign Workflow Approver ·
+     * Reassign User · Recall · Download Document · Regenerate Document`.
+     * Cancel only appears once the invoice is Rejected or Accounted.
+     *
+     * Recall is the cheap route there: its dialog states outright
+     * "Transaction will be kept in Rejected Status", and after confirming, the
+     * status reads Rejected and a top-level Cancel button appears.
+     * Verified live 2026-09-03 on Invoice-FNSE-26-363.
+     *
+     * NOTE the dialog's own buttons are `Cancel` / `Recall` — "Cancel" there
+     * DISMISSES the dialog, so it must not be confused with the invoice's
+     * Cancel action.
+     */
+    async recallInvoice(reason = 'Recalled by automation') {
+        const more = this.page.locator(`xpath=//button[normalize-space()="More"]`).first();
+        await more.waitFor({ state: 'visible', timeout: 30000 });
+        await more.click();
+        await this.page.waitForTimeout(1500);
+
+        const item = this.page.locator(`xpath=//li[@role="menuitem"][normalize-space()="Recall"]`).first();
+        if (!(await item.isVisible({ timeout: 8000 }).catch(() => false))) {
+            console.log('[INV] no Recall action — invoice is probably not Pending Approval.');
+            await this.page.keyboard.press('Escape').catch(() => {});
+            return false;
+        }
+        await item.click();
+        await this.page.waitForTimeout(3000);
+
+        const dialog = this.page.locator('[class*="MuiDialog-root"]').first();
+        await dialog.waitFor({ state: 'visible', timeout: 20000 });
+        const notes = dialog.locator('textarea').first();
+        if (await notes.isVisible({ timeout: 6000 }).catch(() => false)) await notes.fill(reason);
+
+        // Match the dialog's confirm button EXACTLY — a loose /Recall/ match also
+        // hits the heading text, and /Cancel/ would dismiss the dialog instead.
+        await dialog.locator('button').filter({ hasText: /^(Recall|Confirm)$/ }).first().click();
+        await this.page.waitForTimeout(8000);
+        await this.page.reload({ waitUntil: 'domcontentloaded' });
+        await this.page.waitForTimeout(6000);
+        console.log(`[INV] recalled (now expected Rejected) — reason "${reason}"`);
+        return true;
+    }
+
     async cancelInvoice(reason = 'Cancelled by automation') {
         // Cancel sits in the header toolbar on some states (seen on a Rejected /
         // Accounted invoice) and under More on others — try the header first,

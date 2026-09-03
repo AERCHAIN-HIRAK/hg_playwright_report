@@ -966,3 +966,63 @@ attaching a file to a PR / PO / GRN makes them verify with **no code change**.
 
 The test asserts at least one module was verified, so it cannot pass vacuously
 in a tenant where nothing has an attachment.
+
+## 2026-09-03 — Invoice cancellation releases the GRN match (66, 122, 151)
+
+New suite `tests/testSuiteInvoiceCancelGrn.spec.js`; chain extracted to
+`pages/chainBuilders.js`; `recallInvoice()` added. **Passed in 1.7m via RESUME**
+(the full-chain build was separately verified through invoice matching, 14.8m).
+
+| # | Scenario | Status |
+|---|---|---|
+| 66 | Cancelling the Invoice returns the GRN to Unmatched | **DONE** |
+| 122 | …and releases the matched quantity | **DONE** |
+| 151 | …and restores the PO balance / invoice availability | **DONE** |
+
+### A Pending-Approval invoice has NO Cancel action
+This is what broke the first working run. Its actions are
+`Settle Advances · More · Overview · Transactions · Match Line Item`, and More
+holds `Reassign Workflow Approver · Reassign User · Recall · Download Document ·
+Regenerate Document` — **no Cancel**. Cancel appears only once the invoice is
+**Rejected or Accounted**.
+
+**Recall is the route there.** Its dialog says outright *"Transaction will be
+kept in Rejected Status"*; after confirming, the status reads Rejected and a
+top-level Cancel appears. Encoded as `recallInvoice()`.
+
+⚠️ The recall dialog's own buttons are **`Cancel` / `Recall`** — "Cancel" there
+DISMISSES the dialog. A loose `/Cancel/` match dismisses instead of cancelling
+the invoice.
+
+### Proven end to end
+| Step | `INW-NSEFN-26-110` |
+|---|---|
+| Invoice matched, Pending Approval | `completed` |
+| → Recall → Rejected, Cancel appears | — |
+| → Cancel → Cancelled | **`pending`** |
+| → PO offers qty 100 for a new invoice | 122 / 151 |
+
+### Three bugs this shook out
+1. **`reassignWorkflowApprover` threw where its contract says return false** —
+   an opaque 8s timeout that aborted a 45-minute chain. Fixed; **this also
+   affects the reject-edit suite**, which shares the chain.
+2. **A module-level JSON import is a stale snapshot.** Reading
+   `data.savedGrn.code` mid-run returned a *previous* run's GRN
+   (`INW-NSEFN-26-106`, already matched), so the baseline failed claiming a
+   fresh GRN was "already matched". Capture what `saveGrnCode()` returns, or
+   re-read from disk as `openSavedPurchaseOrder` does.
+3. A duplicate `cancelInvoice` I nearly added would have silently overridden a
+   better existing one for every caller — in a JS class the later definition
+   wins.
+
+### The baseline assertion earned its keep
+"This GRN must NOT be matched before any invoice exists" is what caught bug 2. A
+test asserting only "the GRN is matched after invoicing" would have gone green
+against the stale, already-matched GRN and reported three scenarios covered
+while testing nothing.
+
+### RESUME halves the cost
+`RESUME=1` skips the build and starts at invoice creation. A passing run leaves
+the PO open with its GRN unmatched — **exactly the resume precondition**, so it
+sets up its own next verification: ~1.7m and one invoice, instead of ~15m and a
+full record set.
