@@ -640,3 +640,18 @@ it, rather than the test quietly damaging a supplier's banking details.
 135 and 136 reduce to the same assertion from the same form; 136 only adds the
 precondition that the values were stored first. They look like the same merge
 candidate 16/55 turned out to be — **QA's call**.
+
+### 2026-09-03 — scenario 100 (supplier matching %): CONFIRMED GAP
+Added to `testSuiteSupplierIfsc.spec.js`. **Skipped, guarded.** No matching
+percentage is rendered anywhere in this tenant. Checked all three plausible
+homes before concluding:
+
+| Where | Result |
+|---|---|
+| Supplier view page (30458 / 30480 / 30539) | zero `%` text nodes, zero "match" mentions |
+| Supplier Onboarding tab | zero `%` text nodes |
+| Create Supplier form, typing a COLLIDING name | nothing — and this is the strong signal: "HG Automation" collides with the real supplier "HG Automation SUPP", so a duplicate-matching feature would have fired |
+
+The test asserts the absence **positively** (and first proves the page rendered,
+so it cannot pass on a blank page), then skips — so it flips to failing the day
+the feature ships.

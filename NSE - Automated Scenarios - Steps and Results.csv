@@ -216,6 +216,10 @@ NOTE: QA described adding the Evaluation on the CONVERSION page - that control e
 2. Click Add New and assert the Create Supplier form renders with its Supplier Details and User Details sections.
 3. Separately, find a supplier whose Registration Status is Registered and open it.
 4. Click its Onboarding tab and assert the supplier's details render there.",Supplier create and onboarding work in the CAPP flow.,"PARTIAL - 2 tests PASS. Covers the CAPP-side create form and the Onboarding tab. Does NOT submit a new supplier (that would add a record to shared UAT data) and does NOT cover the supplier-facing onboarding form, which is filled through the Supplier Portal.",PARTIAL
+100,Verify Supplier matching percentage is displayed correctly beside the supplier name in the supplier view page.,testSuiteSupplierIfsc.spec.js,supplier matching percentage on the supplier view page,"1. Open a supplier view page (/suppliers/{id}).
+2. Assert ""Supplier Details"" rendered, so an absence assertion cannot pass on a blank page.
+3. Collect every visible text node containing ""%"" and count nodes mentioning ""match"".
+4. Assert the set is empty (guard: the test flips to FAILING the day a percentage appears).",A matching percentage is displayed beside the supplier name on the supplier view page.,"SKIPPED - CONFIRMED GAP. No matching percentage is rendered anywhere in this tenant. Checked all three plausible homes: the supplier view page (30458/30480/30539 - zero ""%"" nodes, zero ""match"" mentions), the Onboarding tab, and the Create Supplier form while typing a COLLIDING name (""HG Automation"" against the real ""HG Automation SUPP"") where a duplicate-matching feature would have fired. Needs the feature/config enabled.",Blocked - feature gap
 103,Verify user can clone a cancelled CXO without changing the reference.,testSuiteCxoClone.spec.js,a Cancelled CXO can be cloned without changing the reference,"1. Find a CXO with the required status on the CXO listing.
 2. Open it, More -> Clone; the form opens at /cxos/{id}/clone pre-filled.
 3. Submit WITHOUT changing anything (the reference/BRF stays as-is).

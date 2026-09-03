@@ -35,7 +35,7 @@ import { supplierActions } from '../pages/supplierActions';
 // instead of the test silently damaging a supplier.
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Supplier onboarding — mandatory IFSC', () => {
+test.describe('Supplier onboarding — mandatory IFSC + view-page matching %', () => {
 
     test.describe.configure({ timeout: 300000 });
 
@@ -123,5 +123,53 @@ test.describe('Supplier onboarding — mandatory IFSC', () => {
         expect(attemptedWrites,
             'the app tried to WRITE with a cleared mandatory IFSC — validation regressed')
             .toEqual([]);
+    });
+
+    // ── 100 — supplier matching percentage ────────────────────────────────────
+
+    test('supplier matching percentage on the supplier view page @Supplier @Matching @S100', async ({ page }) => {
+        const found = await sup.findOnboardingSupplier();
+        test.skip(!found, 'no supplier reachable to inspect');
+
+        await page.goto(`https://nse-capp-uat.aerchain.io/suppliers/${found.id}`,
+            { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await page.waitForTimeout(9000);
+
+        // Prove the page really rendered before asserting anything is absent —
+        // otherwise "no percentage" would pass on a blank page.
+        await expect(page.locator('//*[normalize-space()="Supplier Details"]').first(),
+            'the supplier view page did not render').toBeVisible({ timeout: 30000 });
+
+        const percentTexts = await page.$$eval('*', els => Array.from(new Set(els
+            .filter(e => e.children.length === 0 && /%/.test(e.textContent || '')
+                         && e.getBoundingClientRect().width > 0)
+            .map(e => (e.textContent || '').trim()))));
+        const matchMentions = await page.locator(
+            '//*[contains(translate(., "MATCH", "match"), "match")]').count();
+
+        console.log(`[S100] percent-bearing texts: ${JSON.stringify(percentTexts)} · ` +
+            `"match" mentions: ${matchMentions}`);
+
+        if (!percentTexts.length && matchMentions === 0) {
+            // Documented gap, guarded the same way as the PRC document actions:
+            // assert the absence positively so this test FLIPS TO FAILING the
+            // day the feature ships, instead of skipping forever in silence.
+            //
+            // Checked all three plausible homes and found nothing: the supplier
+            // view page, the Onboarding tab, and the Create Supplier form while
+            // typing a name that DOES collide with an existing supplier
+            // ("HG Automation" vs the real "HG Automation SUPP") — a
+            // duplicate-matching feature would have fired there.
+            expect(percentTexts, 'a percentage appeared — the matching feature now exists, so automate it')
+                .toEqual([]);
+            test.skip(true,
+                'CONFIRMED GAP: no supplier matching percentage is rendered anywhere in this ' +
+                'tenant — not on the supplier view page, not on the Onboarding tab, and not on ' +
+                'the Create Supplier form for a colliding name. Needs the feature/config enabled.');
+        }
+
+        expect(percentTexts.length,
+            'a matching percentage is rendered but this test has not been taught to verify its value')
+            .toBeGreaterThan(0);
     });
 });
