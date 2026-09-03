@@ -835,3 +835,16 @@ about merging them the way 16/55 were.
 - **34 posts a real comment on each run**, stamped `HG Automation comment
   <ts>` so automation-authored comments are obvious. A comment that is never
   sent would prove nothing.
+
+### 2026-09-03 — scenario 21 (award justification hover): NEEDS DATA
+Probed the award detail `/rfx/1450/awards/689` (AWD-FNSE-26-152, from Awarded
+RFX-26-241). The page exposes a **Justification Section** and a **Justification**
+field, but the field is **empty on every award checked**, and the page contains
+**zero truncated nodes** (measured properly: `textOverflow: ellipsis` or
+line-clamp *and* `scrollWidth > clientWidth`).
+
+So there is nothing to hover, and the reveal mechanism — `title` attribute vs a
+radix tooltip vs a popover — **cannot be observed**. No test was written: a
+guessed assertion against an unverified mechanism can pass or fail for the wrong
+reason, which is worse than an honest gap. Needs an award performed with long
+Justification text; the check is small once that exists.
