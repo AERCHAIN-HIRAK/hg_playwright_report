@@ -784,3 +784,54 @@ population is already evidenced here.
 
 Verified after the green run: PO-NSEFN-26-213 still reads qty `50.000`, price
 `2,000.000`, amount `100000` — untouched.
+
+## 2026-09-03 — RFX negotiations + buyer comments (30, 34); 25/26 need QA
+
+New suite `tests/testSuiteRfxCollab.spec.js`, new page object
+`pages/rfxCollabActions.js`. **4 passed (1.6m).**
+
+| # | Scenario | Status |
+|---|---|---|
+| 30 | Negotiations can be performed | **DONE** (form; submit deliberately not sent) |
+| 34 | Buyer comments for another user | **DONE** |
+| 25 | Prices are syncing in the Analysis tab | **NEEDS QA** — no such control |
+| 26 | Prices can be synced from the Analysis tab | **NEEDS QA** — same |
+
+### "None on the sample RFX" was a STATE problem, not a missing feature
+30 and 34 were parked because the sample RFX exposed neither. The sample
+(RFX-26-231) is **Awarded**, and that is the whole reason:
+
+| RFX | State | Analysis actions |
+|---|---|---|
+| RFX-26-231 / 26-241 | Awarded | Select View Type · Compare |
+| RFX-26-239 | Quoted | Select View Type · **Negotiation** · **Award** · Compare |
+
+The suite therefore finds a Quoted RFX rather than using the saved sample, and
+keeps the Awarded case as an explicit **contrast test** — without it, "Negotiation
+is present on a quoted RFX" could just mean "Negotiation is always present".
+
+### Scenarios 25 / 26 — no sync control exists
+Probed both a Quoted and an Awarded RFX, enumerating every visible button, every
+icon-only button and every text node matching `sync|negotiat|comment|remind`.
+The only icon-only buttons in the grid are **`lucide-plus` column-add** controls,
+one per column header — not a sync affordance. There is no "Sync" anywhere.
+
+The wording is also ambiguous: it could mean a sync BUTTON, or prices staying
+consistent after a supplier re-quotes. And **25 and 26 read as near-duplicates**
+of each other. Both are recorded as **needs QA clarification**, with a question
+about merging them the way 16/55 were.
+
+### Two trap notes
+- **The Analysis tab trigger is a `<button>`, not `role=tab`** —
+  `getByRole('button', { name: 'Analysis', exact: true })` does **not** resolve
+  it and times out after 30s. Match the XPath text instead.
+- **The comment mention list has no `role=option` and no listbox** — candidate
+  names are plain text nodes, so a mention target is clicked by text.
+
+### Coverage limits
+- **30** stops at the negotiation request form. Submitting alters RFX state, so
+  completing it needs a QA-designated throwaway RFX, exactly as was arranged for
+  block/unblock (147) and RFX-cancel (98).
+- **34 posts a real comment on each run**, stamped `HG Automation comment
+  <ts>` so automation-authored comments are obvious. A comment that is never
+  sent would prove nothing.
