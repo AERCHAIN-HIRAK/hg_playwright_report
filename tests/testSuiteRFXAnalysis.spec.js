@@ -7,13 +7,21 @@ import data from '../pages/NSEFoundationData.json';
 // RFX Analysis tab
 //
 // Sheet scenarios:
-//   23 prices shown in base currency after toggling
-//   25 deleted line items visible via the "Show deleted items" toggle
-//   26 supplier / view configuration shows the configured data
-//   27 all files downloadable from the Analysis tab
-//   30 quote versions can be compared
-//   35 evaluations can be evaluated
-//   36 deadline can be extended after foreclosing
+//   20 prices shown in base currency after toggling
+//   22 deleted line items visible via the "Show deleted items" toggle
+//   23 supplier / view configuration shows the configured data
+//   24 all files downloadable from the Analysis tab
+//   27 quote versions can be compared
+//   32 evaluations can be evaluated
+//   33 deadline can be extended after foreclosing
+//
+// WARNING - these tags were STALE by +3 until 2026-09-03. The second
+// renumbering (old 19-158 shifted by -3) updated both CSVs and every other
+// suite but missed this file, so the tags here still read 23/25/26/27/30/35/36.
+// Three of those collided with real, UNCOVERED scenarios - 25 and 26 (RFX price
+// sync) and 30 (Negotiations) looked covered while nothing tested them. Grepping
+// the tags is how coverage is counted, so a stale tag silently inflates it.
+// If the sheet is renumbered again, this file must be included in the pass.
 //
 // Verified live on RFX-26-231 (2026-08-31). Controls found on the tab:
 //   • two radix switches — "Show in base currency", "Show deleted items"
@@ -41,7 +49,7 @@ test.describe('RFX Analysis tab', () => {
     // ── Currency toggle (scenario 23) ─────────────────────────────────────────
     test.describe('Base currency toggle', () => {
 
-        test('"Show in base currency" toggle flips state @RFX @Analysis @S23', async ({ page }) => {
+        test('"Show in base currency" toggle flips state @RFX @Analysis @S20', async ({ page }) => {
             const a = await openAnalysis(page);
 
             const { before, after } = await a.toggleAnalysisSwitch('Show in base currency');
@@ -52,7 +60,7 @@ test.describe('RFX Analysis tab', () => {
             await a.toggleAnalysisSwitch('Show in base currency');
         });
 
-        test('prices render in a single currency while base currency is on @RFX @Analysis @S23', async ({ page }) => {
+        test('prices render in a single currency while base currency is on @RFX @Analysis @S20', async ({ page }) => {
             const a = await openAnalysis(page);
 
             if (await a.getAnalysisSwitchState('Show in base currency') === 'unchecked') {
@@ -67,7 +75,7 @@ test.describe('RFX Analysis tab', () => {
                 `base currency is ON but amounts use mixed symbols: ${symbols.join(' ')}`).toBe(1);
         });
 
-        test('toggling base currency off keeps the grid populated @RFX @Analysis @S23', async ({ page }) => {
+        test('toggling base currency off keeps the grid populated @RFX @Analysis @S20', async ({ page }) => {
             const a = await openAnalysis(page);
 
             const on = await a.readAnalysisAmounts();
@@ -92,7 +100,7 @@ test.describe('RFX Analysis tab', () => {
     // ── Deleted items toggle (scenario 25) ────────────────────────────────────
     test.describe('Deleted items toggle', () => {
 
-        test('"Show deleted items" toggle flips state @RFX @Analysis @S25', async ({ page }) => {
+        test('"Show deleted items" toggle flips state @RFX @Analysis @S22', async ({ page }) => {
             const a = await openAnalysis(page);
 
             expect(await a.getAnalysisSwitchState('Show deleted items')).toBe('unchecked');
@@ -102,7 +110,7 @@ test.describe('RFX Analysis tab', () => {
             await a.toggleAnalysisSwitch('Show deleted items');
         });
 
-        test('showing deleted items never removes rows from the grid @RFX @Analysis @S25', async ({ page }) => {
+        test('showing deleted items never removes rows from the grid @RFX @Analysis @S22', async ({ page }) => {
             const a = await openAnalysis(page);
 
             const before = (await a.readAnalysisAmounts()).length;
@@ -127,7 +135,7 @@ test.describe('RFX Analysis tab', () => {
             'Download Questionnaire',
         ];
 
-        test('download menu offers every export @RFX @Analysis @Download @S27', async ({ page }) => {
+        test('download menu offers every export @RFX @Analysis @Download @S24', async ({ page }) => {
             const a = await openAnalysis(page);
             const options = await a.getAnalysisDownloadOptions();
             for (const e of EXPORTS) expect(options, `missing "${e}"`).toContain(e);
@@ -135,7 +143,7 @@ test.describe('RFX Analysis tab', () => {
 
         // Exports confirmed to produce a file on RFX-26-231.
         for (const label of ['Download Analysis', 'Download Versions', 'Download Questionnaire']) {
-            test(`"${label}" produces a non-empty file @RFX @Analysis @Download @S27`, async ({ page }) => {
+            test(`"${label}" produces a non-empty file @RFX @Analysis @Download @S24`, async ({ page }) => {
                 const a = await openAnalysis(page);
                 const res = await a.tryDownloadAnalysisFile(label);
                 expect(res.ok, `${label} failed: HTTP ${res.status} ${res.reason}`).toBeTruthy();
@@ -149,7 +157,7 @@ test.describe('RFX Analysis tab', () => {
         // and the app surfaces exactly that text in a toast — correct behaviour,
         // not a defect. So the assertion accepts EITHER a real file OR a clear
         // message, and fails only if the click does nothing at all.
-        test('"Download Benchmarks" either downloads or explains why not @RFX @Analysis @Download @S27', async ({ page }) => {
+        test('"Download Benchmarks" either downloads or explains why not @RFX @Analysis @Download @S24', async ({ page }) => {
             const a = await openAnalysis(page);
 
             const res = await a.tryDownloadAnalysisFile('Download Benchmarks');
@@ -171,14 +179,14 @@ test.describe('RFX Analysis tab', () => {
     // ── View type / supplier configuration (scenario 26) ──────────────────────
     test.describe('View configuration', () => {
 
-        test('Select View Type lists the saved analysis views @RFX @Analysis @S26', async ({ page }) => {
+        test('Select View Type lists the saved analysis views @RFX @Analysis @S23', async ({ page }) => {
             const a = await openAnalysis(page);
             const views = await a.getAnalysisViewTypes();
             expect(views.length, 'no analysis view types offered').toBeGreaterThan(0);
             expect(views, 'the built-in "Default" view is missing').toContain('Default');
         });
 
-        test('supplier and column configuration controls are available @RFX @Analysis @S26', async ({ page }) => {
+        test('supplier and column configuration controls are available @RFX @Analysis @S23', async ({ page }) => {
             await openAnalysis(page);
             await expect(page.locator(`xpath=${L.analysisSupplierConfigBtn}`).first()).toBeVisible();
             await expect(page.locator(`xpath=${L.analysisColumnConfigBtn}`).first()).toBeVisible();
@@ -188,7 +196,7 @@ test.describe('RFX Analysis tab', () => {
     // ── Compare quote versions (scenario 30) ──────────────────────────────────
     test.describe('Compare versions', () => {
 
-        test('Compare panel exposes supplier, version and field selectors @RFX @Analysis @Compare @S30', async ({ page }) => {
+        test('Compare panel exposes supplier, version and field selectors @RFX @Analysis @Compare @S27', async ({ page }) => {
             const a = await openAnalysis(page);
             await a.openAnalysisCompare();
 
@@ -210,7 +218,7 @@ test.describe('RFX Analysis tab', () => {
         // conversion, which is why its Evaluations tab shows an empty state —
         // that is correct behaviour, NOT the defect an earlier note here claimed.
         // These two tests cover only the entry points.
-        test('Add Evaluation is offered on the RFX @RFX @Evaluation @S35', async ({ page }) => {
+        test('Add Evaluation is offered on the RFX @RFX @Evaluation @S32', async ({ page }) => {
             const a = new NSEFoundationActions(page);
             await page.setViewportSize({ width: 1800, height: 900 });
             await a.openApp(data);
@@ -221,7 +229,7 @@ test.describe('RFX Analysis tab', () => {
             await expect(page.locator(`xpath=${L.rfxAddEvaluationBtn}`).first()).toBeVisible();
         });
 
-        test('Evaluations tab renders for an RFX with no evaluation added @RFX @Evaluation @S35', async ({ page }) => {
+        test('Evaluations tab renders for an RFX with no evaluation added @RFX @Evaluation @S32', async ({ page }) => {
             const a = new NSEFoundationActions(page);
             await page.setViewportSize({ width: 1800, height: 900 });
             await a.openApp(data);
@@ -252,7 +260,7 @@ test.describe('RFX Analysis tab', () => {
         // months away, and every day from today on is selectable — including a
         // date EARLIER than the deadline currently set, which is what QA meant
         // by "select the date prior to the selected date".
-        test('a foreclosed RFX can have its deadline extended and quoting reopens @RFX @Deadline @S36', async ({ page }) => {
+        test('a foreclosed RFX can have its deadline extended and quoting reopens @RFX @Deadline @S33', async ({ page }) => {
             test.setTimeout(420000);
 
             const a = new NSEFoundationActions(page);

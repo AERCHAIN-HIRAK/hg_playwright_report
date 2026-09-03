@@ -290,3 +290,38 @@ numbered 1–155 with 16 missing.** Say the word to renumber consecutively.
 Scenario 16 was never separately automated, so no test was deleted — its intent
 lives in `testSuitePrEdit.spec.js` › *"quantity increased during edit raises
 Budget Exceeded in the Workflow Summary popup @S55"*.
+
+---
+
+## 2026-09-03 — stale @S tags found in testSuiteRFXAnalysis (fixed)
+
+The second renumbering entry above states the −3 shift was *"applied to both CSVs
+and to every `@S<n>` tag in `tests/` in one pass (59 tags shifted)"*.
+**`tests/testSuiteRFXAnalysis.spec.js` was missed.** Its seven tags still carried
+the pre-shift numbers.
+
+| Test | Tag was | Should be | Sheet scenario |
+|---|---|---|---|
+| Base currency toggle | @S23 | **@S20** | price in base currency |
+| Deleted items toggle | @S25 | **@S22** | deleted line items toggle |
+| View configuration | @S26 | **@S23** | supplier configurations |
+| Downloads | @S27 | **@S24** | all files downloadable |
+| Compare panel | @S30 | **@S27** | quote versions compared |
+| Evaluations | @S35 | **@S32** | evaluation can be evaluated |
+| Deadline extension | @S36 | **@S33** | deadline extended after foreclose |
+
+**Why it mattered.** Grepping `@S<n>` is how coverage gets counted, so a stale
+tag silently INFLATES it. Three of these collided with genuinely uncovered
+scenarios — **25** and **26** (RFX price sync) and **30** (Negotiations) appeared
+covered while nothing tested them. They are on the pending list, and were about
+to be built when the collision surfaced.
+
+Both CSVs were already correct — the results CSV maps 20/22/23/24/27 to this
+suite — so only the in-code tags were wrong and no recorded status changed.
+
+An audit comparing every `@S` tag against the results CSV's "Suite file" column
+now reports only six hits, all benign **duplicate coverage** (a scenario
+exercised by two suites where the CSV names one): AuctionFlow @S29,
+PurchaseOrder @S62/@S63, RFXAnalysis @S32, Requisition @S50/@S51.
+
+**If the sheet is renumbered again, include this file in the pass.**
