@@ -264,6 +264,124 @@ export class supplierActions {
     // selection in the Supplier Onboarding". They are not on any invoice
     // template, which is why the probe for them came up empty.
 
+
+    // ── Onboarding form: IFSC mandatory validation (sheet scenarios 135, 136) ─
+    //
+    // The onboarding form at /suppliers/{id}/update is the ONLY place IFSC
+    // exists — it is on neither the Create Supplier form nor the supplier's
+    // Onboarding tab, which is why an earlier probe for it came up empty.
+    //
+    // It renders only while the supplier is still pre-Registered. A REGISTERED
+    // supplier's /update REDIRECTS to /suppliers/{id} (verified on 30458), so a
+    // test must not assume the URL it asked for is the URL it got.
+
+    /** True when /suppliers/{id}/update actually rendered the editable form. */
+    async isOnboardingFormOpen() {
+        if (!/\/update$/.test(this.page.url())) return false;
+        return (await this.page.locator('input').count()) > 20;
+    }
+
+    async openOnboardingForm(id) {
+        await this.page.goto(`${V3_BASE}/suppliers/${id}/update`,
+            { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.waitForTimeout(13000);
+        const open = await this.isOnboardingFormOpen();
+        console.log(`[SUPPLIER] onboarding form for ${id}: ${open ? 'open' : 'NOT available'} (${this.page.url()})`);
+        return open;
+    }
+
+    /**
+     * Find a supplier whose onboarding form is editable AND carries IFSC fields.
+     *
+     * Walks the listing rather than trusting a hardcoded id — the default
+     * supplier listing is a pending-work view, so which suppliers appear churns.
+     * `requireValue: true` additionally demands the IFSC fields already hold a
+     * value, which is what makes scenario 136 an EDIT rather than a creation.
+     */
+    async findOnboardingSupplier({ requireValue = false, max = 6 } = {}) {
+        await this.page.goto(`${V3_BASE}/suppliers`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.waitForTimeout(9000);
+
+        const headers = await this.page.$$eval('thead th',
+            ths => ths.map(t => (t.innerText || '').trim()));
+        const iStatus = headers.indexOf('Registration Status');
+
+        const rows = await this.page.$$eval('tbody tr', (trs, iStatus) => trs.map(tr => {
+            const tds = tr.querySelectorAll('td');
+            const href = tds[0]?.querySelector('a')?.getAttribute('href') || '';
+            return {
+                id: (href.match(/\/suppliers\/(\d+)/) || [])[1] || null,
+                name: (tds[1]?.innerText || '').trim(),
+                status: iStatus >= 0 ? (tds[iStatus]?.innerText || '').trim() : '',
+            };
+        }).filter(r => r.id), iStatus);
+
+        for (const r of rows.slice(0, max)) {
+            if (!(await this.openOnboardingForm(r.id))) continue;
+            const ifsc = await this.getIfscFields();
+            if (!ifsc.length) {
+                console.log(`[SUPPLIER] ${r.name} (${r.id}) has no IFSC field on its template`);
+                continue;
+            }
+            const filled = ifsc.every(f => (f.value || '').trim() !== '');
+            if (requireValue && !filled) {
+                console.log(`[SUPPLIER] ${r.name} (${r.id}) has IFSC fields but they are blank — need a filled one`);
+                continue;
+            }
+            console.log(`[SUPPLIER] using ${r.name} (${r.id}, ${r.status}); IFSC fields: ` +
+                ifsc.map(f => `${f.label}="${f.value}"`).join(' · '));
+            return { ...r, ifsc };
+        }
+        return null;
+    }
+
+    /**
+     * Read the IFSC fields on the open onboarding form.
+     *
+     * Matched on the input's ID PREFIX, not on a mandatory marker: this template
+     * carries NO asterisk and no `required`/`aria-required` on the IFSC inputs
+     * even though the form rejects them when blank. The ids are
+     * "RTGS IFSC Code-<random>" / "NEFT IFSC Code-<random>" — the suffix is
+     * regenerated on every render, so it can never be hardcoded.
+     */
+    async getIfscFields() {
+        return this.page.$$eval('input', els => els
+            .filter(e => /ifsc/i.test(e.id || ''))
+            .map(e => ({ id: e.id, label: (e.id || '').split('-')[0], value: e.value })));
+    }
+
+    async setIfscFields(value) {
+        const handles = await this.page.$$('input');
+        const touched = [];
+        for (const h of handles) {
+            const id = (await h.getAttribute('id')) || '';
+            if (!/ifsc/i.test(id)) continue;
+            await h.fill(value);
+            touched.push(id);
+        }
+        await this.page.waitForTimeout(1200);
+        console.log(`[SUPPLIER] set ${touched.length} IFSC field(s) to "${value}"`);
+        return touched;
+    }
+
+    /**
+     * Submit the onboarding form and read back its validation messages.
+     *
+     * getByRole for the button — the form embeds a SunEditor that injects HIDDEN
+     * "Submit" buttons, and an XPath text match resolves one of those, so the
+     * click does nothing and the form LOOKS like it accepted the submit.
+     */
+    async submitOnboardingAndReadValidation() {
+        await this.page.getByRole('button', { name: 'Submit', exact: true }).first().click();
+        await this.page.waitForTimeout(6000);
+
+        const messages = await this.page.$$eval('*', els => Array.from(new Set(els
+            .filter(e => e.children.length === 0 && /is Mandatory|Please fill mandatory/i.test(e.textContent || ''))
+            .map(e => (e.textContent || '').trim()))));
+        console.log(`[SUPPLIER] validation messages: ${JSON.stringify(messages)}`);
+        return messages;
+    }
+
     /** A plausible value for a text field, chosen from its label. */
     _onboardingTextValue(label) {
         const l = label.toLowerCase();

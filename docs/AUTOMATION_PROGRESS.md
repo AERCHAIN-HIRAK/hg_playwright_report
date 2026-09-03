@@ -587,3 +587,56 @@ Rather than skip blind, the test **positively asserts the menu equals
 `['Reassign User']`** before skipping, so it **flips to failing** the day the
 actions are added — which is the signal worth having. Needs either the app
 change or a QA decision to retire the scenario.
+
+## 2026-09-03 — Supplier onboarding: mandatory IFSC (135, 136)
+
+New suite `tests/testSuiteSupplierIfsc.spec.js`; IFSC helpers added to
+`pages/supplierActions.js`. **2 passed (2.2m).**
+
+| # | Scenario | Status |
+|---|---|---|
+| 135 | Blank IFSC blocks the onboarding submission | **DONE** |
+| 136 | Clearing a stored IFSC while editing raises the same validation | **DONE** |
+
+### Where IFSC actually lives — the earlier note was wrong
+The suite header for `testSuiteSupplierOnboarding` recorded *"IFSC and GST are
+NOT on this form, nor on the supplier's Onboarding tab… so those scenarios are
+not covered here"*. The first half is right and the conclusion was wrong: IFSC
+is on the **onboarding form at `/suppliers/{id}/update`**, which carries **two**
+of them — **RTGS IFSC Code** and **NEFT IFSC Code**.
+
+Verified live on supplier 30539: clearing both and submitting produces
+
+```
+RTGS IFSC Code is Mandatory
+NEFT IFSC Code is Mandatory
+Please fill mandatory fields
+```
+
+### Three traps, all encoded
+- **The IFSC inputs carry NO mandatory marker** — no asterisk, no `required`,
+  no `aria-required` — yet the form rejects them when blank. Deciding
+  mandatoriness from the DOM marker (which was my first probe) concludes the
+  exact opposite of the truth. The only reliable oracle on this form is
+  submitting and reading the messages back, which is what
+  `fillAndSubmitOnboardingForm` already does for its own purposes.
+- **Field ids carry a random suffix** regenerated on every render
+  (`RTGS IFSC Code-au1hzMh6hQKa`, `RTGS IFSC Code-4fwzT58o767P`,
+  `RTGS IFSC Code-tInqnCgEIj5A` across three loads of the same supplier), so
+  only the id PREFIX can ever be matched.
+- **A REGISTERED supplier's `/update` REDIRECTS** to `/suppliers/{id}` and
+  renders no form at all (verified on 30458, HG Automation SUPP). The form
+  exists only pre-Registration, so the helper walks the listing for a supplier
+  that actually yields one instead of trusting an id.
+
+### Non-destructive twice over
+The submit is blocked **entirely client-side** — zero non-GET requests are
+attempted. On top of that the tests abort every non-GET request at the route
+layer and assert `attemptedWrites === []`, so if the app ever regresses to
+ACCEPTING a blank IFSC the abort prevents the mutation and the assertion reports
+it, rather than the test quietly damaging a supplier's banking details.
+
+### Worth raising with QA
+135 and 136 reduce to the same assertion from the same form; 136 only adds the
+precondition that the values were stored first. They look like the same merge
+candidate 16/55 turned out to be — **QA's call**.
