@@ -734,3 +734,53 @@ What is proven is the filter's mechanics and that it never leaks a non-MSME
 invoice. Closing the gap needs at least one invoice raised against an
 MSME-registered vendor; the tests will then assert the matches without any code
 change.
+
+## 2026-09-03 — PO amend: Budget Exceeded (71)
+
+New suite `tests/testSuitePoAmendBudget.spec.js`, new page object
+`pages/poAmendActions.js`. **1 passed (33s).**
+
+Reached at `/purchase-orders/{id}/amend` (`/edit` serves the same form).
+**Neither is offered in the PO More menu** — that holds Clone / Recall /
+Reassign User / Reassign Workflow Approver / Regenerate Document — so the route
+must be navigated directly.
+
+### ⚠️ The size of the increase decides whether this test lies
+Budget item 703 ("Dont Touch") is allocated **₹9,99,99,99,99,999 (~₹1tn)** with
+only ₹6,89,25,900 consumed. The first attempt reused the PR suite's
+`99,999,999` → a transaction value of ~₹200bn — and
+`POST /budget-items/703/validate` returned **`validate: true`**, correctly, since
+200bn is far under 1tn. Had the test asserted loosely it would have looked
+"broken app"; had it asserted nothing it would have passed hollowly.
+
+**Why the PR suite gets away with that same number:** a PR is additionally
+capped by its parent CXO's remaining budget, so 200bn already breaches the
+parent. A PO amend is validated against the **budget item itself**, so the value
+has to exceed ~₹1tn outright. Hence `qty = 999,999,999` → ₹1,999,999,998,000 →
+`validate: false`.
+
+### Three differences from the PR edit page that break a naive port
+| | PR edit | PO amend |
+|---|---|---|
+| Price column | `line_items_suggested_price` | `line_items_product_price` |
+| Total column | `line_items_total_price` | `line_items_amount` |
+| Popup title | "Approvers" | **"Workflow Summary"** |
+
+Plus PO cells are **formatted** — `100.000`, `2,000.000`, and after editing
+`99,99,99,999.000` in Indian digit grouping — so the PR's string-equality check
+on the typed value fails even when the edit succeeded. `poAmendActions` compares
+numerically.
+
+### A route allow-list, not a blanket block
+The popup needs `workflow/stages/eligible-users` and the budget validate call to
+render at all. An initial blanket "abort every non-GET" left the dialog empty and
+the probe wrongly looked like "no budget error". The suite allows those calls and
+blocks everything else, then asserts nothing was blocked — i.e. no amend write
+was even attempted.
+
+### Also useful for scenario 101
+The PO amend grid carries `line_items_uom` = `EA`, so the PO module's UOM
+population is already evidenced here.
+
+Verified after the green run: PO-NSEFN-26-213 still reads qty `50.000`, price
+`2,000.000`, amount `100000` — untouched.
