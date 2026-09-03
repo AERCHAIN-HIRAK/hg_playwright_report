@@ -703,3 +703,34 @@ There is no partial state in the Matched column, so a partially-matched GRN
 cannot be identified from the listing. The test is written and will run as soon
 as a GRN exists that is matched to an invoice for **less than its full
 quantity**.
+
+## 2026-09-03 — Invoice MSME filter (84)
+
+New suite `tests/testSuiteInvoiceMsme.spec.js`, reusing the existing
+`v3ListingActions` filter machinery (`hasFilter` / `applyColumnFilter` /
+`getColumnValues`) — no new page object needed. **3 passed (39s).**
+
+### The earlier note was wrong — the column IS there
+Batch 1 recorded *"no MSME column exposed by default on the Invoice listing;
+needs the column enabled or a different entry point"*. Re-probed live: the
+Invoice listing carries an **MSME column at index 16** with `Yes`/`No` cells and
+a working `img[alt="filter"]` in its `<th>` offering exactly those two options.
+
+### The oracle had to be chosen carefully
+All 20 rows on page 1 read `No`, and the tenant holds **no MSME invoice at all**.
+So "the Yes filter returns rows" is the wrong assertion — it would fail on
+correct behaviour. The suite asserts instead:
+
+- `MSME = No` **must** return rows, and every one must read `No` → 20 rows, all `No`.
+- `MSME = Yes` must never return a row reading `No` — **purity**, whether the
+  result is populated or empty → 0 rows, clean empty result, page not crashed.
+
+That holds however much MSME data the tenant has.
+
+### ⚠️ Coverage limit worth reporting to QA
+Because no MSME invoice exists here, the scenario's **positive** claim — *"all
+Invoices related to MSME Vendor are displayed"* — is **not proven with data**.
+What is proven is the filter's mechanics and that it never leaks a non-MSME
+invoice. Closing the gap needs at least one invoice raised against an
+MSME-registered vendor; the tests will then assert the matches without any code
+change.
