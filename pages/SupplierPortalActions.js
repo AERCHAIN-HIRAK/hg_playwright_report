@@ -476,12 +476,32 @@ export class SupplierPortalActions {
         }
         await this.page.waitForTimeout(1500);
 
+        // The Approvers dialog's Submit is the last gate. Observed 2026-09-08: a
+        // single click can leave the dialog standing — still reading "Invoice looks
+        // good to proceed. Click Submit." — and no invoice is created, so the old
+        // fire-once-then-waitForURL timed out with nothing to diagnose from. Click
+        // until the dialog actually detaches, logging what it still says, then give
+        // the create POST a realistic budget.
         const approversSubmit = this.page.locator(`xpath=${S.dialogSubmitBtn}`).last();
-        if (await approversSubmit.isVisible({ timeout: 15000 }).catch(() => false)) {
-            await approversSubmit.click();
-            console.log('[SAPP Invoice] Approvers popup → Submit');
+        for (let i = 0; i < 4; i++) {
+            const shown = await approversSubmit
+                .isVisible({ timeout: i === 0 ? 15000 : 3000 }).catch(() => false);
+            if (!shown) break;
+            await approversSubmit.scrollIntoViewIfNeeded().catch(() => {});
+            await approversSubmit.click({ force: true }).catch(() => {});
+            console.log(`[SAPP Invoice] Approvers popup → Submit (attempt ${i + 1})`);
+            const gone = await approversSubmit
+                .waitFor({ state: 'hidden', timeout: 20000 }).then(() => true).catch(() => false);
+            if (gone) {
+                console.log('[SAPP Invoice] Approvers dialog closed');
+                break;
+            }
+            const txt = await this.page.locator('xpath=//div[@role="dialog"]').last()
+                .innerText().catch(() => '');
+            console.log('[SAPP Invoice] dialog still open: '
+                + JSON.stringify(txt.replace(/\s+/g, ' ').slice(0, 160)));
         }
-        await this.page.waitForURL(/\/invoices\/\d+$/, { timeout: 30000 });
+        await this.page.waitForURL(/\/invoices\/\d+$/, { timeout: 120000 });
         await this.page.waitForTimeout(3000);
         console.log(`[SAPP Invoice] Invoice created → ${this.page.url()}`);
 
@@ -571,14 +591,29 @@ export class SupplierPortalActions {
      * Take a Pending-Review SAPP invoice (currently open in CAPP) into the approval
      * workflow. Returns true when it submits the review.
      */
-    async reviewAndSubmitPendingReview(tag = 'INV') {
+    /**
+     * Steps (1)-(3) only: leave the invoice OPEN on its review edit page
+     * (/invoices/<id>/edit) without submitting.
+     *
+     * Split out of reviewAndSubmitPendingReview so the review edit page can be
+     * driven by tests that must change a field and expect the submit to be
+     * REFUSED — sheet scenario 126(b) (duplicate reference entered at review)
+     * and 127 (subject character limit). QA confirmed 2026-09-08 that creating
+     * the invoice from SAPP is what triggers the Review stage, and that the
+     * validation itself is exercised from CAPP during that review. This is the
+     * only route to a Review-stage invoice: a CAPP-created PO invoice goes
+     * straight to Pending Approval.
+     *
+     * Returns true when the edit page is open.
+     */
+    async openPendingReviewEditPage(tag = 'INV') {
         // (1) Reassign the workflow approver → NSEF Support Admin (unlocks Review).
         await this._reassignInvoiceApprover(tag);
 
         // (2) Match invoice line items to the PO's GRN.
         await this._matchInvoiceLineItemToGrn(tag);
 
-        // (3) Review → edit page → Submit → Validations/Approvers popups.
+        // (3) Review → edit page.
         const review = this.page.locator(`xpath=${S.invReviewBtn}`).first();
         if (!(await review.isVisible({ timeout: 8000 }).catch(() => false))) {
             console.log(`[${tag}] No Review button after reassign — may already be in workflow`);
@@ -589,6 +624,13 @@ export class SupplierPortalActions {
         console.log(`[${tag}] Clicked Review → opening invoice in edit mode`);
         await this.page.waitForURL(/\/invoices\/\d+\/edit/, { timeout: 20000 }).catch(() => {});
         await this.page.waitForTimeout(2500);
+        const open = /\/invoices\/\d+\/edit/.test(this.page.url());
+        console.log(`[${tag}] review edit page ${open ? 'open' : 'NOT open'} (${this.page.url()})`);
+        return open;
+    }
+
+    async reviewAndSubmitPendingReview(tag = 'INV') {
+        if (!await this.openPendingReviewEditPage(tag)) return false;
 
         // Submit the review. BRF - Description now carries forward from the PO, so
         // the form is valid; retry the forced click until the Validations popup shows.
@@ -618,9 +660,14 @@ export class SupplierPortalActions {
 
     // More → Reassign Workflow Approver → NSEF Support Admin → reason → Reassign.
     async _reassignInvoiceApprover(tag = 'INV') {
+        // 30s, not 8s. The invoice detail page renders its header actions LATE:
+        // on 2026-09-08 this logged "No More button" on Invoice-FNSE-26-376 and
+        // skipped the reassign that unlocks Review, yet probing the same invoice
+        // moments later showed More · Overview · Transactions · Match Line Item
+        // all present. It was a race against page settle, not a missing action.
         const more = this.page.locator(`xpath=${S.moreBtn}`).first();
-        if (!(await more.isVisible({ timeout: 8000 }).catch(() => false))) {
-            console.log(`[${tag}] No More button — cannot reassign approver`);
+        if (!(await more.isVisible({ timeout: 30000 }).catch(() => false))) {
+            console.log(`[${tag}] No More button after 30s — cannot reassign approver`);
             return false;
         }
         await more.click();
@@ -671,19 +718,59 @@ export class SupplierPortalActions {
         if (await addGrn.isVisible({ timeout: 8000 }).catch(() => false)) {
             await addGrn.click();
             await this.page.waitForTimeout(1000);
-            const opt = grnCode
+            // Prefer the chain's own GRN, but FALL BACK to whatever GRN the picker
+            // offers. The exact-code lookup alone is wrong whenever savedGrn is not
+            // the GRN of THIS invoice's PO — which is any run against an invoice the
+            // current chain did not build (2026-09-08: savedGrn INW-NSEFN-26-113 vs
+            // an invoice on PO-NSEFN-26-221, so the option never appeared and an 8s
+            // waitFor took the test down).
+            const anyGrn = this.page.locator(
+                `xpath=//li[@role='option'][contains(normalize-space(.),'INW-')]`).first();
+            let opt = grnCode
                 ? this.page.locator(`xpath=${S.itemMatchingGrnOption(grnCode)}`).first()
-                : this.page.locator(`xpath=//li[@role='option'][contains(normalize-space(.),'INW-')]`).first();
-            await opt.waitFor({ state: 'visible', timeout: 8000 });
+                : anyGrn;
+            let picked = grnCode || '(first)';
+            if (!await opt.isVisible({ timeout: 8000 }).catch(() => false)) {
+                const offered = await this.page.locator(`xpath=//li[@role='option']`)
+                    .allInnerTexts().catch(() => []);
+                console.log(`[${tag}] GRN "${grnCode}" not offered — options: ${JSON.stringify(offered.slice(0, 8))}`);
+                opt = anyGrn;
+                picked = '(fallback: first INW-)';
+                if (!await opt.isVisible({ timeout: 5000 }).catch(() => false)) {
+                    console.log(`[${tag}] no GRN option at all — leaving Item Matching unmatched`);
+                    await this.page.keyboard.press('Escape').catch(() => {});
+                    await this.page.waitForTimeout(1000);
+                    return false;
+                }
+            }
             await opt.click();
-            console.log(`[${tag}] Added GRN ${grnCode || '(first)'} in Item Matching`);
+            console.log(`[${tag}] Added GRN ${picked} in Item Matching`);
             await this.page.waitForTimeout(800);
             // Close the dropdown by clicking the dialog heading.
             await this.page.locator(`xpath=${S.itemMatchingHeading}`).first().click({ force: true }).catch(() => {});
             await this.page.waitForTimeout(500);
         }
+        // FAIL SOFT, like _reassignInvoiceApprover. This dialog has more than one
+        // shape: on a SAPP invoice whose PO carries a matching GRN it offers an
+        // "Add GRN" picker and a Submit, but on Invoice-FNSE-26-376 (2026-09-08,
+        // criteria = Quantity, PO-NSEFN-26-221) it rendered as a read-only
+        // Invoice-vs-PO comparison with NEITHER — only an X. The old hard 10s
+        // waitFor then threw and took the whole test down at a point where there
+        // may be nothing to match at all. Report what the dialog offered and let
+        // the caller decide; the Review button is the real gate.
         const submit = this.page.locator(`xpath=${S.dialogSubmitBtn}`).last();
-        await submit.waitFor({ state: 'visible', timeout: 10000 });
+        if (!await submit.isVisible({ timeout: 10000 }).catch(() => false)) {
+            const txt = await this.page.locator('xpath=//div[@role="dialog"]').last()
+                .innerText().catch(() => '');
+            console.log(`[${tag}] Item Matching dialog offers no Submit — nothing to match. `
+                + `Dialog said: ${JSON.stringify(txt.replace(/\s+/g, ' ').slice(0, 200))}`);
+            await this.page.locator('xpath=//div[@role="dialog"]//button[@aria-label="close" '
+                + 'or normalize-space(.)="×" or contains(@class,"close")]')
+                .first().click({ force: true }).catch(() => {});
+            await this.page.keyboard.press('Escape').catch(() => {});
+            await this.page.waitForTimeout(1500);
+            return false;
+        }
         await submit.click();
         console.log(`[${tag}] Submitted Item Matching`);
         await this.page.waitForTimeout(2500);

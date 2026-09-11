@@ -6,7 +6,7 @@ import data from '../pages/NSEFoundationData.json';
 // ─────────────────────────────────────────────────────────────────────────────
 // Activity timeline — download activities + comments
 //
-// Sheet scenarios 38 (CXO) · 39 (Intake) · 40 (RFX)
+// Sheet scenarios 35 (CXO) · 36 (Intake) · 37 (RFX)
 //
 // One parametrised suite: the Activity Log is the same radix sheet on every v4
 // detail page, reached from an icon-only clock button, with a download control
@@ -18,10 +18,21 @@ import data from '../pages/NSEFoundationData.json';
 // would never resolve here.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// `commentUrl` is the transaction to use for the COMMENT-dependent tests, where
+// that differs from the one used for the read-only checks.
+//
+// It exists because commenting is state-dependent: an AWARDED RFX renders the
+// Activity Log with its filter chips and feed but NO comment field at all, so
+// the Comments export has no conversation to be named after and comes back as
+// ActivityTimeline_undefined_<ts>.xlsx. savedSourcingEvent (RFX-26-243) is
+// Awarded, so the comments half of scenario 37 runs against a non-awarded RFX
+// instead. CXO and Intake need no split — both allow commenting in their saved
+// state, so they fall back to `url`.
 const MODULES = [
-    { key: 'cxo',    scenario: 38, name: 'CXO',    url: () => data.savedCxo.url },
-    { key: 'intake', scenario: 39, name: 'Intake', url: () => data.savedIntake.url },
-    { key: 'rfx',    scenario: 40, name: 'RFX',    url: () => data.savedSourcingEvent.url },
+    { key: 'cxo',    scenario: 35, name: 'CXO',    url: () => data.savedCxo.url },
+    { key: 'intake', scenario: 36, name: 'Intake', url: () => data.savedIntake.url },
+    { key: 'rfx',    scenario: 37, name: 'RFX',    url: () => data.savedSourcingEvent.url,
+                                                   commentUrl: () => data.commentableSourcingEvent.url },
 ];
 
 test.describe('Activity timeline — download activities & comments', () => {
@@ -63,33 +74,46 @@ test.describe('Activity timeline — download activities & comments', () => {
             await a.closeActivityLogPanel();
         });
 
-        // ── KNOWN BUG ────────────────────────────────────────────────────────
-        // "Download Comments" names its export
-        //     ActivityTimeline_undefined_<timestamp>.xlsx
-        // on CXO, Intake AND RFX (observed 2026-08-31), where "Download
-        // Activities" correctly produces
-        //     ActivityTimeline_Transaction Events_<timestamp>.xlsx
-        // The file content is fine — only the middle segment of the filename is
-        // the literal string "undefined", so a value is missing where the export
-        // type should be interpolated.
+        // ── Comments export filename ─────────────────────────────────────────
+        // "Download Comments" was originally recorded as a defect: it named its
+        // export ActivityTimeline_undefined_<ts>.xlsx on CXO, Intake AND RFX
+        // (observed 2026-08-31), where "Download Activities" correctly produced
+        // ActivityTimeline_Transaction Events_<ts>.xlsx.
         //
-        // This test asserts the CORRECT behaviour and therefore FAILS until the
-        // defect is fixed, matching how the CXO amend audit-log bug is tracked.
-        test(`${mod.name}: Download Comments filename has no "undefined" segment @Activity @Download @KnownBug @S${mod.scenario}`, async ({ page }) => {
+        // NOT A DEFECT — retracted by QA 2026-09-04. The transactions simply had
+        // no comments, so the export had no conversation to name itself after.
+        // Post a comment first and the same export comes back as
+        // ActivityTimeline_Conversations_<ts>.xlsx.
+        //
+        // So the add-comment step below is the precondition under test, not
+        // setup noise: drop it and this test legitimately fails again.
+        test(`${mod.name}: Download Comments is named after the conversation once a comment exists @Activity @Download @S${mod.scenario}`, async ({ page }) => {
             const a = new NSEFoundationActions(page);
             await page.setViewportSize({ width: 1800, height: 900 });
             await a.openApp(data);
 
-            await page.goto(mod.url(), { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto((mod.commentUrl ?? mod.url)(), { waitUntil: 'domcontentloaded', timeout: 60000 });
             await page.waitForTimeout(3500);
 
             await a.openActivityLogPanel();
+
+            // The fixture is chosen to be commentable, so an absent field is a
+            // real failure now — most likely the fixture transaction has since
+            // been awarded/closed and needs replacing.
+            expect(await a.hasActivityLogCommentField(),
+                `${mod.name}: no add-comment field on this transaction — it is probably awarded/closed now; point the fixture at a non-awarded one`)
+                .toBe(true);
+
+            await a.addActivityLogComment(`Automation ${mod.name} comment ${Date.now()}`);
             const file = await a.downloadActivityLogItem('Download Comments', mod.key);
             await a.closeActivityLogPanel();
 
             expect(file.name,
-                `Comments export filename contains "undefined" — the export-type value is missing (got "${file.name}")`)
+                `Comments export filename still contains "undefined" even though a comment exists (got "${file.name}")`)
                 .not.toContain('undefined');
+            expect(file.name.toLowerCase(),
+                `Comments export should be named after the conversation (got "${file.name}")`)
+                .toContain('conversations');
         });
 
         for (const label of ['Download Activities', 'Download Comments']) {
@@ -99,10 +123,19 @@ test.describe('Activity timeline — download activities & comments', () => {
                 await page.setViewportSize({ width: 1800, height: 900 });
                 await a.openApp(data);
 
-                await page.goto(mod.url(), { waitUntil: 'domcontentloaded', timeout: 60000 });
+                const target = label === 'Download Comments'
+                    ? (mod.commentUrl ?? mod.url)()
+                    : mod.url();
+                await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 60000 });
                 await page.waitForTimeout(3500);
 
                 await a.openActivityLogPanel();
+                // Comments export needs a conversation to exist first (see above).
+                // Guarded rather than unconditional so this still downloads even if
+                // the fixture is later awarded — the export must work either way.
+                if (label === 'Download Comments' && await a.hasActivityLogCommentField()) {
+                    await a.addActivityLogComment(`Automation ${mod.name} comment ${Date.now()}`);
+                }
                 const file = await a.downloadActivityLogItem(label, mod.key);
 
                 expect(file.name, 'downloaded file has no name').toBeTruthy();

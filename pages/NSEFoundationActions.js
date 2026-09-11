@@ -12,9 +12,19 @@ import path from 'path';
 
 export class NSEFoundationActions {
 
-    constructor(page) {
+    constructor(page, { dataPath = null } = {}) {
         this.page = page;
+        // Per-instance fixture file. Defaults to the shared
+        // pages/NSEFoundationData.json; a chain that must not collide with a
+        // concurrently running chain (parallel workers all rewrite savedCxo …
+        // savedInvoice and the invoice-number counter) passes its own copy.
+        this.dataPath = dataPath;
         fs.mkdirSync('screenshots', { recursive: true });
+    }
+
+    /** Absolute path of the fixture file this instance reads and writes. */
+    _dataPath() {
+        return this.dataPath ?? path.resolve('pages/NSEFoundationData.json');
     }
 
     async takeScreenshot(name) {
@@ -116,10 +126,16 @@ export class NSEFoundationActions {
      *  <textarea>s whose value is the section name. */
     async waitForCreatePageLoaded() {
         await this.page.waitForLoadState('networkidle').catch(() => {});
+        // page.waitForFunction(pageFunction, arg, options) — the options object
+        // MUST be the third argument. Passed second it lands in `arg`, is handed
+        // to the browser as the callback's parameter, and the wait silently falls
+        // back to the config actionTimeout (5s). That is what failed scenario 1
+        // on 2026-09-10: "waitForFunction: Timeout 5000ms exceeded" on a create
+        // page that simply had not finished rendering.
         await this.page.waitForFunction(() => {
             const vals = [...document.querySelectorAll('textarea')].map(t => (t.value || '').trim());
             return vals.includes('Header Details') && vals.includes('Suggested Suppliers');
-        }, { timeout: 25000 });
+        }, null, { timeout: 25000 });
         await this.page.waitForTimeout(500);
     }
 
@@ -567,12 +583,34 @@ export class NSEFoundationActions {
         await this.page.locator(L.submitBtn).first().click();
         await this.page.waitForTimeout(2000);
 
-        // A "Workflow Summary" confirmation popup appears — click its Submit button
-        const popupSubmit = this.page.locator('div[role="dialog"] button:has-text("Submit"), [class*="modal"] button:has-text("Submit"), [class*="dialog"] button:has-text("Submit")').first();
-        if (await popupSubmit.isVisible({ timeout: 5000 }).catch(() => false)) {
-            await popupSubmit.click();
-            await this.page.waitForTimeout(2000);
+        // A "Workflow Summary" confirmation popup appears and must be submitted.
+        //
+        // It is rendered only AFTER the server analyses the approval conditions
+        // ("Conditions Analysed" → Expense Nature, CXO Total Value), and on the
+        // CXO form that took longer than the old 5s window. Observed 2026-09-07:
+        // the modal was ON SCREEN at failure time while the caller had already
+        // moved on to polling for a URL change, so the CXO never submitted and
+        // the whole chain died at its first step.
+        //
+        // Polls for the dialog OR an early navigation, so nothing is wasted on
+        // flows where no popup appears at all.
+        const confirm = this.page.locator(`xpath=${L.workflowSummarySubmitBtn}`).first();
+        const startUrl = this.page.url();
+        const deadline = Date.now() + 30000;
+        while (Date.now() < deadline) {
+            if (await confirm.isVisible({ timeout: 1000 }).catch(() => false)) {
+                await confirm.click();
+                await this.page.waitForTimeout(2500);
+                // The dialog closing is the only proof the confirmation was taken.
+                await this.page.locator(`xpath=//div[@role='dialog']`).first()
+                    .waitFor({ state: 'hidden', timeout: 20000 }).catch(() => {});
+                console.log('[Submit] Workflow Summary confirmed');
+                return;
+            }
+            if (this.page.url() !== startUrl) return;   // submitted without a popup
+            await this.page.waitForTimeout(1000);
         }
+        console.log('[Submit] no Workflow Summary popup appeared within 30s');
     }
 
     async assertCxoSubmittedSuccessfully() {
@@ -710,23 +748,39 @@ export class NSEFoundationActions {
             await this.page.locator(`xpath=${L.approveBtnConfirm}`).click();
         }
         await this.page.waitForTimeout(2000);
-        await this.page.reload({ waitUntil: 'domcontentloaded' });
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
         await this.page.waitForTimeout(2000);
     }
 
     /** Wait for the Approve button, reloading up to `maxReloads` times if stale.
      *  Returns true if it appeared. Stops early if `stopWhen()` resolves true. */
-    async _waitForApproveButton({ maxReloads = 5, tag = 'Workflow', stopWhen = null } = {}) {
-        const approveBtn = this.page.locator(`xpath=${L.approveBtn}`).first();
+    /**
+     * Wait for a header Approve button, reloading between attempts.
+     *
+     * perAttemptMs was 4000, which is a race on a slow UAT: these detail pages
+     * routinely take longer than that to render their header actions after a
+     * reload, so the helper reports "not visible" on a page that DOES offer
+     * Approve. Measured 2026-09-10 — scenario 1's chain B gave up on
+     * PO-NSEFN-26-252 after 5 such attempts (having already approved stages 1
+     * and 2 on the same PO); opening that PO by hand minutes later showed it
+     * still Pending Approval with Approve right there in the header.
+     *
+     * 12s per attempt costs nothing when the button is present (waitFor returns
+     * as soon as it appears) and only slows the genuinely-absent case, where the
+     * caller falls through to reassigning the approver anyway.
+     */
+    async _waitForApproveButton({ maxReloads = 5, tag = 'Workflow', stopWhen = null,
+        selector = L.approveBtn, perAttemptMs = 12000 } = {}) {
+        const approveBtn = this.page.locator(`xpath=${selector}`).first();
         for (let attempt = 0; attempt <= maxReloads; attempt++) {
-            if (await approveBtn.waitFor({ state: 'visible', timeout: 4000 }).then(() => true).catch(() => false)) {
+            if (await approveBtn.waitFor({ state: 'visible', timeout: perAttemptMs }).then(() => true).catch(() => false)) {
                 return true;
             }
             if (stopWhen && await stopWhen()) return false;
             if (attempt < maxReloads) {
-                console.log(`[${tag}] Approve button not visible for 4s — reloading (${attempt + 1}/${maxReloads})...`);
-                await this.page.reload({ waitUntil: 'domcontentloaded' });
-                await this.page.waitForTimeout(2000);
+                console.log(`[${tag}] Approve button not visible for ${perAttemptMs / 1000}s — reloading (${attempt + 1}/${maxReloads})...`);
+                await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+                await this.page.waitForTimeout(2500);
             }
         }
         return false;
@@ -739,26 +793,56 @@ export class NSEFoundationActions {
         // contains(.,'More') match, which on these detail pages also hits the
         // header "More info" button — clicking that opens no menu, so the reassign
         // silently found no options. Exact first, contains only as a fallback.
-        await this.waitForCappDetailLoaded(tag);
-        let moreBtn = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        if (!(await moreBtn.isVisible({ timeout: 8000 }).catch(() => false))) {
-            moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
-        }
-        if (!(await moreBtn.isVisible({ timeout: 8000 }).catch(() => false))) {
-            console.log(`[${tag}] No More button — cannot reassign.`);
-            return false;
-        }
-        await moreBtn.click();
-        await this.page.waitForTimeout(800);
+        // Opening the dialog is retried once: the dialog sometimes renders its
+        // shell without the approver picker inside it, which used to end the
+        // whole chain. Observed 2026-09-10 on INT-FNSE-26-438 — "Reassign picker
+        // never rendered (1 dialog(s) on page)" — where a reload and a second
+        // open would very likely have found it, since the SAME step reassigned
+        // fine on the previous run.
+        const openReassignDialog = async () => {
+            await this.waitForCappDetailLoaded(tag);
+            let moreBtn = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+            if (!(await moreBtn.isVisible({ timeout: 8000 }).catch(() => false))) {
+                moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
+            }
+            if (!(await moreBtn.isVisible({ timeout: 8000 }).catch(() => false))) {
+                console.log(`[${tag}] No More button — cannot reassign.`);
+                return false;
+            }
+            await moreBtn.click();
+            await this.page.waitForTimeout(800);
 
-        const opt = this.page.locator(`xpath=${L.reassignApproverOption}`).first();
-        if (!(await opt.isVisible({ timeout: 8000 }).catch(() => false))) {
-            console.log(`[${tag}] Reassign option not available.`);
-            await this.page.keyboard.press('Escape');
-            return false;
+            const opt = this.page.locator(`xpath=${L.reassignApproverOption}`).first();
+            if (!(await opt.isVisible({ timeout: 8000 }).catch(() => false))) {
+                console.log(`[${tag}] Reassign option not available.`);
+                await this.page.keyboard.press('Escape').catch(() => {});
+                return false;
+            }
+            await opt.click();
+            await this.page.waitForTimeout(1500);
+            return true;
+        };
+
+        const userDropdownSel = this.page.locator(`xpath=${L.reassignUserDropdown}`).first();
+        const comboSel = this.page.locator(
+            `xpath=//div[@role='dialog']//input[contains(@placeholder,'Select Approver')]`).first();
+
+        let picker = null;
+        for (let attempt = 1; attempt <= 2 && picker === null; attempt++) {
+            if (!(await openReassignDialog())) return false;
+            if (await userDropdownSel.isVisible({ timeout: 4000 }).catch(() => false)) {
+                picker = userDropdownSel;
+            } else if (await comboSel.isVisible({ timeout: 8000 }).catch(() => false)) {
+                picker = comboSel;
+            } else if (attempt === 1) {
+                const dialogs = await this.page.locator('[role="dialog"]').count();
+                console.log(`[${tag}] Reassign picker never rendered (${dialogs} dialog(s) on page) `
+                    + '— reloading and reopening the dialog (attempt 2/2)...');
+                await this.page.keyboard.press('Escape').catch(() => {});
+                await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+                await this.page.waitForTimeout(2500);
+            }
         }
-        await opt.click();
-        await this.page.waitForTimeout(1500);
 
         // The approver picker differs by document type: CXO/Intake/RFX use an
         // aria-haspopup dropdown button with [data-value] options; the Invoice
@@ -776,19 +860,13 @@ export class NSEFoundationActions {
         // contains no dialog node), and the throw aborted a 45-minute chain.
         // Failing soft here lets the caller stop with a message that names the
         // real problem instead.
-        const userDropdown = this.page.locator(`xpath=${L.reassignUserDropdown}`).first();
-        const combo = this.page.locator(`xpath=//div[@role='dialog']//input[contains(@placeholder,'Select Approver')]`).first();
-
-        if (await userDropdown.isVisible({ timeout: 4000 }).catch(() => false)) {
-            await userDropdown.click({ force: true });
-        } else if (await combo.isVisible({ timeout: 8000 }).catch(() => false)) {
-            await combo.click({ force: true });
-        } else {
+        if (picker === null) {
             const dialogs = await this.page.locator('[role="dialog"]').count();
             console.log(`[${tag}] Reassign picker never rendered (${dialogs} dialog(s) on page) — cannot reassign.`);
             await this.page.keyboard.press('Escape').catch(() => {});
             return false;
         }
+        await picker.click({ force: true });
         await this.page.waitForTimeout(700);
         const adminOpt = this.page.locator(L.reassignAdminOption)
             .or(this.page.locator(`xpath=//li[@role='option'][normalize-space(.)='NSEF Support Admin']`))
@@ -811,7 +889,7 @@ export class NSEFoundationActions {
         await this.page.locator(`xpath=${L.reassignSubmitBtn}`).first().click();
         console.log(`[${tag}] Workflow approver reassigned to NSEF Support Admin`);
         await this.page.waitForTimeout(2500);
-        await this.page.reload({ waitUntil: 'domcontentloaded' });
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
         await this.page.waitForTimeout(2000);
         return true;
     }
@@ -1000,7 +1078,7 @@ export class NSEFoundationActions {
             if (await rejectBtn.isVisible({ timeout: 4000 }).catch(() => false)) { ready = true; break; }
             if (attempt < 2) {
                 console.log(`[CXO] Reject button not visible — reloading (${attempt + 1}/2)...`);
-                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
                 continue;
             }
             if (attempt === 2) {
@@ -1008,7 +1086,7 @@ export class NSEFoundationActions {
                 await this.reassignWorkflowApprover('Reassigned for automated testing', 'CXO');
                 continue;
             }
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
         }
         await rejectBtn.waitFor({ state: 'visible', timeout: 8000 });
         await rejectBtn.click();
@@ -1783,7 +1861,11 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(600);
     }
 
-    async fillIntakeLineItem(data) {
+    /** Fill the intake's single line-item row. `qty` overrides the fixture
+     *  quantity — scenarios 1 and 6 split one CXO across two intakes, so the
+     *  row is not always the fixture's full 100. */
+    async fillIntakeLineItem(data, { qty = null } = {}) {
+        const lineQty = String(qty ?? data.intake.itemQty);
         // Item Name — click cell, search "Manpower", select "Manpower (T&M)"
         await this.page.locator(IL.intakeItemName).click();
         await this.page.locator(IL.intakeItemNameSearch).fill(data.intake.itemName);
@@ -1796,10 +1878,10 @@ export class NSEFoundationActions {
         }
         await this.page.waitForTimeout(800);
 
-        // QTY — click cell, type 100 directly via keyboard, Tab to confirm
+        // QTY — click cell, type the quantity via keyboard, Tab to confirm
         await this.page.locator(IL.intakeItemQty).click();
         await this.page.waitForTimeout(500);
-        await this.page.keyboard.type('100');
+        await this.page.keyboard.type(lineQty);
         await this.page.keyboard.press('Tab');
         await this.page.waitForTimeout(500);
 
@@ -1833,7 +1915,7 @@ export class NSEFoundationActions {
         if (await totalInput.isVisible({ timeout: 1000 }).catch(() => false)) {
             const totalStr = await totalInput.inputValue();
             const numericTotal = parseFloat(totalStr.replace(/,/g, ''));
-            const expected = parseInt(data.intake.itemQty) * parseInt(data.intake.itemSuggestedPrice);
+            const expected = parseInt(lineQty) * parseInt(data.intake.itemSuggestedPrice);
             console.log(`[Intake] Total: "${totalStr}" (expected: ${expected})`);
             expect(numericTotal).toBe(expected);
         }
@@ -1861,9 +1943,19 @@ export class NSEFoundationActions {
     // ── Intake – Submission Popup (Proceed → Purchaser → Final Submit) ────────
 
     async completeIntakeSubmissionPopup() {
-        // Step 1: Proceed through Workflow Summary
+        // Step 1: Proceed through Workflow Summary.
+        //
+        // "Process Request — Step 1 of 2" renders its shell FIRST and loads the
+        // workflow summary into it afterwards, keeping Proceed disabled until the
+        // body arrives. Waiting only for :visible then clicking gives the click
+        // the config's 5s actionTimeout to find an enabled button, which is not
+        // always enough — scenario 1's chain B died exactly there on 2026-09-09,
+        // on a dialog still showing its spinner. Wait for ENABLED instead.
         const proceedBtn = this.page.locator(IL.intakeProceed).first();
         await proceedBtn.waitFor({ state: 'visible', timeout: 15000 });
+        await expect(proceedBtn, 'the Process Request dialog never enabled Proceed — it either '
+            + 'never finished loading, or the intake failed validation')
+            .toBeEnabled({ timeout: 60000 });
         await proceedBtn.click();
         await this.page.waitForTimeout(1500);
 
@@ -1915,7 +2007,7 @@ export class NSEFoundationActions {
                 await cf.fill(comments);
                 await this.page.locator(IL.intakeAppSubmit).click();
                 await this.page.waitForTimeout(1500);
-                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
                 continue;
             }
 
@@ -1975,24 +2067,36 @@ export class NSEFoundationActions {
                     if (await confirmBtn.isVisible({ timeout: 3000 }).catch(() => false)) await confirmBtn.click();
                 }
                 await this.page.waitForTimeout(1500);
-                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
                 continue;
             }
 
             // No action button — the page state may be stale, or the step is
             // assigned to a different approver. Reload-retry first, then reassign
             // the workflow approver to NSEF Support Admin before giving up.
+            // Reassign is attempted TWICE, with reloads in between, because the
+            // reassign dialog itself is flaky (see reassignWorkflowApprover). A
+            // single failed attempt used to end the chain here even though the
+            // intake was merely awaiting a different approver — scenario 1,
+            // 2026-09-10, INT-FNSE-26-438 stuck Pending Approval with only
+            // Recall in the header.
             noActionStreak++;
-            if (noActionStreak <= 2) {
-                console.log(`[Intake] No action button at step ${i + 1} — reloading (${noActionStreak}/2)...`);
-                await this.page.reload({ waitUntil: 'domcontentloaded' });
-                continue;
-            }
-            if (noActionStreak === 3) {
-                console.log(`[Intake] Still no action button — reassigning approver to NSEF Support Admin...`);
+            if (noActionStreak === 3 || noActionStreak === 6) {
+                console.log(`[Intake] Still no action button — reassigning approver to NSEF Support Admin `
+                    + `(attempt ${noActionStreak === 3 ? 1 : 2}/2)...`);
                 if (await this.reassignWorkflowApprover('Reassigned for automated testing', 'Intake')) {
                     continue;
                 }
+                if (noActionStreak === 6) {
+                    console.log(`[Intake] No action button visible at step ${i + 1} after retries — stopping.`);
+                    break;
+                }
+                continue;
+            }
+            if (noActionStreak <= 6) {
+                console.log(`[Intake] No action button at step ${i + 1} — reloading (${noActionStreak}/6)...`);
+                await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+                continue;
             }
             console.log(`[Intake] No action button visible at step ${i + 1} after retries — stopping.`);
             break;
@@ -2008,7 +2112,7 @@ export class NSEFoundationActions {
     // Mirrors the NSEF happy-path "Create Intake" steps. Leaves the intake on its
     // overview page in Pending Approval. Used by negative flows (Reject/Recall)
     // that need a freshly-submitted intake without re-typing the whole form.
-    async createAndSubmitIntake(data) {
+    async createAndSubmitIntake(data, { qty = null } = {}) {
         await this.closeAskAieraIfVisible();
         await this.expandIntakeSections();
 
@@ -2034,7 +2138,7 @@ export class NSEFoundationActions {
         await this.assertIntakeBRFAutoPopulated();
 
         await this.addIntakeLineRow();
-        await this.fillIntakeLineItem(data);
+        await this.fillIntakeLineItem(data, { qty });
         await this.fillIntakePotentialSuppliers(data);
 
         await this.submitIntake();
@@ -2055,7 +2159,7 @@ export class NSEFoundationActions {
             if (await rejectBtn.isVisible({ timeout: 4000 }).catch(() => false)) { ready = true; break; }
             if (attempt < 2) {
                 console.log(`[Intake] Reject button not visible — reloading (${attempt + 1}/2)...`);
-                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
                 continue;
             }
             if (attempt === 2) {
@@ -2063,7 +2167,7 @@ export class NSEFoundationActions {
                 await this.reassignWorkflowApprover('Reassigned for automated testing', 'Intake');
                 continue;
             }
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
         }
         await rejectBtn.waitFor({ state: 'visible', timeout: 8000 });
         await rejectBtn.click();
@@ -2100,7 +2204,7 @@ export class NSEFoundationActions {
             if (await recallBtn.isVisible({ timeout: 4000 }).catch(() => false)) { ready = true; break; }
             if (attempt < 2) {
                 console.log(`[Intake] Recall button not visible — reloading (${attempt + 1}/2)...`);
-                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
                 continue;
             }
             if (attempt === 2) {
@@ -2108,7 +2212,7 @@ export class NSEFoundationActions {
                 await this.reassignWorkflowApprover('Reassigned for automated testing', 'Intake');
                 continue;
             }
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
         }
         await recallBtn.waitFor({ state: 'visible', timeout: 8000 });
         await recallBtn.click();
@@ -2699,6 +2803,76 @@ export class NSEFoundationActions {
         return revertedAmount;
     }
 
+    /**
+     * Open More → Revert Pending Budget on a CXO and READ the budget row without
+     * submitting anything, as {transactionValue, consumed, reverted, pending}
+     * (numbers, commas stripped) — or {empty:true} when the dialog reports
+     * "No pending budget to revert".
+     *
+     * Scenario 2 needs this to prove the CXO is PARTIALLY consumed before the
+     * revert: budget is consumed at AWARD, so a CXO whose intake is merely
+     * released still reads Consumed 0 / Pending <full value> (verified live
+     * 2026-09-09 on CXO-FNSE-26-390 and -391). Leaves the dialog OPEN so the
+     * caller can go on to revert; pass {close:true} to dismiss it.
+     */
+    async readPendingBudgetRow({ close = false } = {}) {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(600);
+        const opt = this.page.locator(`xpath=${IL.intakeRevertBudgetOption}`).first();
+        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.click();
+
+        const dialog = this.page.locator(`xpath=${IL.revertBudgetDialog}`).first();
+        await dialog.waitFor({ state: 'visible', timeout: 12000 });
+        await this.page.waitForTimeout(800);
+
+        const empty = await dialog.getByText(IL.revertBudgetEmptyMsg, { exact: false })
+            .isVisible({ timeout: 2000 }).catch(() => false);
+        if (empty) {
+            console.log('[RevertBudget] dialog reports: no pending budget to revert');
+            if (close) await this._closeRevertBudgetDialog(dialog);
+            return { empty: true };
+        }
+
+        // Row layout: Budget Item Code | Transaction Value | Consumed Value |
+        // Reverted Value | Pending Value | Rollback Value(input).
+        const row = this.page.locator(`xpath=${IL.revertBudgetRow}`).first();
+        await row.waitFor({ state: 'visible', timeout: 8000 });
+        const cells = (await row.locator('td').allInnerTexts())
+            .map(t => t.replace(/\s+/g, ' ').trim());
+        const num = (t) => {
+            const cleaned = (t || '').replace(/[^\d.-]/g, '');
+            return cleaned === '' ? null : parseFloat(cleaned);
+        };
+        // Anchor on the LAST cell (Rollback input) and count back, so a leading
+        // checkbox column — present here — cannot shift every field by one.
+        const rollbackValue = num(await row.locator(`xpath=${IL.revertBudgetRollbackInput}`)
+            .first().inputValue().catch(() => ''));
+        const tail = cells.slice(-5);
+        const out = {
+            empty: false,
+            raw: cells,
+            transactionValue: num(tail[0]),
+            consumed: num(tail[1]),
+            reverted: num(tail[2]),
+            pending: num(tail[3]),
+            rollbackValue,
+        };
+        console.log(`[RevertBudget] transaction=${out.transactionValue} consumed=${out.consumed} `
+            + `reverted=${out.reverted} pending=${out.pending} rollback=${out.rollbackValue}`);
+        if (close) await this._closeRevertBudgetDialog(dialog);
+        return out;
+    }
+
+    async _closeRevertBudgetDialog(dialog) {
+        const cancel = dialog.getByRole('button', { name: /Cancel|Close/i }).first();
+        if (await cancel.isVisible({ timeout: 2000 }).catch(() => false)) await cancel.click();
+        else await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(600);
+    }
+
     /** Re-open Revert Pending Budget and assert the full pending budget is gone
      *  ("No pending budget to revert") — proving the revert persisted. */
     async assertPendingBudgetReverted() {
@@ -2878,7 +3052,7 @@ export class NSEFoundationActions {
 
         console.log(`[Intake] Saving Intake code: ${displayCode}  |  URL: ${url}`);
 
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         current.savedIntake = {
             code: displayCode,
@@ -2909,7 +3083,7 @@ export class NSEFoundationActions {
 
         console.log(`[CXO] Saving CXO code: ${displayCode}  |  URL: ${url}`);
 
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         current.savedCxo = {
             code: displayCode,
@@ -2927,7 +3101,7 @@ export class NSEFoundationActions {
     // Reads savedIntake.code fresh from disk (the imported data object is stale
     // when the create test ran earlier in the same session and rewrote the JSON)
     getSavedIntakeCode() {
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         const code = current.savedIntake?.code;
         if (!code || code === 'unknown') {
@@ -2940,7 +3114,7 @@ export class NSEFoundationActions {
     // when the CXO create test ran earlier in the same session and rewrote the
     // JSON — using `data.savedCxo.code` selects the PREVIOUS run's CXO).
     getSavedCxoCode() {
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         const code = current.savedCxo?.code;
         if (!code || code === 'unknown') {
@@ -2951,7 +3125,7 @@ export class NSEFoundationActions {
 
     // Reads savedRequisition fresh from disk (same staleness reason as above)
     getSavedRequisition() {
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         const saved = current.savedRequisition;
         if (!saved?.url) {
@@ -2962,7 +3136,7 @@ export class NSEFoundationActions {
 
     // Reads savedSourcingEvent fresh from disk (same staleness reason as above)
     getSavedSourcingEvent() {
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         const saved = current.savedSourcingEvent;
         if (!saved?.code || saved.code === 'unknown') {
@@ -3114,6 +3288,37 @@ export class NSEFoundationActions {
             .isVisible({ timeout }).catch(() => false);
     }
 
+    /**
+     * Confirm the RFX has really LEFT Pending Approval, rather than inferring it
+     * from a badge that has not rendered yet.
+     *
+     * The header is re-rendered after each approval, so there is a window where
+     * no status badge exists at all. `!_isSourcingPendingApproval()` reads that
+     * window as "approved" and the approval loop exits with the RFX still
+     * pending — measured 2026-09-09: approveSourcingUntilReleased logged
+     * "RFX live (not Pending Approval) after 1 approval(s)" for RFX-26-280,
+     * which was still Pending Approval minutes later, and the chain then failed
+     * at "Submit Quote not visible" with no clue as to why.
+     *
+     * So require a POSITIVE reading: reload, and only accept "left pending" when
+     * some other status chip is actually on the page.
+     */
+    async _confirmSourcingLeftPendingApproval() {
+        for (let i = 0; i < 3; i++) {
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+            await this.page.waitForTimeout(2500);
+            if (await this._isSourcingPendingApproval(3000)) return false;
+            const chip = await this.readV4StatusChip({ timeoutMs: 15000 }).catch(() => '');
+            if (chip && chip !== 'Pending Approval') {
+                console.log(`[Sourcing] confirmed status "${chip}" — no longer Pending Approval`);
+                return true;
+            }
+            console.log(`[Sourcing] no status chip rendered yet — re-checking (${i + 1}/3)...`);
+        }
+        console.log('[Sourcing] could not read any status chip; treating as STILL pending');
+        return false;
+    }
+
     // After "Send for Sourcing" submit, the RFX header shows a "Pending Approval"
     // badge plus a direct Approve button (same shape as the CXO flow). It only
     // goes live (suppliers can Submit Quote) once approved. Mirror the CXO pattern:
@@ -3123,7 +3328,8 @@ export class NSEFoundationActions {
     async approveSourcingUntilReleased(comments = 'Approved by automation') {
         const maxStages = 10;
         for (let i = 0; i < maxStages; i++) {
-            if (!(await this._isSourcingPendingApproval(2000))) {
+            if (!(await this._isSourcingPendingApproval(2000))
+                    && await this._confirmSourcingLeftPendingApproval()) {
                 console.log(`[Sourcing] RFX live (not Pending Approval) after ${i} approval(s).`);
                 return;
             }
@@ -3222,7 +3428,83 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(2500);
     }
 
-    async selectQuotePreferredCurrency(data) {
+    /**
+     * Select one or more currencies in the Event Information "Currencies" field.
+     *
+     * This is what makes scenario 20 provable at all: the base-currency toggle
+     * can only change a figure when the quote currency differs from the base
+     * currency. An RFX restricted to INR (the base) can never show a conversion,
+     * so the RFX must be created allowing INR *and* USD, then quoted in USD.
+     *
+     * The control is a multi-select, so the menu stays open between picks and
+     * each wanted currency is clicked in turn. Selection state renders as a
+     * lucide-check, not aria-selected, so the result is verified by the trigger
+     * label changing rather than by reading aria.
+     *
+     * @param {string[]} currencies e.g. ['INR - Indian Rupee', 'USD - US Dollar']
+     */
+    async selectSourcingCurrencies(currencies) {
+        const trigger = this.page.locator(`xpath=${L.sourcingCurrenciesField}`).first();
+        await trigger.waitFor({ state: 'visible', timeout: 20000 });
+        await trigger.scrollIntoViewIfNeeded();
+        const before = (await trigger.innerText().catch(() => '')).trim();
+
+        // The options TOGGLE. The field is pre-populated with the transaction's
+        // currency (INR), so clicking INR blindly DESELECTS it and the RFX ends
+        // up USD-only — observed live 2026-09-04: 'INR - Indian Rupee' -> 'USD -
+        // US Dollar' when both were asked for. So click only what is missing,
+        // judged from the trigger label rather than aria-selected (which reads
+        // "false" even for the selected row).
+        const already = c => before.includes(c) || before.includes(c.split(' - ')[0]);
+        const toClick = currencies.filter(c => !already(c));
+        const kept = currencies.filter(already);
+        if (kept.length) console.log(`[SOURCING] already selected, not re-clicking: ${kept.join(', ')}`);
+
+        if (toClick.length) {
+            await trigger.click();
+            await this.page.waitForTimeout(800);
+
+            for (const currency of toClick) {
+                const search = this.page.locator('[placeholder="Search..."]').last();
+                if (await search.isVisible({ timeout: 1500 }).catch(() => false)) {
+                    await search.fill(currency.split(' - ')[0]);
+                    await this.page.waitForTimeout(500);
+                }
+                const opt = this.page.locator(`xpath=${L.currencyMultiOption(currency)}`).first();
+                await opt.waitFor({ state: 'visible', timeout: 8000 });
+                await opt.click();
+                await this.page.waitForTimeout(500);
+            }
+        }
+
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(600);
+        const after = (await trigger.innerText().catch(() => '')).trim();
+        console.log(`[SOURCING] Currencies: "${before}" -> "${after}" (wanted ${currencies.join(', ')})`);
+
+        // The trigger summarises rather than listing every pick, so three shapes
+        // all mean success (all observed or plausible on this widget):
+        //   "INR - Indian Rupee\n+1"  → first item plus N more  ← what it actually renders
+        //   "2 selected"               → a bare count
+        //   "INR - Indian Rupee, USD"  → the full list
+        const codes = currencies.map(c => c.split(' - ')[0]);
+        const listsAll = codes.every(code => after.includes(code));
+        const countsAll = new RegExp(`\\b${codes.length}\\b`).test(after);
+        // "+N" means N MORE beyond the one shown, so the total is 1 + N.
+        const plus = after.match(/\+\s*(\d+)/);
+        const plusAll = !!plus && (1 + Number(plus[1])) >= codes.length;
+        if (!listsAll && !countsAll && !plusAll) {
+            throw new Error(
+                `Currencies field shows "${after}" — expected all of ${codes.join(', ')}. `
+                + `The options toggle, so a currency that was already selected must not be re-clicked.`);
+        }
+        return { before, after };
+    }
+
+    async selectQuotePreferredCurrency(data, currencyOverride = null) {
+        // Override lets a multi-currency RFX be quoted in USD without mutating
+        // the shared fixture (see the shared-fixture hazard note in the repo).
+        const wanted = currencyOverride || data.sourcing.preferredCurrency;
         const trigger = this.page.locator(`xpath=${L.quotePreferredCurrency}`).first();
         await trigger.waitFor({ state: 'visible', timeout: 20000 });
         await trigger.scrollIntoViewIfNeeded();
@@ -3233,10 +3515,10 @@ export class NSEFoundationActions {
             // Some currency dropdowns have a search box, some don't
             const searchBox = this.page.locator('[placeholder="Search..."]').last();
             if (await searchBox.isVisible({ timeout: 1500 }).catch(() => false)) {
-                await searchBox.fill(data.sourcing.preferredCurrency);
+                await searchBox.fill(wanted);
                 await this.page.waitForTimeout(400);
             }
-            const opt = this.page.locator(`xpath=//div[@role='option'][contains(normalize-space(.),'${data.sourcing.preferredCurrency}')]`).first();
+            const opt = this.page.locator(`xpath=//div[@role='option'][contains(normalize-space(.),'${wanted}')]`).first();
             if (!(await opt.isVisible({ timeout: 3000 }).catch(() => false))) {
                 await this.page.keyboard.press('Escape');
                 await this.page.waitForTimeout(300);
@@ -3244,9 +3526,9 @@ export class NSEFoundationActions {
             }
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(data.sourcing.preferredCurrency, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(trigger).toContainText(wanted, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
-        console.log(`[Quote] Preferred Currency set to ${data.sourcing.preferredCurrency}`);
+        console.log(`[Quote] Preferred Currency set to ${wanted}`);
     }
 
     async fillQuoteUnitRate(data) {
@@ -3297,7 +3579,15 @@ export class NSEFoundationActions {
     }
 
     async assertSourcingStatusQuoted() {
-        // Status may need a reload to reflect
+        // Status may need a reload to reflect.
+        //
+        // The reload is GUARDED: submitting the quote leaves the app mid-navigation
+        // back to the RFX view, and a reload issued into that window dies with
+        // "page.reload: net::ERR_ABORTED; maybe frame was detached?" — which killed
+        // scenario 1 on 2026-09-10 right after a quote that had in fact succeeded.
+        // Every reload in this file sits in a retry/refresh context with a re-check
+        // after it, so a failed reload should cost one iteration, never the chain.
+        // The expect() below is still the real assertion.
         for (let i = 0; i < 4; i++) {
             const quoted = await this.page.locator(`xpath=${L.quotedStatusBadge}`).first()
                 .isVisible({ timeout: 5000 }).catch(() => false);
@@ -3305,7 +3595,7 @@ export class NSEFoundationActions {
                 console.log('[Quote] Sourcing status is Quoted');
                 return;
             }
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
             await this.page.waitForTimeout(2000);
         }
         await expect(this.page.locator(`xpath=${L.quotedStatusBadge}`).first()).toBeVisible({ timeout: 10000 });
@@ -3325,7 +3615,7 @@ export class NSEFoundationActions {
             if (await rejectBtn.isVisible({ timeout: 4000 }).catch(() => false)) { ready = true; break; }
             if (attempt < 2) {
                 console.log(`[RFX] Reject button not visible — reloading (${attempt + 1}/2)...`);
-                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
                 continue;
             }
             if (attempt === 2) {
@@ -3333,7 +3623,7 @@ export class NSEFoundationActions {
                 await this.reassignWorkflowApprover('Reassigned for automated testing', 'RFX');
                 continue;
             }
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
         }
         await rejectBtn.waitFor({ state: 'visible', timeout: 8000 });
         await rejectBtn.click();
@@ -3440,7 +3730,7 @@ export class NSEFoundationActions {
                 return;
             }
             console.log(`[Award] Analysis tab stuck loading — reloading (${attempt + 1}/3)...`);
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
             await this.page.waitForTimeout(3000);
         }
         throw new Error('Analysis tab content did not load (Award button never appeared)');
@@ -3480,6 +3770,582 @@ export class NSEFoundationActions {
             console.log(`[Award] Allocated qty not registered (cell shows "${cellText}") — retrying...`);
         }
         throw new Error('Allocated Quantity was not entered into the award grid');
+    }
+
+    // ── Award justification fields (sheet scenario 21) ───────────────────────
+    //
+    // Resolve a section row by its LABEL and return its internal row index. The
+    // label sits in that row's `_product` cell. Never use the visible "#" column:
+    // on RFX 1468 "Initial Quote Remarks" displayed as #11 but its cells are
+    // cell_12_*, so a number read off the screen addresses the wrong row.
+    async findAwardRowByLabel(label) {
+        const row = await this.page.evaluate((wanted) => {
+            for (const td of document.querySelectorAll('td[id$="_product"]')) {
+                const text = (td.innerText || '').replace(/\s+/g, ' ').trim();
+                if (text.toLowerCase() === wanted.toLowerCase())
+                    return td.id.match(/cell_(\d+)_/)?.[1] ?? null;
+            }
+            return null;
+        }, label);
+        if (!row) {
+            const seen = await this.page.evaluate(() =>
+                [...document.querySelectorAll('td[id$="_product"]')]
+                    .map(td => (td.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean));
+            throw new Error(`[Award] no award row labelled "${label}". Rows present: ${JSON.stringify(seen)}`);
+        }
+        return row;
+    }
+
+    /**
+     * Type `text` into the value cell of the award row labelled `label`.
+     *
+     * The cell is click-to-edit. Two mechanisms are handled because the grid uses
+     * both: some cells mount a real input/textarea on click, others take raw
+     * keystrokes against the focused cell (the same shape as
+     * fillAllocatedQuantity). insertText is used rather than keyboard.type - 300
+     * characters typed one keystroke at a time is minutes of wall clock.
+     *
+     * A cell that accepts NEITHER is a hard failure, not a silent skip: on a
+     * QUOTED (not yet foreclosed) RFX these cells are read-only and keystrokes
+     * land on document.body, which is exactly how a "filled" justification could
+     * be reported for an empty field (observed 2026-09-07 on RFX-26-251).
+     */
+    async fillAwardRowValue(label, text) {
+        const row = await this.findAwardRowByLabel(label);
+        const cell = this.page.locator(L.awardRowValueCell(row)).first();
+        await cell.waitFor({ state: 'visible', timeout: 20000 });
+        await cell.scrollIntoViewIfNeeded();
+        await cell.click();
+        await this.page.waitForTimeout(1200);
+
+        // Preferred: an editor mounted inside the cell.
+        const editor = cell.locator('input, textarea, [contenteditable="true"]').first();
+        if (await editor.count()) {
+            await editor.fill(text).catch(async () => {
+                await editor.click();
+                await this.page.keyboard.insertText(text);
+            });
+        } else {
+            // Fallback: raw keystrokes into whatever the click focused.
+            const focused = await this.page.evaluate(() => document.activeElement?.tagName || '');
+            if (/^(BODY|HTML)$/.test(focused)) {
+                throw new Error(`[Award] clicking "${label}" focused <${focused}> - the cell is not editable. `
+                    + 'On a Quoted RFX these cells are read-only; the award form must be reached after FORECLOSE.');
+            }
+            await this.page.keyboard.insertText(text);
+        }
+        await this.page.keyboard.press('Tab');
+        await this.page.waitForTimeout(1500);
+
+        // Verify it actually landed - the cell renders the value (truncated).
+        const shown = (await cell.innerText().catch(() => '') || '').replace(/\s+/g, ' ').trim();
+        const head = text.slice(0, 25);
+        if (!shown.includes(head.slice(0, 15))) {
+            throw new Error(`[Award] "${label}" did not accept the text. Cell now reads "${shown.slice(0, 80)}"`);
+        }
+        console.log(`[Award] "${label}" filled with ${text.length} chars (cell shows "${shown.slice(0, 40)}…")`);
+        return row;
+    }
+
+    /**
+     * Hover the value cell of `label` and prove the WHOLE text is reachable.
+     *
+     * Asserts three things, per QA (2026-09-07):
+     *   1. the reveal contains the full string that was entered - the terminal
+     *      marker proves nothing was ellipsised away;
+     *   2. the reveal actually OVERFLOWS its box (scrollHeight > clientHeight or
+     *      scrollWidth > clientWidth) - otherwise "scrollable" is vacuous;
+     *   3. it really scrolls - scrollTop/scrollLeft moves when driven.
+     *
+     * The reveal mechanism is not assumed. Tooltip/popover roots, a title
+     * attribute and the cell's own overflow are each tried, and if none carries
+     * the text the error DUMPS what hover produced instead of guessing.
+     */
+    /**
+     * Hover the value cell of `label` and prove the WHOLE text is reachable.
+     *
+     * Measured live 2026-09-07 with a 300-char value in Remarks:
+     *   · the cell's truncating child reports scrollWidth 2018 vs clientWidth 709
+     *     — so the value IS clipped and hover is genuinely needed;
+     *   · the hover tooltip carries all 300 characters;
+     *   · that tooltip reports scrollHeight 141 == clientHeight 141 — it WRAPS the
+     *     text and needs no scrolling at this length.
+     *
+     * So the assertions are: the reveal carries the complete string, and the cell
+     * is actually truncated (otherwise "hover shows the full text" is vacuous —
+     * it would be visible anyway). Scrollability is checked only where the reveal
+     * really overflows, and reported either way rather than assumed: demanding
+     * overflow on a tooltip that wraps would fail correct behaviour.
+     *
+     * The tooltip is picked as the SHORTEST node containing the value. Nested
+     * containers accumulate their children's text (601 and 902 chars were seen
+     * for the same 300-char value), so "first match" measures the wrong box.
+     */
+    async assertAwardRowHoverShowsFullText(label, expected) {
+        const row = await this.findAwardRowByLabel(label);
+        const cell = this.page.locator(L.awardRowValueCell(row)).first();
+        await cell.scrollIntoViewIfNeeded();
+
+        // Is the value clipped in the cell? Measured BEFORE hovering.
+        const clipped = await this.page.evaluate(({ rowIdx, want }) => {
+            const c = document.querySelector(`td[id^="cell_${rowIdx}_"][id$="::price"]`);
+            if (!c) return null;
+            let best = null;
+            for (const n of [c, ...c.querySelectorAll('*')]) {
+                if (!(n.innerText || '').includes(want)) continue;
+                const over = n.scrollWidth > n.clientWidth || n.scrollHeight > n.clientHeight;
+                if (over) best = { sW: n.scrollWidth, cW: n.clientWidth, sH: n.scrollHeight, cH: n.clientHeight,
+                                   cls: String(n.className || '').slice(0, 40) };
+            }
+            return best;
+        }, { rowIdx: row, want: expected });
+
+        await cell.hover();
+        await this.page.waitForTimeout(2500);
+
+        const hit = await this.page.evaluate(({ sel, want, rowIdx }) => {
+            const cands = [];
+            for (const el of document.querySelectorAll(sel)) cands.push({ how: 'tooltip', el });
+            const c = document.querySelector(`td[id^="cell_${rowIdx}_"][id$="::price"]`);
+            if (c) for (const n of [c, ...c.querySelectorAll('*')]) cands.push({ how: 'cell', el: n });
+            // Prefer a VISIBLE node inside a tooltip root. "Shortest text match"
+            // alone picked the wrong box: on 2026-09-07 it chose a collapsed
+            // tooltip wrapper for Remarks (scrollHeight 18 / clientHeight 1) and
+            // the <td> itself for Initial Quote Remarks, so the scroll metrics
+            // described neither visible tooltip.
+            const visible = (el) => el.offsetParent !== null && el.clientHeight > 1 && el.clientWidth > 1;
+            const scored = cands
+                .map(x => ({ how: x.how, el: x.el, text: (x.el.innerText || x.el.textContent || '') }))
+                .filter(x => x.text.includes(want))
+                .map(x => ({ ...x, vis: visible(x.el) }));
+            const withText = [
+                ...scored.filter(x => x.how === 'tooltip' && x.vis).sort((a, b) => a.text.length - b.text.length),
+                ...scored.filter(x => x.how === 'tooltip').sort((a, b) => a.text.length - b.text.length),
+                ...scored.filter(x => x.vis).sort((a, b) => a.text.length - b.text.length),
+                ...scored.sort((a, b) => a.text.length - b.text.length),
+            ];
+            if (!withText.length) {
+                return { none: true, sample: cands.slice(0, 10).map(x => ({ how: x.how,
+                    len: (x.el.innerText || '').length, cls: String(x.el.className || '').slice(0, 40) })) };
+            }
+            const w = withText[0];
+            const titleAttr = c?.getAttribute('title') || c?.querySelector('[title]')?.getAttribute('title') || null;
+            return { none: false, how: w.how, len: w.text.length, exact: w.text.trim() === want,
+                     cls: String(w.el.className || '').slice(0, 40), hasTitle: !!titleAttr,
+                     sH: w.el.scrollHeight, cH: w.el.clientHeight, sW: w.el.scrollWidth, cW: w.el.clientWidth };
+        }, { sel: L.hoverRevealCandidates, want: expected, rowIdx: row });
+
+        if (hit.none) {
+            throw new Error(`[Award] hovering "${label}" revealed nothing containing the full ${expected.length}-char value.\n`
+                + `What hover produced: ${JSON.stringify(hit.sample, null, 1)}`);
+        }
+
+        const overflows = hit.sH > hit.cH || hit.sW > hit.cW;
+        let scrolled = null;
+        if (overflows) {
+            scrolled = await this.page.evaluate(({ sel, want }) => {
+                for (const el of document.querySelectorAll(sel)) {
+                    for (const n of [el, ...el.querySelectorAll('*')]) {
+                        if (!(n.innerText || '').includes(want)) continue;
+                        if (n.scrollHeight > n.clientHeight) { n.scrollTop = n.scrollHeight; return { axis: 'y', moved: n.scrollTop > 0 }; }
+                        if (n.scrollWidth > n.clientWidth) { n.scrollLeft = n.scrollWidth; return { axis: 'x', moved: n.scrollLeft > 0 }; }
+                    }
+                }
+                return { axis: null, moved: false };
+            }, { sel: L.hoverRevealCandidates, want: expected });
+        }
+
+        console.log(`[Award] "${label}": reveal via ${hit.how} (${hit.cls}) — ${hit.len} chars`
+            + `, exact=${hit.exact}, box ${hit.sH}/${hit.cH}h ${hit.sW}/${hit.cW}w`
+            + `, cell clipped=${clipped ? `${clipped.sW}/${clipped.cW}w ${clipped.sH}/${clipped.cH}h` : 'NO'}`
+            + `, reveal overflows=${overflows}${scrolled ? ` scrolled=${JSON.stringify(scrolled)}` : ''}`);
+
+        return { how: hit.how, fullText: hit.len >= expected.length, exact: hit.exact,
+                 cellClipped: !!clipped, clipped, overflows, scrolled };
+    }
+
+    /**
+     * Assert the PO code shown on the current page is the RIGHT one (scenario 117).
+     *
+     * Checks presence AND correctness: every PO-NSEF… string on the page must be
+     * the expected code. Presence alone would pass while a page displayed some
+     * other PO's number, which is precisely what this scenario is about.
+     */
+    async assertPoCodeVisible(poCode, where = 'page') {
+        // Scans RENDERED TEXT *and* FIELD VALUES. innerText alone was not enough:
+        // on the Invoice creation page the PO code lives only in an input's value
+        // (id mui-74794), which innerText and textContent both omit, so the page
+        // was reported as showing no PO code at all (2026-09-07).
+        const seen = await this.page.evaluate(() => {
+            const re = /PO-[A-Z]+-\d+-\d+/g;
+            const out = new Set();
+            const eat = (s) => { for (const m of (s || '').matchAll(re)) out.add(m[0]); };
+            eat(document.body.innerText);
+            for (const f of document.querySelectorAll('input, textarea')) eat(f.value);
+            return [...out];
+        });
+        if (!seen.includes(poCode)) {
+            throw new Error(`[S117] ${where}: expected PO code ${poCode} is NOT displayed. `
+                + `PO codes on the page: ${JSON.stringify(seen)}`);
+        }
+        const wrong = seen.filter(c => c !== poCode);
+        if (wrong.length) {
+            throw new Error(`[S117] ${where}: shows PO code(s) that are not ${poCode}: ${JSON.stringify(wrong)}`);
+        }
+        console.log(`[S117] ${where}: PO code ${poCode} displayed correctly`);
+    }
+
+    // ── Duplicate invoice reference (sheet scenarios 126 / 127) ──────────────
+
+    /** Fill the Invoice Number with an EXACT value instead of the auto-bumped one. */
+    async fillInvoiceNumberExactly(value) {
+        // Two shapes. On the CREATE page the field is found by label proximity. On
+        // the REVIEW EDIT page (/invoices/<id>/edit) the label-proximity xpath can
+        // resolve to a different control, so fall back to the id — which there is
+        // "Invoice Number-<random suffix>", hence a PREFIX match.
+        let num = this.page.locator(`xpath=${L.invoiceNumberInput}`).first();
+        const usable = await num.isVisible({ timeout: 15000 }).catch(() => false)
+            && !await num.isDisabled().catch(() => false);
+        if (!usable) {
+            num = this.page.locator(L.nonPoLabelledField('Invoice Number')).first();
+            await num.waitFor({ state: 'visible', timeout: 15000 });
+            console.log('[INV] Invoice Number addressed by id prefix (review edit page shape)');
+        }
+        await num.fill(String(value));
+        await this.page.waitForTimeout(600);
+        console.log(`[INV] Invoice Number set to "${value}" (deliberate duplicate)`);
+    }
+
+    /**
+     * The supplier invoice number that an EXISTING invoice actually holds.
+     *
+     * NOT invoice.invoiceNumber from the data file: that is the number last
+     * GENERATED, and every refused submit bumps it, so it drifts away from any
+     * real invoice. Observed 2026-09-07 — after two refused runs it read
+     * INV-AUTO-113, a number no invoice held, and the app correctly answered
+     * "Invoice has PASSED duplicate validation". Reading it off the saved
+     * invoice's own page makes the collision real by construction.
+     */
+    async readSavedInvoiceNumber(data) {
+        await this.openSavedInvoice(data);
+        // POLL. The detail page renders its fields late, and a single read raced it
+        // — the same settle race that made the review page's More button look
+        // absent (both seen 2026-09-08). One-shot reads on this app are a bug.
+        let num = null;
+        for (let i = 0; i < 12; i++) {
+            num = await this.page.evaluate(() => {
+                const m = (document.body.innerText || '').match(/INV-[A-Z0-9]+-\d+/);
+                return m ? m[0] : null;
+            });
+            if (num) break;
+            await this.page.waitForTimeout(2500);
+        }
+        if (!num) throw new Error('[INV] could not read an invoice number off the saved invoice page '
+            + `after 30s (url: ${this.page.url()})`);
+        console.log(`[INV] saved invoice holds invoice number "${num}"`);
+        return num;
+    }
+
+    /**
+     * Submit an invoice that MUST be refused for a duplicate reference.
+     *
+     * Returns the validation text. Two ways this app refuses things, both handled:
+     * an explicit message, or a SILENT block that simply leaves the form in place
+     * (the known pattern here — a 2nd invoice on a partially consumed PO stays on
+     * /invoices/new with no error in the DOM). A silent block is reported as such
+     * rather than being dressed up as a validation, and a submit that SUCCEEDS is a
+     * hard failure — that is the bug this scenario is looking for.
+     */
+    // ── Subject character limit at the review stage (sheet scenario 127) ─────
+    //
+    // QA 2026-09-08: the real limit is 250 characters, NOT the 240 the sheet says.
+    // Checked in the SAME review-edit visit as the duplicate reference (126b) —
+    // set an over-long Subject, assert the limit validation, restore the original
+    // Subject, then go on to the duplicate. One Pending-Review invoice covers both.
+
+    /** Current Subject on the invoice edit page. Prefix-matched: the id is
+     *  "Subject-<random suffix>", regenerated on every render. */
+    async readInvoiceSubject() {
+        const inp = this.page.locator(L.nonPoLabelledField('Subject')).first();
+        await inp.waitFor({ state: 'visible', timeout: 20000 });
+        const v = (await inp.inputValue().catch(() => '')).trim();
+        console.log(`[INV] Subject currently ${JSON.stringify(v.slice(0, 60))}`
+            + (v.length > 60 ? ` (${v.length} chars)` : ''));
+        return v;
+    }
+
+    /** Set Subject and VERIFY it stuck.
+     *
+     *  Re-resolves the locator on every attempt: after a failed submit the form
+     *  re-renders and the id's random suffix is REGENERATED, so a handle taken
+     *  before the error points at a detached node. Observed 2026-09-08 — the fill
+     *  reported "set to 25 characters" while a read-back still returned the old
+     *  255-character value, because the two had hold of different elements. */
+    async fillInvoiceSubject(value) {
+        const want = String(value);
+        for (let i = 1; i <= 4; i++) {
+            const inp = this.page.locator(L.nonPoLabelledField('Subject')).first();
+            await inp.waitFor({ state: 'visible', timeout: 20000 });
+            await inp.click({ timeout: 8000 }).catch(() => {});
+            await inp.fill('').catch(() => {});
+            await inp.fill(want).catch(() => {});
+            await inp.blur().catch(() => {});
+            await this.page.waitForTimeout(1500);
+            const got = (await this.page.locator(L.nonPoLabelledField('Subject')).first()
+                .inputValue().catch(() => '')).trim();
+            if (got === want.trim()) {
+                console.log(`[INV] Subject set to ${want.length} characters (attempt ${i}, verified)`);
+                return;
+            }
+            console.log(`[INV] Subject did not stick on attempt ${i} — wanted ${want.length} chars, `
+                + `field holds ${got.length}; re-resolving`);
+        }
+        throw new Error(`[INV] could not set Subject to ${want.length} characters after 4 attempts`);
+    }
+
+    /** Text of the topmost visible dialog, whitespace-collapsed. */
+    async _topDialogText() {
+        const dlgs = this.page.locator(`xpath=//div[@role='dialog']`);
+        const n = await dlgs.count().catch(() => 0);
+        for (let i = n - 1; i >= 0; i--) {
+            if (await dlgs.nth(i).isVisible().catch(() => false)) {
+                return ((await dlgs.nth(i).innerText().catch(() => '')) || '')
+                    .replace(/\s+/g, ' ').trim();
+            }
+        }
+        return '';
+    }
+
+    /**
+     * Click a button inside the open dialog and VERIFY it did something.
+     *
+     * Written 2026-09-08 after three separate dialog buttons were clicked
+     * "successfully" while the dialog sat unchanged — the SAPP Approvers Submit,
+     * the Validations Proceed, and the Workflow Summary Submit. A click that logs
+     * fine and changes nothing is worse than a failure, because the run then
+     * misattributes the consequence: the Workflow Summary case was about to be
+     * recorded as "the app does not validate the subject limit".
+     *
+     * Returns true once the dialog's text changes or the button disappears.
+     */
+    async clickDialogButtonVerified(label, { attempts = 4, settleMs = 6000, tag = 'INV' } = {}) {
+        const xp = `//div[@role='dialog']//button[normalize-space(.)='${label}']`
+            + ` | //div[contains(@class,'MuiDialog')]//button[normalize-space(.)='${label}']`;
+        for (let i = 1; i <= attempts; i++) {
+            const all = this.page.locator(`xpath=${xp}`);
+            const n = await all.count().catch(() => 0);
+            let btn = null;
+            for (let k = 0; k < n; k++) {
+                if (await all.nth(k).isVisible().catch(() => false)) { btn = all.nth(k); break; }
+            }
+            if (!btn) {
+                console.log(`[${tag}] "${label}" no longer present — treating as done`);
+                return true;
+            }
+            const before = await this._topDialogText();
+            // Diagnostics: a swallowed click and a DISABLED button look identical in
+            // the log otherwise, and they mean very different things.
+            const st = await btn.evaluate(el => ({
+                disabled: !!el.disabled,
+                aria: el.getAttribute('aria-disabled'),
+                pe: getComputedStyle(el).pointerEvents,
+                cls: (el.className || '').toString().slice(0, 80),
+                box: (b => b && { w: Math.round(b.width), h: Math.round(b.height) })(el.getBoundingClientRect()),
+            })).catch(() => null);
+            console.log(`[${tag}] "${label}" state: ${JSON.stringify(st)}`);
+            await btn.scrollIntoViewIfNeeded().catch(() => {});
+            // Plain click first so Playwright waits for actionability; force only as
+            // a fallback, because a forced click on a not-yet-ready button is
+            // precisely what gets swallowed.
+            await btn.click({ timeout: 8000 }).catch(async () => {
+                await btn.click({ force: true }).catch(() => {});
+            });
+            await this.page.waitForTimeout(settleMs);
+            const after = await this._topDialogText();
+            if (after !== before) {
+                console.log(`[${tag}] "${label}" clicked (attempt ${i}) — dialog advanced`);
+                return true;
+            }
+            console.log(`[${tag}] "${label}" clicked (attempt ${i}) but the dialog did not change`);
+        }
+        console.log(`[${tag}] "${label}" never advanced the dialog after ${attempts} attempts`);
+        return false;
+    }
+
+    /**
+     * Submit the review edit page with an over-long Subject and report whether the
+     * 250-character limit is enforced.
+     *
+     * THE FULL GAUNTLET, per QA 2026-09-08 — the limit is checked at the LAST step,
+     * not the first:
+     *
+     *     Submit  ->  "Validations" dialog   -> Proceed
+     *             ->  Workflow Summary popup -> Submit
+     *             ->  the subject validation appears HERE
+     *
+     * An earlier version stopped at the Validations dialog, saw only "Invoice has
+     * passed duplicate validation" and wrongly concluded the limit was unenforced.
+     * That dialog only ever reports the duplicate check.
+     *
+     * PRECONDITION SAFETY: an over-long Subject is expected to be REFUSED, which
+     * leaves the invoice in Pending Review for the duplicate half of the flow. If
+     * it is instead ACCEPTED, the invoice submits out of Review and that
+     * precondition is gone — reported explicitly as `consumed`, because the next
+     * assertion in the flow would then fail for an unrelated reason.
+     */
+    async submitInvoiceExpectingSubjectLimitRejection({ settleMs = 8000 } = {}) {
+        const LIMIT_RE = /(\b250\b|\b240\b).{0,60}(char|limit)|(char|limit).{0,60}(\b250\b|\b240\b)|exceed|too long|maximum length|subject.{0,40}(long|limit|char)/i;
+
+        const scan = () => this.page.evaluate((src) => {
+            const re = new RegExp(src, 'i');
+            const hits = [];
+            for (const dlg of document.querySelectorAll('[role="dialog"], [class*="MuiDialog"]')) {
+                const t = (dlg.innerText || '').replace(/\s+/g, ' ').trim();
+                if (t && re.test(t)) hits.push(t.slice(0, 300));
+            }
+            for (const el of document.querySelectorAll('*')) {
+                if (el.children.length) continue;
+                const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                if (t && t.length < 300 && re.test(t)) hits.push(t);
+            }
+            const errish = [];
+            for (const el of document.querySelectorAll(
+                '[class*="error"], [class*="helper"], [role="alert"], [class*="Mui-error"]')) {
+                const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                if (t) errish.push(t.slice(0, 160));
+            }
+            return { hits: [...new Set(hits)], errish: [...new Set(errish)].slice(0, 12) };
+        }, LIMIT_RE.source);
+
+        const held = (await this.page.locator(L.nonPoLabelledField('Subject')).first()
+            .inputValue().catch(() => '')).length;
+        const dialogText = async () => (await this.page.locator(`xpath=${L.muiDialog}`).last()
+            .innerText().catch(() => '') || '').replace(/\s+/g, ' ').trim();
+
+        // (1) a client-side cap would already be visible, before any round trip.
+        let found = await scan();
+        if (found.hits.length) {
+            console.log(`[INV] subject limit reported INLINE: ${JSON.stringify(found.hits)}`);
+            return { enforced: true, inline: true, consumed: false, messages: found.hits, heldChars: held };
+        }
+
+        // (2) Submit -> Validations dialog.
+        await this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first()
+            .click({ timeout: 20000 }).catch(() => {});
+        await this.page.waitForTimeout(settleMs);
+        console.log(`[INV] after Submit, dialog says: ${JSON.stringify((await dialogText()).slice(0, 200))}`);
+
+        // (3) Proceed past the Validations dialog.
+        const proceed = this.page.locator(`xpath=${L.dialogProceedBtn2}`).first();
+        if (await proceed.isVisible({ timeout: 15000 }).catch(() => false)) {
+            await this.clickDialogButtonVerified('Proceed', { tag: 'INV', settleMs: 5000 });
+        } else {
+            console.log('[INV] no Proceed button appeared after Submit');
+        }
+
+        // (4) Workflow Summary popup -> Submit. THIS is where the limit is reported.
+        const wfSubmit = this.page.locator(`xpath=${L.workflowSummarySubmitBtn}`).last();
+        if (await wfSubmit.isVisible({ timeout: 15000 }).catch(() => false)) {
+            console.log(`[INV] workflow popup says: ${JSON.stringify((await dialogText()).slice(0, 200))}`);
+            // CLICK ONCE, THEN POLL. The message is TRANSIENT and the Workflow
+            // Summary dialog does NOT change when it appears — so
+            // clickDialogButtonVerified is the wrong tool here: it read "dialog
+            // unchanged" as "click swallowed", clicked three more times, and by the
+            // time anything scanned the page the message had auto-dismissed. That is
+            // how a validation QA can see by eye got recorded as "the 250-char limit
+            // is not enforced" (2026-09-08). Retrying is unsafe too — each click is a
+            // real submit attempt.
+            await wfSubmit.scrollIntoViewIfNeeded().catch(() => {});
+            await wfSubmit.click({ timeout: 10000 })
+                .catch(async () => { await wfSubmit.click({ force: true }).catch(() => {}); });
+            console.log('[INV] Workflow Summary -> Submit (once); polling for the validation');
+
+            for (let i = 0; i < 100; i++) {          // ~25s at 250ms
+                found = await scan();
+                if (found.hits.length) {
+                    console.log(`[INV] validation caught ~${((i * 250) / 1000).toFixed(1)}s after the click`);
+                    break;
+                }
+                await this.page.waitForTimeout(250);
+            }
+        } else {
+            console.log('[INV] no Workflow Summary Submit appeared');
+        }
+
+        if (!found || !found.hits.length) found = await scan();
+        const stillOnEdit = /\/invoices\/\d+\/edit/.test(this.page.url());
+
+        if (found.hits.length) {
+            console.log(`[INV] subject limit REFUSED at the final submit: ${JSON.stringify(found.hits)}`);
+            // Clear whatever dialog is carrying the message so the caller can go on
+            // to restore the Subject and run the duplicate half.
+            const mc = this.page.locator(`xpath=${L.dialogMakeChangesBtn}`).first();
+            if (await mc.isVisible({ timeout: 4000 }).catch(() => false)) await mc.click().catch(() => {});
+            else await this.page.keyboard.press('Escape').catch(() => {});
+            await this.page.waitForTimeout(2500);
+            return { enforced: true, inline: false, consumed: false, messages: found.hits, heldChars: held };
+        }
+
+        const finalDialog = await dialogText();
+        console.log(`[INV] NO subject-limit validation after Proceed + Workflow Submit. `
+            + `Field held ${held} chars; still on edit page: ${stillOnEdit}; `
+            + `dialog: ${JSON.stringify(finalDialog.slice(0, 240))}; `
+            + `error-shaped text: ${JSON.stringify(found.errish)}`);
+        return { enforced: false, inline: false, consumed: !stillOnEdit, messages: [],
+                 heldChars: held, dialogText: finalDialog, errish: found.errish, url: this.page.url() };
+    }
+
+    async submitInvoiceExpectingDuplicateRejection(
+        { settleMs = 9000, formUrlRe = /\/invoices\/new/ } = {}) {
+        const before = this.page.url();
+        await this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first().click({ timeout: 20000 });
+        await this.page.waitForTimeout(settleMs);
+
+        const found = await this.page.evaluate(() => {
+            // Must mean FAILURE. A bare /duplicate/ also matches the SUCCESS dialog
+            // "Invoice has passed duplicate validation", which scored a clean
+            // submit as a refusal (2026-09-07).
+            const re = /failed duplicate validation|duplicate (invoice|reference|entry)|already (exists|exist|used|present)|same (reference|invoice number)|must be unique/i;
+            const passed = /passed duplicate validation/i;
+            const hits = [];
+            // DIALOGS FIRST, read whole. The message is NOT a leaf node: the app
+            // renders "Invoice has failed duplicate validation. Please refer to
+            // <a>Invoice-FNSE-26-367</a>", so the element carrying the word
+            // "duplicate" HAS a child and a leaf-only scan skips it while the leaf
+            // itself is just the invoice code. That is exactly how a working
+            // validation was first mis-reported as a silent refusal (2026-09-07).
+            for (const dlg of document.querySelectorAll('[role="dialog"], [class*="MuiDialog"]')) {
+                const t = (dlg.innerText || '').replace(/\s+/g, ' ').trim();
+                if (t && re.test(t) && !passed.test(t)) hits.push(t.slice(0, 300));
+            }
+            for (const el of document.querySelectorAll('*')) {
+                if (el.children.length) continue;
+                const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                if (t && t.length < 300 && re.test(t) && !passed.test(t)) hits.push(t);
+            }
+            // Anything error-shaped, for diagnosis when nothing matched.
+            const errish = [];
+            for (const el of document.querySelectorAll('[class*="error"], [class*="helper"], [role="alert"], [class*="Mui-error"]')) {
+                const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                if (t) errish.push(t.slice(0, 160));
+            }
+            return { hits: [...new Set(hits)], errish: [...new Set(errish)].slice(0, 12) };
+        });
+
+        // Parameterised: the SAME refusal has to be recognised on the review edit
+        // page (/invoices/<id>/edit), not just the create page, for scenario 126(b).
+        const stillOnForm = formUrlRe.test(this.page.url());
+        if (found.hits.length) {
+            console.log(`[INV] duplicate reference REFUSED with: ${JSON.stringify(found.hits)}`);
+            return { refused: true, silent: false, messages: found.hits };
+        }
+        if (stillOnForm) {
+            console.log(`[INV] duplicate reference refused SILENTLY — still on ${this.page.url()}, `
+                + `no message. Error-shaped text on the page: ${JSON.stringify(found.errish)}`);
+            return { refused: true, silent: true, messages: [], errish: found.errish };
+        }
+        throw new Error('[INV] the duplicate invoice number was ACCEPTED — the invoice submitted and left '
+            + `/invoices/new (now ${this.page.url()}). Expected a duplicate-reference validation.`);
     }
 
     async submitWorkflowSummary() {
@@ -3549,12 +4415,182 @@ export class NSEFoundationActions {
         throw new Error('Award workflow did not reach Completed status');
     }
 
+    /** Every visible action on the current page (buttons, menu items, links).
+     *  Used to report what an award page ACTUALLY offers when an expected
+     *  control is missing, instead of a bare locator timeout. */
+    async listPageActions() {
+        return await this.page.evaluate(() => {
+            const els = [...document.querySelectorAll('button,[role="menuitem"],a')]
+                .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; })
+                .map(e => (e.innerText || '').replace(/\s+/g, ' ').trim())
+                .filter(t => t && t.length < 40);
+            return [...new Set(els)];
+        });
+    }
+
+    /**
+     * Reject an award while it is in its approval workflow (sheet scenario 7).
+     *
+     * Mirrors rejectIntake: v4 header Reject → comments → the dialog's own
+     * Reject, which stays disabled until a comment is typed. The award workflow
+     * often assigns its first stage to another user (completeAwardApprovals hits
+     * this too), so if Reject is absent the approver is reassigned to NSEF
+     * Support Admin and it retries once.
+     */
+    async rejectAward(reason = 'Rejected by automation') {
+        const rejectBtn = this.page.locator(`xpath=${IL.intakeRejectBtn}`).first();
+
+        let ready = await rejectBtn.isVisible({ timeout: 8000 }).catch(() => false);
+        if (!ready) {
+            console.log('[Award] Reject not visible — reassigning approver to NSEF Support Admin...');
+            await this.reassignWorkflowApprover('Reassigned for automated testing', 'Award').catch(() => false);
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+            await this.page.waitForTimeout(2500);
+            ready = await rejectBtn.isVisible({ timeout: 10000 }).catch(() => false);
+        }
+        if (!ready) {
+            throw new Error('[Award] no Reject control on the award page. Actions present: '
+                + JSON.stringify(await this.listPageActions()));
+        }
+        await rejectBtn.click();
+
+        const comments = this.page.locator(IL.intakeApproveComments).first();
+        await comments.waitFor({ state: 'visible', timeout: 10000 });
+        await comments.fill(reason);
+
+        const confirm = this.page.locator(`xpath=${IL.intakeRejectConfirm}`).first();
+        await expect(confirm).toBeEnabled({ timeout: 8000 });
+        await confirm.click();
+        console.log(`[Award] Reject submitted ("${reason}")`);
+        await this.page.waitForTimeout(2500);
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+        await this.page.waitForTimeout(2000);
+    }
+
+    /**
+     * Cancel an award from the v4 header More menu (sheet scenario 7), with the
+     * mandatory reason. Same dialog shape as CXO/intake cancel.
+     */
+    async cancelAward(reason = 'Cancelled by automation') {
+        const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
+        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.click();
+        await this.page.waitForTimeout(800);
+
+        const opt = this.page.locator(`xpath=${IL.cxoCancelOption}`).first();
+        if (!(await opt.isVisible({ timeout: 6000 }).catch(() => false))) {
+            const items = await this.page.evaluate(() =>
+                [...document.querySelectorAll('[role="menuitem"]')].map(e => (e.innerText || '').trim()));
+            throw new Error('[Award] no Cancel in the award More menu. Menu items: '
+                + JSON.stringify(items));
+        }
+        await opt.click();
+
+        // The "Cancel Award" dialog is award-specific — NOT the CXO/intake
+        // shape. Confirm is "Cancel Award"; "Keep Award" sits next to it as the
+        // dismiss, so targeting the wrong button silently keeps the award.
+        // Reason is a mandatory textarea. Verified live 2026-09-10.
+        const dialog = this.page.locator(`xpath=${L.awardCancelDialog}`).first();
+        await dialog.waitFor({ state: 'visible', timeout: 12000 });
+
+        const reasonField = this.page.locator(`xpath=${L.awardCancelReason}`).first();
+        await reasonField.waitFor({ state: 'visible', timeout: 8000 });
+        await reasonField.fill(reason);
+        await this.page.waitForTimeout(400);
+
+        const confirm = this.page.locator(`xpath=${L.awardCancelConfirm}`).first();
+        await expect(confirm, 'the Cancel Award confirm never enabled — is the reason required?')
+            .toBeEnabled({ timeout: 10000 });
+        await confirm.click();
+        console.log(`[Award] Cancel submitted ("${reason}")`);
+        await this.page.waitForTimeout(2500);
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+        await this.page.waitForTimeout(2000);
+    }
+
+    /**
+     * The AWARD's own status, read from the RFX → Awards tab.
+     *
+     * Do NOT scan the award detail page for a status word: it renders the parent
+     * RFX's badge AND a per-line-item Status column, both of which say "Awarded"
+     * on an award that is actually Rejected. Verified 2026-09-10 —
+     * AWD-FNSE-26-198 read "Awarded" on its own page while the Awards tab
+     * correctly showed "Status: Rejected" with "Requisition: -".
+     *
+     * Navigates to the Awards tab of the saved RFX, so it works from anywhere.
+     * Returns { status, requisition, code }.
+     */
+    async readAwardSummary({ navigate = true } = {}) {
+        // navigate:false reads the page we are ALREADY on — the award's back
+        // arrow lands on this very Awards view, so the flow under test does not
+        // need (and QA does not do) a separate navigation to check the status.
+        if (navigate) {
+            const rfx = this.getSavedSourcingEvent();
+            const id = (rfx.url || '').match(/quote-requests\/(\d+)/)?.[1] ?? rfx.id;
+            const cfg = JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8'));
+            await this.page.goto(`${cfg.loginUrl}/quote-requests/${id}/awards`,
+                { waitUntil: 'domcontentloaded' });
+            await this.page.waitForTimeout(3000);
+        }
+
+        // Wait for the summary block itself before reading fields, so a slow
+        // render costs one wait rather than one-per-label.
+        await this.page.locator(`xpath=${L.awardsTabLabel('Award Code')}`).first()
+            .waitFor({ state: 'visible', timeout: 30000 })
+            .catch(() => console.log('[Award] "Award Code:" never rendered on ' + this.page.url()));
+
+        // textContent() MUST carry its own short timeout. Without one it inherits
+        // the spec's actionTimeout (20s here), so a label that is not on the page
+        // costs 20s per iteration — 10 iterations x 3 labels is ~10 minutes of a
+        // browser sitting motionless, which is exactly how this looked on
+        // 2026-09-10 before it was spotted from the screen.
+        const valueOf = async (label) => {
+            const el = this.page.locator(`xpath=${L.awardsTabValueFor(label)}`).first();
+            for (let i = 0; i < 8; i++) {
+                const txt = (await el.textContent({ timeout: 1500 }).catch(() => '') ?? '').trim();
+                if (txt) return txt;
+                await this.page.waitForTimeout(1000);
+            }
+            console.log(`[Award] no value found for "${label}:" on ${this.page.url()}`);
+            return '';
+        };
+        const summary = {
+            code: await valueOf('Award Code'),
+            requisition: await valueOf('Requisition'),
+            status: await valueOf('Status'),
+        };
+        console.log(`[Award] ${summary.code}: status="${summary.status}" requisition="${summary.requisition}"`);
+        return summary;
+    }
+
     async clickAwardBackArrow() {
         const back = this.page.locator(`xpath=${L.awardBackArrow}`).first();
-        await back.waitFor({ state: 'visible', timeout: 15000 });
-        await back.click();
-        console.log('[Award] Clicked back button beside award code');
-        await this.page.waitForTimeout(2000);
+        if (await back.isVisible({ timeout: 5000 }).catch(() => false)) {
+            await back.click();
+            console.log('[Award] Clicked back button beside award code');
+            await this.page.waitForTimeout(2000);
+            return;
+        }
+
+        // Cancelling an award redirects to the RFX's Awards view by itself —
+        // verified 2026-09-11 on AWD-FNSE-26-201 (RFX-26-298): the award-code
+        // <h1> the back arrow hangs off is gone, and "Award Code:" is already
+        // on screen with Status "Cancelled". Waiting 15s for an arrow that the
+        // app has legitimately removed cost the whole scenario-7 run, so
+        // "already there" counts as done.
+        const onAwardsView = /\/quote-requests\/\d+\/awards/.test(this.page.url())
+            && await this.page.locator(`xpath=${L.awardsTabLabel('Award Code')}`)
+                .first().isVisible({ timeout: 5000 }).catch(() => false);
+        if (onAwardsView) {
+            console.log('[Award] already on the Awards view — no back arrow to click');
+            return;
+        }
+
+        // Neither on an award page nor on the Awards view: the caller's
+        // assumption about where we are is wrong, so fail loudly.
+        throw new Error('[Award] no back arrow and not on the Awards view — on '
+            + this.page.url() + '. Actions present: '
+            + JSON.stringify(await this.listPageActions()));
     }
 
     async isRfxAwarded() {
@@ -3593,7 +4629,7 @@ export class NSEFoundationActions {
                 console.log(`[Award] Requisition field not visible yet — reloading in 30s (${i + 1}/${maxAttempts})...`);
             }
             await this.page.waitForTimeout(30000);
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
             await this.page.waitForTimeout(3000);
         }
         throw new Error('Requisition code did not appear after waiting');
@@ -3624,7 +4660,7 @@ export class NSEFoundationActions {
         const urlMatch = url.match(/\/(?:purchase-requisitions?|requisitions?|prs?)\/([^\/\?#]+)/i);
         const reqId = urlMatch ? urlMatch[1] : null;
 
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         current.savedRequisition = {
             code: code,
@@ -3786,19 +4822,29 @@ export class NSEFoundationActions {
     // Reload the PR page every `intervalMs` until its status badge shows `status`.
     // After submit the PR auto-progresses: Submitted → Processed (PRC auto-created)
     // → Completed (PO auto-created).
+    // `status` may be a string OR an array of acceptable statuses; returns the
+    // one that matched. PASS AN ARRAY WHEN WAITING FOR AN INTERMEDIATE STATE:
+    // "Processed" is transient, and if the backend hops to Completed between two
+    // 10s polls, waiting on "Processed" alone never matches and burns all 60
+    // attempts on a PR that is already past it — measured 2026-09-10, 54 polls
+    // for "Processed" while PR-NSEFN-26-167 sat there Completed.
     async waitForPrStatus(status, { intervalMs = 10000, maxAttempts = 60 } = {}) {
+        const wanted = Array.isArray(status) ? status : [status];
+        const label = wanted.join('" or "');
         for (let i = 0; i < maxAttempts; i++) {
-            const badge = this.page.locator(`xpath=${L.prStatusBadge(status)}`).first();
-            if (await badge.isVisible().catch(() => false)) {
-                console.log(`[PR] Status is "${status}".`);
-                return;
+            for (const s of wanted) {
+                const badge = this.page.locator(`xpath=${L.prStatusBadge(s)}`).first();
+                if (await badge.isVisible().catch(() => false)) {
+                    console.log(`[PR] Status is "${s}".`);
+                    return s;
+                }
             }
-            console.log(`[PR] Status not "${status}" yet — reloading in ${intervalMs / 1000}s (${i + 1}/${maxAttempts})...`);
+            console.log(`[PR] Status not "${label}" yet — reloading in ${intervalMs / 1000}s (${i + 1}/${maxAttempts})...`);
             await this.page.waitForTimeout(intervalMs);
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
             await this.page.waitForTimeout(3000);
         }
-        throw new Error(`PR status did not reach "${status}" after ${maxAttempts} reloads`);
+        throw new Error(`PR status did not reach "${label}" after ${maxAttempts} reloads`);
     }
 
     // Save the real PR code (e.g. PR-NSEFN-26-43) now that it replaced PR-DRAFT
@@ -3812,7 +4858,7 @@ export class NSEFoundationActions {
         const urlMatch = url.match(/\/requisitions?\/([^\/\?#]+)/i);
         const reqId = urlMatch ? urlMatch[1] : null;
 
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         current.savedRequisition = { code, id: reqId, url };
         fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
@@ -3847,7 +4893,7 @@ export class NSEFoundationActions {
 
         console.log(`[Sourcing] Saving Sourcing Event code: ${displayCode}  |  URL: ${url}`);
 
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         current.savedSourcingEvent = {
             code: displayCode,
@@ -3936,7 +4982,7 @@ export class NSEFoundationActions {
 
         // Save PO code/url for potential downstream (Invoice) steps
         const idMatch = url.match(/\/purchase-orders\/(\d+)/);
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         current.savedPurchaseOrder = { code: poCode || null, id: idMatch ? idMatch[1] : null, url };
         fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
@@ -3952,38 +4998,181 @@ export class NSEFoundationActions {
         await this.page.locator(`xpath=${L.poApproveConfirmBtn}`).first().click();
         console.log(`[${tag}] Approved a stage`);
         await this.page.waitForTimeout(2500);
-        await this.page.reload({ waitUntil: 'domcontentloaded' });
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
         await this.page.waitForTimeout(2500);
     }
 
     // Approve the PO through all stages until the "Create" dropdown appears
     // (status → Submitted). Reassigns approver to NSEF Support Admin if Approve
     // disappears before completion (same pattern as CXO/award).
+    // ── PO Recall (sheet scenario 65) ────────────────────────────────────────
+    //
+    // Recall is offered ONLY while the PO is Pending Approval — see the locator
+    // note. So this must run on a chain built with { approvePo: false }.
+
+    /** The status word shown on the PO detail page. */
+    async readPoStatus() {
+        for (let i = 0; i < 10; i++) {
+            const t = (await this.page.locator('body').innerText().catch(() => '')) || '';
+            // "Rejected" MUST be in here: it is where Recall actually lands the PO
+            // (QA, 2026-09-08). Leaving it out made a successful recall read as a
+            // null status for 15 polls, and the test failed while the app was right
+            // — PO-NSEFN-26-222 was sitting in Rejected the whole time.
+            const m = t.match(
+                /pending[-\s]?approval|pending[-\s]?sync|Rejected|Recalled|Submitted|In-progress|Draft|Completed|Cancelled/i);
+            if (m) return m[0].trim();
+            await this.page.waitForTimeout(2000);
+        }
+        return null;
+    }
+
+    /** Items in the PO's More menu, left OPEN for the caller to act on. */
+    async openPoMoreMenu() {
+        const more = this.page.locator(`xpath=${L.v3MoreBtn}`).first();
+        // 30s: this page renders its header actions late — the same settle race
+        // that made the invoice More button look absent (2026-09-08).
+        await more.waitFor({ state: 'visible', timeout: 30000 });
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            await more.click({ timeout: 10000 }).catch(() => {});
+            await this.page.waitForTimeout(2000);
+            const items = (await this.page.locator(`xpath=${L.anyV3MenuItem}`)
+                .allInnerTexts().catch(() => [])).map(t => t.trim()).filter(Boolean);
+            if (items.length) {
+                console.log(`[PO] More menu: ${JSON.stringify(items)}`);
+                return items;
+            }
+            console.log(`[PO] More menu did not open (attempt ${attempt})`);
+        }
+        return [];
+    }
+
+    /**
+     * Recall a Pending-Approval PO and assert the status it actually reaches.
+     *
+     * TWO CORRECTIONS from QA, 2026-09-08:
+     *   1. Recall opens a popup with a MANDATORY REASON — submitting without one
+     *      is refused silently. A first attempt clicked the dialog's button with
+     *      no reason and the PO sat at Pending Approval through 15 polls, which
+     *      read exactly like "Recall does nothing".
+     *   2. The end status is REJECTED, not the Draft the sheet's wording says.
+     *      Same class of sheet error as scenario 127's "240" (really 250).
+     *
+     * Polls for Rejected but reports whatever it actually settles on, so a future
+     * behaviour change is described rather than just failing as a timeout.
+     */
+    async recallPoWithReason(reason = 'Recalled by automation') {
+        const status = await this.readPoStatus();
+        if (!/pending[-\s]?approval/i.test(status || '')) {
+            throw new Error(`[PO] Recall needs a Pending-Approval PO, but this one reads `
+                + `"${status}". Build the chain with { approvePo: false }.`);
+        }
+        const items = await this.openPoMoreMenu();
+        if (!items.some(t => /^recall$/i.test(t))) {
+            throw new Error(`[PO] no "Recall" in the More menu of a Pending-Approval PO. `
+                + `Menu was ${JSON.stringify(items)}`);
+        }
+        await this.page.locator(`xpath=${L.v3MenuItem('Recall')}`).first().click({ timeout: 15000 });
+        console.log('[PO] Recall clicked — expecting the reason popup');
+        await this.page.waitForTimeout(4000);
+
+        // The reason field. Same dialog shape as Foreclose / Cancel, so the
+        // locator is shared rather than re-guessed.
+        const reasonField = this.page.locator(`xpath=${L.rfxForecloseReasonField}`).first();
+        if (!await reasonField.isVisible({ timeout: 20000 }).catch(() => false)) {
+            throw new Error('[PO] the Recall reason popup never appeared — QA confirmed one is '
+                + `required. Dialog currently reads: ${JSON.stringify(await this._topDialogText())}`);
+        }
+        await reasonField.fill(reason);
+        console.log(`[PO] recall reason entered: ${JSON.stringify(reason)}`);
+        await this.page.waitForTimeout(800);
+
+        // Submit it. The button has carried more than one label in this app, so
+        // try the plausible ones and VERIFY the dialog actually moved.
+        let submitted = false;
+        for (const label of ['Submit', 'Recall', 'Confirm', 'Yes', 'Proceed']) {
+            const btn = this.page.locator(
+                `xpath=//div[@role='dialog']//button[normalize-space(.)='${label}']`).first();
+            if (!await btn.isVisible({ timeout: 3000 }).catch(() => false)) continue;
+            submitted = await this.clickDialogButtonVerified(label, { tag: 'PO', settleMs: 6000 });
+            if (submitted) break;
+        }
+        if (!submitted) {
+            console.log('[PO] WARNING: no reason-popup button visibly advanced the dialog — '
+                + 'continuing to the status poll anyway');
+        }
+
+        for (let i = 0; i < 15; i++) {
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+            await this.page.waitForTimeout(5000);
+            const now = await this.readPoStatus();
+            console.log(`[PO] status after recall (poll ${i + 1}): ${now}`);
+            if (/rejected|draft/i.test(now || '')) return now;
+        }
+        throw new Error('[PO] the PO never left Pending Approval after Recall + reason. Expected '
+            + 'Rejected (QA, 2026-09-08).');
+    }
+
     async approvePoUntilSubmitted(comments = 'Approved by automation') {
         const createReady = async (t = 1000) =>
             await this.page.locator(`xpath=${L.poCreateBtn}`).first().isVisible({ timeout: t }).catch(() => false);
 
+        // RELOAD BEFORE GIVING UP ON APPROVE — this loop used to check Approve
+        // once with a 4s budget and, on a miss, go straight to reassigning the
+        // approver, never refreshing the page. A newly created PO renders its
+        // header actions late, and a reassignment only surfaces Approve after a
+        // reload, so the fallback could never recover: scenario 1 on 2026-09-10
+        // reassigned 5x, threw "PO did not reach approved/Submitted", and the
+        // failure screenshot showed PO-NSEFN-26-246 Pending Approval with the
+        // Approve button plainly visible. _waitForApproveButton reloads and
+        // re-polls, which is what the Intake/RFX/CXO loops have always done.
         for (let i = 0; i < 10; i++) {
             if (await createReady()) {
                 console.log(`[PO] Approvals complete (Create available) after ${i} approval(s).`);
                 return;
             }
-            const approveVisible = await this.page.locator(`xpath=${L.poApproveBtn}`).first()
-                .isVisible({ timeout: 4000 }).catch(() => false);
-            if (approveVisible) {
-                console.log(`[PO] Approving stage ${i + 1}...`);
-                await this._approveWithNotes(comments, 'PO');
-            } else {
-                if (await createReady()) return;
+
+            let visible = await this._waitForApproveButton({
+                tag: 'PO',
+                selector: L.poApproveBtn,
+                stopWhen: createReady,
+            });
+
+            if (!visible) {
+                if (await createReady()) {
+                    console.log(`[PO] Approvals complete (Create available) after ${i} approval(s).`);
+                    return;
+                }
                 console.log('[PO] Approve missing — reassigning approver to NSEF Support Admin...');
-                if (!(await this.reassignWorkflowApprover('Reassigned for automated testing', 'PO'))) break;
+                if (!(await this.reassignWorkflowApprover('Reassigned for automated testing', 'PO'))) {
+                    console.log('[PO] Reassign unavailable — stopping approval loop.');
+                    break;
+                }
+                visible = await this._waitForApproveButton({
+                    tag: 'PO',
+                    selector: L.poApproveBtn,
+                    stopWhen: createReady,
+                });
+                if (!visible) {
+                    console.log('[PO] Still no Approve button after reassign — stopping.');
+                    break;
+                }
             }
+
+            console.log(`[PO] Approving stage ${i + 1}...`);
+            await this._approveWithNotes(comments, 'PO');
         }
         if (!(await createReady())) throw new Error('PO did not reach approved/Submitted (Create) state');
     }
 
     async clickPoCreateGrn() {
-        await this.page.locator(`xpath=${L.poCreateBtn}`).first().click();
+        // WAIT for Create before clicking. openSavedPurchaseOrder navigates afresh
+        // and this v3 page renders its header actions late, so the bare click ran
+        // into the 5s default actionTimeout — scenario 1, 2026-09-10, right after
+        // "Approvals complete (Create available)" had already proved the button
+        // exists on the pre-navigation page.
+        const createBtn = this.page.locator(`xpath=${L.poCreateBtn}`).first();
+        await createBtn.waitFor({ state: 'visible', timeout: 30000 });
+        await createBtn.click();
         await this.page.waitForTimeout(800);
         const grn = this.page.locator(`xpath=${L.poCreateGrnOption}`).first();
         await grn.waitFor({ state: 'visible', timeout: 10000 });
@@ -4030,6 +5219,75 @@ export class NSEFoundationActions {
     // The Line Items grid is an AG Grid with pinned columns, so cells are split
     // across containers — read them by stable col-id (line_items_po_quantity /
     // line_items_received), scoped to the grid that holds the PO Quantity header.
+    /**
+     * Set the GRN's Received qty on line 0 — a PARTIAL receipt.
+     *
+     * Needed by sheet scenario 13 (GRN 50 vs invoice 100 -> Disputed): the GRN
+     * otherwise defaults to the full PO quantity, which is what
+     * assertGrnReceivedMatchesPoQty checks for the happy path.
+     *
+     * Mirrors _invoiceQtyOps: AG-grid cells silently ignore keystrokes when the
+     * grid is not in edit mode, so never trust one attempt, and the clear uses
+     * ControlOrMeta+a — plain Control+a does not select the cell contents on macOS.
+     */
+    async setGrnReceivedQty(qty) {
+        const cell = this.page.locator(`xpath=${L.grnReceivedCell}`).first();
+        await cell.waitFor({ state: 'visible', timeout: 20000 });
+        const read = async () => {
+            const txt = (await cell.textContent().catch(() => '')) ?? '';
+            const m = txt.replace(/,/g, '').match(/\d+(?:\.\d+)?/);
+            return m ? String(parseFloat(m[0])) : '';
+        };
+        for (let i = 1; i <= 3; i++) {
+            await cell.scrollIntoViewIfNeeded().catch(() => {});
+            await cell.dblclick();
+            await this.page.waitForTimeout(500);
+            const editor = cell.locator('input').first();
+            if (await editor.count().catch(() => 0)) {
+                await editor.fill(String(qty)).catch(() => {});
+            } else {
+                await this.page.keyboard.press('ControlOrMeta+a');
+                await this.page.keyboard.press('Delete');
+                await this.page.keyboard.type(String(qty));
+            }
+            await this.page.keyboard.press('Enter');
+            await this.page.waitForTimeout(900);
+            const now = await read();
+            if (now === String(qty)) {
+                console.log(`[GRN] Received set to ${qty} (cell reads "${now}")`);
+                return;
+            }
+            console.log(`[GRN] Received did not stick (cell reads "${now}") — retry ${i}/3`);
+        }
+        throw new Error(`[GRN] could not set Received to ${qty}`);
+    }
+
+    /** The status word on an invoice detail page. */
+    async readInvoiceStatus() {
+        for (let i = 0; i < 10; i++) {
+            const t = (await this.page.locator('body').innerText().catch(() => '')) || '';
+            const m = t.match(
+                /disputed|pending[-\s]?review|pending[-\s]?approval|pending[-\s]?sync|accounted|rejected|cancelled|draft|to-review|to-enrich/i);
+            if (m) return m[0].trim();
+            await this.page.waitForTimeout(2000);
+        }
+        return null;
+    }
+
+    /** Poll the invoice detail page until its status matches, reloading each time.
+     *  Returns the status seen, or throws with what it actually settled on. */
+    async waitForInvoiceStatus(re, { polls = 12, tag = 'INV' } = {}) {
+        let last = null;
+        for (let i = 1; i <= polls; i++) {
+            last = await this.readInvoiceStatus();
+            console.log(`[${tag}] invoice status (poll ${i}): ${last}`);
+            if (re.test(last || '')) return last;
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+            await this.page.waitForTimeout(5000);
+        }
+        throw new Error(`[${tag}] the invoice never reached ${re} — it settled on "${last}"`);
+    }
+
     async assertGrnReceivedMatchesPoQty() {
         await this.page.locator(`xpath=${L.grnLineItemColHeader('PO Quantity')}`).first()
             .waitFor({ state: 'visible', timeout: 10000 });
@@ -4121,7 +5379,7 @@ export class NSEFoundationActions {
         const m = bodyText.match(/INW-[A-Z0-9\-]*\d+/i);
         const code = m ? m[0].trim() : null;
         const idMatch = url.match(/\/inwards\/(\d+)/);
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         current.savedGrn = { code, id: idMatch ? idMatch[1] : null, url };
         fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
@@ -4133,7 +5391,7 @@ export class NSEFoundationActions {
 
     // Open the saved PO directly (re-login on the capp domain if redirected).
     async openSavedPurchaseOrder(data) {
-        const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const fresh = JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8'));
         const { url, code } = fresh.savedPurchaseOrder;
         console.log(`[PO] Opening saved PO ${code} → ${url}`);
         await this.page.goto(url, { waitUntil: 'domcontentloaded' });
@@ -4161,7 +5419,11 @@ export class NSEFoundationActions {
     }
 
     async clickPoCreateInvoice() {
-        await this.page.locator(`xpath=${L.poCreateBtn}`).first().click();
+        // Same late-rendering Create action as clickPoCreateGrn — wait, don't
+        // rely on the 5s default actionTimeout.
+        const createBtn = this.page.locator(`xpath=${L.poCreateBtn}`).first();
+        await createBtn.waitFor({ state: 'visible', timeout: 30000 });
+        await createBtn.click();
         await this.page.waitForTimeout(800);
         const inv = this.page.locator(`xpath=${L.poCreateInvoiceOption}`).first();
         await inv.waitFor({ state: 'visible', timeout: 10000 });
@@ -4200,7 +5462,7 @@ export class NSEFoundationActions {
     // persist it back to NSEFoundationData.json. The app rejects duplicate invoice
     // numbers, so every run must use a fresh one.
     _nextInvoiceNumber() {
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         current.invoice = current.invoice || {};
         const prev = current.invoice.invoiceNumber || 'INV-AUTO-000';
@@ -4264,7 +5526,7 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(2000);
 
         // GRN created for this PO
-        const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const fresh = JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8'));
         const grnCode = fresh.savedGrn && fresh.savedGrn.code;
 
         const addGrn = this.page.locator(`xpath=${L.itemMatchingAddGrnField}`).first();
@@ -4350,9 +5612,18 @@ export class NSEFoundationActions {
     // After the final approval the Approve button disappears and the status flips
     // to "Pending Sync" — the terminal state for this test. (It only becomes
     // "Accounted" after an external acknowledgement, which is out of scope.)
-    async approveInvoiceUntilPendingSync(comments = 'Approved by automation', { acceptSyncFailed = false } = {}) {
-        // acceptSyncFailed: Non-PO invoices in UAT finish approvals on "Sync Failed"
-        // (no EBS integration for that template) and are still ackable to Accounted.
+    async approveInvoiceUntilPendingSync(comments = 'Approved by automation', { acceptSyncFailed = true } = {}) {
+        // An approved invoice settles on Pending Sync OR Sync Failed, and BOTH are
+        // acknowledgeable through to Accounted — QA rule, 2026-09-09. Measured the
+        // same day: Invoice-FNSE-26-388 finished approvals on Sync Failed, the ack
+        // POST returned 200 {"success":true}, and the invoice went to Accounted
+        // with "+ Payment" offered.
+        //
+        // Hence the default is true. It used to be false, which made every caller
+        // that did not opt in throw "Invoice did not reach Pending Sync status" on
+        // an invoice that was perfectly ackable — scenario 1 died exactly that way.
+        // Pass { acceptSyncFailed: false } only for a test whose POINT is that the
+        // invoice must reach Pending Sync specifically.
         const pendingSync = async (t = 1500) => {
             if (await this.page.locator(`xpath=${L.invoicePendingSyncStatus}`).first()
                     .isVisible({ timeout: t }).catch(() => false)) return true;
@@ -4363,27 +5634,44 @@ export class NSEFoundationActions {
         const pendingApproval = async (t = 1500) =>
             await this.page.locator(`xpath=${L.invoicePendingApprovalStatus}`).first().isVisible({ timeout: t }).catch(() => false);
 
+        // A SINGLE 4s probe is not enough on this page. The v3 invoice detail view
+        // renders its header actions and status badge late — heavier than the PO
+        // page because of the line-item grid — so a bare isVisible check missed
+        // both the Approve button AND the Pending Approval badge on most passes.
+        // Scenario 1 on 2026-09-10 burned all 12 iterations logging "No Approve
+        // button and not Pending Approval" while the failure screenshot showed
+        // Invoice-FNSE-26-404 Pending Approval with Approve right there in the
+        // header (it did find it on pass 5, which is what gives the timing away).
+        // _waitForApproveButton reloads and re-polls, exactly as the PO loop now
+        // does.
         for (let i = 0; i < 12; i++) {
             if (await pendingSync()) {
                 console.log(`[INV] Status Pending Sync after ${i} approval(s).`);
                 return;
             }
-            const approveVisible = await this.page.locator(`xpath=${L.poApproveBtn}`).first()
-                .isVisible({ timeout: 4000 }).catch(() => false);
+            const approveVisible = await this._waitForApproveButton({
+                tag: 'INV',
+                selector: L.poApproveBtn,
+                stopWhen: pendingSync,
+            });
             if (approveVisible) {
                 console.log(`[INV] Approving stage ${i + 1}...`);
                 await this._approveWithNotes(comments, 'INV');
                 continue;
             }
+            if (await pendingSync()) {
+                console.log(`[INV] Status Pending Sync after ${i} approval(s).`);
+                return;
+            }
             // No Approve button. If still Pending Approval, the approver isn't us —
             // reassign and retry. Otherwise the badge may be mid-transition; reload.
-            if (await pendingApproval(1500)) {
+            if (await pendingApproval(4000)) {
                 console.log('[INV] Approve missing while Pending Approval — reassigning to NSEF Support Admin...');
                 if (!(await this.reassignWorkflowApprover('Reassigned for automated testing', 'INV'))) break;
                 continue;
             }
             console.log('[INV] No Approve button and not Pending Approval — reloading to re-check status...');
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
             await this.page.waitForTimeout(3000);
         }
         if (!(await pendingSync())) {
@@ -4393,10 +5681,17 @@ export class NSEFoundationActions {
         }
     }
 
-    async assertInvoicePendingSync() {
-        await expect(this.page.locator(`xpath=${L.invoicePendingSyncStatus}`).first())
-            .toBeVisible({ timeout: 15000 });
-        console.log('[INV] Status is Pending Sync');
+    /** Assert the invoice has settled somewhere acknowledgeable: Pending Sync or
+     *  Sync Failed (QA rule, 2026-09-09 — the ack applies to both). Returns which.
+     *  `strict:true` demands Pending Sync, for a test about that state itself. */
+    async assertInvoicePendingSync({ strict = false } = {}) {
+        if (strict) {
+            await expect(this.page.locator(`xpath=${L.invoicePendingSyncStatus}`).first())
+                .toBeVisible({ timeout: 15000 });
+            console.log('[INV] Status is Pending Sync');
+            return 'Pending Sync';
+        }
+        return await this.assertInvoiceReadyForAck();
     }
 
     async saveInvoiceCode() {
@@ -4405,7 +5700,7 @@ export class NSEFoundationActions {
         const m = bodyText.match(/Invoice-[A-Z0-9\-]*\d+/i);
         const code = m ? m[0].trim() : null;
         const idMatch = url.match(/\/invoices\/(\d+)/);
-        const dataPath = path.resolve('pages/NSEFoundationData.json');
+        const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
         current.savedInvoice = { code, id: idMatch ? idMatch[1] : null, url };
         fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
@@ -4423,7 +5718,7 @@ export class NSEFoundationActions {
      * the NSEF_INVOICE_ACK_KEY env var (.env) — never hardcoded.
      */
     async acknowledgeInvoice(data) {
-        const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const fresh = JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8'));
         const expenseRecordNo = fresh.savedInvoice?.code;
         const responseBodyRef = fresh.invoice?.invoiceNumber;
         // Prefer the env var (.env) but fall back to the committed data key so the
@@ -4442,10 +5737,28 @@ export class NSEFoundationActions {
             },
         };
         console.log(`[ACK] POST ${data.invoice.ackUrl} → EXPENSE_RECORD_NO="${expenseRecordNo}", response_body_reference="${responseBodyRef}"`);
-        const resp = await this.page.request.post(data.invoice.ackUrl, {
-            headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
-            data: payload,
-        });
+        // Retry transient transport failures. The ack is a single POST at the very
+        // end of a ~20 minute chain, so losing it to one flaky socket throws away
+        // the whole run — which is exactly what happened on 2026-09-10
+        // ("apiRequestContext.post: read ETIMEDOUT" on Invoice-FNSE-26-408, an
+        // invoice that acked fine moments later). Retrying is safe: the ack is
+        // idempotent per EXPENSE_RECORD_NO.
+        let resp;
+        for (let attempt = 1; attempt <= 4; attempt++) {
+            try {
+                resp = await this.page.request.post(data.invoice.ackUrl, {
+                    headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+                    data: payload,
+                    timeout: 60000,
+                });
+                break;
+            } catch (e) {
+                const why = String(e).split('\n')[0];
+                if (attempt === 4) throw new Error(`[ACK] POST failed after 4 attempts — ${why}`);
+                console.log(`[ACK] POST attempt ${attempt} failed (${why}) — retrying in 10s...`);
+                await this.page.waitForTimeout(10000);
+            }
+        }
         const body = await resp.text().catch(() => '');
         console.log(`[ACK] Response ${resp.status()}: ${body.slice(0, 300)}`);
         expect(resp.ok(), `Ack API returned ${resp.status()}: ${body}`).toBeTruthy();
@@ -4455,7 +5768,7 @@ export class NSEFoundationActions {
 
     /** Open the invoice created by the last flow (capp domain — re-login if redirected). */
     async openSavedInvoice(data) {
-        const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const fresh = JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8'));
         const { url, code } = fresh.savedInvoice;
         console.log(`[INV] Opening saved invoice ${code} → ${url}`);
         await this.page.goto(url, { waitUntil: 'domcontentloaded' });
@@ -4521,7 +5834,7 @@ export class NSEFoundationActions {
         for (let i = 0; i < 6; i++) {
             if (await accounted(2000)) { console.log('[INV] Status is Accounted'); return; }
             console.log(`[INV] Not Accounted yet — reloading (${i + 1}/6)...`);
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
             await this.page.waitForTimeout(3000);
         }
         await expect(this.page.locator(`xpath=${L.invoiceAccountedStatus}`).first())
@@ -4531,11 +5844,33 @@ export class NSEFoundationActions {
     // ── Invoice payment ────────────────────────────────────────────────────────
 
     /** Read the "Invoice Amount" from the invoice Overview as a number (₹ 2,00,000.00 → 200000). */
-    async readInvoiceAmount() {
+    /**
+     * Read the invoice's Invoice Amount.
+     *
+     * The page renders "₹ 0.00" placeholders and fills them a moment later, so a
+     * single reading can capture 0 — which then gets typed into Paid Amount as a
+     * zero payment. Observed 2026-09-10 on Invoice-FNSE-26-408, an invoice
+     * genuinely worth ₹1,00,000. A zero invoice is never valid in this flow, so
+     * poll until a non-zero figure appears and fail loudly if it never does,
+     * rather than silently paying nothing.
+     */
+    async readInvoiceAmount({ timeoutMs = 30000 } = {}) {
         const el = this.page.locator(`xpath=${L.invoiceAmountValue}`).first();
-        await el.waitFor({ state: 'visible', timeout: 10000 });
-        const txt = (await el.textContent()) ?? '';
-        return parseFloat(txt.replace(/[₹,\s]/g, ''));
+        await el.waitFor({ state: 'visible', timeout: 15000 });
+        const deadline = Date.now() + timeoutMs;
+        let amount = 0;
+        let seen = '';
+        while (Date.now() < deadline) {
+            seen = (await el.textContent().catch(() => '')) ?? '';
+            amount = parseFloat(seen.replace(/[₹,\s]/g, ''));
+            if (Number.isFinite(amount) && amount > 0) {
+                console.log(`[INV] Invoice Amount = ${amount}`);
+                return amount;
+            }
+            await this.page.waitForTimeout(1000);
+        }
+        throw new Error(`[INV] Invoice Amount never became non-zero (last read "${seen.trim()}") `
+            + '— paying 0 would silently create a meaningless payment');
     }
 
     /** Open the "Converting to Payment" drawer via the + Payment button. */
@@ -4878,6 +6213,46 @@ export class NSEFoundationActions {
         console.log(`[RFX] Rejected RFX edited (qty→${newQty}) & resubmitted`);
     }
 
+    /**
+     * On the New Sourcing event form (Intake → Process → Send For Sourcing),
+     * overwrite the item grid's Quantity so the RFX converts only PART of the
+     * intake — sheet scenario 6 converts 50 of an intake's 100.
+     *
+     * The cell is click-to-edit: clicking mounts an <input> pre-filled with the
+     * intake quantity ("100.00"). ControlOrMeta+a is required rather than
+     * Control+a — on macOS a plain Control+a moves the caret to line start and
+     * the new digits are PREPENDED, silently converting 100 → 50100.
+     * Verified live 2026-09-09 on intake 2250: 100.00 → 50.00.
+     */
+    async setSourcingLineItemQty(qty, rowIndex = 0) {
+        const cell = this.page.locator(L.sourcingItemQtyCell).nth(rowIndex);
+        await cell.waitFor({ state: 'visible', timeout: 20000 });
+        await cell.scrollIntoViewIfNeeded();
+        const before = (await cell.innerText().catch(() => '')).trim();
+
+        await cell.click();
+        await this.page.waitForTimeout(500);
+
+        // The click must have mounted an editor. If focus stayed on <body> the
+        // grid is read-only and a "lowered" qty would be a silent no-op.
+        const focused = await this.page.evaluate(() => document.activeElement?.tagName || '');
+        if (/^(BODY|HTML)$/.test(focused)) {
+            throw new Error(`[RFX] clicking the Quantity cell focused <${focused}> — the sourcing grid is not editable here`);
+        }
+
+        await this.page.keyboard.press('ControlOrMeta+a');
+        await this.page.keyboard.press('Delete');
+        await this.page.keyboard.type(String(qty));
+        await this.page.keyboard.press('Tab');
+        await this.page.waitForTimeout(1200);
+
+        const after = (await cell.innerText().catch(() => '')).replace(/[,\s]/g, '');
+        expect(after, `sourcing line qty should have changed from ${before} to ${qty}`)
+            .toMatch(new RegExp(`^${qty}(\\.0+)?$`));
+        console.log(`[RFX] Sourcing line qty ${before} → ${after}`);
+        return after;
+    }
+
     /** After a re-convertible intake's Process → Send for Sourcing lands on the
      *  New Sourcing event page: expand the sections and assert the (lowered)
      *  line-item qty shows in the Item Table. The qty may render as a grid-cell
@@ -4955,7 +6330,7 @@ export class NSEFoundationActions {
                 await this.reassignWorkflowApprover('Reassigned for automated testing', tag).catch(() => {});
             } else {
                 console.log(`[${tag}] Reject not visible — reloading (${attempt + 1})`);
-                await this.page.reload({ waitUntil: 'domcontentloaded' });
+                await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
             }
             await this.page.waitForTimeout(1500);
         }
@@ -5673,6 +7048,71 @@ export class NSEFoundationActions {
         console.log('[NONPO] invoice details filled');
     }
 
+    // ── Vendor Type / RPT FLag autopopulation (sheet scenarios 73-80) ────────
+    //
+    // Verified live 2026-09-08 on the NSEF Credit Note template: with no supplier
+    // both fields are blank; choosing "HG Automation SUPP (FNSE-26-2993)" fills
+    // Vendor Type="IT" and RPT FLag="N". They sit in a collapsed accordion and
+    // their ids carry a random suffix — see nonPoLabelledField for the full trap
+    // list. On the PO Invoice template the Supplier picker is DISABLED (the PO
+    // supplies it), so both fields are already populated on arrival.
+
+    /** Read the three supplier-derived flags. Never fills — they are disabled by
+     *  design. Expands the accordions first, else every value reads as absent. */
+    async readVendorRptFlags() {
+        await this.expandNonPoSections();
+        const read = async (label) => {
+            const loc = this.page.locator(L.nonPoLabelledField(label));
+            if (!await loc.count().then(n => n > 0).catch(() => false)) return null;
+            for (let i = 0; i < 8; i++) {
+                const v = (await loc.first().inputValue().catch(() => '')).trim();
+                if (v) return v;
+                await this.page.waitForTimeout(1000);
+            }
+            return '';
+        };
+        const flags = {
+            vendorType: await read('Vendor Type'),
+            rptFlag:    await read('RPT FLag'),
+            msme:       await read('MSME vendor?'),
+        };
+        console.log(`[VENDORRPT] Vendor Type=${JSON.stringify(flags.vendorType)} `
+            + `RPT FLag=${JSON.stringify(flags.rptFlag)} MSME=${JSON.stringify(flags.msme)}`);
+        return flags;
+    }
+
+    /** Pick a supplier on a template whose Supplier picker is enabled (Credit Note,
+     *  CXO Template). Returns the option text actually chosen so the test can
+     *  report which supplier drove the autopopulation. */
+    async selectNonPoSupplier(name) {
+        const inp = this.page.locator(L.nonPoSupplierInput).first();
+        await inp.waitFor({ state: 'visible', timeout: 30000 });
+        if (await inp.isDisabled().catch(() => false)) {
+            throw new Error(`[VENDORRPT] the Supplier picker is disabled on this template — `
+                + 'it is driven by the PO, so do not try to choose one');
+        }
+        await inp.click();
+        await this.page.waitForTimeout(1000);
+        await inp.fill(name);
+        await this.page.waitForTimeout(3500);
+        const opts = this.page.locator(L.muiAcOption);
+        if (!await opts.count().then(n => n > 0).catch(() => false)) {
+            throw new Error(`[VENDORRPT] no supplier option matched "${name}"`);
+        }
+        const chosen = (await opts.first().innerText().catch(() => name)).replace(/\n/g, ' | ').trim();
+        await opts.first().click();
+        await this.page.waitForTimeout(8000); // the choice triggers the autopopulate fetch
+        console.log(`[VENDORRPT] supplier -> "${chosen}"`);
+        return chosen;
+    }
+
+    /** True when the Supplier picker is present but disabled (the PO-driven case). */
+    async isNonPoSupplierLocked() {
+        const inp = this.page.locator(L.nonPoSupplierInput).first();
+        if (!await inp.count().then(n => n > 0).catch(() => false)) return false;
+        return await inp.isDisabled().catch(() => false);
+    }
+
     /** Mandatory-but-disabled fields, populated by the app from the CXO + supplier.
      *  Reported, not asserted — failing on an assumption about fill timing would
      *  mask the real behaviour. */
@@ -5995,7 +7435,7 @@ export class NSEFoundationActions {
 
     /** Open a CXO overview by code. */
     async openCxoByCode(code) {
-        const current = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const current = JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8'));
         const saved = current.savedCxo || {};
         if (saved.code === code && saved.url) {
             await this.page.goto(saved.url);
@@ -6052,7 +7492,7 @@ export class NSEFoundationActions {
     }
 
     getSavedInvoiceCode() {
-        const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const fresh = JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8'));
         return fresh.savedInvoice?.code;
     }
 
@@ -6139,7 +7579,7 @@ export class NSEFoundationActions {
         // hits the heading text, and /Cancel/ would dismiss the dialog instead.
         await dialog.locator('button').filter({ hasText: /^(Recall|Confirm)$/ }).first().click();
         await this.page.waitForTimeout(8000);
-        await this.page.reload({ waitUntil: 'domcontentloaded' });
+        await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
         await this.page.waitForTimeout(6000);
         console.log(`[INV] recalled (now expected Rejected) — reason "${reason}"`);
         return true;
@@ -6193,20 +7633,36 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(2500);
     }
 
-    /** Non-PO terminal check before acking: Pending Sync, or (in UAT) Sync Failed.
-     *  Logs which, so a change in environment behaviour is visible. */
-    async assertNonPoInvoiceReadyForAck() {
+    /** Terminal check before acking: Pending Sync, or (in UAT) Sync Failed.
+     *  Returns and logs which, so a change in environment behaviour is visible.
+     *
+     *  Both states are ackable. Originally written for Non-PO invoices, but PO
+     *  invoices land on Sync Failed too — measured 2026-09-09, when scenario 1's
+     *  two PO invoices (Invoice-FNSE-26-388 / -390) both finished approvals on
+     *  Sync Failed. Acking 388 from that state returned 200 and the invoice went
+     *  straight to Accounted with "+ Payment" offered, so the distinction does
+     *  not affect the flow. What proves the invoice is really settled is the
+     *  post-ack assertInvoiceAccounted(), not which of the two it passed through.
+     */
+    async assertInvoiceReadyForAck(tag = 'INV') {
         const sync = this.page.locator(`xpath=${L.invoicePendingSyncStatus}`).first();
         const failed = this.page.locator(`xpath=${L.invoiceSyncFailedStatus}`).first();
         if (await sync.isVisible({ timeout: 10000 }).catch(() => false)) {
-            console.log('[NONPO] invoice status = Pending Sync');
+            console.log(`[${tag}] invoice status = Pending Sync`);
             return 'Pending Sync';
         }
         if (await failed.isVisible({ timeout: 10000 }).catch(() => false)) {
-            console.log('[NONPO] invoice status = Sync Failed (expected in UAT — ack still applies)');
+            console.log(`[${tag}] invoice status = Sync Failed (seen in UAT — ack still applies)`);
             return 'Sync Failed';
         }
-        throw new Error('[NONPO] invoice is neither Pending Sync nor Sync Failed');
+        const chips = await this._readDocStatusChips().catch(() => []);
+        throw new Error(`[${tag}] invoice is neither Pending Sync nor Sync Failed `
+            + `— status chips on the page: ${JSON.stringify(chips)}`);
+    }
+
+    /** Back-compat alias for the Non-PO callers. */
+    async assertNonPoInvoiceReadyForAck() {
+        return await this.assertInvoiceReadyForAck('NONPO');
     }
 
     // ── v4 detail-page "More" dropdown + Transactions tab ─────────────────────
@@ -6337,17 +7793,33 @@ export class NSEFoundationActions {
 
     /** Open an intake straight from its id, bypassing the listing. */
     async openIntakeById(id, tab = 'overview') {
-        const cfg = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const cfg = JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8'));
         await this.page.goto(`${cfg.loginUrl}/intakes/${id}/${tab}`, { waitUntil: 'domcontentloaded' });
         await this.page.waitForTimeout(3500);
     }
 
-    /** Status chip text on an intake/CXO overview (e.g. "Processed"). */
-    async readV4StatusChip() {
-        const lines = (await this.page.locator('body').innerText()).split('\n').map(t => t.trim());
+    /** Status chip text on an intake/CXO overview (e.g. "Processed").
+     *
+     *  `timeoutMs` polls until a chip actually renders. Without it a caller that
+     *  reads immediately after a navigation gets "" from a half-drawn page —
+     *  which then passes any `not.toBe('SomeStatus')` assertion vacuously
+     *  (observed 2026-09-09 in scenario 6, where the chip read "" and the real
+     *  status went unchecked). */
+    async readV4StatusChip({ timeoutMs = 0 } = {}) {
         const known = ['Draft', 'Pending Approval', 'Released', 'Processed', 'Partially Processed',
                        'Rejected', 'Cancelled', 'Awarded', 'Quoted'];
-        return lines.find(t => known.includes(t)) ?? '';
+        const readOnce = async () => {
+            const lines = (await this.page.locator('body').innerText().catch(() => ''))
+                .split('\n').map(t => t.trim());
+            return lines.find(t => known.includes(t)) ?? '';
+        };
+        const deadline = Date.now() + timeoutMs;
+        let chip = await readOnce();
+        while (!chip && Date.now() < deadline) {
+            await this.page.waitForTimeout(1000);
+            chip = await readOnce();
+        }
+        return chip;
     }
 
     async readIntakeTransactionSections() {
@@ -6365,7 +7837,7 @@ export class NSEFoundationActions {
         return s;
     }
 
-    // ── Activity Log panel (sheet scenarios 38-40) ────────────────────────────
+    // ── Activity Log panel (sheet scenarios 35-37) ────────────────────────────
 
     /** Open the Activity Log sheet from any v4 detail page. */
     async openActivityLogPanel() {
@@ -6419,6 +7891,61 @@ export class NSEFoundationActions {
         expect(size, `"${label}" download ("${name}") is empty`).toBeGreaterThan(0);
         console.log(`[ACTIVITY] ${moduleTag} → ${label}: ${name} (${size} bytes)`);
         return { name, path: target, size };
+    }
+
+    /**
+     * Is the Activity Log's add-comment field present on this transaction?
+     *
+     * Commenting is state-dependent, NOT universal: an AWARDED RFX renders the
+     * panel with the filter chips and feed but no textarea at all (confirmed
+     * live 2026-09-04 on RFX-26-243 / 1458 — the panel had zero inputs). So the
+     * comment precondition has to be probed, not assumed, or the RFX case fails
+     * on a by-design restriction and looks like a bug.
+     */
+    async hasActivityLogCommentField() {
+        const box = this.page.locator(`xpath=${L.activityLogCommentInput}`).first();
+        return box.isVisible({ timeout: 4000 }).catch(() => false);
+    }
+
+    /**
+     * Add a comment in an open Activity Log panel and confirm it landed.
+     *
+     * Precondition for the Comments export, NOT a cosmetic extra: with no
+     * comments on the transaction the "Download Comments" file is named
+     * ActivityTimeline_undefined_<ts>.xlsx, because the export has no
+     * conversation to name itself after. Once a comment exists the same export
+     * comes back as ActivityTimeline_Conversations_<ts>.xlsx. That is the whole
+     * reason the "undefined" filename was mistaken for a defect (sheet 35-37,
+     * retracted by QA 2026-09-04).
+     *
+     * The blue right-arrow send button ships DISABLED and enables only when the
+     * textarea is non-empty, so this waits for enabled instead of clicking
+     * straight after fill().
+     *
+     * @param {string} text comment body
+     * @returns {Promise<string>} the text that was posted
+     */
+    async addActivityLogComment(text = `Automation comment ${Date.now()}`) {
+        const box = this.page.locator(`xpath=${L.activityLogCommentInput}`).first();
+        await box.waitFor({ state: 'visible', timeout: 15000 });
+        await box.click();
+        await box.fill(text);
+
+        const send = this.page.locator(`xpath=${L.activityLogCommentSendBtn}`).first();
+        await expect(send, 'comment send button never enabled after typing').toBeEnabled({ timeout: 10000 });
+        await send.click();
+
+        // The feed re-renders in place; wait for the posted body to show up
+        // rather than a fixed sleep, so a slow save cannot race the download.
+        const posted = this.page.locator(`xpath=${L.activityLogPanel}`)
+            .first()
+            .getByText(text, { exact: false });
+        await posted.first().waitFor({ state: 'visible', timeout: 20000 })
+            .catch(() => { throw new Error(`comment "${text}" did not appear in the Activity Log feed after send`); });
+
+        await this.page.waitForTimeout(800);
+        console.log(`[ACTIVITY] comment posted: "${text}"`);
+        return text;
     }
 
     /** Labels offered by the Activity Log download dropdown. */
@@ -6768,6 +8295,66 @@ export class NSEFoundationActions {
         return { tally, pagesWalked: pages + 1 };
     }
 
+    // ── Listing "pending approval" view (sheet scenario 131) ─────────────────
+    //
+    // A rejected transaction must no longer sit in the approver's queue. Scoped
+    // to CXO / PO / Invoice on QA's instruction (2026-09-08): probed live, those
+    // are the only three modules that HAVE such a view. GRN's /inwards listing
+    // shows no approval text at all, and Intake and RFX offer only "All".
+    //
+    // TWO SHAPES, and the label is NOT the same in both:
+    //   CXO      (v4)  role=tab   "My Pending Approval"
+    //   Invoice  (v3)  plain text "My Pending Approval"
+    //   PO       (v3)  plain text "Pending My Approval"   <- word order differs
+    // Matching "My Pending Approval" everywhere would silently find nothing on
+    // the PO listing.
+
+    /** Load a listing and switch to its pending-approval view. */
+    async openPendingApprovalView(url, label, tag = 'LIST') {
+        await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
+        // These listings render late; waiting on rows is far more reliable than a
+        // fixed sleep — an under-waited probe reported the v3 tabs as absent
+        // entirely (2026-09-08).
+        await this.page.waitForSelector('tbody tr, .MuiTab-root, [data-slot="tabs-trigger"]',
+            { timeout: 90000 }).catch(() => {});
+        await this.page.waitForTimeout(10000);
+
+        const byRole = this.page.getByRole('tab', { name: label, exact: true }).first();
+        if (await byRole.count().catch(() => 0) && await byRole.isVisible().catch(() => false)) {
+            await byRole.click();
+            console.log(`[${tag}] switched to "${label}" (role=tab)`);
+        } else {
+            const el = this.page.locator(`xpath=//*[normalize-space(text())="${label}"]`).first();
+            if (!await el.isVisible({ timeout: 30000 }).catch(() => false)) {
+                throw new Error(`[${tag}] the listing at ${url} offers no "${label}" view`);
+            }
+            await el.click({ force: true });
+            console.log(`[${tag}] switched to "${label}" (text match)`);
+        }
+        await this.page.waitForTimeout(9000);
+    }
+
+    /** Every transaction code on the current listing, across pages. */
+    async listingCodesAcrossPages(maxPages = 15, tag = 'LIST') {
+        const codes = [];
+        for (let i = 0; i < maxPages; i++) {
+            const page = await this.page.evaluate(() => {
+                const norm = t => (t || '').replace(/\s+/g, ' ').trim();
+                return [...document.querySelectorAll('tbody tr')]
+                    .map(r => norm((r.querySelectorAll('td')[0] || {}).textContent))
+                    .filter(Boolean);
+            });
+            codes.push(...page);
+            const next = this.page.getByRole('button', { name: 'Next' }).first();
+            if (!await next.count().catch(() => 0)) break;
+            if (await next.isDisabled().catch(() => true)) break;
+            await next.click();
+            await this.page.waitForTimeout(3500);
+        }
+        console.log(`[${tag}] ${codes.length} code(s) in this view across pages`);
+        return codes;
+    }
+
     /**
      * Walk every page of the CURRENT listing and return rows whose status is
      * terminal — a record that can no longer be approved has no business
@@ -6910,7 +8497,7 @@ export class NSEFoundationActions {
 
     /** First CXO on the listing whose Status matches, as {code, href, status}. */
     async findCxoWithStatus(statusPattern) {
-        const cfg = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const cfg = JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8'));
         await this.page.goto(`${cfg.loginUrl}/cxos`, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
@@ -6935,7 +8522,7 @@ export class NSEFoundationActions {
 
     /** Open a CXO and start a clone; lands on /cxos/{id}/clone. */
     async startCxoClone(hrefPath) {
-        const cfg = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+        const cfg = JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8'));
         await this.page.goto(`${cfg.loginUrl}${hrefPath}/overview`, {
             waitUntil: 'domcontentloaded', timeout: 60000,
         });

@@ -14,7 +14,19 @@ import data from '../pages/NSEFoundationData.json';
 //  53  A Requisition raised from an Intake links back to that Intake
 //  54  The Requisition's budget (BRF) link opens the budget
 //  34  Suppliers can be reminded in bulk to quote an RFX (in-app half)
-//  32  A foreclosed RFX converts to an Auction, linked in Transactions
+//
+// Sheet scenario 29 ("the Auction for the RFX can be accessed from the RFX
+// Analysis tab") was MOVED OUT on 2026-09-08: auctions get their own sheet, so
+// its test was removed from here. What it had established, for whoever picks the
+// auction sheet up: QA corrected the location — the Auction is linked from the
+// RFX **Transactions** tab, not Analysis — and the "Convert to Auction" action
+// is GATED ON FORECLOSURE. Confirmed on UAT: RFX-26-233 (Quoted, not foreclosed)
+// offered Foreclose and no auction option, while RFX-26-222 (quoted then
+// foreclosed) offered Convert to Auction and no Foreclose. The removed test also
+// counted Linked Auctions before and after, so the assertion proved the
+// conversion produced one rather than finding an older auction, and it never
+// foreclosed anything itself — foreclosing is destructive and would consume the
+// shared pool of quotable RFXs that scenario 34 draws from.
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('QA-clarified scenarios', () => {
@@ -254,63 +266,4 @@ test.describe('QA-clarified scenarios', () => {
         console.log(`[S34] send-reminder-to-all-suppliers HTTP ${status}`);
     });
 
-    // ── Scenario 32 ───────────────────────────────────────────────────────────
-    //
-    // "Verify that the Auction for the RFX can be accessed from the RFX
-    //  Analysis tab."  QA (2026-09-01) corrected the location: once a QUOTED
-    //  RFX is FORECLOSED, More offers "Convert to Auction", and afterwards the
-    //  Auction is linked from the RFX **Transactions** tab.
-    //
-    // Precondition confirmed on UAT: RFX-26-233 (Quoted, not yet foreclosed)
-    // offers Foreclose and NO auction option, while RFX-26-222 (quoted then
-    // foreclosed) offers Convert to Auction and no Foreclose. So the option is
-    // gated on foreclosure, exactly as QA described.
-    //
-    // This test does NOT foreclose anything itself — it uses an RFX that is
-    // already past that point. Foreclosing is destructive and would consume
-    // the shared pool of quotable RFXs that scenario 34 also draws from.
-    test('a foreclosed RFX converts to an Auction linked in Transactions @RFX @Auction @S29', async ({ page }) => {
-        const a = new NSEFoundationActions(page);
-        await page.setViewportSize({ width: 1800, height: 900 });
-        await a.openApp(data);
-
-        // Find a quoted RFX that has reached the post-foreclose state.
-        let target = null;
-        const candidates = await a.listRfxByStatus(['Quoted'], data.loginUrl);
-        for (const c of candidates) {
-            await page.goto(`${data.loginUrl}${c.href}/overview`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-            await page.waitForTimeout(3000);
-            if (await a.hasV4MenuItem('Convert to Auction')) { target = c; break; }
-            await page.keyboard.press('Escape').catch(() => {});
-        }
-        test.skip(!target, 'no quoted-and-foreclosed RFX available to convert');
-        console.log(`[S32] ${target.code}`);
-
-        // Count the auctions already linked, so the assertion proves THIS
-        // conversion produced one rather than just finding an older auction.
-        const readAuctions = async () => {
-            await page.goto(`${data.loginUrl}${target.href}/transactions`,
-                { waitUntil: 'domcontentloaded', timeout: 60000 });
-            await page.waitForTimeout(3500);
-            const s = await a.readV4TransactionSections(['Linked Auctions']);
-            return s['Linked Auctions'];
-        };
-
-        const before = await readAuctions();
-        expect(before, 'the RFX has no Linked Auctions section').not.toBeNull();
-        console.log(`[S32] auctions before: ${before.rowCount} ${JSON.stringify(before.codes)}`);
-
-        await page.goto(`${data.loginUrl}${target.href}/overview`,
-            { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await page.waitForTimeout(6000);
-        await a.clickV4MenuItem('Convert to Auction');
-        await a.confirmConvertToAuction();
-
-        const after = await readAuctions();
-        expect(after.rowCount,
-            `converting ${target.code} to an auction added no row to Linked Auctions `
-            + `(before ${before.rowCount}, after ${after.rowCount})`)
-            .toBeGreaterThan(before.rowCount);
-        console.log(`[S32] auctions after: ${after.rowCount} ${JSON.stringify(after.codes)}`);
-    });
 });

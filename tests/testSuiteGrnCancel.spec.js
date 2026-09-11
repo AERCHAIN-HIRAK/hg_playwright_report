@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { v3DetailActions } from '../pages/v3DetailActions';
+import { NSEFoundationActions } from '../pages/NSEFoundationActions';
+import { buildToPoViaCapp } from '../pages/chainBuilders';
 import data from '../pages/V3ListingData.json';
+import nsefData from '../pages/NSEFoundationData.json';
+import fs from 'fs';
+import path from 'path';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GRN — Cancel availability vs invoice matching
@@ -82,29 +87,139 @@ test.describe('GRN — Cancel availability vs invoice matching', () => {
             .toBeFalsy();
     });
 
-    test('Cancel is unavailable once a GRN is partially matched with an Invoice @Grn @Cancel @S68', async () => {
-        const rows = await grn.listGrnsWithMatchState(data.baseUrl);
+    // ── 68: build the partial match, then prove Cancel is withheld ───────────
+    //
+    // QA's flow (2026-09-07): CXO → … → PO, GRN for the FULL 100, Invoice for
+    // 50 matched to that GRN, approve + acknowledge until Accounted, then open
+    // the GRN and confirm Cancel is gone.
+    //
+    // This REPLACES the earlier discovery-based version, which could only skip:
+    // the GRN listing's Matched column renders just progress-completed or
+    // progress-pending, so a partially-matched GRN is indistinguishable from an
+    // unmatched one there and no amount of searching can identify one. The only
+    // way to have a GRN matched for LESS than its quantity is to build it.
+    //
+    // The BASELINE is the point of the design. Verified live 2026-09-03,
+    // /inwards/565 was unmatched and still offered no Cancel — so "Cancel is
+    // absent" proves nothing on its own. Here the baseline is taken on THE SAME
+    // GRN while it is still unmatched, which is far stronger than comparing two
+    // different GRNs: the only thing that changes between the two reads is the
+    // partial match.
+    //
+    // ⚠️ CREATES REAL RECORDS on UAT: one CXO, Intake, RFX, award, PR, PRC, PO,
+    // GRN and Invoice per run, all subjected "HG Automation …".
+    //
+    // Cross-frontend on purpose: the chain runs on v4 (nse-capp-v4-uat) while
+    // the GRN cancel state is read on v3 (nse-capp-uat), where the button
+    // inventory was verified. Same backend — the pattern testSuiteInvoiceCancelGrn
+    // already uses.
+    test('a GRN partially matched to an Accounted Invoice cannot be cancelled @Grn @Cancel @S68 @S117 @Slow', async ({ page }) => {
+        test.setTimeout(2700000);   // 45 min — full CXO → … → PO → GRN → Invoice build
 
-        // A PARTIAL match has no distinct representation on this listing: the
-        // Matched column only ever renders progress-completed or
-        // progress-pending, so a partially-matched GRN is indistinguishable
-        // from an unmatched one here. Identifying one needs a GRN whose linked
-        // invoice covers less than its full quantity — i.e. purpose-built data.
-        const partialCandidates = rows.filter(r => r.matched === 'pending' && r.invoice);
-        // (r.invoice is expected to be empty for every row on this listing — see
-        // the note in readGrnActions — so this skips by design until QA supplies
-        // a purpose-built partially-matched GRN.)
-        test.skip(!partialCandidates.length,
-            'no partially-matched GRN available: the listing shows an INV code with a still-pending ' +
-            'Matched icon for none of the current rows, and the column exposes no partial state. ' +
-            'Needs a GRN matched to an invoice for LESS than its full quantity.');
+        const a = new NSEFoundationActions(page);
+        await a.openApp(nsefData);
 
-        const target = partialCandidates[0];
-        const actions = await grn.readGrnActions(target.id, data.baseUrl);
-        console.log(`[S68] target: ${target.code} (partially matched, invoice ${target.invoice})`);
+        // S68_RESUME=1 skips the ~40 minute build and picks up the GRN/Invoice the
+        // last run left in NSEFoundationData.json. Read from DISK, never the module
+        // import — the import is a snapshot taken before any run wrote to it.
+        // NOTE: resuming CANNOT re-establish the baseline (the invoice already
+        // exists, so the GRN is no longer unmatched), so a resumed run verifies the
+        // tail of the flow only and says so.
+        const RESUME = process.env.S68_RESUME === '1';
+        let grnCode, listed, invCode;
 
-        expect(grn.grnCanBeCancelled(actions),
-            `${target.code} is partially matched to ${target.invoice} but still offers Cancel`)
+        if (RESUME) {
+            const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
+            grnCode = fresh.savedGrn?.code;
+            invCode = fresh.savedInvoice?.code;
+            expect(grnCode, 'S68_RESUME needs savedGrn in NSEFoundationData.json').toBeTruthy();
+            console.log(`[S68] RESUME — GRN ${grnCode}, invoice ${invCode} (baseline NOT re-established)`);
+            listed = (await grn.listGrnsWithMatchState(data.baseUrl)).find(g => g.code === grnCode);
+            expect(listed, `${grnCode} is not on the v3 GRN listing`).toBeTruthy();
+            await a.openSavedInvoice(nsefData);
+        } else {
+
+        // ── CXO → Intake → RFX → award → PR → PRC → PO ────────────────────────
+        await buildToPoViaCapp(a);
+
+        // ── 117: the PO code must be shown correctly at every step ────────────
+        // Read from DISK — the module import is a snapshot from before this run
+        // wrote savedPurchaseOrder.
+        const poCode = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'))
+            .savedPurchaseOrder?.code;
+        expect(poCode, 'buildToPoViaCapp left no savedPurchaseOrder.code').toBeTruthy();
+        await a.assertPoCodeVisible(poCode, 'PO view page');
+
+        // ── GRN for the FULL PO quantity (100) ────────────────────────────────
+        await a.clickPoCreateGrn();
+        await a.submitSelectPoItemsPopup();
+        await a.fillGrnGeneralDetails(nsefData);
+        await a.fillGrnDocumentDetails(nsefData);
+        await a.assertPoCodeVisible(poCode, 'GRN creation page');
+        // The GRN must cover the WHOLE line, otherwise the later 50-qty invoice
+        // would be a FULL match of a 50 GRN rather than a partial match of 100.
+        await a.assertGrnReceivedMatchesPoQty();
+        await a.submitGrn();
+        grnCode = await a.saveGrnCode();
+        expect(grnCode, 'saveGrnCode() returned no GRN code').toBeTruthy();
+        await a.approveGrnUntilInwarded('Approved by automation — scenario 68');
+        await a.assertGrnInwarded();
+        await a.assertPoCodeVisible(poCode, 'GRN view page (post-approval)');
+        console.log(`[S68] GRN under test: ${grnCode} (full qty ${nsefData.intake.itemQty})`);
+
+        // ── BASELINE: while unmatched, this GRN DOES offer Cancel ──────────────
+        listed = (await grn.listGrnsWithMatchState(data.baseUrl))
+            .find(g => g.code === grnCode);
+        expect(listed, `${grnCode} is not on the v3 GRN listing`).toBeTruthy();
+        const before = await grn.readGrnActions(listed.id, data.baseUrl);
+        expect(grn.grnCanBeCancelled(before),
+            `${grnCode} offers no Cancel even while UNMATCHED, so its absence after partial matching `
+            + 'would prove nothing — this scenario cannot be demonstrated on this GRN')
+            .toBeTruthy();
+        console.log(`[S68] baseline OK — ${grnCode} offers Cancel while unmatched`);
+
+        // ── Invoice for 50 of the 100, matched to that GRN ─────────────────────
+        await a.openSavedPurchaseOrder(nsefData);
+        await a.clickPoCreateInvoice();
+        await a.submitSelectPoItemsForInvoice();
+        await a.confirmInvoiceCreation();
+        await a.uploadInvoiceDocument(nsefData);
+        await a.assertPoCodeVisible(poCode, 'Invoice creation page');
+        await a.fillInvoiceDetails(nsefData);
+        await a.setInvoiceGeneralDetailsNo();
+        await a.setInvoiceQty('50');
+        await a.matchGrnInItemMatching();
+        // Item Matching can push the GRN's matched qty (100) back into the row,
+        // which would turn this into a FULL match and silently invalidate the
+        // scenario — re-apply 50 if that happened.
+        await a.ensureInvoiceQty('50');
+        await a.submitInvoice();
+        invCode = await a.saveInvoiceCode();
+        await a.assertPoCodeVisible(poCode, 'Invoice view page (pending approval)');
+        console.log(`[S68] invoice ${invCode} raised for 50 of ${nsefData.intake.itemQty}`);
+
+        }   // end of the non-RESUME build
+
+        // ── Approve + acknowledge until Accounted ─────────────────────────────
+        // acceptSyncFailed: this UAT has NO EBS integration, so the invoice
+        // finishes its approvals on "Sync Failed" rather than "Pending Sync" —
+        // verified 2026-09-07 on /invoices/1148 (buttons: Cancel · Re-Initiate ·
+        // More). Without the flag the loop burns its 12 rounds reloading and
+        // throws "Invoice did not reach Pending Sync status". Sync Failed is still
+        // acknowledgeable through to Accounted.
+        await a.approveInvoiceUntilPendingSync('Approved by automation — scenario 68',
+            { acceptSyncFailed: true });
+        await a.acknowledgeInvoice(nsefData);
+        await a.assertInvoiceAccounted();
+        console.log(`[S68] ${invCode} is Accounted`);
+
+        // ── The GRN must now refuse to be cancelled ───────────────────────────
+        const after = await grn.readGrnActions(listed.id, data.baseUrl);
+        console.log(`[S68] ${grnCode} after partial match — invoices on page: `
+            + `${after.invoiceCodes.join(', ') || 'none'}`);
+        expect(grn.grnCanBeCancelled(after),
+            `${grnCode} is partially matched to an Accounted invoice (${invCode}, 50 of `
+            + `${nsefData.intake.itemQty}) but still offers Cancel`)
             .toBeFalsy();
     });
 });

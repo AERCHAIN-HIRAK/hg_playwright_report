@@ -151,8 +151,39 @@ export const NSEFoundation_Locators = {
     rfxAwardBtn:             `//button[normalize-space(.)='Award']`,
     // Award allocation table cells (stable id suffixes; prefix varies per quote)
     awardPendingQtyCell:     `td[id$="pendingAwardedQuantity"]`,
+    // ── Award grid: section rows (sheet scenario 21) ─────────────────────────
+    // The New Award page (/rfx/<id>/new-award) is ONE grid in which the
+    // Event Information / Justification Section / Cost Approval Note "sections"
+    // are just rows. Two things bite here, both verified live 2026-09-07:
+    //   · the internal row index in the cell id is NOT the visible "#" column
+    //     (Initial Quote Remarks shows as #11 but is cell_12_*), so a row must be
+    //     found by its LABEL, never by the number on screen;
+    //   · every row's value lives in ONE wide cell (595px) whose id ends
+    //     "<supplierId>::price"; the row's other cells are zero-width and
+    //     invisible, so `.last()` on the row picks an unclickable cell.
+    awardRowLabelCells:      `td[id$="_product"]`,
+    awardRowValueCell:       (row) => `td[id^="cell_${row}_"][id$="::price"]`,
+    // Candidate homes for a hover reveal, tried in order.
+    hoverRevealCandidates:   `[role="tooltip"], [data-radix-popper-content-wrapper], [class*="ant-popover-inner"], [class*="MuiTooltip-tooltip"], [data-state="delayed-open"][data-side]`,
+    // New Sourcing event (Intake → Process → Send For Sourcing) item grid.
+    // Every grid cell carries id="cell_<rowUuid>_<field>", so the Quantity cell
+    // is addressable by field name instead of by column position — the
+    // positional xpath in allLocators (intakeItemQty / intakeItemQtyEmptyRow)
+    // silently targets the wrong column when the grid gains a column.
+    // Verified live 2026-09-09: clicking it mounts <input> pre-filled "100.00".
+    sourcingItemQtyCell:     `[id^="cell_"][id$="_quantity"]`,
+
     awardAllocatedQtyCell:   `td[id$="allocatedQuantity"]:not([id$="pendingAwardedQuantity"])`,
     workflowSummarySubmitBtn: `//div[@role='dialog']//button[contains(normalize-space(.),'Submit')]`,
+    // Dialog buttons must be addressed with a FULLY-QUALIFIED path per union branch.
+    // Do NOT append //button to `muiDialog`: that locator is an XPath union
+    // (A | B), so the suffix binds to B alone and .first() then matches the dialog
+    // DIV — a click lands on the dialog body and nothing happens. That is exactly
+    // how a "Proceed" click was silently swallowed on 2026-09-08.
+    dialogProceedBtn2:  `//div[@role='dialog']//button[normalize-space(.)='Proceed']`
+        + ` | //div[contains(@class,'MuiDialog')]//button[normalize-space(.)='Proceed']`,
+    dialogMakeChangesBtn: `//div[@role='dialog']//button[normalize-space(.)='Make Changes']`
+        + ` | //div[contains(@class,'MuiDialog')]//button[normalize-space(.)='Make Changes']`,
     workflowStagesBtn:       `//button[contains(normalize-space(.),'Workflow Stages')] | //*[normalize-space(text())='Workflow Stages']`,
     workflowCompletedStatus: `//*[normalize-space(text())='Completed']`,
     // Overall workflow badge beside the "Workflow N" header in the stages popup
@@ -177,6 +208,30 @@ export const NSEFoundation_Locators = {
     reassignReasonField:     `//*[@role='dialog']//textarea`,
     reassignSubmitBtn:       `//*[@role='dialog']//button[normalize-space(.)='Reassign'] | //*[@role='dialog']//button[normalize-space(.)='Submit']`,
     rfxAwardsTab:            `//*[@role='tab' or @data-slot='tabs-trigger'][contains(normalize-space(.),'Awards')]`,
+    // RFX → Awards tab renders the award summary as "<label>:" / "<value>" pairs
+    // (Award Code:, Awarded Suppliers:, Total Value:, Requisition:, Status:).
+    // This is the ONLY place the AWARD's own status is shown — the award detail
+    // page shows the parent RFX's badge and the LINE ITEM's status, both of
+    // which read "Awarded" on an award that is in fact Rejected (verified
+    // 2026-09-10 on AWD-FNSE-26-198).
+    // Award → More → Cancel opens a dedicated "Cancel Award" dialog. It does NOT
+    // follow the CXO/intake shape: the confirm is labelled "Cancel Award", and
+    // the DISMISS is "Keep Award" — clicking the wrong one silently keeps the
+    // award. Reason is a mandatory textarea. Verified live 2026-09-10.
+    awardCancelDialog:       `//*[@role='dialog'][.//*[normalize-space(text())='Cancel Award']]`,
+    awardCancelReason:       `//*[@role='dialog']//textarea`,
+    awardCancelConfirm:      `//*[@role='dialog']//button[normalize-space(.)='Cancel Award']`,
+    awardCancelDismiss:      `//*[@role='dialog']//button[normalize-space(.)='Keep Award']`,
+
+    // The Awards view renders each field as <label>Award Code:</label><p>AWD-…</p>.
+    // Match on normalize-space(.) — the element's whole string value — NOT
+    // normalize-space(text()), which takes only the FIRST text node. React emits
+    // `{label}:` as two text nodes ("Award Code" + ":"), so the text() form
+    // matched zero nodes for every label on this page and readAwardSummary
+    // silently returned empty strings (verified in the DOM 2026-09-11).
+    awardsTabLabel:          (label) => `//label[normalize-space()='${label}:']`,
+    awardsTabValueFor:       (label) => `//label[normalize-space()='${label}:']/following-sibling::*[1]`,
+
     awardedStatusBadge:      `//*[normalize-space(text())='Awarded']`,
     requisitionProcessing:   `//*[contains(normalize-space(text()),'Processing')]`,
     // Requisition value is a clickable <p>, not an <a>, beside the "Requisition" label
@@ -197,6 +252,14 @@ export const NSEFoundation_Locators = {
 
     // Quote page
     quotePreferredCurrency: `(//*[contains(normalize-space(text()),'Preferred Currency')]/following::button[@role='combobox'])[1]`,
+    // "Currencies" on the Event Information section of the Send-for-Sourcing /
+    // RFX edit form. MULTI-select: the menu offers "Select All" plus one row per
+    // currency (INR/USD/EUR/CAD/GBP), has a Search box, and selection shows as a
+    // lucide-check rather than aria-selected — so aria state cannot be trusted.
+    // An EXACT text match is required: contains() would also hit "Preferred
+    // Currency" and "Transaction Currency Exchange Rate" on the same form.
+    sourcingCurrenciesField: `(//*[normalize-space(text())='Currencies']/following::button[@role='combobox'])[1]`,
+    currencyMultiOption:     (label) => `//*[@role='option'][contains(normalize-space(.),'${label}')]`,
     // Editable Unit Rate cell in the quote item grid (user-confirmed locator)
     quoteUnitRateCell:      `[class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"]`,
     quoteSubmitBtn:         `//button[contains(normalize-space(.),'Submit Quote')]`,
@@ -448,6 +511,34 @@ export const NSEFoundation_Locators = {
     //   plain text inputs       : id="Subject-2hUeVYKM8oeG"  (random suffix → prefix match)
     //   date pickers            : no id; addressed by placeholder
     nonPoFieldById:   (label) => `[id="${label}"]`,
+    // Vendor Type / RPT FLag (sheet scenarios 73-80). Auto-populated from the
+    // chosen supplier's onboarding record, so both are DISABLED text inputs —
+    // read them, never fill them.
+    //
+    // Three traps, all of which made the 2026-09-02 probe wrongly report the
+    // fields as absent (corrected 2026-09-08):
+    //   1. they live inside a COLLAPSED accordion, so a visible-only field sweep
+    //      never sees them — expandNonPoSections() first;
+    //   2. the id carries a per-render random suffix ("Vendor Type-V5GCVvt0Av7T"),
+    //      so it must be matched by PREFIX;
+    //   3. the app's label is misspelt "RPT FLag" (capital L) — match that, not
+    //      "RPT Flag".
+    // MSME is inconsistent: suffixed on some templates, bare on others, hence the
+    // two-branch selector.
+    nonPoLabelledField: (label) => `[id="${label}"], [id^="${label}-"]`,
+    nonPoSupplierInput: 'input[id="Supplier"]',
+
+    // ── PO Recall (sheet scenario 65) ─────────────────────────────────────────
+    // Recall is offered ONLY while the PO is Pending Approval. Verified live
+    // 2026-09-08 by reading both menus: Pending-Approval PO-NSEFN-26-213 lists
+    // Clone / Recall / Reassign User / Reassign Workflow Approver / Regenerate
+    // Document; the approved PO-NSEFN-26-220 lists Clone / Reassign User /
+    // Regenerate Document. Every earlier probe checked Submitted/In-progress POs
+    // and so concluded — wrongly — that Recall does not exist in this build.
+    v3MoreBtn:          `//button[contains(normalize-space(.),'More')]`,
+    v3MenuItem:         (label) => `//*[@role='menuitem'][normalize-space()='${label}']`
+        + ` | //li[normalize-space()='${label}']`,
+    anyV3MenuItem:      `//*[@role='menuitem'] | //li[@role='option']`,
     nonPoTextById:    (label) => `[id^="${label}-"]`,
     nonPoDateByPh:    (ph)    => `input[placeholder="${ph}"]`,
 
@@ -506,7 +597,7 @@ export const NSEFoundation_Locators = {
     cxoTxnNoIntakes:                `//*[contains(normalize-space(.),"No intakes found")]`,
     cxoTxnAnyRow:                   `//tbody/tr`,
 
-    // ── Activity Log panel (sheet scenarios 38-40) ────────────────────────────
+    // ── Activity Log panel (sheet scenarios 35-37) ────────────────────────────
     // Present on every v4 detail page (CXO, Intake, RFX). The trigger is an
     // icon-only clock button; the panel is a radix sheet with role="dialog" and
     // a download button in its header.
@@ -525,6 +616,15 @@ export const NSEFoundation_Locators = {
     activityLogDownloadItem:  (label) => `//*[@role="menuitem"][normalize-space()="${label}"]`,
     activityLogCloseBtn:      `//*[@role="dialog"]//button[.//*[contains(@class,"lucide-x")]]`,
     activityLogEntries:       `//*[@role="dialog"]//*[contains(@class,"lucide-circle-check-big")]`,
+    // Add-comment affordance inside the same sheet (verified live 2026-09-04).
+    // The send control is the blue right-arrow beside the field: a button whose
+    // only child is a lucide-send-horizontal icon. It ships DISABLED and only
+    // enables once the textarea is non-empty, so a click must wait for enabled
+    // rather than fire straight after fill().
+    activityLogCommentInput:  `//*[@role="dialog"]//textarea[@placeholder="Add comment..."]`,
+    activityLogCommentSendBtn:`//*[@role="dialog"]//button[.//*[contains(@class,"lucide-send-horizontal")]]`,
+    // Feed filter chips: All | Comments | Activities | Audit Logs | Approvals.
+    activityLogFilterChip:    (label) => `//*[@role="dialog"]//button[normalize-space()="${label}"]`,
 
     // ── RFX Analysis tab (sheet scenarios 23, 25, 26, 27, 30) ─────────────────
     // Verified live on RFX-26-231 (2026-08-31).

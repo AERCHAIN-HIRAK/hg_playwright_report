@@ -7,8 +7,9 @@ import data from '../pages/V3ListingData.json';
 // Cross-module document + reassignment coverage (v3 modules)
 //
 // Sheet scenarios:
-//   41 Requisition · 42 PRC · 43 Purchase Order · 44 GRN · 45 Invoice
+//   41 Requisition · 42 PRC · 43 Purchase Order · 45 Invoice
 //      → "document can be regenerated and downloaded from the view page"
+//      (GRN retired by QA 2026-09-08 — confirmed capability gap)
 //   46 Requisition · 47 PRC · 48 Purchase Order · 49 GRN · 50 Invoice
 //      → "user can be reassigned"
 //
@@ -24,10 +25,16 @@ import data from '../pages/V3ListingData.json';
 // 2026-08-31), it only fires POST .../regenerate-document.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// NOTE: `scenario` here is this file's own older numbering, which is offset from
+// the master sheet in this range — the GRN document pair was sheet row 41, not 44.
+//
+// The GRN entry was REMOVED on 2026-09-08: QA retired that scenario after it was
+// confirmed a capability gap (the GRN "More" menu exposes only "Reassign User" —
+// no Regenerate Document, no Download). GRN reassignment is unaffected and still
+// runs below.
 const DOC_MODULES = [
     { key: 'requisition',   scenario: 41 },
     { key: 'purchaseOrder', scenario: 43 },
-    { key: 'grn',           scenario: 44 },
     { key: 'invoice',       scenario: 45 },
 ].map(m => ({ ...data.modules[m.key], scenario: m.scenario }));
 

@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { NSEFoundationActions } from '../pages/NSEFoundationActions';
 import { NSEFoundation_Locators as L } from '../pages/NSEFoundationLocators';
 import data from '../pages/NSEFoundationData.json';
+import { buildMultiCurrencyRfxToForeclose } from '../pages/chainBuilders';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RFX Analysis tab
@@ -45,6 +46,62 @@ async function openAnalysis(page) {
 test.describe('RFX Analysis tab', () => {
 
     test.describe.configure({ timeout: 180000 });
+
+    // ── Base-currency CONVERSION (scenario 20, the real proof) ────────────────
+    //
+    // The three toggle tests below run against savedSourcingEvent, which is
+    // quoted in INR — the base currency. Nothing can change when the quote and
+    // base currency are the same, so those tests deliberately do NOT assert
+    // "values changed": that would be wrong there, not stricter.
+    //
+    // This test builds the fixture that CAN prove it (QA-specified flow,
+    // 2026-09-04): CXO → Intake → RFX allowing INR+USD → quote in USD →
+    // foreclose. Then the Analysis grid must read in USD, and switching
+    // "Show in base currency" on must re-render it in INR.
+    //
+    // It creates real UAT records (one CXO, Intake and RFX per run), which is
+    // the price of not depending on ambient data — same trade-off as the other
+    // chain-driven suites.
+    test.describe('Base currency conversion — USD-quoted RFX', () => {
+
+        test('quoted prices show in USD and convert to INR when base currency is on @RFX @Analysis @Currency @S20', async ({ page }) => {
+            test.setTimeout(2400000); // full CXO→foreclose chain
+
+            const cfg = data.multiCurrencyRfx;
+            const a = new NSEFoundationActions(page);
+            await page.setViewportSize({ width: 1800, height: 900 });
+            await a.openApp(data);
+
+            await buildMultiCurrencyRfxToForeclose(a, data);
+
+            await a.clickAnalysisTab();
+            await page.waitForTimeout(2500);
+
+            // Base currency OFF → the grid must be in the QUOTE currency (USD).
+            if (await a.getAnalysisSwitchState('Show in base currency') === 'checked') {
+                await a.toggleAnalysisSwitch('Show in base currency');
+            }
+            const quoted = await a.readAnalysisCurrencySymbols();
+            console.log(`[ANALYSIS] base-currency OFF symbols: ${quoted.join(' ')}`);
+            expect(quoted.length, 'no currency amounts rendered with base currency off').toBeGreaterThan(0);
+            expect(quoted,
+                `RFX was quoted in ${cfg.quoteCurrency} but the grid does not show ${cfg.expectedQuoteSymbol} (got ${quoted.join(' ')})`)
+                .toContain(cfg.expectedQuoteSymbol);
+
+            // Base currency ON → the same figures must re-render in INR.
+            await a.toggleAnalysisSwitch('Show in base currency');
+            await page.waitForTimeout(2000);
+            const base = await a.readAnalysisCurrencySymbols();
+            console.log(`[ANALYSIS] base-currency ON symbols: ${base.join(' ')}`);
+            expect(base,
+                `base currency is ON but the grid does not show ${cfg.expectedBaseSymbol} (got ${base.join(' ')})`)
+                .toContain(cfg.expectedBaseSymbol);
+            // This is the assertion the INR-quoted fixture could never make.
+            expect(base,
+                `base currency is ON but amounts are still in the quote currency (${base.join(' ')})`)
+                .not.toContain(cfg.expectedQuoteSymbol);
+        });
+    });
 
     // ── Currency toggle (scenario 23) ─────────────────────────────────────────
     test.describe('Base currency toggle', () => {

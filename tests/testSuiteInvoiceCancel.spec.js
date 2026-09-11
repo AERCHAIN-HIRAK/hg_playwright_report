@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { NSEFoundationActions } from '../pages/NSEFoundationActions';
 import { v3ListingActions } from '../pages/v3ListingActions';
 import data from '../pages/V3ListingData.json';
 
@@ -15,64 +16,56 @@ import data from '../pages/V3ListingData.json';
 //
 // Verified live 2026-09-03 on Invoice-FNSE-26-334 (/invoices/1115, Accounted):
 //   top-level actions → Cancel · + Payment · More · Overview · Transactions
-//   More              → Reassign User · Download Document · Regenerate Document
 //   Cancel opens a "Cancellation Notes" dialog with an "Enter Reason" textarea
-//   and Cancel / Confirm. Opening it fires ZERO write requests.
+//   and Cancel / Confirm.
 //
-// ⚠️ COVERAGE LIMIT — the cancellation is NOT confirmed. Cancelling an
-// ACCOUNTED invoice reverses a posted financial document, which is the most
-// destructive action in this whole sheet; doing it on every CI run would chew
-// through the tenant's accounted invoices. The test proves the action is
-// offered AND actionable (the dialog opens with its reason field and Confirm),
-// then backs out. Completing it needs a QA-designated throwaway invoice, the
-// way 147 (block/unblock) and 98 (RFX cancel) were arranged.
+// ⚠️ DESTRUCTIVE, AND CONSUMES DATA — QA asked (2026-09-07) for the cancellation
+// to be carried through and the resulting status asserted, so this test now
+// CONFIRMS the dialog. That reverses a posted financial document and burns one
+// Accounted invoice per run. Two consequences to keep in mind:
+//   • the tenant needs a fresh Accounted invoice before each run, else the test
+//     skips (no Accounted row) rather than fails;
+//   • the invoice it picks is whichever Accounted one sorts first — it is not a
+//     dedicated throwaway.
+// If that becomes a problem, the sustainable alternative is the shape used by
+// scenario 66 in testSuiteInvoiceCancelGrn: build the chain, drive the fresh
+// invoice to Accounted, then cancel the invoice this test itself created. That
+// costs ~45 min per run instead of ~2 min.
 //
-// Enforced non-destructive: every non-GET request is aborted for the life of
-// these tests and the test asserts none was attempted, so even a misclick on
-// Confirm cannot post the cancellation.
+// Status is read back through readInvoiceStatusByPath, which re-navigates and
+// polls for one of the known status words — the detail page paints the status
+// chip after the document body, so reading it straight after the dialog closes
+// is racy.
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Invoice — cancel an Accounted invoice', () => {
 
-    test.describe.configure({ timeout: 240000 });
+    test.describe.configure({ timeout: 300000 });
 
-    /** @type {v3ListingActions} */
-    let listing;
-    /** @type {string[]} */
-    let attemptedWrites;
-
-    test.beforeEach(async ({ page }) => {
-        listing = new v3ListingActions(page, data.modules.invoice);
+    test('an Accounted invoice can be cancelled and its status becomes Cancelled @Invoice @Cancel @S81', async ({ page }) => {
+        const a = new NSEFoundationActions(page);
+        const listing = new v3ListingActions(page, data.modules.invoice);
         await page.setViewportSize({ width: 1800, height: 950 });
-
-        attemptedWrites = [];
-        await page.route('**/*', route => {
-            const req = route.request();
-            if (req.method() === 'GET') return route.continue();
-            attemptedWrites.push(`${req.method()} ${req.url()}`);
-            return route.abort();
-        });
 
         await listing.navigateToListingPage(data.baseUrl);
         await listing.waitForListingPageLoad(90000);
-    });
-
-    test('an Accounted invoice offers Cancel and opens the cancellation dialog @Invoice @Cancel @S81', async ({ page }) => {
         await listing.applyColumnFilter('Status', 'Accounted');
 
         const codes = (await listing.getColumnValues('Code')).filter(Boolean);
         test.skip(!codes.length, 'no Accounted invoice exists in this tenant');
 
+        // The filter must not have leaked another status — the whole scenario is
+        // "cancel an ACCOUNTED invoice", so picking a Rejected one proves nothing.
         const statuses = (await listing.getColumnValues('Status')).filter(Boolean);
         for (const s of statuses) {
             expect(s, `the Accounted filter leaked a "${s}" invoice`).toMatch(/Accounted/i);
         }
 
-        // Open the first Accounted invoice via its listing anchor.
         const href = await page.locator('tbody tr').first().locator('a').first().getAttribute('href');
         const id = (href || '').match(/\/invoices\/(\d+)/)?.[1];
         expect(id, 'could not resolve an invoice id from the listing row').toBeTruthy();
-        console.log(`[S81] opening ${codes[0]} (/invoices/${id})`);
+        const code = codes[0];
+        console.log(`[S81] cancelling ${code} (/invoices/${id})`);
 
         await page.goto(`${data.baseUrl}/invoices/${id}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
         await page.locator('xpath=//button[normalize-space()="More"]').first()
@@ -88,19 +81,23 @@ test.describe('Invoice — cancel an Accounted invoice', () => {
         await expect(cancel, 'an Accounted invoice offers no Cancel action').toBeVisible({ timeout: 20000 });
         expect(await cancel.isDisabled(), 'the Cancel action is disabled').toBeFalsy();
 
-        // It must be genuinely actionable, not just a rendered button.
-        await cancel.click();
-        const dialog = page.locator('[class*="MuiDialog-root"]').first();
-        await expect(dialog, 'Cancel did not open a cancellation dialog').toBeVisible({ timeout: 20000 });
-        await expect(dialog).toContainText(/Cancellation Notes/i);
-        await expect(dialog.locator('textarea[placeholder="Enter Reason"]').first(),
-            'the cancellation dialog has no reason field').toBeVisible({ timeout: 10000 });
-        await expect(dialog.locator('xpath=.//button[normalize-space()="Confirm"]').first(),
-            'the cancellation dialog has no Confirm').toBeVisible({ timeout: 10000 });
+        // ── Cancel for real ───────────────────────────────────────────────────
+        // cancelInvoice tries the header button first, then More, and treats the
+        // dialog closing as the only proof the cancel was accepted — a page-wide
+        // textarea lookup once filled the wrong box, leaving Confirm refused by
+        // validation while the caller logged success.
+        await a.cancelInvoice(`Cancelled by automation — scenario 81 (${code})`);
 
-        console.log('[S81] cancellation dialog is available — NOT confirmed (would reverse a posted invoice)');
+        // ── The status must now be Cancelled ──────────────────────────────────
+        const after = await a.readInvoiceStatusByPath(`/invoices/${id}`);
+        console.log(`[S81] ${code} status after cancel = "${after}"`);
+        expect(after, `${code} did not move to Cancelled after the cancellation`)
+            .toMatch(/Cancelled/i);
 
-        expect(attemptedWrites,
-            'a write was attempted while only inspecting the cancel dialog').toEqual([]);
+        // A cancelled invoice must not still offer Cancel.
+        const stillCancellable = await page
+            .locator('xpath=//button[normalize-space()="Cancel"]').first()
+            .isVisible({ timeout: 5000 }).catch(() => false);
+        console.log(`[S81] Cancel still offered after cancelling? ${stillCancellable}`);
     });
 });

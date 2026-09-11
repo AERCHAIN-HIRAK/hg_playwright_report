@@ -46,6 +46,36 @@ exports.supplier_Locators = {
     mandatoryMessages:     '//*[contains(normalize-space(),"is Mandatory")][not(*)]',
     atleastOneRowMessage:  '//*[contains(normalize-space(),"Atleast one row is required")][not(*)]',
 
+    // ── User Details row validation (verified by hand 2026-09-04) ─────────────
+    // Row-level errors are NOT page text. After "Add Item" the
+    // "Atleast one row is required" message disappears and the row's own errors
+    // move into an Ant POPOVER hung off an exclamation icon in the serial cell.
+    // So a page-text assertion here passes while proving nothing.
+    //
+    // Hover the ICON, not the cell — hovering the cell does nothing.
+    //
+    // Read the popover via ant-popover-inner ONLY. The form's SunEditor keeps
+    // ~56 of its own tooltips permanently in the DOM (Resize 100%, Rotate left,
+    // Mirror Horizontal, …), so any [class*="tooltip"] match drowns the real
+    // message. ant-popover-inner is empty until the hover.
+    userRowErrorIcon:      '//span[contains(@class,"anticon-exclamation-circle")]',
+
+    // ── Onboarding attachment fields (structure confirmed live 2026-09-04) ────
+    // Every upload renders as
+    //     div.attachments-wrapper
+    //       ├─ div.attachments-label   ← the label text, with a leading "*"
+    //       └─ input[type=file]        ← exactly one, a SIBLING of the label
+    // so the wrapper is an unambiguous anchor: each of NDA / Code of Conduct /
+    // File Upload with Template / No GST Acknowledgment resolved to exactly one
+    // wrapper holding exactly one input. translate() drops the mandatory
+    // asterisk so the label compares cleanly.
+    attachmentWrapperByLabel: (label) =>
+        `//*[contains(@class,"attachments-wrapper")][.//*[contains(@class,"attachments-label")][normalize-space(translate(.,"*",""))="${label}"]]`,
+    antPopoverInner:       '//*[contains(@class,"ant-popover-inner")]',
+    // "Add Item" has the accessible name "folder Add Item" (icon alt + text),
+    // so getByRole('button', { name: 'Add Item', exact: true }) does NOT match.
+    addItemBtnRole:        'folder Add Item',
+
     // ── Listing search ────────────────────────────────────────────────────────
     // Single "Search" box above the grid; filters server-side after a short debounce.
     searchInput:           '//input[@placeholder="Search"]',

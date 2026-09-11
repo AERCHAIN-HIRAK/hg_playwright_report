@@ -101,9 +101,9 @@
         "deliveryTimeline": "2026-12-31"
     },
     "savedCxo": {
-        "code": "CXO-FNSE-26-386",
-        "id": "5780",
-        "url": "https://nse-capp-v4-uat.aerchain.io/cxos/5780/overview"
+        "code": "CXO-FNSE-26-435",
+        "id": "5843",
+        "url": "https://nse-capp-v4-uat.aerchain.io/cxos/5843/overview"
     },
     "intake": {
         "title": "HG Automation NSEF Intake",
@@ -125,9 +125,9 @@
         "notes": "Automation test notes"
     },
     "savedIntake": {
-        "code": "INT-FNSE-26-392",
-        "id": "2242",
-        "url": "https://nse-capp-v4-uat.aerchain.io/intakes/2242/overview"
+        "code": "INT-FNSE-26-404",
+        "id": "2257",
+        "url": "https://nse-capp-v4-uat.aerchain.io/intakes/2257/overview"
     },
     "sourcing": {
         "commercialBidDueDate": "2026-12-15",
@@ -139,9 +139,26 @@
         "forecloseReason": "Foreclosed by automation"
     },
     "savedSourcingEvent": {
-        "code": "RFX-26-243",
-        "id": "1458",
-        "url": "https://nse-capp-v4-uat.aerchain.io/quote-requests/1458/overview"
+        "code": "RFX-26-255",
+        "id": "1490",
+        "url": "https://nse-capp-v4-uat.aerchain.io/quote-requests/1490/overview"
+    },
+    "multiCurrencyRfx": {
+        "currencies": [
+            "INR - Indian Rupee",
+            "USD - US Dollar"
+        ],
+        "quoteCurrency": "USD - US Dollar",
+        "expectedQuoteSymbol": "$",
+        "expectedBaseSymbol": "₹",
+        "why": "Scenario 20 (base-currency toggle) can only be proved when the quote currency differs from the base currency. savedSourcingEvent is quoted in INR, which IS the base, so no figure can change and the toggle is unfalsifiable. This drives a purpose-built RFX: allow INR+USD at conversion, quote in USD, then the toggle must flip the grid from $ to ₹."
+    },
+    "commentableSourcingEvent": {
+        "code": "RFX-26-245",
+        "id": "1462",
+        "status": "Released",
+        "url": "https://nse-capp-v4-uat.aerchain.io/quote-requests/1462/overview",
+        "why": "An AWARDED RFX cannot be commented on - its Activity Log renders the filter chips and feed but no comment field at all. savedSourcingEvent (RFX-26-243) is Awarded, so scenario 37's comments half needs a non-awarded RFX. This one is Released and does expose the comment field (verified live 2026-09-04). If it is ever awarded, pick another non-awarded RFX from /quote-requests."
     },
     "requisition": {
         "effectiveToDate": "2026-12-31",
@@ -153,31 +170,31 @@
         "deliveryNoteReference": "DNR-AUTO-001"
     },
     "invoice": {
-        "invoiceNumber": "INV-AUTO-111",
+        "invoiceNumber": "INV-AUTO-18725",
         "documentPath": "fixtures/invoice_document.png",
         "ackUrl": "https://nse-api-uat.aerchain.io/invoice/ack",
         "ackTemplateId": 1233,
         "ackApiKey": "7db7048329bbb0d3c4f48be228ffb0d5b5fdce2b93991919ca9b9315a26474d1"
     },
     "savedRequisition": {
-        "code": "PR-NSEFN-26-131",
-        "id": "1117",
-        "url": "https://nse-capp-uat.aerchain.io/requisitions/1117"
+        "code": "PR-NSEFN-26-135",
+        "id": "1124",
+        "url": "https://nse-capp-uat.aerchain.io/requisitions/1124"
     },
     "savedPurchaseOrder": {
-        "code": "PO-NSEFN-26-215",
-        "id": "1048",
-        "url": "https://nse-capp-uat.aerchain.io/purchase-orders/1048"
+        "code": "PO-NSEFN-26-220",
+        "id": "1053",
+        "url": "https://nse-capp-uat.aerchain.io/purchase-orders/1053"
     },
     "savedGrn": {
-        "code": "INW-NSEFN-26-110",
-        "id": "570",
-        "url": "https://nse-capp-uat.aerchain.io/inwards/570"
+        "code": "INW-NSEFN-26-113",
+        "id": "573",
+        "url": "https://nse-capp-uat.aerchain.io/inwards/573"
     },
     "savedInvoice": {
-        "code": "Invoice-FNSE-26-365",
-        "id": "1146",
-        "url": "https://nse-capp-uat.aerchain.io/invoices/1146"
+        "code": "Invoice-FNSE-26-369",
+        "id": "1150",
+        "url": "https://nse-capp-uat.aerchain.io/invoices/1150"
     },
     "supplierPortal": {
         "authUrl": "https://nse-auth-uat.aerchain.io/sapp/login",
@@ -208,5 +225,18 @@
         "currency": "INR",
         "paymentSpoc": null,
         "paymentTerms": null
+    },
+    "vendorRpt": {
+        "supplierSearch": "HG Automation",
+        "_supplierResolved": "HG Automation SUPP (FNSE-26-2993)",
+        "expectedVendorType": "IT",
+        "expectedRptFlag": "N",
+        "_note": "Read off the supplier's onboarding record. Verified live 2026-09-08 on the NSEF Credit Note template: blank before the supplier is chosen, IT / N after. Update these two if QA changes the supplier's onboarding selection.",
+        "supplierPickableTemplates": [
+            "NSEF Credit Note",
+            "CXO Template (Dev)"
+        ],
+        "poDrivenTemplate": "PO Invoice NSEF",
+        "_noFieldsTemplate": "RC Invoice — carries neither field; not used by scenarios 73-80"
     }
 }

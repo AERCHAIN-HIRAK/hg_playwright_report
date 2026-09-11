@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { supplier_Locators as S } from '../pages/supplierLocators';
 import { V3_BASE_URL } from '../pages/v3ListingActions';
-import { supplierActions } from '../pages/supplierActions';
+import { supplierActions, SupplierStatus } from '../pages/supplierActions';
 import fs from 'fs';
 
 // Handover between the create test and the onboarding-form test.
@@ -321,7 +321,7 @@ test.describe('Supplier module', () => {
     //
     // Runs on the supplier the previous test created; set S97_SUPPLIER_ID to
     // re-run it against an existing Requested supplier instead.
-    test('the supplier onboarding form can be completed and submitted @Supplier @Onboarding @S97', async ({ page }) => {
+    test('the supplier onboarding form can be completed and submitted @Supplier @Onboarding @S97 @S138', async ({ page }) => {
         test.setTimeout(900000);
 
         const state = process.env.S97_SUPPLIER_ID
@@ -337,9 +337,35 @@ test.describe('Supplier module', () => {
         console.log(`[S97] onboarding fill: ${JSON.stringify({
             mandatory: result.requested, pickers: result.autocomplete.length,
             text: result.text.length, dates: result.date.length, files: result.file.length,
+            attachments: (result.attachments || []).length,
             skipped: result.skipped.length, http: result.httpStatus })}`);
 
-        expect(result.requested, 'the form reported no mandatory fields').toBeGreaterThan(0);
+        // ── Every attachment field must carry a file (QA, 2026-09-07) ─────────
+        // The form has 4. This asserts the DISCOVERED set rather than the number,
+        // so it still holds if the template gains a fifth, and it names any field
+        // left empty instead of failing on a bare count.
+        //
+        // This is the check that would have caught the 2026-09-07 defect: `NDA` is
+        // an attachment, but "Enter NDA" substring-matched the date input
+        // "Enter NDA Start Date", so NDA was sent to the date picker, never
+        // uploaded, and the submit was silently refused (http=null).
+        const emptyAttachments = (result.attachments || []).filter(a => !a.hasFile).map(a => a.label);
+        expect(emptyAttachments,
+            `attachment fields left empty: ${JSON.stringify(emptyAttachments)}`).toEqual([]);
+        expect((result.attachments || []).length,
+            'expected at least the 4 known attachment fields on the onboarding form')
+            .toBeGreaterThanOrEqual(4);
+
+        // ── Sheet scenario 138 is satisfied here ──────────────────────────────
+        // 138 asks that every mandatory field configured in the SUPPLIER
+        // ONBOARDING template triggers validation when left blank. That is
+        // exactly what pass 1 does: the form is submitted completely empty and
+        // every "<field> is Mandatory" message is read back — 65 of them on this
+        // template. The separate @S138 test above covers the CREATE SUPPLIER
+        // template, which is a different template from the one 138 names.
+        expect(result.requested,
+            'submitting the onboarding form empty produced no mandatory-field validation (scenario 138)')
+            .toBeGreaterThan(0);
         expect(result.skipped, `these mandatory fields could not be filled: ${JSON.stringify(result.skipped)}`)
             .toEqual([]);
         expect(result.remaining,
@@ -351,5 +377,43 @@ test.describe('Supplier module', () => {
         const yesNo = result.autocomplete.filter(a => /=(No|N)$/i.test(a));
         console.log(`[S97] Yes/No questions answered No: ${yesNo.length}`);
         expect(yesNo.length, 'no Yes/No question was answered').toBeGreaterThan(0);
+
+        // ── Approve the onboarding through to Pending Sync (QA, 2026-09-07) ───
+        // Submitting the form is not the end of the scenario: the onboarding has
+        // its own approval stages, and clearing them all lands the supplier on
+        // Pending Sync.
+        //
+        // PENDING SYNC IS THE END STATE ASSERTED HERE, on QA's instruction. The
+        // step beyond it — Pending Sync → Registered — is driven by the downstream
+        // integration, not by anything this test does, and it does not complete in
+        // this UAT: FNSE-26-3040 was still "Pending Sync" minutes after all its
+        // approvals cleared, so polling for Registered only ever burned the budget
+        // and then failed on an environment dependency. That transition is sheet
+        // scenario 141's subject, not 97's.
+        // readSupplierStatus finds the status chip by the "(CODE)" beside the
+        // title, so the code is required. S97_SUPPLIER_ID can be set without
+        // S97_SUPPLIER_CODE, in which case read it off the detail page rather
+        // than polling forever against an empty match.
+        let code = state.code;
+        if (!code) {
+            await page.goto(`${V3_BASE_URL}/suppliers/${state.id}`,
+                { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.waitForTimeout(8000);
+            code = await page.evaluate(() => {
+                const m = document.body.innerText.match(/\(([A-Z]+-\d+-\d+)\)/);
+                return m ? m[1] : null;
+            });
+            expect(code, 'could not resolve the supplier code from the detail page').toBeTruthy();
+            console.log(`[S97] resolved supplier code from the page: ${code}`);
+        }
+
+        const final = await s.approveUntilPendingSync(
+            state.id, code, 'Onboarding approved by automation — scenario 97');
+        console.log(`[S97] status after approving the onboarding = ${final}`);
+        // Synced / Registered also pass — they mean the record moved PAST Pending
+        // Sync, and failing on "it already progressed" would be a false negative.
+        expect(final,
+            `the onboarding approvals did not reach Pending Sync (ended at "${final}")`)
+            .toMatch(SupplierStatus.PENDING_SYNC);
     });
 });

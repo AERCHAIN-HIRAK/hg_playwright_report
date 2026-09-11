@@ -7,13 +7,18 @@ import data from '../pages/V3ListingData.json';
 // PRC — Requisition Conversion View (v3, nse-capp-uat)
 //
 // Sheet scenarios:
-//   39  document can be regenerated and downloaded from the PRC view page
 //   44  user can be reassigned for the PRC
 //
-// Both had been parked as TODO with the note "PRC has no listing; reachable
-// only via a Requisition's conversion view". That is true, and it is now
-// automated: openPrcConversionView() walks the parent Requisition's
-// Transactions tab → Conversions → the PRC-… link.
+// Scenario 39 ("document can be regenerated and downloaded from the PRC view
+// page") was RETIRED by QA on 2026-09-08 and its test removed. It had been a
+// confirmed capability gap: the PRC conversion view exposes no Regenerate
+// Document and no Download at all — its More menu holds "Reassign User" only,
+// and the header's Reload icon is a plain refresh (fires zero non-GET requests).
+//
+// 44 had been parked as TODO with the note "PRC has no listing; reachable only
+// via a Requisition's conversion view". That is true, and it is now automated:
+// openPrcConversionView() walks the parent Requisition's Transactions tab →
+// Conversions → the PRC-… link.
 //
 // Three shape facts that make a PRC unlike every other v3 module:
 //   - it has NO listing and NO URL of its own. The conversion view renders IN
@@ -75,39 +80,5 @@ test.describe('PRC — Requisition Conversion View', () => {
         }
 
         await prc.closeDialog();
-    });
-
-    // ── 39 — Regenerate + download document ───────────────────────────────────
-
-    test('document regeneration / download on the PRC view @Prc @Documents @S39', async () => {
-        const found = await prc.openAnyPrcConversionView(data.baseUrl);
-        test.skip(!found, 'no requisition with a PRC conversion found on page 1 of the listing');
-        console.log(`[S39] ${found.prcCode} via ${found.requisitionCode}`);
-
-        const items = await prc.getMoreMenuItems();
-        await prc.closeMenu();
-        console.log(`[S39] PRC More menu: ${items.join(' · ')}`);
-
-        const hasRegenerate = items.includes(L.menu_RegenerateDocument);
-        const hasDownload = items.includes(L.menu_Download) || items.includes(L.menu_DownloadDocument);
-
-        if (!hasRegenerate && !hasDownload) {
-            // Documented capability gap, same shape as the GRN's scenario 41:
-            // the PRC offers no document actions at all. Assert that positively
-            // rather than skipping blind, so this test FLIPS TO FAILING the day
-            // the actions are added — which is the signal QA wants.
-            //
-            // The header's `Reload` icon is not a substitute: clicking it fires
-            // zero non-GET requests (verified live), so it is a plain refresh.
-            expect(items, 'PRC menu changed — it now offers document actions, so this scenario is automatable')
-                .toEqual([L.menu_ReassignUser]);
-            test.skip(true,
-                'CONFIRMED APP GAP: the PRC conversion view exposes no Regenerate Document ' +
-                'and no Download action — its More menu holds "Reassign User" only, and the ' +
-                'header carries just Reload (a plain refresh) + Activity Log.');
-        }
-
-        if (hasRegenerate) await prc.regenerateDocumentAndAssert();
-        if (hasDownload) await prc.downloadDocumentAndAssert();
     });
 });

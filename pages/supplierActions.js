@@ -22,6 +22,30 @@ export const V3_BASE = 'https://nse-capp-uat.aerchain.io';
 //    Always submit through getByRole.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Supplier registration-status vocabulary.
+ *
+ * Confirmed against the live Registration Status filter (2026-09-04):
+ *   Pending Approval · Pending Verification · Pending Amend Approval ·
+ *   Requested · Registered · Pending Sync · Sync Failed
+ *
+ * Grid cells render the same values hyphenated ("Pending-approval",
+ * "Sync-failed"), hence normalise() before any comparison.
+ */
+export const SupplierStatus = {
+    normalise: (raw) => (raw || '').replace(/[-_\s]+/g, ' ').trim(),
+    SUBMITTED:    /^(submitted|registered|requested)$/i,
+    // Synced/Registered mean the record moved PAST Pending Sync — the sync can
+    // complete while the loop is still polling, and failing on "it already
+    // progressed" would be a false negative.
+    PENDING_SYNC: /^(pending sync|synced|registered)$/i,
+    // Registered is the END of the CAPP onboarding flow. Unlike PENDING_SYNC this
+    // is deliberately STRICT — accepting "pending sync" here would let the very
+    // thing being asserted (the sync completed) pass untested.
+    REGISTERED:   /^registered$/i,
+    FAILED:       /^(sync failed|rejected|cancelled)$/i,
+};
+
 export class supplierActions {
 
     constructor(page) { this.page = page; }
@@ -94,6 +118,41 @@ export class supplierActions {
         console.log(`[SUPPLIER] user row: ${name} / ${email} / ${phone}`);
     }
 
+    /**
+     * Hover the User Details row's error icon and read its validation popover.
+     *
+     * The row-level check for sheet scenario 138. Call it after "Add Item" plus a
+     * blocked Submit: the grid row shows an exclamation icon beside its serial
+     * number, and hovering that icon reveals the fields the row is missing
+     * (observed live 2026-09-04: "Name is Mandatory", "Email is Mandatory" —
+     * Phone is not mandatory).
+     *
+     * @returns {Promise<string[]>} one entry per line of the popover
+     */
+    async readUserRowValidation() {
+        const icon = this.page.locator(`xpath=${S.userRowErrorIcon}`).first();
+        await icon.waitFor({ state: 'visible', timeout: 15000 });
+        await icon.scrollIntoViewIfNeeded();
+        await icon.hover();
+
+        const popover = this.page.locator(`xpath=${S.antPopoverInner}`).first();
+        await popover.waitFor({ state: 'visible', timeout: 8000 });
+        const text = (await popover.innerText()).trim();
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        console.log(`[SUPPLIER] row validation popover: ${JSON.stringify(lines)}`);
+        return lines;
+    }
+
+    /** Click "Add Item" on the User Details grid. */
+    async clickAddItem() {
+        const btn = this.page.locator(`xpath=${S.addItemBtn}`).first();
+        await btn.scrollIntoViewIfNeeded();
+        await this.page.waitForTimeout(500);
+        await btn.click();
+        await this.page.waitForTimeout(3000);
+        console.log('[SUPPLIER] Add Item clicked');
+    }
+
     /** Fill every mandatory field. Returns the generated supplier name. */
     async fillMandatoryFields({ namePrefix = 'HG Auto Supplier' } = {}) {
         const stamp = Date.now().toString().slice(-8);
@@ -157,16 +216,39 @@ export class supplierActions {
         return true;
     }
 
-    /** Approve / Acknowledge / Review until the supplier reaches Submitted. */
-    async approveUntilSubmitted(id, code, notes = 'Approved by automation') {
-        for (let round = 1; round <= 8; round++) {
+    /**
+     * Drive the supplier workflow until its status matches `terminal`.
+     *
+     * Shared by approveUntilSubmitted and approveUntilPendingSync — the loop is
+     * identical, only the stop condition and the round budget differ.
+     *
+     * @param {RegExp} terminal   status that means "done" (tested on the status
+     *                            with internal whitespace collapsed, so
+     *                            "Pending  Sync" still matches)
+     */
+    async _approveUntil(id, code, terminal, { notes = 'Approved by automation', rounds = 8, label = 'target' } = {}) {
+        for (let round = 1; round <= rounds; round++) {
             await this.page.goto(`${V3_BASE}/suppliers/${id}`,
                 { waitUntil: 'domcontentloaded', timeout: 60000 });
             await this.page.waitForTimeout(8000);
 
-            const status = await this.readSupplierStatus(code);
-            if (/^(Submitted|Registered|Requested)$/.test(status || '')) {
-                console.log(`[SUPPLIER] reached ${status} after ${round - 1} action(s)`);
+            const raw = await this.readSupplierStatus(code);
+            // Statuses render in TWO forms depending on where they are read
+            // (both seen live 2026-09-04): the filter list uses spaced title case
+            // ("Pending Sync", "Sync Failed") while grid cells hyphenate
+            // ("Pending-approval", "Sync-failed"). The detail-page chip this
+            // reads could be either, so collapse -, _ and whitespace to one
+            // space and match case-insensitively. Comparing the raw string would
+            // silently never match.
+            const status = SupplierStatus.normalise(raw);
+            if (terminal.test(status)) {
+                console.log(`[SUPPLIER] reached "${raw}" -> "${status}" after ${round - 1} action(s) (wanted ${label})`);
+                return status;
+            }
+            // Sync Failed is terminal but NOT success — no approval action will
+            // clear it, so stop instead of burning the whole round budget.
+            if (SupplierStatus.FAILED.test(status)) {
+                console.log(`[SUPPLIER] stopping: "${raw}" is a terminal FAILURE state (wanted ${label})`);
                 return status;
             }
 
@@ -201,11 +283,97 @@ export class supplierActions {
                 break;
             }
             if (!acted) {
-                console.log(`[SUPPLIER] round ${round}: ${status} — no workflow action available`);
+                console.log(`[SUPPLIER] round ${round}: ${status} — no workflow action available (wanted ${label})`);
                 return status;
             }
         }
-        return this.readSupplierStatus(code);
+        const last = SupplierStatus.normalise(await this.readSupplierStatus(code));
+        console.log(`[SUPPLIER] gave up after ${rounds} rounds at "${last}" (wanted ${label})`);
+        return last;
+    }
+
+    /** Approve / Acknowledge / Review until the supplier reaches Submitted. */
+    async approveUntilSubmitted(id, code, notes = 'Approved by automation') {
+        return this._approveUntil(id, code, SupplierStatus.SUBMITTED, {
+            notes, rounds: 8, label: 'Submitted',
+        });
+    }
+
+    /**
+     * Approve the ONBOARDING workflow until the supplier reaches Pending Sync.
+     *
+     * The final gate of the CAPP onboarding flow (sheet scenario 138): after the
+     * onboarding form is submitted the supplier still has approval stages to
+     * clear, and only once they are all through does it land on Pending Sync —
+     * waiting to be pushed to the downstream system.
+     *
+     * Synced / Registered are accepted too: both mean the record moved PAST
+     * Pending Sync (the sync can complete while the loop is still polling), and
+     * failing on "it already progressed" would be a false negative. The status
+     * actually reached is returned so the caller can assert precisely.
+     *
+     * A bigger round budget than approveUntilSubmitted: the onboarding workflow
+     * has more stages than the registration one.
+     */
+    async approveUntilPendingSync(id, code, notes = 'Approved by automation') {
+        return this._approveUntil(id, code, SupplierStatus.PENDING_SYNC, {
+            notes, rounds: 12, label: 'Pending Sync',
+        });
+    }
+
+    /**
+     * Approve the ONBOARDING workflow all the way to Registered (QA, 2026-09-07).
+     *
+     * Two legs, because the last one is not an approval at all:
+     *   1. clear every remaining approval stage — this is what lands the supplier
+     *      on Pending Sync;
+     *   2. Pending Sync then clears ASYNCHRONOUSLY, when the downstream push
+     *      succeeds. No button drives that, so it is polled.
+     *
+     * Splitting them matters for diagnosis: "parked at Pending Sync" is an
+     * INTEGRATION problem, whereas "no workflow action available" at some earlier
+     * status is a WORKFLOW problem, and the two need different people to fix.
+     * Sync Failed is returned as-is rather than polled - it is terminal, and it is
+     * exactly the state sheet scenario 140 expects to see.
+     */
+    async approveUntilRegistered(id, code, notes = 'Approved by automation', { syncTimeoutMs = 180000 } = {}) {
+        const afterApprovals = await this._approveUntil(id, code, SupplierStatus.REGISTERED, {
+            notes, rounds: 14, label: 'Registered',
+        });
+        if (SupplierStatus.REGISTERED.test(afterApprovals)) return afterApprovals;
+        if (SupplierStatus.FAILED.test(afterApprovals)) {
+            console.log(`[SUPPLIER] onboarding ended in the terminal failure state "${afterApprovals}"`);
+            return afterApprovals;
+        }
+        console.log(`[SUPPLIER] approvals done at "${afterApprovals}" — polling for the sync to complete`);
+        return this.waitForRegistered(id, code, syncTimeoutMs);
+    }
+
+    /** Poll the supplier until it reads Registered, hits a failure state, or times out. */
+    async waitForRegistered(id, code, timeoutMs = 180000) {
+        const deadline = Date.now() + timeoutMs;
+        let status = '';
+        for (;;) {
+            await this.page.goto(`${V3_BASE}/suppliers/${id}`,
+                { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await this.page.waitForTimeout(6000);
+            status = SupplierStatus.normalise(await this.readSupplierStatus(code));
+
+            if (SupplierStatus.REGISTERED.test(status)) {
+                console.log(`[SUPPLIER] sync completed — status "${status}"`);
+                return status;
+            }
+            if (SupplierStatus.FAILED.test(status)) {
+                console.log(`[SUPPLIER] sync ended in "${status}" — terminal, not retrying`);
+                return status;
+            }
+            if (Date.now() > deadline) {
+                console.log(`[SUPPLIER] still "${status}" after ${Math.round(timeoutMs / 1000)}s — giving up on the sync`);
+                return status;
+            }
+            console.log(`[SUPPLIER] status "${status}" — waiting for the sync`);
+            await this.page.waitForTimeout(10000);
+        }
     }
 
     /** Status chip beside the supplier title, read by its code. */
@@ -403,6 +571,61 @@ export class supplierActions {
     }
 
     /**
+     * Fill every empty "Country" autocomplete on the onboarding form.
+     *
+     * MUST be called explicitly. Country is NOT flagged mandatory — it carries
+     * no asterisk and never appears in the "<field> is Mandatory" list — so the
+     * message-driven fill loop is structurally blind to it: that loop only ever
+     * fills fields the form complains about. QA flagged this on 2026-09-04:
+     * the Country field in Registered Office Details was being left empty.
+     *
+     * Confirmed live: two Country fields on the form, both autocompletes
+     * (aria-autocomplete="list"), offering 2 and 4 options respectively.
+     *
+     * @param {string} value country to select
+     * @returns {Promise<Array>} one entry per field, for logging
+     */
+    async fillCountryFields(value = 'India') {
+        const labels = await this.page.$$('xpath=//*[normalize-space(text())="Country"]');
+        const report = [];
+        for (let i = 0; i < labels.length; i++) {
+            try {
+                const handle = await labels[i].evaluateHandle(el => {
+                    let n = el;
+                    for (let k = 0; k < 6 && n.parentElement; k++) {
+                        n = n.parentElement;
+                        const q = n.querySelector('input');
+                        if (q) return q;
+                    }
+                    return null;
+                });
+                const input = handle.asElement();
+                if (!input) { report.push({ i, skipped: 'no input' }); continue; }
+
+                if ((await input.inputValue().catch(() => '')).trim()) {
+                    report.push({ i, skipped: 'already set' });
+                    continue;
+                }
+                await input.scrollIntoViewIfNeeded();
+                await input.click();
+                await input.fill(value);
+                await this.page.waitForTimeout(1800);
+
+                const opts = await this.page.$$('li[role=option], [role=option]');
+                if (opts.length) {
+                    await opts[0].click();
+                    await this.page.waitForTimeout(1200);
+                }
+                report.push({ i, options: opts.length, value: await input.inputValue().catch(() => '') });
+            } catch (e) {
+                report.push({ i, error: String(e.message).split('\n')[0].slice(0, 120) });
+            }
+        }
+        console.log(`[ONBOARD] Country fields: ${JSON.stringify(report)}`);
+        return report;
+    }
+
+    /**
      * Fill every mandatory field on the onboarding form and submit.
      * Returns a report of what was filled and anything left over.
      */
@@ -414,7 +637,11 @@ export class supplierActions {
             { waitUntil: 'domcontentloaded', timeout: 60000 });
         await this.page.waitForTimeout(10000);
 
-        const done = { autocomplete: [], text: [], date: [], file: [], skipped: [] };
+        // Unflagged fields first — the pass loop below can only fill what the
+        // form complains about, and Country never complains.
+        const country = await this.fillCountryFields();
+
+        const done = { autocomplete: [], text: [], date: [], file: [], skipped: [], country };
         let requested = 0;
         let remaining = [];
 
@@ -446,6 +673,17 @@ export class supplierActions {
             + `${done.date.length} dates, ${done.file.length} files; ${done.skipped.length} skipped`);
         if (done.skipped.length) console.log(`[ONBOARD] skipped: ${JSON.stringify(done.skipped)}`);
 
+        // ── Attachment sweep ──────────────────────────────────────────────────
+        // The pass loop can only fill what the form COMPLAINS about, so an upload
+        // that is mandatory-but-unreported, or one whose validation message was
+        // consumed by another field's shape, would stay empty. Enumerate every
+        // attachment wrapper on the form and fill any that still holds no file, so
+        // "all attachment fields are filled" is guaranteed rather than assumed.
+        const attach = await this.uploadRemainingAttachments(abs);
+        console.log(`[ONBOARD] attachments (${attach.fields.length} field(s)): ${JSON.stringify(attach.fields)}`);
+        if (attach.filled.length) console.log(`[ONBOARD] swept in late: ${JSON.stringify(attach.filled)}`);
+        if (attach.failed.length) console.log(`[ONBOARD] attachment upload FAILED: ${JSON.stringify(attach.failed)}`);
+
         const posted = this.page.waitForResponse(
             r => /suppliers\/v2\//.test(r.url()) && r.request().method() !== 'GET',
             { timeout: 90000 },
@@ -458,7 +696,12 @@ export class supplierActions {
             (await this.page.locator(`xpath=${S.mandatoryMessages}`).allInnerTexts())
                 .map(m => m.trim()).filter(Boolean))];
 
-        return { requested, ...done, remaining: stillMissing, httpStatus: resp ? resp.status() : null };
+        return {
+            requested, ...done,
+            attachments: attach.fields,
+            remaining: stillMissing,
+            httpStatus: resp ? resp.status() : null,
+        };
     }
 
     /** Fill ONE mandatory field, whatever shape it is. Returns true if handled. */
@@ -492,8 +735,27 @@ export class supplierActions {
             } catch { done.skipped.push(`${label} (text)`); return false; }
         }
 
-        // 3. Date — "Enter <label>" placeholder.
-        const date = this.page.getByPlaceholder(`Enter ${label}`).first();
+        // 3. Attachment — CHECKED BEFORE DATES. attachmentWrapperByLabel is an
+        // EXACT label match, so a wrapper existing for this label proves the field
+        // is an upload, not a date.
+        //
+        // Dates used to be tried first, and that silently lost an attachment:
+        // getByPlaceholder does SUBSTRING matching, so `Enter NDA` also matches the
+        // date input `Enter NDA Start Date`. The NDA ATTACHMENT was therefore sent
+        // into _pickDate, died on "Element is not attached to the DOM", was recorded
+        // only as "skipped", and the form's final submit was refused by validation
+        // (http=null). Observed 2026-09-07 on FNSE-26-3039: 3 files uploaded of 4,
+        // and `dates` inflated to 5 because attachment labels were being counted as
+        // dates.
+        if (await this.page.locator(`xpath=${S.attachmentWrapperByLabel(label)}`).count()) {
+            if (await this._uploadByLabel(label, abs)) { done.file.push(label); return true; }
+            done.skipped.push(`${label} (attachment)`);
+            return false;
+        }
+
+        // 4. Date — "Enter <label>" placeholder, EXACT so a short label can never
+        // borrow a longer field's placeholder.
+        const date = this.page.getByPlaceholder(`Enter ${label}`, { exact: true }).first();
         if (await date.count()) {
             try {
                 await this._pickDate(date, /expiry/i.test(label) ? 1 : 0);
@@ -502,7 +764,7 @@ export class supplierActions {
             } catch (e) { done.skipped.push(`${label} (date: ${e.message.split('\n')[0]})`); return false; }
         }
 
-        // 4. File — matched on the input's OWN label.
+        // 5. File — fallback for uploads that do not use the wrapper markup.
         if (await this._uploadByLabel(label, abs)) { done.file.push(label); return true; }
 
         done.skipped.push(label);
@@ -537,6 +799,25 @@ export class supplierActions {
      * so match on that instead.
      */
     async _uploadByLabel(label, abs) {
+        // PRIMARY: anchor on the attachments wrapper. Deterministic — verified
+        // live that each label yields exactly one wrapper with exactly one input.
+        const wrapper = this.page.locator(`xpath=${S.attachmentWrapperByLabel(label)}`);
+        if (await wrapper.count()) {
+            try {
+                await wrapper.first().locator('input[type=file]').first().setInputFiles(abs);
+                await this.page.waitForTimeout(3000);
+                return true;
+            } catch (e) {
+                // Do NOT swallow this. A silent catch here cost a whole 7-minute
+                // chain run on 2026-09-04: four mandatory attachments were
+                // reported only as "skipped", the form never posted (http=null),
+                // and the supplier sat at Requested with no reason recorded.
+                console.log(`[ONBOARD] upload failed for "${label}": ${String(e.message).split('\n')[0]}`);
+            }
+        }
+
+        // FALLBACK: the original text-climb matcher, for any upload field that
+        // does not use the attachments-wrapper markup.
         const handle = await this.page.evaluateHandle((lab) => {
             const norm = (s) => (s || '')
                 .replace(/\n+/g, ' | ')
@@ -558,11 +839,54 @@ export class supplierActions {
         }, label);
 
         const el = handle.asElement();
-        if (!el) return false;
+        if (!el) {
+            console.log(`[ONBOARD] no file input found for "${label}"`);
+            return false;
+        }
         try {
             await el.setInputFiles(abs);
             await this.page.waitForTimeout(3000);
             return true;
-        } catch { return false; }
+        } catch (e) {
+            console.log(`[ONBOARD] fallback upload failed for "${label}": ${String(e.message).split('\n')[0]}`);
+            return false;
+        }
+    }
+
+    /**
+     * Every attachment field on the onboarding form, with whether it holds a file.
+     *
+     * `input.files.length` is the primary signal because it is what the browser
+     * actually holds. Some wrappers swap the input out for a filename chip once
+     * uploaded, so the wrapper's own text is checked for the fixture's basename as
+     * a second signal — otherwise a successful upload can read back as empty.
+     */
+    async listAttachmentFields(basename = '') {
+        return this.page.evaluate((base) => {
+            const out = [];
+            for (const w of document.querySelectorAll('[class*="attachments-wrapper"]')) {
+                const lab = w.querySelector('[class*="attachments-label"]');
+                const label = (lab ? lab.textContent : '')
+                    .replace(/\*/g, '').replace(/\s+/g, ' ').trim();
+                const inp = w.querySelector('input[type="file"]');
+                const byInput = !!(inp && inp.files && inp.files.length > 0);
+                const txt = (w.innerText || '');
+                const byText = !!base && txt.includes(base);
+                out.push({ label, hasFile: byInput || byText });
+            }
+            return out;
+        }, basename);
+    }
+
+    /** Upload into every attachment field that is still empty. */
+    async uploadRemainingAttachments(abs) {
+        const base = abs.split('/').pop();
+        const filled = [], failed = [];
+        for (const f of await this.listAttachmentFields(base)) {
+            if (f.hasFile || !f.label) continue;
+            if (await this._uploadByLabel(f.label, abs)) filled.push(f.label);
+            else failed.push(f.label);
+        }
+        return { filled, failed, fields: await this.listAttachmentFields(base) };
     }
 }
