@@ -9,7 +9,6 @@
 8,Verify that all transactions created for the CXO are displayed in the CXO transaction tab,
 9,Verify that transactions created from Intake is displayed in the transaction tab of the Intake.,
 10,Verify that Intake can be created using Bulk Upload,
-11,Verify that RFX can be created using Bulk Upload,
 12,Verify that the lowered qty during PO Reject edit is avilable in the PRC for creation of the nect PO,
 13,Verify that an Invoice is moved to Disputed status when there is a quantity mismatch between the GRN and Invoice for a quantity-based PO.,
 14,Verify that CXO can be saved then edited and submitted during creation.,
