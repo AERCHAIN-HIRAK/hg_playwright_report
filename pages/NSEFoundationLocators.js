@@ -232,6 +232,24 @@ export const NSEFoundation_Locators = {
     awardsTabLabel:          (label) => `//label[normalize-space()='${label}:']`,
     awardsTabValueFor:       (label) => `//label[normalize-space()='${label}:']/following-sibling::*[1]`,
 
+    // ── Intake Bulk Upload (sheet scenario 10) ────────────────────────────────
+    // Verified live 2026-09-11 on /intakes/create. The dialog offers exactly
+    // three buttons - Download Template, Upload File, Cancel - and states
+    // "You can only create 2000 line items via Bulk Upload".
+    //
+    // "Upload File" is NOT a label on the file input: the dialog's lone
+    // input[type=file] is inert, and setInputFiles on it does nothing at all
+    // (no request, no toast, no grid change). The button mounts a real OS file
+    // chooser, so the upload must go through page.waitForEvent('filechooser').
+    intakeBulkUploadBtn:      `//button[contains(normalize-space(.),'Bulk Upload')]`,
+    bulkDownloadTemplateBtn:  `//*[@role='dialog']//button[contains(normalize-space(.),'Download Template')]`,
+    bulkUploadFileBtn:        `//*[@role='dialog']//button[normalize-space(.)='Upload File']`,
+    // Line-item grid cell. The grid is VIRTUALISED - roughly 31 of 100 rows are
+    // mounted at any moment - so counting these is an undercount, never a row
+    // count. Use countIntakeLineItemRows(), which scrolls and reads the serial
+    // column.
+    intakeGridCell:           `//div[@class="w-full h-full flex items-center outline-primary relative cursor-pointer p-[3.5px] px-[7px]"]`,
+
     awardedStatusBadge:      `//*[normalize-space(text())='Awarded']`,
     requisitionProcessing:   `//*[contains(normalize-space(text()),'Processing')]`,
     // Requisition value is a clickable <p>, not an <a>, beside the "Requisition" label

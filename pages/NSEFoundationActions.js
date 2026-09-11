@@ -8139,6 +8139,151 @@ export class NSEFoundationActions {
      * Fill the Intake create form and Save it as a Draft (no workflow submit).
      * Mirrors createCxoDraft. Lands on the intake overview and persists the code.
      */
+    /**
+     * Every header field on the intake create page, with NO line row added.
+     * Extracted from createIntakeDraft/createAndSubmitIntake so scenario 10 can
+     * build a header and let Bulk Upload supply the lines - those two callers
+     * used to inline this identical block and both still behave exactly as before.
+     */
+    async fillIntakeHeaderFields(data) {
+        await this.fillIntakeTitle(data);
+        await this.fillIntakeSummary(data);
+        await this.selectIntakeCompany1();
+        await this.selectIntakeCompany2();
+        await this.selectIntakeDepartment(data);
+        await this.selectIntakeExpenseNatureApproval(data);
+        await this.selectIntakeCurrency(data);
+        await this.selectIntakeFunction(data);
+        await this.selectIntakeVertical(data);
+        await this.selectIntakeProjectName();
+        await this.selectIntakeNatureOfExpense(data);
+        await this.selectIntakeGLAccount();
+        await this.selectIntakeProfitCenter();
+        await this.selectIntakeCostCenter();
+        await this.selectIntakeSEBICategorization();
+        await this.selectIntakeSubSegment();
+        await this.selectIntakeProjectCategory();
+        await this.selectIntakeCXOType(data);
+        await this.selectIntakeCXOTransaction(data);
+    }
+
+    // ── Intake Bulk Upload (sheet scenario 10) ───────────────────────────────
+
+    async openIntakeBulkUpload() {
+        const btn = this.page.locator(`xpath=${L.intakeBulkUploadBtn}`).first();
+        await btn.waitFor({ state: 'visible', timeout: 15000 });
+        await btn.click();
+        const dlg = this.page.locator(`xpath=//*[@role='dialog']`).first();
+        await dlg.waitFor({ state: 'visible', timeout: 15000 });
+        await this.page.waitForTimeout(1200);
+        console.log('[BULK] Bulk Upload dialog open');
+    }
+
+    /**
+     * Download Template. Saved under downloads/ like every other download in
+     * this suite. Verified to fire a real download event, but the race with
+     * 'page' is kept because this app opens a tab instead often enough that a
+     * bare waitForEvent('download') would hang for the full timeout and report
+     * a working feature as broken (same trap as scenario 91).
+     */
+    async downloadIntakeTemplate() {
+        const btn = this.page.locator(`xpath=${L.bulkDownloadTemplateBtn}`).first();
+        await btn.waitFor({ state: 'visible', timeout: 15000 });
+
+        const ctx = this.page.context();
+        const race = Promise.race([
+            this.page.waitForEvent('download', { timeout: 45000 }).then(d => ({ kind: 'download', d })),
+            ctx.waitForEvent('page', { timeout: 45000 }).then(pg => ({ kind: 'tab', pg })),
+        ]);
+        await btn.click();
+        const r = await race.catch(() => ({ kind: 'neither' }));
+        if (r.kind !== 'download') {
+            throw new Error(`[BULK] Download Template produced "${r.kind}", not a download`
+                + (r.kind === 'tab' ? ` (tab: ${r.pg.url()})` : ''));
+        }
+
+        const name = r.d.suggestedFilename();
+        fs.mkdirSync('downloads', { recursive: true });
+        const target = `downloads/intake_template_${Date.now()}_${name}`;
+        await r.d.saveAs(target);
+        const size = fs.statSync(target).size;
+        expect(size, `the downloaded template "${name}" is empty`).toBeGreaterThan(0);
+        console.log(`[BULK] template downloaded: ${name} (${size} bytes) -> ${target}`);
+        return target;
+    }
+
+    /**
+     * Upload a filled template. Goes through the file chooser (see the locator
+     * note - the dialog's own input[type=file] is inert), then waits for the
+     * app's streaming /intakes/excel-upload response to finish. That response is
+     * NDJSON-ish progress frames ending in a "complete" frame; response.text()
+     * resolves only once the stream closes, which is exactly the signal that the
+     * rows have been parsed and pushed into the grid.
+     */
+    async uploadIntakeBulkFile(filePath) {
+        const respP = this.page.waitForResponse(
+            r => /\/intakes\/excel-upload/.test(r.url()) && r.request().method() === 'POST',
+            { timeout: 180000 });
+
+        const chooserP = this.page.waitForEvent('filechooser', { timeout: 20000 });
+        await this.page.locator(`xpath=${L.bulkUploadFileBtn}`).first().click();
+        const chooser = await chooserP;
+        await chooser.setFiles(filePath);
+        console.log(`[BULK] file handed to the chooser: ${filePath}`);
+
+        const resp = await respP;
+        const body = await resp.text().catch(() => '');
+        expect(resp.status(), 'excel-upload did not return 2xx').toBeLessThan(300);
+        if (!/"type"\s*:\s*"complete"/.test(body)) {
+            throw new Error('[BULK] excel-upload never emitted a "complete" frame. '
+                + `status=${resp.status()} tail=${body.slice(-300).replace(/\s+/g, ' ')}`);
+        }
+        console.log('[BULK] excel-upload completed');
+        await this.page.waitForTimeout(4000);
+    }
+
+    /**
+     * Count the line-item rows in the VIRTUALISED grid.
+     *
+     * Counting mounted cells is wrong - only ~31 of 100 rows exist in the DOM at
+     * any time, so a DOM count reports 31 and fails a working feature. Instead
+     * scroll the grid's own container to the bottom, collecting the narrow
+     * serial-number column as it goes, and report the highest serial seen.
+     */
+    async countIntakeLineItemRows() {
+        return await this.page.evaluate(async () => {
+            const scrollers = [...document.querySelectorAll('*')]
+                .filter(e => e.scrollHeight > e.clientHeight + 60 && e.clientHeight > 150);
+            const target = scrollers.sort((a, b) => b.scrollHeight - a.scrollHeight)[0];
+            if (!target) return { max: 0, count: 0, note: 'no scroll container found' };
+
+            const seen = new Set();
+            const harvest = () => [...document.querySelectorAll('td,div')].forEach(e => {
+                const t = (e.innerText || '').trim();
+                if (/^\d{1,4}$/.test(t) && +t > 0 && +t <= 2000 && e.clientWidth < 70) seen.add(+t);
+            });
+
+            target.scrollTop = 0;
+            await new Promise(r => setTimeout(r, 250));
+            for (let i = 0; i < 80; i++) {
+                harvest();
+                if (target.scrollTop + target.clientHeight >= target.scrollHeight - 5) break;
+                target.scrollTop += target.clientHeight * 0.8;
+                await new Promise(r => setTimeout(r, 300));
+            }
+            harvest();
+            const arr = [...seen].sort((a, b) => a - b);
+            return { max: arr[arr.length - 1] ?? 0, count: arr.length };
+        });
+    }
+
+    async assertIntakeLineItemCount(expected) {
+        const { max, count } = await this.countIntakeLineItemRows();
+        console.log(`[BULK] grid serials -> highest ${max}, distinct ${count} (expected ${expected})`);
+        expect(max, `the grid's highest line-item serial should be ${expected}`).toBe(expected);
+        expect(count, `the grid should hold ${expected} distinct line-item serials`).toBe(expected);
+    }
+
     async createIntakeDraft(data) {
         await this.closeAskAieraIfVisible();
         await this.expandIntakeSections();
