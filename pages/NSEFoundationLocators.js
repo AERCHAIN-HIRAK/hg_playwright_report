@@ -350,6 +350,12 @@ export const NSEFoundation_Locators = {
     // User") — the edit affordance is an unlabelled header pencil icon button.
     cappEditIconBtn:      `//button[.//img[@alt='Edit']]`,
     // GRN Received-qty cell (AG grid col-id, row 0)
+    // PO edit form, line-item Quantity (ag-grid). Modelled on grnReceivedCell:
+    // the grid is found by a column header, then row 0's cell by col-id. The
+    // col-id is a guess pending the first live dump - editPoLowerQtyAndSubmit
+    // falls back to dumpEditableFields when this misses, so a wrong guess costs
+    // information rather than a silent no-op.
+    poQuantityCell:       `//div[@role='grid'][.//*[@role='columnheader'][contains(normalize-space(.),'Quantity')]]//div[contains(@class,'ag-row')][@row-index='0']//div[contains(@col-id,'quantity')]`,
     grnReceivedCell:      `//div[@role='grid'][.//*[@role='columnheader'][contains(normalize-space(.),'Received')]]//div[@class='ag-row' or contains(@class,'ag-row')][@row-index='0']//div[@col-id='line_items_received']`,
     grnInwardedOrRejected: `//*[normalize-space(text())='Rejected' or normalize-space(text())='Inwarded']`,
     // Invoice line-item qty (AG grid, row 0) — the "* Invoice" column under the

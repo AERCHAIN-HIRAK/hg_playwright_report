@@ -6882,6 +6882,138 @@ export class NSEFoundationActions {
 
     /** Rejected GRN → Edit → lower the Received qty (AG-grid cell), annotate the
      *  Invoice Number with " reject edit" → resubmit. */
+    /**
+     * Rejected PO -> edit -> lower the line quantity -> submit (sheet scenario 12).
+     *
+     * The PO edit form is UNMAPPED: unlike the GRN and Invoice equivalents there
+     * is no known qty cell and no submitPo helper, so this dumps the form when
+     * its guesses miss rather than failing blind. A ~16 min chain per attempt
+     * makes information the valuable output of the first run.
+     */
+    async editPoLowerQtyAndSubmit(newQty = '50') {
+        // The edit affordance is not always present immediately after the reject
+        // re-renders the header - the certification run found no pencil where the
+        // previous run had one. Reload and retry before giving up.
+        let opened = await this.openCappEditForm('PO');
+        for (let attempt = 0; !opened && attempt < 2; attempt++) {
+            console.log(`[PO] no edit affordance yet — reloading (${attempt + 1}/2)`);
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+            await this.page.waitForTimeout(6000);
+            opened = await this.openCappEditForm('PO');
+        }
+        if (!opened) {
+            await this.dumpEditableFields('PO-NOEDIT');
+            throw new Error(`[PO] could not open the edit form on the rejected PO (${this.page.url()})`);
+        }
+        await this.page.waitForTimeout(1500);
+
+        const cell = this.page.locator(`xpath=${L.poQuantityCell}`).first();
+        if (await cell.isVisible({ timeout: 8000 }).catch(() => false)) {
+            await cell.scrollIntoViewIfNeeded();
+            await cell.dblclick();
+            await this.page.waitForTimeout(400);
+            await this.page.keyboard.press('ControlOrMeta+a');
+            await this.page.keyboard.press('Delete');
+            await this.page.keyboard.type(String(newQty));
+            await this.page.keyboard.press('Enter');
+            await this.page.waitForTimeout(1200);
+            console.log(`[PO] quantity lowered to ${newQty}`);
+        } else {
+            console.log('[PO] quantity cell not found — dumping the edit form');
+            await this.dumpEditableFields('PO-EDIT');
+            await this.dumpGridColumns('PO-EDIT');
+            throw new Error('[PO] no quantity cell on the PO edit form — see the dump above');
+        }
+
+        const submit = this.page.locator(
+            `xpath=//button[normalize-space(.)='Submit'] | //button[normalize-space(.)='Save']`).first();
+        await submit.waitFor({ state: 'visible', timeout: 15000 });
+        await submit.click();
+        console.log('[PO] edit submitted');
+        await this.page.waitForTimeout(4000);
+        // A workflow/approver dialog may follow, as on the sourcing and PR forms.
+        const dlg = this.page.locator(
+            `xpath=//*[@role='dialog']//button[normalize-space(.)='Submit']`).first();
+        if (await dlg.isVisible({ timeout: 6000 }).catch(() => false)) {
+            await dlg.click();
+            console.log('[PO] confirmed the follow-up dialog');
+            await this.page.waitForTimeout(5000);
+        }
+    }
+
+    /** Column headers of every ag-grid on the page, with their col-ids. */
+    async dumpGridColumns(tag = 'GRID') {
+        const cols = await this.page.evaluate(() => [...document.querySelectorAll('[role="columnheader"]')]
+            .map(h => ({ text: (h.innerText || '').replace(/\s+/g, ' ').trim(),
+                         colId: h.getAttribute('col-id') })).filter(c => c.text).slice(0, 30));
+        console.log(`[${tag}] grid columns: ${JSON.stringify(cols)}`);
+        return cols;
+    }
+
+    /**
+     * Everything the Requisition Conversion View offers, with button COLOURS.
+     * Scenario 12 turns on "Convert to PO" being blue (i.e. enabled/primary)
+     * once the reject-edit frees quantity, so the actual computed colour is
+     * recorded rather than assumed - a live PRC with no spare qty shows no such
+     * button at all (verified 2026-09-11 on PRC-NSEFN-26-165).
+     */
+    /**
+     * Expand the Rate Contract ("RC") section of the Requisition Conversion View.
+     *
+     * The "Convert to PO" button lives INSIDE this section and does not exist in
+     * the DOM until it is expanded - a collapsed view offers only
+     * More / Overview / Process / Transactions, which is how scenario 12's first
+     * run concluded there was no such button (verified 2026-09-11).
+     */
+    async expandPrcRateContractSection() {
+        const rc = this.page.locator(`xpath=//*[normalize-space(text())="Rate Contract"]`).first();
+        await rc.waitFor({ state: 'visible', timeout: 20000 });
+        await rc.scrollIntoViewIfNeeded();
+        await rc.click();
+        await this.page.waitForTimeout(3500);
+        console.log('[PRC] Rate Contract (RC) section expanded');
+    }
+
+    /** The Convert to PO button's state and computed colour, or null if absent. */
+    async readConvertToPoButton() {
+        const info = await this.page.evaluate(() => {
+            const b = [...document.querySelectorAll('button')]
+                .find(x => /^convert to po$/i.test((x.innerText || '').trim()));
+            if (!b) return null;
+            const cs = getComputedStyle(b);
+            return { disabled: b.disabled || b.getAttribute('aria-disabled') === 'true',
+                     bg: cs.backgroundColor, color: cs.color };
+        });
+        console.log(`[PRC] Convert to PO: ${JSON.stringify(info)}`);
+        return info;
+    }
+
+    /** Click Convert to PO and land on the "Converting to PO" form. */
+    async clickConvertToPo() {
+        await this.page.locator(`xpath=//button[normalize-space(.)="Convert to PO"]`).first().click();
+        await this.page.waitForURL(/\/requisition-conversion\/\d+\/newPo/, { timeout: 45000 });
+        await this.page.waitForTimeout(5000);
+        console.log(`[PRC] Convert to PO -> ${this.page.url()}`);
+    }
+
+    async dumpConversionViewControls(tag = 'PRC') {
+        const info = await this.page.evaluate(() => ({
+            url: location.href,
+            sections: [...new Set([...document.querySelectorAll('*')]
+                .filter(e => e.children.length <= 3)
+                .map(e => (e.innerText || '').replace(/\s+/g, ' ').trim())
+                .filter(t => t && t.length < 70 && /\bRC\b|rate contract|conversion|convert/i.test(t)))].slice(0, 20),
+            buttons: [...document.querySelectorAll('button,a[role="button"]')].map(b => {
+                const cs = getComputedStyle(b); const r = b.getBoundingClientRect();
+                return { text: (b.innerText || '').replace(/\s+/g, ' ').trim(),
+                         disabled: b.disabled || b.getAttribute('aria-disabled') === 'true',
+                         bg: cs.backgroundColor, color: cs.color, w: Math.round(r.width) };
+            }).filter(b => b.text && b.w > 0).slice(0, 30),
+        }));
+        console.log(`[${tag}] conversion view:\n${JSON.stringify(info, null, 1)}`);
+        return info;
+    }
+
     async editGrnReceivedLowerQtyAndSubmit(newQty = '50') {
         if (!await this.openCappEditForm('GRN')) {
             throw new Error('[GRN] Could not open the edit form on the rejected GRN — see the field/button dump above.');
