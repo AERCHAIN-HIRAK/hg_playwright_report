@@ -3269,6 +3269,49 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(1500);
     }
 
+    /**
+     * Click the sourcing form's Submit and STOP at the Workflow Summary dialog.
+     *
+     * submitSourcingEvent() clicks Submit and immediately confirms the dialog,
+     * which is right for building a chain and useless for scenario 18, where two
+     * tabs must both sit on an OPEN dialog before either commits. Splitting the
+     * two halves is what makes the race controllable.
+     */
+    async openSourcingWorkflowSummary() {
+        const btn = this.page.locator(`xpath=${L.sourcingSubmitBtn}`).first();
+        await btn.scrollIntoViewIfNeeded();
+        await btn.click();
+        const dlgSubmit = this.page.locator(
+            `xpath=//*[@role='dialog']//button[normalize-space(.)='Submit']`).first();
+        await dlgSubmit.waitFor({ state: 'visible', timeout: 20000 });
+        console.log('[Sourcing] Workflow Summary open, holding at Submit');
+    }
+
+    /**
+     * Commit the Workflow Summary. Returns what happened rather than throwing on
+     * a refusal: in scenario 18 the LOSER of the race is expected to be rejected,
+     * and an exception there would hide the message we are trying to read.
+     */
+    async clickWorkflowSummarySubmit(tag = '') {
+        const dlgSubmit = this.page.locator(
+            `xpath=//*[@role='dialog']//button[normalize-space(.)='Submit']`).first();
+        const visible = await dlgSubmit.isVisible({ timeout: 5000 }).catch(() => false);
+        if (!visible) {
+            console.log(`[Sourcing]${tag} no Workflow Summary Submit to click`);
+            return { clicked: false, reason: 'dialog not open' };
+        }
+        const enabled = await dlgSubmit.isEnabled().catch(() => null);
+        try {
+            await dlgSubmit.click({ timeout: 10000 });
+            console.log(`[Sourcing]${tag} Workflow Summary Submit clicked (enabled=${enabled})`);
+            return { clicked: true, enabled };
+        } catch (e) {
+            const why = e.message.split('\n')[0];
+            console.log(`[Sourcing]${tag} Workflow Summary Submit click FAILED: ${why}`);
+            return { clicked: false, enabled, reason: why };
+        }
+    }
+
     async submitSourcingEvent() {
         const btn = this.page.locator(`xpath=${L.sourcingSubmitBtn}`).first();
         await btn.scrollIntoViewIfNeeded();
