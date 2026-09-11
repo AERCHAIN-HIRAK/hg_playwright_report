@@ -3821,6 +3821,317 @@ export class NSEFoundationActions {
     // label sits in that row's `_product` cell. Never use the visible "#" column:
     // on RFX 1468 "Initial Quote Remarks" displayed as #11 but its cells are
     // cell_12_*, so a number read off the screen addresses the wrong row.
+    /**
+     * Dump everything about the New Award page's attachment section.
+     *
+     * Scenario 59 needs to upload into 4 attachment fields there, and the page
+     * is the same one-big-grid layout as the justification rows (see
+     * awardRowLabelCells) - so the fields may be grid ROWS, or a separate
+     * attachments block like SAPP's, or plain file inputs. Guessing costs a
+     * ~6 min chain build per wrong guess, so the first run reports the truth.
+     */
+    /**
+     * Scroll the award page (and its inner scroller) to the bottom so the
+     * virtualised rows below the fold actually mount.
+     *
+     * This is not cosmetic: before scrolling the page exposes 6 file inputs and
+     * ONE "Attachments" row, which reads as a single multi-file control. After
+     * scrolling it exposes 21 inputs and the real Attachment section -
+     * Commercial Comparison / Vendor Quotes / Justification / Others (verified
+     * live 2026-09-11). Enumerating without scrolling describes a page that has
+     * not finished existing.
+     */
+    async scrollAwardPageToBottom(passes = 14) {
+        for (let i = 0; i < passes; i++) {
+            await this.page.evaluate(() => {
+                window.scrollBy(0, window.innerHeight * 0.9);
+                const sc = [...document.querySelectorAll('*')]
+                    .filter(e => e.scrollHeight > e.clientHeight + 80 && e.clientHeight > 200)
+                    .sort((a, b) => b.scrollHeight - a.scrollHeight)[0];
+                if (sc) sc.scrollTop += sc.clientHeight * 0.9;
+            });
+            await this.page.waitForTimeout(800);
+        }
+        await this.page.waitForTimeout(2000);
+    }
+
+    /**
+     * Award grid rows that actually hold a file input, as {row, label}.
+     *
+     * Resolving by label ALONE is unsafe here: the award page has TWO rows
+     * called "Justification" - a text row in the main grid and an attachment row
+     * in the Attachment section - so findAwardRowByLabel('Justification') would
+     * match whichever came first and upload into the wrong place.
+     */
+    async listAwardAttachmentRows() {
+        const rows = await this.page.evaluate(() => {
+            const out = [];
+            for (const td of document.querySelectorAll('td[id$="_product"]')) {
+                const idx = td.id.match(/cell_(\d+)_/)?.[1];
+                if (!idx) continue;
+                const inputs = document.querySelectorAll(`td[id^="cell_${idx}_"] input[type=file]`).length;
+                if (!inputs) continue;
+                out.push({ row: idx, label: (td.innerText || '').replace(/\s+/g, ' ').trim(), inputs });
+            }
+            return out;
+        });
+        console.log(`[Award] attachment rows: ${JSON.stringify(rows)}`);
+        return rows;
+    }
+
+    /**
+     * Upload one file into a named award attachment field.
+     *
+     * Each such row carries 5 inputs - one real and four in ZERO-WIDTH mirror
+     * cells (the quirk documented on awardRowLabelCells). setInputFiles works on
+     * the hidden input directly, verified live, so there is no file-chooser
+     * dance here; the assertion is the cell's own count text, because the page
+     * never renders the filename.
+     */
+    async uploadAwardAttachment(label, filePath) {
+        const rows = await this.listAwardAttachmentRows();
+        const match = rows.find(r => r.label.toLowerCase() === label.toLowerCase());
+        if (!match) {
+            throw new Error(`[Award] no attachment field "${label}". Fields present: `
+                + JSON.stringify(rows.map(r => r.label)));
+        }
+        const input = this.page.locator(`td[id^="cell_${match.row}_"] input[type=file]`).first();
+
+        // The cell flips to "Upload 1 File" IMMEDIATELY, while the real upload is
+        // still in flight: the app presigns (POST helpers/generate-upload-url)
+        // and then PUTs the bytes to S3, which lands 3-6s later. Waiting a flat
+        // 3.5s and asserting on that optimistic label is why run 3 submitted an
+        // award that ended up holding "No files" - the label lied, and the test
+        // believed it. Wait for the S3 PUT itself.
+        const putDone = this.page.waitForResponse(
+            r => r.request().method() === 'PUT' && /amazonaws\.com/.test(r.url()),
+            { timeout: 90000 });
+        await input.setInputFiles(filePath, { timeout: 20000 });
+        const put = await putDone;
+        expect(put.status(), `the S3 upload for "${label}" returned ${put.status()}`)
+            .toBeLessThan(300);
+        await this.page.waitForTimeout(1500);
+
+        const cellText = await this.page.evaluate((r) => {
+            const c = [...document.querySelectorAll(`td[id^="cell_${r}_"]`)]
+                .find(x => x.getBoundingClientRect().width > 0 && x.querySelector('input[type=file]'));
+            return c ? (c.innerText || '').replace(/\s+/g, ' ').trim() : '';
+        }, match.row);
+
+        expect(cellText, `"${label}" should report an uploaded file after setInputFiles; `
+            + `the cell reads "${cellText}"`).toMatch(/\d+\s*File/i);
+        console.log(`[Award] ${label} <- ${path.basename(filePath)} (cell now "${cellText}")`);
+        return cellText;
+    }
+
+    /**
+     * Which of `names` appear anywhere on the current page, after scrolling so
+     * virtualised content mounts. Used to prove the award's attachments carried
+     * through to the PR and the PRC.
+     */
+    /**
+     * Look for `names` across every tab of a detail page, scrolling each.
+     *
+     * Scenario 59's PR/PRC pages are v3 and split across Overview / Process /
+     * Transactions, so a body scan of whichever tab happens to be open proves
+     * nothing about the others.
+     */
+    /**
+     * Attachment sections on a v3 detail page (PR / PRC), as {label, value}.
+     *
+     * Filenames are NOT usable as evidence here: the award grid, the award
+     * detail page and the PR all render a COUNT ("1 File") or an empty state
+     * ("No Attachments.", "No Attachment Added") and never the filename -
+     * verified live 2026-09-11. Four scenario-59 runs asserted on filenames and
+     * so could not have passed whatever the app did.
+     */
+    async readAttachmentSections() {
+        await this.scrollAwardPageToBottom(10);
+        const sections = await this.page.evaluate(() => {
+            const out = [];
+            const RE = /(award attachment|justification att|attachments?)\b/i;
+            for (const e of document.querySelectorAll('div,section,p,td')) {
+                if (e.children.length > 4) continue;
+                const t = (e.innerText || '').replace(/\s+/g, ' ').trim();
+                if (!t || t.length > 200 || !RE.test(t)) continue;
+                out.push(t);
+            }
+            return [...new Set(out)];
+        });
+        const counts = await this.page.evaluate(() =>
+            (document.body.innerText.match(/\d+\s*Files?\b/g) || []));
+        console.log(`[Attach] ${this.page.url()}\n  sections: ${JSON.stringify(sections)}\n  counts: ${JSON.stringify(counts)}`);
+        return { sections, counts, hasAny: counts.length > 0 };
+    }
+
+    /**
+     * Every attachment field on a v3 detail page, as {label, value, index} -
+     * one entry per OCCURRENCE, duplicates included.
+     *
+     * Duplicate labels are the point. The award grid carries two rows called
+     * "Justification" (a text row and the attachment row), and QA reports the PR
+     * carries TWO "Justification Att." fields (2026-09-11). Anything that
+     * resolves a field by label alone reads whichever comes first - so a
+     * carry-forward that landed in the second one looks missing, and a
+     * whole-page "any files?" check hides the difference entirely.
+     */
+    /**
+     * For each expected field label, the attachment value shown beside it:
+     * a count ("1 File") or an empty state ("No Attachments.").
+     *
+     * Targeted by label rather than by scanning for attachment-ish elements: the
+     * previous version exact-matched element text and returned [] on a PR whose
+     * sections a manual probe could plainly see, because the DOM nests the label
+     * and its value differently per page. This climbs a few levels from the
+     * label to find whichever of the two it sits with.
+     *
+     * Labels differ between pages - the award calls it "Justification", the PR
+     * calls it "Justification Att." (QA, 2026-09-11) - so callers pass the list
+     * that belongs to the page they are on.
+     */
+    async readAttachmentFieldValues(labels) {
+        await this.scrollAwardPageToBottom(10);
+        const rows = await this.page.evaluate((wanted) => {
+            const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+            const VALUE = /(\d+\s*Files?\b)|No Attachments?\.?|No Attachment Added|No files/i;
+            const out = [];
+            for (const label of wanted) {
+                let value = null, ctx = null;
+                const cands = [...document.querySelectorAll('div,td,p,span,label')]
+                    .filter(e => {
+                        const t = norm(e.innerText).toLowerCase();
+                        return t.startsWith(label.toLowerCase()) && t.length < 300;
+                    })
+                    .sort((a, b) => norm(a.innerText).length - norm(b.innerText).length);
+                for (const e of cands) {
+                    let n = e;
+                    for (let k = 0; k < 4 && n; k++, n = n.parentElement) {
+                        const t = norm(n.innerText);
+                        // The value must be ADJACENT to the label. Without this
+                        // cap the climb reaches a page-level container and
+                        // matches an empty state (or a count) belonging to some
+                        // other field entirely - observed 2026-09-11, where
+                        // "Commercial Comparison" was reported "No Attachments."
+                        // from a block beginning "Company National Stock
+                        // Exchange Foundation Subject ...". That reads as a
+                        // finding and is noise.
+                        if (t.length > 220) break;
+                        const m = t.match(VALUE);
+                        if (m) { value = m[0]; ctx = t.slice(0, 140); break; }
+                    }
+                    if (value) break;
+                }
+                out.push({ label, value, ctx });
+            }
+            return out;
+        }, labels);
+        console.log(`[Attach] ${this.page.url()}\n  ${rows.map(r => `${r.label} = ${r.value ?? 'NOT FOUND'}`).join('\n  ')}`);
+        return rows;
+    }
+
+    async readAttachmentFields() {
+        await this.scrollAwardPageToBottom(10);
+        const fields = await this.page.evaluate(() => {
+            const LABEL = /^(award attachment|justification att\.?|commercial comparison|vendor quotes|justification|others|attachments?)$/i;
+            const out = [];
+            for (const e of document.querySelectorAll('div,td,p,span')) {
+                if (e.children.length > 2) continue;
+                const label = (e.innerText || '').replace(/\s+/g, ' ').trim();
+                if (!LABEL.test(label)) continue;
+                // the value is the nearest following text that states a count or
+                // an empty state
+                let value = '';
+                const scope = e.parentElement?.innerText || '';
+                const m = scope.replace(/\s+/g, ' ')
+                    .match(/(\d+\s*Files?\b|No Attachments?\.?|No Attachment Added|No files)/i);
+                if (m) value = m[1];
+                out.push({ label, value });
+            }
+            // de-dup identical label+value pairs that come from nested wrappers,
+            // but KEEP genuine repeats by numbering them
+            const seen = new Map();
+            return out.map(o => {
+                const k = `${o.label}||${o.value}`;
+                const n = (seen.get(k) ?? 0);
+                seen.set(k, n + 1);
+                return { ...o, occurrence: n };
+            }).filter(o => o.occurrence === 0 || o.value);
+        });
+        console.log(`[Attach] fields on ${this.page.url()}:\n  ${JSON.stringify(fields)}`);
+        return fields;
+    }
+
+    async findFilenamesAcrossTabs(names, { tabs = ['Overview', 'Process', 'Transactions'] } = {}) {
+        const seen = new Set();
+        for (const tabName of tabs) {
+            const tab = this.page.locator(
+                `xpath=//*[@role='tab' or @data-slot='tabs-trigger'][normalize-space(.)='${tabName}']`).first();
+            if (await tab.isVisible({ timeout: 4000 }).catch(() => false)) {
+                await tab.click().catch(() => {});
+                await this.page.waitForTimeout(3500);
+            } else {
+                continue;
+            }
+            const hits = await this.findFilenamesOnPage(names);
+            hits.forEach(h => seen.add(h));
+            if (seen.size === names.length) break;
+        }
+        const found = [...seen];
+        console.log(`[Attach] across tabs -> ${found.length}/${names.length}: ${JSON.stringify(found)}`);
+        return found;
+    }
+
+    async findFilenamesOnPage(names) {
+        await this.scrollAwardPageToBottom(10);
+        const body = await this.page.evaluate(() => document.body.innerText);
+        const found = names.filter(n => body.includes(n));
+        console.log(`[Attach] on ${this.page.url()} -> found ${found.length}/${names.length}: ${JSON.stringify(found)}`);
+
+        // Finding nothing is ambiguous: wrong page, not-yet-mounted content, or a
+        // page that shows a COUNT instead of filenames (the award page does
+        // exactly that). Report what attachment-ish content IS there so the next
+        // run is informed rather than another blind guess.
+        if (!found.length) {
+            const diag = await this.page.evaluate(() => ({
+                fileishLinks: [...document.querySelectorAll('a')]
+                    .map(e => (e.innerText || '').trim())
+                    .filter(t => /\.(pdf|png|jpe?g|xlsx?|docx?|csv|txt)$/i.test(t)).slice(0, 10),
+                attachText: [...new Set([...document.querySelectorAll('*')]
+                    .filter(e => !e.children.length && /attach|upload|\bfiles?\b/i.test(e.innerText || ''))
+                    .map(e => (e.innerText || '').replace(/\s+/g, ' ').trim()))].slice(0, 15),
+                tabs: [...document.querySelectorAll('[role="tab"],[data-slot="tabs-trigger"]')]
+                    .map(e => (e.innerText || '').trim()).filter(Boolean).slice(0, 12),
+            }));
+            console.log(`[Attach] nothing matched — page diagnostics: ${JSON.stringify(diag)}`);
+        }
+        return found;
+    }
+
+    async dumpAwardAttachmentSection() {
+        const info = await this.page.evaluate(() => {
+            const txt = (e) => (e.innerText || '').replace(/\s+/g, ' ').trim();
+            return {
+                url: location.href,
+                gridRowLabels: [...document.querySelectorAll('td[id$="_product"]')]
+                    .map(td => txt(td)).filter(Boolean),
+                fileInputs: [...document.querySelectorAll('input[type=file]')].map(i => ({
+                    id: i.id || null, name: i.name || null, accept: i.accept || null,
+                    hidden: !(i.offsetWidth || i.offsetHeight),
+                    parentClass: String(i.parentElement?.className || '').slice(0, 80),
+                })),
+                attachishClasses: [...new Set([...document.querySelectorAll('[class*="attach" i]')]
+                    .map(e => String(e.className).slice(0, 90)))].slice(0, 12),
+                attachishText: [...new Set([...document.querySelectorAll('*')]
+                    .filter(e => !e.children.length && /attach|upload|browse|drag/i.test(txt(e)))
+                    .map(e => txt(e)))].slice(0, 20),
+                buttons: [...new Set([...document.querySelectorAll('button')]
+                    .map(b => txt(b)).filter(t => t && t.length < 40))].slice(0, 30),
+            };
+        });
+        console.log('[Award] attachment section dump:\n' + JSON.stringify(info, null, 1));
+        return info;
+    }
+
     async findAwardRowByLabel(label) {
         const row = await this.page.evaluate((wanted) => {
             for (const td of document.querySelectorAll('td[id$="_product"]')) {
