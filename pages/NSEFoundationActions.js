@@ -6224,6 +6224,119 @@ export class NSEFoundationActions {
      * the new digits are PREPENDED, silently converting 100 → 50100.
      * Verified live 2026-09-09 on intake 2250: 100.00 → 50.00.
      */
+    /**
+     * Every error the page is currently showing: toasts, inline red text, and
+     * any open dialog. Used where the QUESTION is whether the app complained at
+     * all, and where it complained - not where a specific message is expected.
+     */
+    /**
+     * Start recording every toast/alert the page raises, from now until read.
+     *
+     * collectVisibleErrors() SNAPSHOTS the DOM, which cannot see a message that
+     * has already faded. Scenario 17 chased that for five runs: the app does
+     * show a quantity error on submit (confirmed on screen by QA, 2026-09-11),
+     * but the toast was gone by the time the snapshot ran, so the run reported
+     * "no error" and came within one commit of filing a false defect.
+     *
+     * A MutationObserver catches each toast as it is inserted, so transient
+     * messages survive to be asserted on. Note a full page navigation wipes the
+     * log - restart it after one if the flow navigates.
+     */
+    async startErrorRecorder() {
+        await this.page.evaluate(() => {
+            const SEL = '[role="status"],[role="alert"],[class*="toast"],[data-sonner-toast],[class*="Toastify"]';
+            window.__errLog = [];
+            // A date picker's month labels ("September 2026", ...) match one of the
+            // toast selectors on this app, so they are filtered out here rather
+            // than left to trip a future assertion.
+            const NOISE = /^(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{4}$/i;
+            const push = (t) => {
+                t = (t || '').replace(/\s+/g, ' ').trim();
+                if (!t || t.length <= 2 || NOISE.test(t)) return;
+                if (!window.__errLog.includes(t)) window.__errLog.push(t);
+            };
+            const scan = (root) => {
+                if (!root || root.nodeType !== 1) return;
+                if (root.matches?.(SEL)) push(root.innerText);
+                root.querySelectorAll?.(SEL).forEach(e => push(e.innerText));
+            };
+            scan(document.body);
+            window.__errMo?.disconnect();
+            window.__errMo = new MutationObserver(muts => {
+                for (const m of muts) m.addedNodes?.forEach(scan);
+                scan(document.body);
+            });
+            window.__errMo.observe(document.body, { childList: true, subtree: true });
+        });
+        console.log('[ERR] recorder started');
+    }
+
+    /** Everything the recorder has seen since startErrorRecorder(). */
+    async readRecordedErrors() {
+        const log = await this.page.evaluate(() => window.__errLog || []);
+        if (log.length) console.log(`[ERR] recorded: ${JSON.stringify(log)}`);
+        return log;
+    }
+
+    async collectVisibleErrors() {
+        return await this.page.evaluate(() => ({
+            toasts: [...document.querySelectorAll('[role="status"],[role="alert"],[class*="toast"]')]
+                .map(e => (e.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean).slice(0, 8),
+            // Error-styled TEXT only. An earlier version matched on the class
+            // alone and picked up the "Cancel" BUTTON, whose destructive styling
+            // uses the same tokens - scenario 17 then reported a guard the app
+            // does not have and passed on a false positive (2026-09-11).
+            // Controls are excluded, and so is anything that reads like a label.
+            inline: [...document.querySelectorAll('*')]
+                .filter(e => !e.children.length
+                    && /text-red|text-destructive|error/i.test(String(e.className || ''))
+                    && !e.closest('button,[role="button"],a,[role="menuitem"],label'))
+                .map(e => (e.innerText || '').trim())
+                .filter(t => t.length > 3 && t.length < 300
+                    && !/^(cancel|close|delete|remove|submit|clear|reset|back)$/i.test(t))
+                .slice(0, 10),
+            dialog: (document.querySelector('[role="dialog"]')?.innerText || '').replace(/\s+/g, ' ').slice(0, 400),
+        }));
+    }
+
+    /**
+     * Type a quantity into the sourcing grid and report what happened, WITHOUT
+     * asserting the value took (sheet scenario 17).
+     *
+     * setSourcingLineItemQty asserts the cell now holds the typed value, which
+     * is right when lowering a qty (scenario 6) and wrong when the whole point
+     * is that the app should REFUSE the value: the helper would fail on its own
+     * assertion and tell us nothing about the app's error handling.
+     */
+    async attemptSourcingLineItemQty(qty, rowIndex = 0) {
+        const cell = this.page.locator(L.sourcingItemQtyCell).nth(rowIndex);
+        await cell.waitFor({ state: 'visible', timeout: 20000 });
+        await cell.scrollIntoViewIfNeeded();
+        const before = (await cell.innerText().catch(() => '')).trim();
+
+        await cell.click();
+        await this.page.waitForTimeout(500);
+        const focused = await this.page.evaluate(() => document.activeElement?.tagName || '');
+        if (/^(BODY|HTML)$/.test(focused)) {
+            throw new Error(`[RFX] clicking the Quantity cell focused <${focused}> — the sourcing grid is not editable here`);
+        }
+
+        await this.page.keyboard.press('ControlOrMeta+a');
+        await this.page.keyboard.press('Delete');
+        await this.page.keyboard.type(String(qty));
+        await this.page.keyboard.press('Tab');
+        await this.page.waitForTimeout(2500);
+
+        const after = (await cell.innerText().catch(() => '')).replace(/[,\s]/g, '');
+        const accepted = new RegExp(`^${qty}(\\.0+)?$`).test(after);
+        const errors = await this.collectVisibleErrors();
+        console.log(`[RFX] attempted qty ${before} → ${qty}: cell now "${after}" (accepted=${accepted})`);
+        if (errors.toasts.length || errors.inline.length || errors.dialog) {
+            console.log(`[RFX] errors on screen: ${JSON.stringify(errors)}`);
+        }
+        return { before, after, accepted, errors };
+    }
+
     async setSourcingLineItemQty(qty, rowIndex = 0) {
         const cell = this.page.locator(L.sourcingItemQtyCell).nth(rowIndex);
         await cell.waitFor({ state: 'visible', timeout: 20000 });
