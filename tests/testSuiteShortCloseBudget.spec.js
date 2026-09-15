@@ -131,12 +131,23 @@ test.describe('Short close returns the unspent PO balance to the budget', () => 
             expect(poAmount, 'PO amount should be qty x unit price')
                 .toBeCloseTo(PO_QTY * UNIT_PRICE, 2);
 
-            const readB = await new budgetSpendActions(a.page)
+            // The walk is QA's documented path, so it stays; but the figure it
+            // returns may not have settled yet (see below), so a value that is
+            // not yet A + PO amount is polled rather than failed on the spot.
+            const walkB = await new budgetSpendActions(a.page)
                 .readActualSpendFromTransaction('S60-PO');
-            console.log(`[S60] B (after PO) = ${readB.actualSpend}`);
-            expect(readB.actualSpend,
+            console.log(`[S60] B (after PO, first read) = ${walkB.actualSpend}`);
+
+            const expectedB = readA.actualSpend + poAmount;
+            const settledB = Math.abs(walkB.actualSpend - expectedB) <= 0.01
+                ? { value: walkB.actualSpend, settled: true }
+                : await new budgetSpendActions(a.page)
+                    .waitForActualSpend(budgetUrl, expectedB, { tag: 'S60-PO-WAIT' });
+            const actualB = settledB.value;
+            console.log(`[S60] B (after PO) = ${actualB}`);
+            expect(actualB,
                 `Actual Spend should rise by the PO amount (${poAmount}) once the PO exists`)
-                .toBeCloseTo(readA.actualSpend + poAmount, 2);
+                .toBeCloseTo(expectedB, 2);
 
             // ── GRN for HALF the PO quantity -> Inwarded ──────────────────────
             await a.openSavedPurchaseOrder(data);
@@ -175,6 +186,20 @@ test.describe('Short close returns the unspent PO balance to the budget', () => 
             await a.assertInvoiceAccounted();
             console.log('[S60] invoice acknowledged → Accounted');
 
+            // ── Baseline taken IMMEDIATELY BEFORE the short close ─────────────
+            //
+            // NOT reading B. B was taken ~10 minutes earlier, and /budgets/369 is
+            // a SHARED tenant budget (168 requisitions, 160 POs, 118 invoices) that
+            // other work moves while this test runs: on the 2026-09-15 rerun ₹200
+            // of somebody else's spend landed between B and the short close, so
+            // "C == B - 100,000" missed by exactly that ₹200 while the short close
+            // itself was flawless. Anchoring to a reading taken seconds before the
+            // write makes the assertion exact again instead of needing a fudge
+            // factor to absorb other people's transactions.
+            const beforeSC = await new budgetSpendActions(a.page)
+                .readActualSpendAt(budgetUrl, 'S60-BEFORE-SC');
+            console.log(`[S60] baseline immediately before short close = ${beforeSC}`);
+
             // ── Short close the PO ────────────────────────────────────────────
             await a.openSavedPurchaseOrder(data);
             const po = new v3DetailActions(a.page, PO_MODULE);
@@ -191,16 +216,28 @@ test.describe('Short close returns the unspent PO balance to the budget', () => 
             const closedAmount = closedQty * UNIT_PRICE;
 
             // ── READING C — the balance is back in the budget ─────────────────
-            const actualC = await new budgetSpendActions(a.page)
-                .readActualSpendAt(budgetUrl, 'S60-AFTER-SC');
-            console.log(`[S60] C (after short close) = ${actualC}`);
+            //
+            // THE BUDGET UPDATES 60 SECONDS AFTER THE SHORT CLOSE (QA, 2026-09-15).
+            // That is why the first certification run failed: the short-close POST
+            // returned 200 and short_close_qty was already 50, yet Actual Spend
+            // still read its pre-close figure, and only minutes later showed the
+            // returned amount. So wait out the settling window, then poll — the
+            // poll is a safety net around the 60s, not a substitute for it.
+            await a.page.waitForTimeout(60000);
 
-            expect(actualC,
+            const expectedC = beforeSC - closedAmount;
+            const settledC = await new budgetSpendActions(a.page)
+                .waitForActualSpend(budgetUrl, expectedC, { tag: 'S60-AFTER-SC' });
+            console.log(`[S60] C (after short close) = ${settledC.value}`
+                + ` after ${settledC.seen.length} poll(s)`);
+
+            expect(settledC.value,
                 `Actual Spend should fall by the short-closed amount (${closedAmount}): `
-                + `${readB.actualSpend} - ${closedAmount}`)
-                .toBeCloseTo(readB.actualSpend - closedAmount, 2);
+                + `${beforeSC} - ${closedAmount}; saw ${JSON.stringify(settledC.seen)}`)
+                .toBeCloseTo(expectedC, 2);
 
-            console.log(`[S60] PASS — A ${readA.actualSpend} -> B ${readB.actualSpend}`
-                + ` -> C ${actualC} (PO ${poAmount}, short closed ${closedAmount})`);
+            console.log(`[S60] PASS — A ${readA.actualSpend} -> B ${actualB}`
+                + ` -> before short close ${beforeSC} -> C ${settledC.value}`
+                + ` (PO ${poAmount}, short closed ${closedAmount})`);
         });
 });

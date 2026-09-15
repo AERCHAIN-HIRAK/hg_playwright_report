@@ -116,6 +116,44 @@ export class budgetSpendActions {
     }
 
     /**
+     * Poll the budget page until Actual Spend reaches `expected`.
+     *
+     * BUDGET RECALCULATION IS ASYNCHRONOUS. Measured 2026-09-15 on scenario 60:
+     * the short-close POST returned HTTP 200 and the PO's short_close_qty was
+     * already 50, yet Actual Spend still read 71,472,629.98 — unchanged. Re-read
+     * a few minutes later it was 71,372,629.98, exactly the expected figure. So
+     * a single read taken right after the write reports a WORKING feature as
+     * broken; the wait is the difference between measuring the app and
+     * measuring the clock.
+     *
+     * Returns { value, settled, seen } — `settled` false means it never got
+     * there, and `seen` carries every observation so the failure shows whether
+     * the figure was drifting or simply never moved.
+     */
+    async waitForActualSpend(budgetUrl, expected, {
+        timeoutMs = 480000, pollMs = 15000, tolerance = 0.01, tag = 'BUDGET',
+    } = {}) {
+        const deadline = Date.now() + timeoutMs;
+        const seen = [];
+        let value = null;
+
+        for (let poll = 1; ; poll++) {
+            value = await this.readActualSpendAt(budgetUrl, `${tag}#${poll}`);
+            seen.push(value);
+            if (Math.abs(value - expected) <= tolerance) {
+                console.log(`[${tag}] settled at ${value} after ${poll} poll(s)`);
+                return { value, settled: true, seen };
+            }
+            if (Date.now() > deadline) break;
+            console.log(`[${tag}] ${value} != ${expected} (off by `
+                + `${(value - expected).toFixed(2)}) — waiting`);
+            await this.page.waitForTimeout(pollMs);
+        }
+        console.log(`[${tag}] never reached ${expected}; saw ${JSON.stringify(seen)}`);
+        return { value, settled: false, seen };
+    }
+
+    /**
      * Re-read the same budget page directly. Once the first walk has revealed
      * the URL there is nothing to gain from repeating the four-hop navigation,
      * and every repeat is another chance for a drawer to not open.
