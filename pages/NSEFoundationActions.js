@@ -7170,6 +7170,108 @@ export class NSEFoundationActions {
         await this.submitInvoice();
     }
 
+
+    /** Reopen a REJECTED invoice, re-match its GRN and resubmit at the SAME qty.
+     *
+     *  editInvoiceLowerQtyAndSubmit cannot be reused for this: it calls setQty()
+     *  unconditionally and throws "the cell kept its original value" when the new
+     *  qty equals the old one — which is precisely the case here, because the
+     *  reject-edit cycle in scenario 116 must not disturb the 10-per-invoice split
+     *  that consumes the PO exactly.
+     *
+     *  The GRN re-match is still required. Rejecting breaks the existing match, and
+     *  an unmatched invoice submits SILENTLY back to /invoices/<id>/edit with no
+     *  error — the same signature as the qty bug, so it is easy to misread. The GRN
+     *  is already ticked on a reopened edit form, hence reselect.
+     */
+    async editInvoiceResubmitSameQty(qty, data, tag = 'INV') {
+        // RE-OPEN THE INVOICE FIRST. Rejecting navigates AWAY from it — observed
+        // 2026-09-15, run 1: after "[INV] Reject submitted" the browser sat on the
+        // PRC page ("Requisition Conversion View", Pending-approval), so the header
+        // pencil opened the PRC's edit form and the FIX button was rightly absent.
+        // The wrong-page navigation looked exactly like a bad locator. The reject
+        // path here routinely takes the approver-reassign recovery, which is what
+        // moves the page.
+        await this.openSavedInvoice(data);
+
+        if (!await this.openCappEditForm('INV')) {
+            throw new Error('[INV] Could not open the edit form on the rejected Invoice — see the field/button dump above.');
+        }
+        await this.page.waitForTimeout(500);
+
+        // Re-match the GRN. FIX is TOLERATED AS ABSENT: on an edit that does not
+        // change the qty the existing match can survive the reject, leaving nothing
+        // to fix. Its absence is logged rather than assumed, because an invoice that
+        // resubmits genuinely unmatched goes to Disputed instead of failing loudly.
+        // The probe gets its own timeout — the edit grid mounts well after the form,
+        // and the config's 5s actionTimeout is what expired in run 1.
+        const fix = this.page.locator(`xpath=${L.invoiceFixBtn}`).first();
+        if (await fix.isVisible({ timeout: 15000 }).catch(() => false)) {
+            await this.matchGrnInItemMatching({ reselect: true });
+            await this.page.waitForTimeout(500);
+            // Item Matching can push the GRN's matched qty back into the row.
+            // ensureInvoiceQty is a no-op when the cell already reads `qty`.
+            await this.ensureInvoiceQty(qty);
+        } else {
+            console.log(`[${tag}] No FIX button on the edit form — the GRN match survived the reject, nothing to re-match.`);
+        }
+
+        await this.submitInvoice();
+        console.log(`[${tag}] Resubmitted the rejected invoice at qty ${qty}`);
+    }
+
+    /** Open the Transactions tab on whatever CAPP document is on screen.
+     *
+     *  Mirrors openCxoTransactionsTab rather than using a single xpath: the tab
+     *  renders an icon before its label, so normalize-space(text()) reads the
+     *  leading whitespace node and never matches, and the tab strip mounts late.
+     */
+    async openPoTransactionsTab() {
+        const tabs = this.page.locator(`xpath=//*[normalize-space(.)="Transactions"]`);
+        let n = 0;
+        for (let waited = 0; waited < 30000; waited += 1000) {
+            n = await tabs.count();
+            if (n > 0) {
+                let anyVisible = false;
+                for (let i = 0; i < n && !anyVisible; i++) {
+                    anyVisible = await tabs.nth(i).isVisible().catch(() => false);
+                }
+                if (anyVisible) break;
+            }
+            await this.page.waitForTimeout(1000);
+        }
+        for (let i = 0; i < n; i++) {
+            const t = tabs.nth(i);
+            if (!await t.isVisible().catch(() => false)) continue;
+            await t.click({ timeout: 15000 }).catch(() => {});
+            await this.page.waitForTimeout(4000);
+            console.log(`[PO] opened PO Transactions tab (match ${i + 1}/${n})`);
+            return;
+        }
+        throw new Error(`[PO] no visible "Transactions" tab among ${n} matches`);
+    }
+
+    /** Every invoice code listed in the open Transactions tab, IN ORDER and WITH
+     *  repeats preserved — a duplicate DB entry is exactly a repeat, so
+     *  de-duplicating here would delete the finding this scenario exists to make.
+     */
+    async readPoTransactionInvoiceCodes() {
+        const codes = await this.page.evaluate(() => {
+            const seen = [];
+            // Row-scoped rather than a body-wide regex: a body scrape also picks up
+            // the code in a toast or breadcrumb and inflates the count.
+            const rows = document.querySelectorAll('tr,[role="row"],[data-slot="table-row"]');
+            for (const r of rows) {
+                const txt = (r.innerText || '').trim();
+                const m = txt.match(/Invoice-[A-Z0-9-]*\d+/gi);
+                if (m) seen.push(...m);
+            }
+            return seen;
+        });
+        console.log(`[PO] Transactions tab lists ${codes.length} invoice row(s): ${JSON.stringify(codes)}`);
+        return codes;
+    }
+
     /** Open the saved PO → Create → Invoice, and assert the reduced qty is
      *  available for creating a new Invoice. */
     async assertPoQtyAvailableForInvoice(qty, data) {

@@ -34,9 +34,14 @@ export default defineConfig({
     // slow page, not just a slow server.
     navigationTimeout: 15000,
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    // PW_LIGHT=1 turns off video and trace capture. Both buffer for the WHOLE
+    // test, and on a long headed run that is enough to get the process killed:
+    // the 10-invoice scenario-116 run was OOM-killed by macOS at ~25 min on
+    // 2026-09-15. Screenshots and the error-context DOM snapshot still survive,
+    // and those are what actually diagnose failures here. Default is unchanged.
+    video: process.env.PW_LIGHT ? 'off' : 'retain-on-failure',
     // Trace on failure even if a run forgets the `--trace on` CLI flag.
-    trace: 'retain-on-failure',
+    trace: process.env.PW_LIGHT ? 'off' : 'retain-on-failure',
   },
 
   projects: [
@@ -49,7 +54,7 @@ export default defineConfig({
     {
       name: 'tests',
       // Exclude the NSE Foundation + Supplier specs — they have their own login
-      testMatch: /testSuite(?!NSEFhappyPATHS|CxoInvoice|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests|SupplierPortal|allmodulesrejectedit|InvoiceDisputed|ModuleListings|CrossModuleDocs|Requisition|ActivityTimeline|RFXAnalysis|SaveEditSubmit|Dashboard|SupplierOnboarding|PurchaseOrder|InvoiceAckRules|CxoClone|QaClarified|Reports|AuctionFlow|AllReports|ShortClose|DoubleSubmit|RfxEvaluation|InvoiceVendorRpt|PrEdit|PrcView|SupplierIfsc|GrnCancel|InvoiceMsme|PoAmendBudget|RfxCollab|InvoiceCancel|AdvancePayments|Attachments|InvoiceCancelGrn|AwardJustification|InvoiceRefValidation|InvoiceReviewValidation|PoRecall|RejectedNotPending|CxoRevertPartialBudget|IntakePartialRfxReuse|CxoTwoIntakePayments|AwardCancelReaward|IntakeBulkUpload|IntakeOverQtyRfx|IntakeDoubleTabRfx|AwardAttachmentCarry|PoRejectEditPrc|PrCloneBudget|ShortCloseBudget).*\.spec\.js/,
+      testMatch: /testSuite(?!NSEFhappyPATHS|CxoInvoice|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests|SupplierPortal|allmodulesrejectedit|InvoiceDisputed|ModuleListings|CrossModuleDocs|Requisition|ActivityTimeline|RFXAnalysis|SaveEditSubmit|Dashboard|SupplierOnboarding|PurchaseOrder|InvoiceAckRules|CxoClone|QaClarified|Reports|AuctionFlow|AllReports|ShortClose|DoubleSubmit|RfxEvaluation|InvoiceVendorRpt|PrEdit|PrcView|SupplierIfsc|GrnCancel|InvoiceMsme|PoAmendBudget|RfxCollab|InvoiceCancel|AdvancePayments|Attachments|InvoiceCancelGrn|AwardJustification|InvoiceRefValidation|InvoiceReviewValidation|PoRecall|RejectedNotPending|CxoRevertPartialBudget|IntakePartialRfxReuse|CxoTwoIntakePayments|AwardCancelReaward|IntakeBulkUpload|IntakeOverQtyRfx|IntakeDoubleTabRfx|AwardAttachmentCarry|PoRejectEditPrc|PrCloneBudget|ShortCloseBudget|InvoiceNoDuplicates).*\.spec\.js/,
       use: {
         storageState: 'auth.json',
       },
@@ -63,7 +68,7 @@ export default defineConfig({
 
     {
       name: 'nsef-tests',
-      testMatch: /testSuite(NSEFhappyPATHS|CxoInvoice|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests|allmodulesrejectedit|InvoiceDisputed|ModuleListings|CrossModuleDocs|Requisition|ActivityTimeline|RFXAnalysis|SaveEditSubmit|Dashboard|SupplierOnboarding|PurchaseOrder|InvoiceAckRules|CxoClone|QaClarified|Reports|AuctionFlow|AllReports|ShortClose|DoubleSubmit|RfxEvaluation|InvoiceVendorRpt|PrEdit|PrcView|SupplierIfsc|GrnCancel|InvoiceMsme|PoAmendBudget|RfxCollab|InvoiceCancel|AdvancePayments|Attachments|InvoiceCancelGrn|AwardJustification|InvoiceRefValidation|PoRecall|RejectedNotPending|CxoRevertPartialBudget|IntakePartialRfxReuse|CxoTwoIntakePayments|AwardCancelReaward|IntakeBulkUpload|IntakeOverQtyRfx|IntakeDoubleTabRfx|AwardAttachmentCarry|PoRejectEditPrc|PrCloneBudget|ShortCloseBudget)\.spec\.js/,
+      testMatch: /testSuite(NSEFhappyPATHS|CxoInvoice|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests|allmodulesrejectedit|InvoiceDisputed|ModuleListings|CrossModuleDocs|Requisition|ActivityTimeline|RFXAnalysis|SaveEditSubmit|Dashboard|SupplierOnboarding|PurchaseOrder|InvoiceAckRules|CxoClone|QaClarified|Reports|AuctionFlow|AllReports|ShortClose|DoubleSubmit|RfxEvaluation|InvoiceVendorRpt|PrEdit|PrcView|SupplierIfsc|GrnCancel|InvoiceMsme|PoAmendBudget|RfxCollab|InvoiceCancel|AdvancePayments|Attachments|InvoiceCancelGrn|AwardJustification|InvoiceRefValidation|PoRecall|RejectedNotPending|CxoRevertPartialBudget|IntakePartialRfxReuse|CxoTwoIntakePayments|AwardCancelReaward|IntakeBulkUpload|IntakeOverQtyRfx|IntakeDoubleTabRfx|AwardAttachmentCarry|PoRejectEditPrc|PrCloneBudget|ShortCloseBudget|InvoiceNoDuplicates)\.spec\.js/,
       // Reuse the one-time NSEF login captured by nsef-setup.
       use: {
         storageState: 'auth.nsef.json',
