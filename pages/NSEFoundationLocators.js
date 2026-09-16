@@ -362,6 +362,25 @@ export const NSEFoundation_Locators = {
     // QUANTITY group. Distinct from the GRN's line_items_received.
     invoiceQtyCell:       `//div[@role='grid']//div[contains(@class,'ag-row')][@row-index='0']//div[@col-id='line_items_quantity']`,
 
+    // ── Invoice line-item TAX (scenario 58) ──────────────────────────────────
+    // Same AG grid as invoiceQtyCell, different col-id. The tax editor renders in
+    // a body-level portal (this grid uses ant-select elsewhere — see nonPoAntOption),
+    // so the option is matched in the OPEN dropdown, never inside the cell.
+    invoiceTaxCell:        `//div[@role='grid']//div[contains(@class,'ag-row')][@row-index='0']//div[@col-id='line_items_tax']`,
+    invoiceNetTaxPctCell:  `//div[@role='grid']//div[contains(@class,'ag-row')][@row-index='0']//div[@col-id='line_items_net_tax_percentage']`,
+    invoiceTaxValueCell:   `//div[@role='grid']//div[contains(@class,'ag-row')][@row-index='0']//div[@col-id='line_items_tax_value']`,
+    gridSelectDropdownOpen: `.ant-select-dropdown:not(.ant-select-dropdown-hidden)`,
+    gridSelectOptionFor: (needle) =>
+        `//*[contains(@class,'ant-select-dropdown') and not(contains(@class,'ant-select-dropdown-hidden'))]`
+        + `//*[contains(@class,'ant-select-item-option')][contains(normalize-space(.),'${needle}')]`
+        + ` | //*[@role='option'][contains(normalize-space(.),'${needle}')]`
+        + ` | //li[contains(@class,'MuiMenuItem')][contains(normalize-space(.),'${needle}')]`,
+
+    // Workflow-level status badges used by scenario 58's end-state assertion.
+    // Per-stage rows carry their own badges, so readWorkflowRuns() confines the
+    // search to the smallest ancestor holding exactly one "Workflow N" label.
+    workflowRunLabel: `//*[starts-with(normalize-space(text()),'Workflow ')]`,
+
     // ── PO → Invoice (Create → Invoice → /invoices/new) ───────────────────────
     poCreateInvoiceOption: `//li[@role='menuitem'][normalize-space(.)='Invoice'] | //*[@role='menuitem'][normalize-space(.)='Invoice']`,
     // "Confirm Invoice Creation" popup → Proceed (MUI button in dialog)

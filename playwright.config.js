@@ -54,7 +54,7 @@ export default defineConfig({
     {
       name: 'tests',
       // Exclude the NSE Foundation + Supplier specs — they have their own login
-      testMatch: /testSuite(?!NSEFhappyPATHS|CxoInvoice|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests|SupplierPortal|allmodulesrejectedit|InvoiceDisputed|ModuleListings|CrossModuleDocs|Requisition|ActivityTimeline|RFXAnalysis|SaveEditSubmit|Dashboard|SupplierOnboarding|PurchaseOrder|InvoiceAckRules|CxoClone|QaClarified|Reports|AuctionFlow|AllReports|ShortClose|DoubleSubmit|RfxEvaluation|InvoiceVendorRpt|PrEdit|PrcView|SupplierIfsc|GrnCancel|InvoiceMsme|PoAmendBudget|RfxCollab|InvoiceCancel|AdvancePayments|Attachments|InvoiceCancelGrn|AwardJustification|InvoiceRefValidation|InvoiceReviewValidation|PoRecall|RejectedNotPending|CxoRevertPartialBudget|IntakePartialRfxReuse|CxoTwoIntakePayments|AwardCancelReaward|IntakeBulkUpload|IntakeOverQtyRfx|IntakeDoubleTabRfx|AwardAttachmentCarry|PoRejectEditPrc|PrCloneBudget|ShortCloseBudget|InvoiceNoDuplicates).*\.spec\.js/,
+      testMatch: /testSuite(?!NSEFhappyPATHS|CxoInvoice|NsefCXOtest|IntakeNegative|IntakeListing|NSETracksHotfixes|RFXtests|SupplierPortal|allmodulesrejectedit|InvoiceDisputed|ModuleListings|CrossModuleDocs|Requisition|ActivityTimeline|RFXAnalysis|SaveEditSubmit|Dashboard|SupplierOnboarding|PurchaseOrder|InvoiceAckRules|CxoClone|QaClarified|Reports|AuctionFlow|AllReports|ShortClose|DoubleSubmit|RfxEvaluation|InvoiceVendorRpt|PrEdit|PrcView|SupplierIfsc|GrnCancel|InvoiceMsme|PoAmendBudget|RfxCollab|InvoiceCancel|AdvancePayments|Attachments|InvoiceCancelGrn|AwardJustification|InvoiceRefValidation|InvoiceReviewValidation|PoRecall|RejectedNotPending|CxoRevertPartialBudget|IntakePartialRfxReuse|CxoTwoIntakePayments|AwardCancelReaward|IntakeBulkUpload|IntakeOverQtyRfx|IntakeDoubleTabRfx|AwardAttachmentCarry|PoRejectEditPrc|PrCloneBudget|ShortCloseBudget|InvoiceNoDuplicates|InvoiceTaxQtyWorkflow).*\.spec\.js/,
       use: {
         storageState: 'auth.json',
       },
@@ -83,7 +83,7 @@ export default defineConfig({
 
     {
       name: 'supplier-tests',
-      testMatch: /testSuite(SupplierPortal|InvoiceReviewValidation)\.spec\.js/,
+      testMatch: /testSuite(SupplierPortal|InvoiceReviewValidation|InvoiceTaxQtyWorkflow)\.spec\.js/,
       // Combined CAPP + SAPP session so both portals are authenticated.
       use: {
         storageState: 'auth.supplier.json',

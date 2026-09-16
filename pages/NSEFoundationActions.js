@@ -5714,7 +5714,27 @@ export class NSEFoundationActions {
                 await this._approveWithNotes(comments, 'GRN');
             } else {
                 if (await inwarded()) return;
-                console.log('[GRN] Approve missing — reassigning approver to NSEF Support Admin...');
+                // Don't conclude "no Approve" from one 4s probe. This page renders its
+                // header actions LATE — the same race documented on the invoice detail
+                // page — and on 2026-09-16 a GRN that had passed two stages reported
+                // Approve missing AND "Reassign option not available", i.e. neither
+                // control had mounted yet, and the chain died one step from Inwarded.
+                // Reload once and look again before falling back to a reassign.
+                console.log('[GRN] Approve not visible — reloading and re-checking...');
+                await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+                await this.page.waitForTimeout(6000);
+                if (await inwarded()) {
+                    console.log(`[GRN] Status Inwarded after ${i} approval(s) (seen after reload).`);
+                    return;
+                }
+                const approveAfterReload = await this.page.locator(`xpath=${L.poApproveBtn}`).first()
+                    .isVisible({ timeout: 15000 }).catch(() => false);
+                if (approveAfterReload) {
+                    console.log(`[GRN] Approve appeared after reload — approving stage ${i + 1}...`);
+                    await this._approveWithNotes(comments, 'GRN');
+                    continue;
+                }
+                console.log('[GRN] Approve still missing — reassigning approver to NSEF Support Admin...');
                 if (!(await this.reassignWorkflowApprover('Reassigned for automated testing', 'GRN'))) break;
             }
         }
@@ -10238,6 +10258,789 @@ export class NSEFoundationActions {
             const i = t.findIndex(x => /^RFX-\d/.test(x));
             return i === -1 ? null : t[i + 1];
         });
+    }
+
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // SCENARIO 58 — tax at the supplier review stage, qty change at the CAPP
+    // review stage, and what that does to the workflow.
+    //
+    // Flow: SAPP creates a PO invoice at qty 70 -> CAPP supplier review adds an
+    // 18% line-item tax -> submit triggers the CAPP workflow -> at the CAPP
+    // review stage the qty is raised 70 -> 100 -> submit must REJECT the
+    // in-flight workflow and start a fresh one.
+    // ═════════════════════════════════════════════════════════════════════════
+
+    /** Current qty in the invoice line-item grid, digits only ("70.000" -> "70").
+     *  Used to prove the 70 survived Item Matching before the tax is added — the
+     *  match step can push the GRN's own qty back into the row. */
+    async readInvoiceLineQty() {
+        const cell = this.page.locator(`xpath=${L.invoiceQtyCell}`).first();
+        if (!await cell.isVisible({ timeout: 8000 }).catch(() => false)) return null;
+        const txt = (await cell.textContent().catch(() => '')) ?? '';
+        const m = txt.replace(/,/g, '').match(/\d+(?:\.\d+)?/);
+        return m ? String(parseFloat(m[0])) : '';
+    }
+
+    /** Pick a tax from the line-item TAX dropdown (col-id line_items_tax).
+     *  `needle` matches the option text, so '18' picks whatever the tenant calls
+     *  its 18% code. The editor is a portal-rendered select, so the option is
+     *  matched in the open dropdown rather than inside the cell; a double-click
+     *  opens it, with a single click as the fallback because AG cell editors
+     *  differ by column type. Verified by reading the tax and net-tax-% cells
+     *  back — a silent no-op here would leave nothing for the workflow assertion
+     *  to observe and fail far from the cause. */
+    /** Every col-id in line-item row 0 with the text it displays. The invoice grid
+     *  has more tax-ish columns than the sheet implies (tax, net_tax_percentage,
+     *  tax_value), so when a pick does not show up this says exactly which column
+     *  moved instead of guessing. */
+    async readInvoiceRow0Cells() {
+        return await this.page.evaluate(() => {
+            const row = document.querySelector("[role='grid'] .ag-row[row-index='0']")
+                     || document.querySelector("[role='grid'] [row-index='0']");
+            if (!row) return null;
+            const out = {};
+            row.querySelectorAll('[col-id]').forEach(c => {
+                out[c.getAttribute('col-id')] = (c.textContent || '').replace(/\s+/g, ' ').trim();
+            });
+            return out;
+        });
+    }
+
+    /** Full structure of every line-item grid on the page: its header texts and,
+     *  per AG container (pinned-left / center / pinned-right), the row-0 cells keyed
+     *  by col-id. Needed because this grid PINS columns: row-index 0 exists once per
+     *  container, so a single "row 0" read returns only the pinned slice (observed
+     *  2026-09-16: just ag-Grid-AutoColumn + line_items_product, with quantity and
+     *  tax living in the centre container). */
+    async readInvoiceGrids() {
+        return await this.page.evaluate(() => {
+            const grids = [...document.querySelectorAll("[role='grid']")];
+            return grids.map((g, gi) => {
+                const headers = [...g.querySelectorAll("[role='columnheader']")]
+                    .map(h => (h.textContent || '').replace(/\s+/g, ' ').trim()).filter(Boolean);
+                const containers = ['.ag-pinned-left-cols-container',
+                                    '.ag-center-cols-container',
+                                    '.ag-pinned-right-cols-container'];
+                const parts = {};
+                for (const sel of containers) {
+                    const c = g.querySelector(sel);
+                    if (!c) continue;
+                    const row = c.querySelector("[row-index='0']");
+                    if (!row) continue;
+                    const cells = {};
+                    row.querySelectorAll('[col-id]').forEach(cell => {
+                        cells[cell.getAttribute('col-id')] =
+                            (cell.textContent || '').replace(/\s+/g, ' ').trim();
+                    });
+                    parts[sel.replace('.ag-', '').replace('-cols-container', '')] = cells;
+                }
+                if (!Object.keys(parts).length) {
+                    const row = g.querySelector("[row-index='0']");
+                    if (row) {
+                        const cells = {};
+                        row.querySelectorAll('[col-id]').forEach(cell => {
+                            cells[cell.getAttribute('col-id')] =
+                                (cell.textContent || '').replace(/\s+/g, ' ').trim();
+                        });
+                        parts.unpinned = cells;
+                    }
+                }
+                return { grid: gi, headers, parts };
+            });
+        });
+    }
+
+    /** Open the line-item tax cell's editor and report what it actually is: the
+     *  cell's own markup plus every dropdown portal now on screen with its options.
+     *  The tax column is the one field on this grid whose editor type was never
+     *  established, and an unscoped option match can silently click a list that
+     *  belongs to some other control. */
+    async probeTaxEditor(tag = 'S58-PROBE') {
+        const cell = this.page.locator(
+            ".ag-center-cols-container [row-index='0'] [col-id='line_items_tax']").first();
+        await cell.scrollIntoViewIfNeeded().catch(() => {});
+        const before = await cell.innerHTML().catch(() => '(no cell)');
+        await cell.dblclick().catch(() => {});
+        await this.page.waitForTimeout(1500);
+        const info = await this.page.evaluate(() => {
+            const vis = (e) => {
+                const r = e.getBoundingClientRect();
+                return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden';
+            };
+            const cell = document.querySelector(
+                ".ag-center-cols-container [row-index='0'] [col-id='line_items_tax']");
+            const editors = cell
+                ? [...cell.querySelectorAll('input, select, textarea, [contenteditable="true"], [role="combobox"]')]
+                    .map(e => ({ tag: e.tagName, cls: e.className, role: e.getAttribute('role') || '',
+                                 ph: e.getAttribute('placeholder') || '' }))
+                : [];
+            const portals = [...document.querySelectorAll(
+                    '.ant-select-dropdown, [role="listbox"], .MuiPopover-root, .MuiMenu-root, .ag-popup')]
+                .filter(vis)
+                .map(d => ({
+                    cls: d.className.slice(0, 120),
+                    options: [...d.querySelectorAll(
+                        '.ant-select-item-option, [role="option"], li, .ag-list-item')]
+                        .map(o => (o.textContent || '').trim()).filter(Boolean).slice(0, 25),
+                }));
+            return { cellHtml: cell ? cell.innerHTML.slice(0, 600) : '(no cell)', editors, portals };
+        });
+        console.log(`[${tag}] tax cell BEFORE dblclick: ${JSON.stringify(before.slice(0, 300))}`);
+        console.log(`[${tag}] tax editor probe → ${JSON.stringify(info, null, 1)}`);
+        return info;
+    }
+
+    /** Put a tax on invoice line-item row 0.
+     *
+     *  The editor is an ant-select in MULTIPLE mode (probed live 2026-09-16:
+     *  `ant-select-multiple ant-select-allow-clear ant-select-show-search`,
+     *  identificationkey="line_items_tax", type="taxes"), and its options are
+     *  "28%", "12%", "5%", "18%" plus several "exempt" entries.
+     *
+     *  Two consequences drove this implementation:
+     *   - A multi-select does NOT close on pick, so the value only reaches the cell
+     *     when the AG editor stops. Escape REVERTS it (the pick read back as "-" on
+     *     the first attempt) and a click on the page background is absorbed by the
+     *     dropdown overlay, so the commit is Tab, then a neighbouring cell as backup.
+     *   - The option list must be scoped to the dropdown this cell opened. An
+     *     unscoped `contains(.,'18')` can match a list belonging to some other
+     *     control entirely, which looks like success and changes nothing. */
+    async setInvoiceLineTax(needle = '18%', tag = 'S58') {
+        const CELL   = ".ag-center-cols-container [row-index='0'] [col-id='line_items_tax']";
+        const NEIGH  = ".ag-center-cols-container [row-index='0'] [col-id='line_items_uom']";
+        const POPUP  = '.ant-select-dropdown:not(.ant-select-dropdown-hidden)';
+        const cell   = this.page.locator(CELL).first();
+
+        if (!await cell.isVisible({ timeout: 15000 }).catch(() => false)) {
+            console.log(`[${tag}] tax cell (col-id line_items_tax) not on this grid — dumping`);
+            console.log(`[${tag}] grids → ${JSON.stringify(await this.readInvoiceGrids())}`);
+            throw new Error('[S58] Invoice line-item tax cell (line_items_tax) not found.');
+        }
+
+        const readTax = async () =>
+            ((await cell.textContent().catch(() => '')) ?? '').replace(/\s+/g, ' ').trim();
+
+        let picked = null;
+        for (let attempt = 1; attempt <= 3 && !picked; attempt++) {
+            await cell.scrollIntoViewIfNeeded().catch(() => {});
+            await cell.dblclick().catch(() => {});
+            await this.page.waitForTimeout(1200);
+
+            const popup = this.page.locator(POPUP).first();
+            if (!await popup.isVisible({ timeout: 4000 }).catch(() => false)) {
+                console.log(`[${tag}] tax dropdown did not open (attempt ${attempt})`);
+                await this.page.keyboard.press('Tab').catch(() => {});
+                continue;
+            }
+
+            // Exact option first ("18%"), then a contains fallback — "18" alone would
+            // also match an id-like "13"/"14" entry in this list.
+            const exact   = popup.locator('.ant-select-item-option', { hasText: new RegExp(`^\\s*${needle.replace('%', '\\%')}\\s*$`) }).first();
+            const loose   = popup.locator('.ant-select-item-option', { hasText: needle }).first();
+            const target  = (await exact.count().catch(() => 0)) ? exact : loose;
+
+            if (!await target.isVisible({ timeout: 3000 }).catch(() => false)) {
+                const offered = await popup.locator('.ant-select-item-option')
+                    .allInnerTexts().catch(() => []);
+                console.log(`[${tag}] "${needle}" not offered (attempt ${attempt}); `
+                    + `options=${JSON.stringify(offered)}`);
+                await this.page.keyboard.press('Tab').catch(() => {});
+                continue;
+            }
+            picked = (await target.innerText().catch(() => '')).trim();
+            await target.click();
+            await this.page.waitForTimeout(1000);
+        }
+        if (!picked) {
+            await this.probeTaxEditor(`${tag}-tax-fail`);
+            throw new Error(`[S58] Could not pick a tax matching "${needle}".`);
+        }
+
+        // Commit. Tab closes the multi-select AND stops the AG editor; if the cell
+        // still reads empty, clicking a neighbouring cell in the same grid is the
+        // fallback that commits without leaving the grid.
+        await this.page.keyboard.press('Tab').catch(() => {});
+        await this.page.waitForTimeout(2000);
+        let tax = await readTax();
+        if (!tax || tax === '-') {
+            console.log(`[${tag}] tax still "${tax}" after Tab — committing via a neighbour cell`);
+            await this.page.locator(NEIGH).first().click().catch(() => {});
+            await this.page.waitForTimeout(2000);
+            tax = await readTax();
+        }
+
+        const row = await this.readInvoiceRow0Cells();
+        const grids = await this.readInvoiceGrids();
+        const centre = (grids?.[0]?.parts?.center) || {};
+        console.log(`[${tag}] tax picked "${picked}" → tax cell="${tax}"`);
+        console.log(`[${tag}] centre row → ${JSON.stringify(centre)}`);
+
+        const landed = String(tax).includes(needle.replace('%', ''))
+            || Object.entries(centre).some(([k, v]) =>
+                   /tax/i.test(k) && v && v !== '-' && v.includes(needle.replace('%', '')));
+        expect(landed,
+            `the ${needle} tax was picked ("${picked}") but the row does not carry it — tax cell `
+            + `reads "${tax}". Full centre row: ${JSON.stringify(centre)}. Nothing changed on the `
+            + `invoice, so the workflow re-trigger this scenario checks would have no cause.`)
+            .toBeTruthy();
+        return { picked, tax, centre, row };
+    }
+
+    /** What the OLD-CAPP (v3) invoice page offers for viewing the approval
+     *  workflow. openWorkflowStages() drives the v4 intake surface (More →
+     *  Workflow Stages) and times out here, so the v3 entry point has to be found
+     *  before the scenario-58 end-state can be asserted at all. */
+    async probeWorkflowSurface(tag = 'S58-WF') {
+        const info = await this.page.evaluate(() => {
+            const txt = e => (e.textContent || '').replace(/\s+/g, ' ').trim();
+            const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+            const buttons = [...document.querySelectorAll('button, [role="button"]')]
+                .filter(vis).map(txt).filter(Boolean).slice(0, 60);
+            const tabs = [...document.querySelectorAll('[role="tab"], .MuiTab-root, .ant-tabs-tab')]
+                .filter(vis).map(txt).filter(Boolean).slice(0, 30);
+            const workflowish = [...document.querySelectorAll('*')]
+                .filter(e => !e.children.length && /workflow/i.test(txt(e)))
+                .map(e => ({ text: txt(e).slice(0, 80), tag: e.tagName,
+                             cls: (e.className || '').toString().slice(0, 60) }))
+                .slice(0, 25);
+            const runLabels = [...document.querySelectorAll('*')]
+                .filter(e => !e.children.length && /^Workflow\s+\d+$/.test(txt(e)))
+                .map(txt);
+            return { url: location.href, buttons, tabs, workflowish, runLabels };
+        });
+        console.log(`[${tag}] workflow surface → ${JSON.stringify(info, null, 1)}`);
+
+        // The v3 invoice page hides its approval history behind the Overview tab and
+        // the More menu; dump both rather than assume either carries it.
+        const dumpStageish = async (where) => {
+            const found = await this.page.evaluate(() => {
+                const txt = e => (e.textContent || '').replace(/\s+/g, ' ').trim();
+                const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+                const KEY = /(stage|approv|rejected|\bactive\b|workflow|pending on|level)/i;
+                return [...document.querySelectorAll('*')]
+                    .filter(e => !e.children.length && vis(e) && KEY.test(txt(e)))
+                    .map(txt).filter(t => t.length < 90)
+                    .filter((t, i, arr) => arr.indexOf(t) === i)
+                    .slice(0, 45);
+            });
+            console.log(`[${tag}] ${where} stage-ish text → ${JSON.stringify(found)}`);
+        };
+        await dumpStageish('current view');
+
+        const more = this.page.locator(`xpath=${L.moreBtn}`).first();
+        if (await more.isVisible({ timeout: 5000 }).catch(() => false)) {
+            await more.click().catch(() => {});
+            await this.page.waitForTimeout(1200);
+            const items = await this.page
+                .locator('[role="menuitem"], .MuiMenuItem-root, li[role="option"]')
+                .allInnerTexts().catch(() => []);
+            console.log(`[${tag}] More menu → ${JSON.stringify(items.map(x => x.trim()).filter(Boolean))}`);
+            await this.page.keyboard.press('Escape').catch(() => {});
+            await this.page.waitForTimeout(600);
+        }
+        for (const tabName of ['Overview', 'Transactions']) {
+            const tab = this.page.locator(`xpath=//*[@role='tab'][normalize-space(.)='${tabName}']`
+                + ` | //button[normalize-space(.)='${tabName}']`).first();
+            if (await tab.isVisible({ timeout: 4000 }).catch(() => false)) {
+                await tab.click().catch(() => {});
+                await this.page.waitForTimeout(2500);
+                await dumpStageish(`${tabName} tab`);
+            }
+        }
+        return info;
+    }
+
+    /** Exhaustive hunt for an invoice approval-history surface: scroll the page to
+     *  trigger lazy sections, click every collapsed accordion/section header, then
+     *  dump ALL section headers and every stage-ish string regardless of
+     *  visibility. A visible-only probe called this absent once already, and a
+     *  collapsed accordion is exactly what that misses. */
+    async huntInvoiceWorkflowSurface(tag = 'S58-HUNT') {
+        // Scroll to the bottom in steps so anything lazy mounts.
+        for (let i = 0; i < 6; i++) {
+            await this.page.evaluate(() => window.scrollBy(0, window.innerHeight));
+            await this.page.waitForTimeout(700);
+        }
+        const headers = await this.page.evaluate(() => {
+            const txt = e => (e.textContent || '').replace(/\s+/g, ' ').trim();
+            return [...document.querySelectorAll(
+                'h1,h2,h3,h4,h5,h6,.MuiAccordionSummary-content,[class*="accordion"],'
+                + '[class*="Accordion"],[class*="section-title"],[class*="panel-title"],'
+                + '.ant-collapse-header,summary')]
+                .map(txt).filter(t => t && t.length < 70)
+                .filter((t, i, a) => a.indexOf(t) === i).slice(0, 60);
+        });
+        console.log(`[${tag}] section headers → ${JSON.stringify(headers)}`);
+
+        // Click anything that looks collapsed.
+        const clickable = this.page.locator(
+            '.MuiAccordionSummary-root, .ant-collapse-header, [aria-expanded="false"], summary');
+        const n = Math.min(await clickable.count().catch(() => 0), 25);
+        console.log(`[${tag}] collapsed candidates: ${n}`);
+        for (let i = 0; i < n; i++) {
+            await clickable.nth(i).click({ timeout: 2500 }).catch(() => {});
+            await this.page.waitForTimeout(350);
+        }
+        await this.page.waitForTimeout(2000);
+
+        const found = await this.page.evaluate(() => {
+            const txt = e => (e.textContent || '').replace(/\s+/g, ' ').trim();
+            const all = [...document.querySelectorAll('*')].filter(e => !e.children.length);
+            const runs = all.map(txt).filter(t => /^Workflow\s+\d+$/.test(t));
+            const statuses = all.map(txt)
+                .filter(t => /^(Active|Rejected|Completed|Inactive|Pending|Approved)$/i.test(t));
+            const stageish = all.map(txt)
+                .filter(t => /(stage|approval|rejected|workflow|pending on|level \d)/i.test(t))
+                .filter(t => t.length < 90)
+                .filter((t, i, a) => a.indexOf(t) === i).slice(0, 50);
+            return { runs, statuses, stageish };
+        });
+        console.log(`[${tag}] after expanding → ${JSON.stringify(found, null, 1)}`);
+        return found;
+    }
+
+    /** Dump EVERY clickable in the invoice header, including icon-only ones.
+     *  The earlier probe mapped textContent and dropped empties, so an icon button
+     *  ("See Workflow Stages", which QA confirmed sits beside Review) could not
+     *  appear in its output at all. */
+    async probeHeaderControls(tag = 'S58-HDR') {
+        const info = await this.page.evaluate(() => {
+            const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+            const txt = e => (e.textContent || '').replace(/\s+/g, ' ').trim();
+            return [...document.querySelectorAll('button, [role="button"], a[class*="btn"], svg[class*="lucide"]')]
+                .filter(vis)
+                .map(e => {
+                    const r = e.getBoundingClientRect();
+                    const svg = e.querySelector('svg');
+                    return {
+                        tag: e.tagName,
+                        text: txt(e).slice(0, 40),
+                        aria: e.getAttribute('aria-label') || '',
+                        title: e.getAttribute('title') || e.querySelector('[title]')?.getAttribute('title') || '',
+                        dataTip: e.getAttribute('data-tooltip') || e.getAttribute('data-testid') || '',
+                        cls: (e.className || '').toString().slice(0, 70),
+                        svgCls: svg ? (svg.getAttribute('class') || '').slice(0, 60) : '',
+                        xy: `${Math.round(r.x)},${Math.round(r.y)}`,
+                    };
+                })
+                .filter(b => b.y !== undefined || true)
+                .slice(0, 70);
+        });
+        console.log(`[${tag}] header controls → ${JSON.stringify(info, null, 1)}`);
+
+        // The header icons carry no text, aria-label, title or svg class, so identify
+        // them by their markup (img src / alt) and by hover tooltip.
+        const icons = await this.page.evaluate(() => {
+            const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+            return [...document.querySelectorAll('button')]
+                .filter(vis)
+                .filter(b => Math.abs(b.getBoundingClientRect().y - 74) < 30)
+                .map(b => {
+                    const r = b.getBoundingClientRect();
+                    const img = b.querySelector('img');
+                    return {
+                        x: Math.round(r.x),
+                        text: (b.textContent || '').trim().slice(0, 20),
+                        imgAlt: img ? (img.getAttribute('alt') || '') : '',
+                        imgSrc: img ? (img.getAttribute('src') || '').split('/').pop().slice(0, 60) : '',
+                        html: b.innerHTML.replace(/\s+/g, ' ').slice(0, 160),
+                    };
+                });
+        });
+        console.log(`[${tag}] header row icons → ${JSON.stringify(icons, null, 1)}`);
+        return { info, icons };
+    }
+
+    /** Hover each text-less header icon and report the tooltip it shows, so the
+     *  "See Workflow Stages" control can be identified by what the app calls it
+     *  rather than by screen position. */
+    async identifyHeaderIcons(tag = 'S58-TIP') {
+        const buttons = this.page.locator('button').filter({ hasText: /^$/ });
+        const n = Math.min(await buttons.count().catch(() => 0), 30);
+        const found = [];
+        for (let i = 0; i < n; i++) {
+            const b = buttons.nth(i);
+            const box = await b.boundingBox().catch(() => null);
+            if (!box || Math.abs(box.y - 74) > 30) continue;
+            await b.hover().catch(() => {});
+            await this.page.waitForTimeout(900);
+            const tip = await this.page.evaluate(() => {
+                const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+                const t = [...document.querySelectorAll(
+                    '[role="tooltip"], .MuiTooltip-tooltip, .ant-tooltip-inner, [class*="tooltip"]')]
+                    .filter(vis).map(e => (e.textContent || '').trim()).filter(Boolean);
+                return t[0] || '';
+            });
+            found.push({ x: Math.round(box.x), tooltip: tip });
+            console.log(`[${tag}] icon @x=${Math.round(box.x)} → tooltip ${JSON.stringify(tip)}`);
+        }
+        return found;
+    }
+
+    /** Open the invoice's "See Workflow Stages" panel (old-CAPP v3).
+     *
+     *  The control is an ICON-ONLY MUI button sitting between Review and More. It
+     *  carries no text, aria-label, title or svg class, and its only distinctive
+     *  classes are styled-component hashes (sc-ekulBa) that change on rebuild — so
+     *  it is identified by its HOVER TOOLTIP, which is the app's own name for it.
+     *  The button after Review in DOM order is tried first as the fast path. */
+    async openInvoiceWorkflowStages(tag = 'S58-WF') {
+        const headerIcons = this.page.locator('button').filter({ hasText: /^$/ });
+        const n = Math.min(await headerIcons.count().catch(() => 0), 40);
+
+        const tooltipOf = async (btn) => {
+            await btn.hover().catch(() => {});
+            await this.page.waitForTimeout(800);
+            return await this.page.evaluate(() => {
+                const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+                const t = [...document.querySelectorAll(
+                    '[role="tooltip"], .MuiTooltip-tooltip, .ant-tooltip-inner, [class*="tooltip"]')]
+                    .filter(vis).map(e => (e.textContent || '').trim()).filter(Boolean);
+                return t[0] || '';
+            });
+        };
+
+        let target = null, seen = [];
+        for (let i = 0; i < n; i++) {
+            const b = headerIcons.nth(i);
+            const box = await b.boundingBox().catch(() => null);
+            if (!box || box.y > 200) continue;          // header row only
+            const tip = await tooltipOf(b);
+            seen.push(`${Math.round(box.x)}:${tip || '-'}`);
+            if (/workflow/i.test(tip)) { target = b; break; }
+        }
+        if (!target) {
+            console.log(`[${tag}] no "See Workflow Stages" icon found; header icons → ${seen.join(', ')}`);
+            throw new Error('[S58] "See Workflow Stages" control not found on the invoice header.');
+        }
+        await target.click();
+        await this.page.waitForTimeout(3000);
+        console.log(`[${tag}] opened See Workflow Stages`);
+        return true;
+    }
+
+    /** Text of every visible leaf on the page — the basis for a before/after diff
+     *  around a click, which is how a panel that renders inline (no dialog role) is
+     *  located without guessing at its container class. */
+    async _visibleLeafText() {
+        return await this.page.evaluate(() => {
+            const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+            const txt = e => (e.textContent || '').replace(/\s+/g, ' ').trim();
+            return [...document.querySelectorAll('*')]
+                .filter(e => !e.children.length && vis(e))
+                .map(txt).filter(Boolean);
+        });
+    }
+
+    /** Dump whatever the workflow-stages panel renders, so the stage rows and their
+     *  status wording can be read before anything is asserted against them. */
+    async dumpWorkflowPanel(tag = 'S58-WF') {
+        const info = await this.page.evaluate(() => {
+            const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+            const txt = e => (e.textContent || '').replace(/\s+/g, ' ').trim();
+            const panel = [...document.querySelectorAll(
+                '[role="dialog"], .MuiDialog-root, .MuiDrawer-root, .ant-drawer, .ant-modal')]
+                .filter(vis).pop();
+            const scope = panel || document.body;
+            const lines = [...scope.querySelectorAll('*')]
+                .filter(e => !e.children.length && vis(e))
+                .map(txt).filter(Boolean)
+                .filter((t, i, a) => a.indexOf(t) === i)
+                .slice(0, 120);
+            return { hasPanel: !!panel, panelCls: panel ? panel.className.slice(0, 80) : '', lines };
+        });
+        console.log(`[${tag}] panel → ${JSON.stringify(info, null, 1)}`);
+        return info;
+    }
+
+    /** Parse the invoice's "Workflow Steps" panel into runs and their stage rows.
+     *
+     *  Probed live 2026-09-16. The panel renders INLINE (no dialog/drawer role) and
+     *  its leaf text arrives in DOM order as:
+     *
+     *      "Workflow Steps", "Workflow 1", "Active",
+     *      "1", "Completed", "1", "Sep 16, 2026",
+     *      "2", "In progress", "1",
+     *      "3", "Pending", "1",  ...  "7", "Skipped", "1"
+     *
+     *  So a stage row is a sequence NUMBER immediately followed by a stage status,
+     *  and the trailing "1" is an approver count, not a status. Two wording traps:
+     *  the RUN says "Active" while the CURRENT STAGE says "In progress", and the
+     *  panel shows no stage NAMES at all — only sequence numbers — so stages are
+     *  identified by position, which is the order QA configured (1 = supplier
+     *  review, 2 = CAPP review, then the remaining CAPP stages). */
+    async readInvoiceWorkflowState(tag = 'S58-WF') {
+        const state = await this.page.evaluate(() => {
+            const RUN_ST   = ['Active', 'Rejected', 'Completed', 'Inactive', 'Cancelled'];
+            const STAGE_ST = ['Completed', 'In progress', 'In Progress', 'Pending',
+                              'Skipped', 'Rejected', 'Approved'];
+            const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+            const txt = e => (e.textContent || '').replace(/\s+/g, ' ').trim();
+
+            const head = [...document.querySelectorAll('*')]
+                .find(e => !e.children.length && vis(e) && txt(e) === 'Workflow Steps');
+            if (!head) return { open: false, runs: [] };
+
+            // Smallest ancestor that holds the whole panel.
+            let box = head;
+            for (let i = 0; i < 10 && box.parentElement; i++) {
+                box = box.parentElement;
+                const t = txt(box);
+                if (/Workflow\s+\d+/.test(t) && /(Pending|Completed|In progress)/i.test(t)) break;
+            }
+
+            const tokens = [...box.querySelectorAll('*')]
+                .filter(e => !e.children.length && vis(e))
+                .map(txt).filter(Boolean);
+
+            const runs = [];
+            for (let i = 0; i < tokens.length; i++) {
+                const t = tokens[i];
+                if (/^Workflow\s+\d+$/.test(t)) {
+                    const status = RUN_ST.includes(tokens[i + 1]) ? tokens[i + 1] : null;
+                    runs.push({ name: t, n: parseInt(t.split(/\s+/)[1], 10), status, stages: [] });
+                    continue;
+                }
+                if (/^\d{1,2}$/.test(t) && runs.length) {
+                    const next = tokens[i + 1];
+                    if (STAGE_ST.includes(next)) {
+                        runs[runs.length - 1].stages.push({ seq: parseInt(t, 10), status: next });
+                        i += 1;
+                    }
+                }
+            }
+            return { open: true, runs, tokens };
+        });
+
+        if (!state.open) {
+            console.log(`[${tag}] Workflow Steps panel is not open`);
+            return state;
+        }
+        const render = state.runs.map(r =>
+            `${r.name}=${r.status ?? '?'} [${r.stages.map(s => `${s.seq}:${s.status}`).join(' ')}]`
+        ).join(' | ');
+        console.log(`[${tag}] workflow state → ${render}`);
+        return state;
+    }
+
+    /** Dismiss the Workflow Steps panel.
+     *
+     *  It is an inline overlay with no reachable dismiss: Escape does nothing, the
+     *  toggle icon is unreadable while it is up (every header tooltip goes blank,
+     *  and the icons shift position), and an outside click is swallowed. Verified
+     *  2026-09-16 across three attempts each. So the panel is cleared by RELOADING
+     *  the invoice page, which is also how the review-validation suite escapes a
+     *  stuck Workflow Summary modal. Leaves the invoice on its detail page with a
+     *  clickable header. */
+    async dismissInvoiceWorkflowStages(tag = 'S58-WF') {
+        await this.page.keyboard.press('Escape').catch(() => {});
+        await this.page.waitForTimeout(800);
+        if (!(await this.readInvoiceWorkflowState(tag)).open) {
+            console.log(`[${tag}] panel closed on Escape`);
+            return true;
+        }
+        const m = this.page.url().match(/^(https?:\/\/[^/]+)\/invoices\/(\d+)/);
+        if (!m) {
+            console.log(`[${tag}] cannot reload — unexpected url ${this.page.url()}`);
+            return false;
+        }
+        await this.page.goto(`${m[1]}/invoices/${m[2]}`,
+            { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.waitForTimeout(10000);
+        const open = (await this.readInvoiceWorkflowState(tag)).open;
+        console.log(`[${tag}] panel cleared by reload (still open: ${open})`);
+        return !open;
+    }
+
+    /** Status + money off the invoice detail header. Used to prove whether an edit
+     *  at the review stage actually PERSISTED: this app has a history of silent
+     *  submit blocks, and a workflow that looks unchanged could equally mean the
+     *  submit was refused without a message. qty 70 -> 1,40,000 + 18% = 1,65,200;
+     *  qty 100 -> 2,00,000 + 18% = 2,36,000, so the amount alone settles it. */
+    async readInvoiceMoneySnapshot(tag = 'S58') {
+        const snap = await this.page.evaluate(() => {
+            const txt = e => (e.textContent || '').replace(/\s+/g, ' ').trim();
+            const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+            const leaves = [...document.querySelectorAll('*')].filter(e => !e.children.length && vis(e));
+            const after = (label) => {
+                const i = leaves.findIndex(e => txt(e) === label);
+                return i >= 0 ? (txt(leaves[i + 1]) || '') : '';
+            };
+            const status = ['Pending Review', 'Pending Approval', 'Approved', 'Accounted',
+                            'Rejected', 'Cancelled', 'Disputed', 'Draft']
+                .find(st => leaves.some(e => txt(e) === st)) || '';
+            return {
+                status,
+                invoiceAmount: after('Invoice Amount'),
+                taxes: after('Taxes'),
+            };
+        });
+        console.log(`[${tag}] invoice header → ${JSON.stringify(snap)}`);
+        return snap;
+    }
+
+    /** Re-match the GRN after the invoice qty is changed at a review stage.
+     *
+     *  Changing the qty makes the invoice amount disagree with what the GRN has
+     *  already consumed, and the submit is refused with:
+     *    "ValidationError: GRN consumption mismatch - invoice amount has changed.
+     *     Please re-match GRN before submitting"
+     *  The Line Items toolbar on the edit page carries a primary button with a
+     *  GearFix icon (label FIX) that performs that re-match. It is matched on the
+     *  icon attribute first because the visible label sits next to an <img>, so a
+     *  leaf-text search for "FIX" does not find it. */
+    async fixGrnMatchAfterQtyChange(tag = 'S58') {
+        const byIcon = this.page.locator('button[icon*="GearFix"]').first();
+        const byText = this.page.locator('button:has-text("FIX")').first();
+        const fix = (await byIcon.count().catch(() => 0)) ? byIcon : byText;
+
+        if (!await fix.isVisible({ timeout: 10000 }).catch(() => false)) {
+            const btns = await this.page.locator('button').allInnerTexts().catch(() => []);
+            console.log(`[${tag}] no FIX / GearFix button on the edit page; buttons=`
+                + JSON.stringify(btns.map(b => b.replace(/\s+/g, ' ').trim())
+                    .filter(Boolean).slice(0, 30)));
+            throw new Error('[S58] Could not find the FIX control to re-match the GRN.');
+        }
+        await fix.scrollIntoViewIfNeeded().catch(() => {});
+        await fix.click();
+        console.log(`[${tag}] clicked FIX to re-match the GRN`);
+        await this.page.waitForTimeout(3000);
+
+        // Whatever it opens, report it and confirm it.
+        const dlg = await this.page.evaluate(() => {
+            const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+            const txt = e => (e.textContent || '').replace(/\s+/g, ' ').trim();
+            const d = [...document.querySelectorAll('[role="dialog"], .MuiDialog-root, .ant-modal')]
+                .filter(vis).pop();
+            if (!d) return null;
+            return {
+                text: txt(d).slice(0, 300),
+                buttons: [...d.querySelectorAll('button')].filter(vis)
+                    .map(txt).filter(Boolean),
+            };
+        });
+        console.log(`[${tag}] after FIX → ${JSON.stringify(dlg)}`);
+
+        if (dlg) {
+            for (const label of ['Match', 'Submit', 'Proceed', 'Confirm', 'Save', 'Yes', 'OK']) {
+                const b = this.page.locator(`[role="dialog"] button, .MuiDialog-root button`)
+                    .filter({ hasText: new RegExp(`^\\s*${label}\\s*$`, 'i') }).first();
+                if (await b.isVisible({ timeout: 1500 }).catch(() => false)) {
+                    await b.click().catch(() => {});
+                    console.log(`[${tag}] FIX dialog → ${label}`);
+                    await this.page.waitForTimeout(2500);
+                    break;
+                }
+            }
+        }
+        const row = await this.readInvoiceGrids();
+        console.log(`[${tag}] centre row after FIX → `
+            + JSON.stringify(row?.[0]?.parts?.center ?? {}));
+        return true;
+    }
+
+    /** Open the panel (if needed) and read it. */
+    async getInvoiceWorkflowState(tag = 'S58-WF') {
+        let state = await this.readInvoiceWorkflowState(tag);
+        if (!state.open) {
+            await this.openInvoiceWorkflowStages(tag);
+            state = await this.readInvoiceWorkflowState(tag);
+        }
+        return state;
+    }
+
+    /** Step 13 — after the 18% tax is submitted at the supplier review stage, the
+     *  CAPP workflow must be running: stage 1 (supplier review) Completed, stage 2
+     *  (CAPP review) In progress, and the stages after it still Pending. */
+    async assertTaxTriggeredCappWorkflow(tag = 'S58') {
+        const state = await this.getInvoiceWorkflowState(tag);
+        expect(state.open, 'the Workflow Steps panel did not open, so the workflow the tax '
+            + 'triggered cannot be verified').toBeTruthy();
+        expect(state.runs.length,
+            'adding the tax at supplier review should have created a workflow run')
+            .toBeGreaterThanOrEqual(1);
+
+        // By STATUS, never by position: the panel renumbers its runs so that neither
+        // "last in the DOM" nor "highest number" is the current one.
+        const render = state.runs.map(r =>
+            `${r.name}=${r.status ?? '?'} [${r.stages.map(st => `${st.seq}:${st.status}`).join(' ')}]`
+        ).join(' | ');
+        const active = state.runs.filter(r => r.status === 'Active');
+        expect(active.length,
+            `exactly one run should be Active after the tax submit — got ${render}`).toBe(1);
+        const run = active[0];
+        const shown = `${run.name}=${run.status} [${run.stages.map(s => `${s.seq}:${s.status}`).join(' ')}] `
+            + `(all runs: ${render})`;
+        expect(run.stages.length,
+            `the run should list its stages — got ${shown}`).toBeGreaterThanOrEqual(2);
+
+        const s1 = run.stages.find(s => s.seq === 1);
+        const s2 = run.stages.find(s => s.seq === 2);
+        expect(s1?.status,
+            `stage 1 (supplier review) should be Completed once the tax was submitted — got ${shown}`)
+            .toBe('Completed');
+        expect(String(s2?.status).toLowerCase(),
+            `stage 2 (CAPP review) should be the stage now in progress — got ${shown}`)
+            .toBe('in progress');
+        const later = run.stages.filter(s => s.seq > 2);
+        expect(later.some(s => s.status === 'Pending'),
+            `the stages after CAPP review should still be Pending — got ${shown}`).toBeTruthy();
+        console.log(`[${tag}] step 13 OK — ${shown}`);
+        return state;
+    }
+
+    /** Step 15 — after the qty is changed at the CAPP review stage and resubmitted,
+     *  the in-flight workflow must be REJECTED and a fresh one started.
+     *
+     *  Observed live 2026-09-16, and the reason this does not read the runs
+     *  positionally: the panel's numbering is NOT chronological. Before the change
+     *  there was one run, "Workflow 1" = Active. After it the panel showed
+     *
+     *      Workflow 1=Active [2:In progress 3:Pending ... 7:Skipped] | Workflow 2=Rejected []
+     *
+     *  i.e. the NEW run keeps the label "Workflow 1" and the superseded one is
+     *  renumbered to "Workflow 2", so "highest number" and "last in the DOM" are
+     *  both the OLD run. The runs are therefore identified BY STATUS.
+     *
+     *  Note also that the new run starts at stage 2: the supplier review is not
+     *  replayed, the workflow resumes at the CAPP review stage — which is what QA
+     *  specified ("new workflow will be triggered with the capp review again"). */
+    async assertWorkflowRejectedAndNewActive({ tag = 'S58', expectRuns = null } = {}) {
+        const state = await this.getInvoiceWorkflowState(tag);
+        const render = state.runs.map(r =>
+            `${r.name}=${r.status ?? '?'} [${r.stages.map(st => `${st.seq}:${st.status}`).join(' ')}]`
+        ).join(' | ');
+
+        expect(state.open,
+            'the Workflow Steps panel did not open, so the re-trigger cannot be verified').toBeTruthy();
+        expect(state.runs.length,
+            `the qty change should have left TWO runs — the rejected one and its replacement. `
+            + `Panel shows ${state.runs.length}: ${render}`).toBeGreaterThanOrEqual(2);
+        if (expectRuns !== null) {
+            expect(state.runs.length, `expected exactly ${expectRuns} runs — got ${render}`)
+                .toBe(expectRuns);
+        }
+
+        const active   = state.runs.filter(r => r.status === 'Active');
+        const rejected = state.runs.filter(r => r.status === 'Rejected');
+
+        expect(active.length,
+            `exactly one run should be Active after the resubmit — got ${render}`).toBe(1);
+        expect(rejected.length,
+            `the superseded run should be Rejected once the qty changed at the CAPP review `
+            + `stage — got ${render}`).toBeGreaterThanOrEqual(1);
+
+        // The replacement resumes at the CAPP review stage, not at the supplier review.
+        const s2 = active[0].stages.find(st => st.seq === 2);
+        if (s2) {
+            expect(String(s2.status).toLowerCase(),
+                `the new run should be back at the CAPP review stage (2) — got ${render}`)
+                .toBe('in progress');
+        }
+        console.log(`[${tag}] step 15 OK — active=${active[0].name}, `
+            + `rejected=${rejected.map(r => r.name).join(',')} | ${render}`);
+        return state.runs;
     }
 
 }

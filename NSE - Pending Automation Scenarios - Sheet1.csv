@@ -49,7 +49,7 @@
 55,Verify if QTY is increased during PR edit then budget exceed error is displayed.,
 56,Verify after clicking the item name then the item details panel is displayed.,
 57,Verify after clicking the back button from the PR the PR listing page is displayed.,
-58,"Verify that when a PO Invoice is created from SAPP, adding Tax during the SAPP Review stage triggers the CAPP workflow. After modifying the Tax, Quantity, or Price during the CAPP Review stage and submitting the Invoice, verify that a new workflow is triggered and the previous workflow is rejected.",
+58,"Verify that when a PO Invoice is created from SAPP, adding Tax during the SAPP Review stage triggers the CAPP workflow. After modifying the Tax, Quantity, or Price during the CAPP Review stage and submitting the Invoice, verify that a new workflow is triggered and the previous workflow is rejected.",Automated
 59,Verify that attachments added in RFX award are carry forwarded to PR to PRC.,
 60,"Verify that when a partial-quantity GRN is created for a PO, an Invoice is created and matched against the partial quantity, and the PO is subsequently Short Closed, the remaining PO amount is returned to the Budget correctly.",
 61,"Verify that an Advance Payment can be requested against a PO and paid successfully. After creating the Invoice, verify that the Advance Payment is correctly deducted from the Invoice amount/balance, and the remaining Invoice amount can be paid successfully.",

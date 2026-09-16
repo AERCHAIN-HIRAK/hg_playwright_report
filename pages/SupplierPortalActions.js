@@ -420,7 +420,10 @@ export class SupplierPortalActions {
     // /invoices/{id}. The invoice appears in CAPP under the SAME numeric id (only
     // the domain differs), in "Pending Review", so we save a CAPP url for the
     // downstream review/approve steps. Returns the saved invoice code.
-    async createInvoiceFromPo(data) {
+    /** `opts.beforeSubmit` runs with the filled /invoices/new form still open,
+     *  before the Submit gauntlet — scenario 58 uses it to set the line qty to 70
+     *  (the form defaults to the PO's full qty). */
+    async createInvoiceFromPo(data, { beforeSubmit = null } = {}) {
         await this.openPoCreateMenu('Invoice');
 
         // "Select PO Items" dialog → Submit.
@@ -452,6 +455,15 @@ export class SupplierPortalActions {
             .setInputFiles(path.resolve(data.invoice.documentPath));
         await this.page.waitForTimeout(3000); // let the document upload register
         console.log(`[SAPP Invoice] Filled form (Invoice Number=${invoiceNumber}, date=today, Period/Extra=No, document uploaded)`);
+
+        if (beforeSubmit) {
+            // Pass THIS page explicitly. NSEFoundationActions swaps its own
+            // this.page to a new tab mid-chain ("operate on the PO tab from here
+            // on"), so a caller's `a` is no longer on the SAPP form — an edit made
+            // through it lands on a stale tab and silently does nothing.
+            await beforeSubmit(this.page);
+            await this.page.waitForTimeout(800);
+        }
 
         // ── Submit → "Validations" (Proceed) → "Approvers" (Submit) ──
         // The document upload can still be processing right after setInputFiles,
@@ -606,12 +618,17 @@ export class SupplierPortalActions {
      *
      * Returns true when the edit page is open.
      */
-    async openPendingReviewEditPage(tag = 'INV') {
+    async openPendingReviewEditPage(tag = 'INV', { reassign = true, matchGrn = true } = {}) {
         // (1) Reassign the workflow approver → NSEF Support Admin (unlocks Review).
-        await this._reassignInvoiceApprover(tag);
+        //     Skipped for a SECOND review gate (scenario 58): the approver is already
+        //     the admin by then, and re-reassigning a stage that is mid-workflow is
+        //     not what the scenario is testing.
+        if (reassign) await this._reassignInvoiceApprover(tag);
 
-        // (2) Match invoice line items to the PO's GRN.
-        await this._matchInvoiceLineItemToGrn(tag);
+        // (2) Match invoice line items to the PO's GRN. Skipped on a re-entry —
+        //     matching pushes the GRN's own qty back into the row, which would
+        //     silently undo a deliberately partial qty.
+        if (matchGrn) await this._matchInvoiceLineItemToGrn(tag);
 
         // (3) Review → edit page.
         const review = this.page.locator(`xpath=${S.invReviewBtn}`).first();
@@ -631,6 +648,30 @@ export class SupplierPortalActions {
 
     async reviewAndSubmitPendingReview(tag = 'INV') {
         if (!await this.openPendingReviewEditPage(tag)) return false;
+        return await this.submitReviewEdit(tag);
+    }
+
+    /** Submit whatever is on the review EDIT page: Submit → Validations (Proceed)
+     *  → Approvers (Submit). Split out of reviewAndSubmitPendingReview so a caller
+     *  can edit the form in between — scenario 58 adds a tax, then later changes
+     *  the qty, before submitting. */
+    async submitReviewEdit(tag = 'INV') {
+        // Log whatever the app puts on screen during the submit. A review submit that
+        // is REFUSED can look identical to one that succeeded — the dialogs are
+        // clicked through either way — so the messages are the only way to tell a
+        // silent block from a validation the caller should act on.
+        const sayWhatIsOnScreen = async (when) => {
+            const seen = await this.page.evaluate(() => {
+                const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+                const txt = e => (e.textContent || '').replace(/\s+/g, ' ').trim();
+                const boxes = [...document.querySelectorAll(
+                    '[role="dialog"], .MuiDialog-root, .MuiAlert-root, .ant-message,'
+                    + ' .ant-notification, .Toastify__toast, [class*="toast"], [class*="error"]')]
+                    .filter(vis).map(e => txt(e).slice(0, 220)).filter(Boolean);
+                return [...new Set(boxes)];
+            });
+            if (seen.length) console.log(`[${tag}] on screen (${when}) → ${JSON.stringify(seen)}`);
+        };
 
         // Submit the review. BRF - Description now carries forward from the PO, so
         // the form is valid; retry the forced click until the Validations popup shows.
@@ -644,10 +685,12 @@ export class SupplierPortalActions {
             if (await proceed.isVisible({ timeout: 6000 }).catch(() => false)) { shown = true; break; }
             await this.page.waitForTimeout(2000);
         }
+        await sayWhatIsOnScreen('after Submit clicks');
         if (shown) {
             await proceed.click();
             console.log(`[${tag}] Validations popup → Proceed`);
             await this.page.waitForTimeout(1500);
+            await sayWhatIsOnScreen('after Proceed');
             const approvers = this.page.locator(`xpath=${S.dialogSubmitBtn}`).last();
             if (await approvers.isVisible({ timeout: 10000 }).catch(() => false)) {
                 await approvers.click();
@@ -655,6 +698,8 @@ export class SupplierPortalActions {
             }
         }
         await this.page.waitForTimeout(3000);
+        await sayWhatIsOnScreen('after final Submit');
+        console.log(`[${tag}] url after submit: ${this.page.url()}`);
         return true;
     }
 
