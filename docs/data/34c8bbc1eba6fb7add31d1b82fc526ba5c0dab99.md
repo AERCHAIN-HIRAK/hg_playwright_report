@@ -1,0 +1,805 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - img [ref=e7] [cursor=pointer]
+        - generic [ref=e8] [cursor=pointer]:
+          - img [ref=e11]:
+            - img [ref=e12]
+          - heading [level=5] [ref=e14]: Modules
+      - generic [ref=e15]:
+        - img [ref=e19] [cursor=pointer]:
+          - img [ref=e20]
+        - img [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+        - generic [ref=e30]:
+          - img [ref=e32] [cursor=pointer]:
+            - img [ref=e33]
+          - superscript [ref=e35]: 99+
+        - generic [ref=e37] [cursor=pointer]:
+          - img [ref=e39]
+          - generic [ref=e42]: "N"
+    - generic [ref=e43]:
+      - generic [ref=e45]:
+        - generic [ref=e47]:
+          - paragraph [ref=e48] [cursor=pointer]:
+            - img [ref=e49]
+          - paragraph [ref=e50]: Create Invoice
+        - generic [ref=e52]:
+          - button [ref=e54] [cursor=pointer]:
+            - generic [ref=e55]: Cancel
+          - button [ref=e57] [cursor=pointer]:
+            - generic [ref=e58]: Submit
+      - generic [ref=e59]:
+        - generic [ref=e62]:
+          - img [ref=e64]
+          - generic [ref=e65]:
+            - button [ref=e67] [cursor=pointer]:
+              - img [ref=e69]
+            - generic [ref=e70]: 100%
+            - button [ref=e72] [cursor=pointer]:
+              - img [ref=e74]
+            - button [ref=e76] [cursor=pointer]:
+              - img [ref=e78]
+            - button [ref=e80] [cursor=pointer]:
+              - img [ref=e82]
+            - button [ref=e84] [cursor=pointer]:
+              - img [ref=e86]
+            - button [ref=e88] [cursor=pointer]:
+              - img [ref=e90]
+        - generic [ref=e92]:
+          - generic [ref=e96]:
+            - combobox [ref=e100]:
+              - generic [ref=e101]:
+                - generic [ref=e104]: "* Templates"
+                - generic [ref=e105]:
+                  - textbox [disabled] [ref=e106]:
+                    - /placeholder: Choose Template
+                    - text: PO Invoice NSEF
+                  - button [disabled] [ref=e108]:
+                    - img [ref=e110]
+                  - group
+            - combobox [ref=e113]:
+              - generic [ref=e115]:
+                - textbox [disabled] [ref=e116]:
+                  - /placeholder: Select PO
+                  - text: PO-NSEFN-26-291
+                - button [disabled] [ref=e118]:
+                  - img [ref=e120]
+                - group
+          - generic [ref=e122]:
+            - generic [ref=e125]:
+              - button [expanded] [ref=e126]:
+                - generic [ref=e129] [cursor=pointer]:
+                  - img [ref=e131]
+                  - paragraph [ref=e132]: Invoice Details
+              - region [ref=e136]:
+                - generic [ref=e140]:
+                  - combobox [ref=e143]:
+                    - generic [ref=e144]:
+                      - generic [ref=e147]: "* Company"
+                      - generic [ref=e148]:
+                        - textbox [disabled] [ref=e149]: National Stock Exchange Foundation
+                        - button [disabled] [ref=e151]:
+                          - img [ref=e153]
+                        - group
+                  - combobox [ref=e156]:
+                    - generic [ref=e157]:
+                      - generic [ref=e160]: "* Supplier"
+                      - generic [ref=e161]:
+                        - textbox [ref=e162]:
+                          - /placeholder: Select Supplier
+                          - text: HG Automation SUPP (FNSE-26-2993)
+                        - button [ref=e164] [cursor=pointer]:
+                          - img [ref=e166]
+                        - group
+                  - generic [ref=e169]:
+                    - generic [ref=e172]: "* Subject"
+                    - generic [ref=e173]:
+                      - textbox [ref=e174]: HG Automation NSEF Intake
+                      - group
+                  - generic [ref=e177]:
+                    - generic [ref=e180]: "* Invoice Number"
+                    - generic [ref=e181]:
+                      - textbox [ref=e182]: INV-AUTO-19746
+                      - group
+                  - generic [ref=e186]:
+                    - alert [ref=e187]: "Selected date: Thursday, September 17th, 2026"
+                    - generic [ref=e188]:
+                      - generic [ref=e191]: "* Invoice Date"
+                      - generic [ref=e192]:
+                        - textbox [ref=e193]:
+                          - /placeholder: Enter Invoice Date
+                          - text: 17/09/2026
+                        - img [ref=e195] [cursor=pointer]
+                        - group
+                  - generic [ref=e198]:
+                    - generic [ref=e201]: Supplier Tax Number
+                    - generic [ref=e202]:
+                      - textbox [disabled] [ref=e203]: 29ABCDE1234F1Z5
+                      - group
+                  - combobox [ref=e206]:
+                    - generic [ref=e207]:
+                      - generic [ref=e210]: "* Delivery Address"
+                      - generic [ref=e211]:
+                        - textbox [disabled] [ref=e212]:
+                          - /placeholder: Select Delivery Address
+                          - text: Mumbai - Exchange Plaza BKC
+                        - button [disabled] [ref=e214]:
+                          - img [ref=e216]
+                        - group
+                  - combobox [ref=e219]:
+                    - generic [ref=e220]:
+                      - generic [ref=e223]: "* Billing Address"
+                      - generic [ref=e224]:
+                        - textbox [disabled] [ref=e225]:
+                          - /placeholder: Select Billing Address
+                          - text: Mumbai - Exchange Plaza BKC
+                        - button [disabled] [ref=e227]:
+                          - img [ref=e229]
+                        - group
+                  - generic [ref=e232]:
+                    - generic [ref=e235]: Customer Tax Number
+                    - generic [ref=e236]:
+                      - textbox [disabled] [ref=e237]: 27AAFCN9603G1ZD
+                      - group
+                  - generic [ref=e241]:
+                    - alert [ref=e242]
+                    - generic [ref=e243]:
+                      - generic [ref=e246]: Due Date
+                      - generic [ref=e247]:
+                        - textbox [ref=e248]:
+                          - /placeholder: Enter Due Date
+                        - img [ref=e250] [cursor=pointer]
+                        - group
+                  - combobox [ref=e253]:
+                    - generic [ref=e254]:
+                      - generic [ref=e257]: "* Currency"
+                      - generic [ref=e258]:
+                        - textbox [disabled] [ref=e259]:
+                          - /placeholder: Select Currency
+                          - text: INR
+                        - button [disabled] [ref=e261]:
+                          - img [ref=e263]
+                        - group
+                  - generic [ref=e266]:
+                    - generic [ref=e269]: Vendor Type
+                    - generic [ref=e270]:
+                      - textbox [disabled] [ref=e271]: IT
+                      - group
+                  - generic [ref=e274]:
+                    - generic [ref=e277]: RPT FLag
+                    - generic [ref=e278]:
+                      - textbox [disabled] [ref=e279]: "N"
+                      - group
+            - generic [ref=e282]:
+              - button [expanded] [ref=e283]:
+                - generic [ref=e286] [cursor=pointer]:
+                  - img [ref=e288]
+                  - paragraph [ref=e289]: General Details
+              - region [ref=e293]:
+                - generic [ref=e297]:
+                  - combobox [ref=e300]:
+                    - generic [ref=e301]:
+                      - generic [ref=e304]: "* Department"
+                      - generic [ref=e305]:
+                        - textbox [ref=e306]: Premises
+                        - button [ref=e308] [cursor=pointer]:
+                          - img [ref=e310]
+                        - group
+                  - combobox [ref=e313]:
+                    - generic [ref=e314]:
+                      - generic [ref=e317]: "* Function"
+                      - generic [ref=e318]:
+                        - textbox [ref=e319]: Legal
+                        - button [ref=e321] [cursor=pointer]:
+                          - img [ref=e323]
+                        - group
+                  - combobox [ref=e326]:
+                    - generic [ref=e327]:
+                      - generic [ref=e330]: "* Expense Nature (for approval triggers)"
+                      - generic [ref=e331]:
+                        - textbox [ref=e332]: Non-CSR Process
+                        - button [ref=e334] [cursor=pointer]:
+                          - img [ref=e336]
+                        - group
+                  - combobox [ref=e339]:
+                    - generic [ref=e340]:
+                      - generic [ref=e343]: "* Project Name"
+                      - generic [ref=e344]:
+                        - textbox [ref=e345]: NA
+                        - button [ref=e347] [cursor=pointer]:
+                          - img [ref=e349]
+                        - group
+                  - combobox [ref=e352]:
+                    - generic [ref=e353]:
+                      - generic [ref=e356]: "* Vertical"
+                      - generic [ref=e357]:
+                        - textbox [ref=e358]: Legal
+                        - button [ref=e360] [cursor=pointer]:
+                          - img [ref=e362]
+                        - group
+                  - combobox [ref=e365]:
+                    - generic [ref=e366]:
+                      - generic [ref=e369]: "* Nature of Expense (budget level)"
+                      - generic [ref=e370]:
+                        - textbox [ref=e371]: Opex
+                        - button [ref=e373] [cursor=pointer]:
+                          - img [ref=e375]
+                        - group
+                  - combobox [ref=e378]:
+                    - generic [ref=e379]:
+                      - generic [ref=e382]: "* GL Account"
+                      - generic [ref=e383]:
+                        - textbox [ref=e384]: NA
+                        - button [ref=e386] [cursor=pointer]:
+                          - img [ref=e388]
+                        - group
+                  - combobox [ref=e391]:
+                    - generic [ref=e392]:
+                      - generic [ref=e395]: "* Profit Center"
+                      - generic [ref=e396]:
+                        - textbox [ref=e397]: NA
+                        - button [ref=e399] [cursor=pointer]:
+                          - img [ref=e401]
+                        - group
+                  - combobox [ref=e404]:
+                    - generic [ref=e405]:
+                      - generic [ref=e408]: "* Cost Center"
+                      - generic [ref=e409]:
+                        - textbox [ref=e410]: NA
+                        - button [ref=e412] [cursor=pointer]:
+                          - img [ref=e414]
+                        - group
+                  - combobox [ref=e417]:
+                    - generic [ref=e418]:
+                      - generic [ref=e421]: "* SEBI Categorization"
+                      - generic [ref=e422]:
+                        - textbox [ref=e423]: NA
+                        - button [ref=e425] [cursor=pointer]:
+                          - img [ref=e427]
+                        - group
+                  - combobox [ref=e430]:
+                    - generic [ref=e431]:
+                      - generic [ref=e434]: "* Sub Segment"
+                      - generic [ref=e435]:
+                        - textbox [ref=e436]: NA
+                        - button [ref=e438] [cursor=pointer]:
+                          - img [ref=e440]
+                        - group
+                  - combobox [ref=e443]:
+                    - generic [ref=e444]:
+                      - generic [ref=e447]: "* Project Category"
+                      - generic [ref=e448]:
+                        - textbox [ref=e449]: NA
+                        - button [ref=e451] [cursor=pointer]:
+                          - img [ref=e453]
+                        - group
+                  - combobox [ref=e456]:
+                    - generic [ref=e457]:
+                      - generic [ref=e460]: "* BRF - Description"
+                      - generic [ref=e461]:
+                        - textbox [ref=e462]:
+                          - /placeholder: Select Budget Items
+                          - text: Dont Touch/HG Auomation PURPOSE
+                        - button [ref=e464] [cursor=pointer]:
+                          - button [ref=e466]:
+                            - img [ref=e467]
+                        - group
+                  - combobox [ref=e470]:
+                    - generic [ref=e471]:
+                      - generic [ref=e474]: "* Payment Spoc"
+                      - generic [ref=e475]:
+                        - textbox [ref=e476]: Hirak Goswami
+                        - button [ref=e478] [cursor=pointer]:
+                          - img [ref=e480]
+                        - group
+                  - combobox [ref=e483]:
+                    - generic [ref=e484]:
+                      - generic [ref=e487]: "* Payment Terms"
+                      - generic [ref=e488]:
+                        - textbox [disabled] [ref=e489]:
+                          - /placeholder: Select Payment Terms
+                          - text: Payable quarterly within 60 days of date of receipt of tax invoice
+                        - button [disabled] [ref=e491]:
+                          - img [ref=e493]
+                        - group
+                  - combobox [ref=e496]:
+                    - generic [ref=e497]:
+                      - generic [ref=e500]: "* Inward Required"
+                      - generic [ref=e501]:
+                        - textbox [disabled] [ref=e502]: "Yes"
+                        - button [disabled] [ref=e504]:
+                          - img [ref=e506]
+                        - group
+                  - combobox [ref=e509]:
+                    - generic [ref=e510]:
+                      - generic [ref=e513]: "* Inward Matching Criteria"
+                      - generic [ref=e514]:
+                        - textbox [disabled] [ref=e515]: quantity
+                        - button [disabled] [ref=e517]:
+                          - img [ref=e519]
+                        - group
+                  - combobox [ref=e522]:
+                    - generic [ref=e523]:
+                      - generic [ref=e526]: "* Period based Invoicing?"
+                      - generic [ref=e527]:
+                        - textbox [ref=e528]: "No"
+                        - button [ref=e530] [cursor=pointer]:
+                          - img [ref=e532]
+                        - group
+                  - combobox [ref=e535]:
+                    - generic [ref=e536]:
+                      - generic [ref=e539]: "* Extra billing"
+                      - generic [ref=e540]:
+                        - textbox [ref=e541]: "No"
+                        - button [ref=e543] [cursor=pointer]:
+                          - img [ref=e545]
+                        - group
+                  - generic [ref=e547]:
+                    - generic [ref=e548]:
+                      - img [ref=e549]
+                      - generic [ref=e550]: Notes
+                    - generic [ref=e552]:
+                      - generic [ref=e554]:
+                        - list [ref=e556]:
+                          - listitem [ref=e557]:
+                            - button [disabled] [ref=e558]:
+                              - img
+                          - listitem [ref=e559]:
+                            - button [disabled] [ref=e560]:
+                              - img
+                        - list [ref=e562]:
+                          - listitem [ref=e563]:
+                            - button [ref=e564] [cursor=pointer]:
+                              - img
+                          - listitem [ref=e565]:
+                            - button [ref=e566] [cursor=pointer]:
+                              - img
+                          - listitem [ref=e567]:
+                            - button [ref=e568] [cursor=pointer]:
+                              - img
+                          - listitem [ref=e569]:
+                            - button [ref=e570] [cursor=pointer]:
+                              - img
+                          - listitem [ref=e571]:
+                            - button [ref=e572] [cursor=pointer]:
+                              - img
+                          - listitem [ref=e573]:
+                            - button [ref=e574] [cursor=pointer]:
+                              - img
+                        - list [ref=e576]:
+                          - listitem [ref=e577]:
+                            - button [ref=e578] [cursor=pointer]:
+                              - img
+                        - list [ref=e580]:
+                          - listitem [ref=e581]:
+                            - button [ref=e582] [cursor=pointer]:
+                              - img
+                          - listitem [ref=e583]:
+                            - button [ref=e584] [cursor=pointer]:
+                              - img
+                        - list [ref=e586]:
+                          - listitem [ref=e587]:
+                            - button [ref=e588] [cursor=pointer]:
+                              - img
+                          - listitem [ref=e589]:
+                            - button [ref=e590] [cursor=pointer]:
+                              - img
+                          - listitem [ref=e591]:
+                            - button [ref=e592] [cursor=pointer]:
+                              - img
+                        - list [ref=e594]:
+                          - listitem [ref=e595]:
+                            - button [ref=e596] [cursor=pointer]:
+                              - img
+                          - listitem [ref=e597]:
+                            - button [ref=e598] [cursor=pointer]:
+                              - img
+                      - generic [ref=e599]:
+                        - generic: Enter Notes
+                        - paragraph [ref=e601]
+                  - generic [ref=e604]:
+                    - generic [ref=e606]: Attachments
+                    - img [ref=e612] [cursor=pointer]
+                  - generic [ref=e616]:
+                    - alert [ref=e617]
+                    - generic [ref=e618]:
+                      - generic [ref=e621]: Period start date
+                      - generic [ref=e622]:
+                        - textbox [disabled] [ref=e623]:
+                          - /placeholder: Enter Period start date
+                        - img [ref=e625] [cursor=pointer]
+                        - group
+                  - generic [ref=e629]:
+                    - alert [ref=e630]
+                    - generic [ref=e631]:
+                      - generic [ref=e634]: Period end date
+                      - generic [ref=e635]:
+                        - textbox [disabled] [ref=e636]:
+                          - /placeholder: Enter Period end date
+                        - img [ref=e638] [cursor=pointer]
+                        - group
+                  - combobox [ref=e641]:
+                    - generic [ref=e642]:
+                      - generic [ref=e645]: MSME vendor?
+                      - generic [ref=e646]:
+                        - textbox [ref=e647]: "No"
+                        - button [ref=e649] [cursor=pointer]:
+                          - img [ref=e651]
+                        - group
+                  - generic [ref=e654]:
+                    - generic [ref=e657]: Site Id
+                    - generic [ref=e658]:
+                      - textbox [ref=e659]
+                      - group
+                  - combobox [ref=e662]:
+                    - generic [ref=e663]:
+                      - generic [ref=e666]: Invoice Type Lookup
+                      - generic [ref=e667]:
+                        - textbox [ref=e668]: STANDARD
+                        - button [ref=e670] [cursor=pointer]:
+                          - img [ref=e672]
+                        - group
+                  - generic [ref=e676]:
+                    - alert [ref=e677]
+                    - generic [ref=e678]:
+                      - generic [ref=e681]: Transaction From
+                      - generic [ref=e682]:
+                        - textbox [ref=e683]:
+                          - /placeholder: Enter Transaction From
+                        - img [ref=e685] [cursor=pointer]
+                        - group
+                  - generic [ref=e689]:
+                    - alert [ref=e690]
+                    - generic [ref=e691]:
+                      - generic [ref=e694]: Transaction To
+                      - generic [ref=e695]:
+                        - textbox [ref=e696]:
+                          - /placeholder: Enter Transaction To
+                        - img [ref=e698] [cursor=pointer]
+                        - group
+                  - generic [ref=e702]:
+                    - alert [ref=e703]
+                    - generic [ref=e704]:
+                      - generic [ref=e707]: "Effective from date (PO start date):"
+                      - generic [ref=e708]:
+                        - textbox [disabled] [ref=e709]:
+                          - /placeholder: "Enter Effective from date (PO start date):"
+                          - text: 17/09/2026
+                        - img [ref=e711] [cursor=pointer]
+                        - group
+                  - generic [ref=e715]:
+                    - alert [ref=e716]
+                    - generic [ref=e717]:
+                      - generic [ref=e720]: "Effective to date (PO end date):"
+                      - generic [ref=e721]:
+                        - textbox [disabled] [ref=e722]:
+                          - /placeholder: "Enter Effective to date (PO end date):"
+                          - text: 31/12/2026
+                        - img [ref=e724] [cursor=pointer]
+                        - group
+                  - generic [ref=e727]:
+                    - generic [ref=e730]: Requester Id
+                    - generic [ref=e731]:
+                      - textbox [ref=e732]
+                      - group
+                  - combobox [ref=e735]:
+                    - generic [ref=e736]:
+                      - generic [ref=e739]: Template Id
+                      - generic [ref=e740]:
+                        - textbox [ref=e741]: "1233"
+                        - button [ref=e743] [cursor=pointer]:
+                          - img [ref=e745]
+                        - group
+                  - combobox [ref=e748]:
+                    - generic [ref=e749]:
+                      - generic [ref=e752]: Pay Template Id
+                      - generic [ref=e753]:
+                        - textbox [ref=e754]: "444"
+                        - button [ref=e756] [cursor=pointer]:
+                          - img [ref=e758]
+                        - group
+                  - generic [ref=e761]:
+                    - generic [ref=e764]: Payment Notes
+                    - generic [ref=e765]:
+                      - textbox [ref=e766]
+                      - group
+                  - combobox [ref=e769]:
+                    - generic [ref=e770]:
+                      - generic [ref=e773]: Invoice Type
+                      - generic [ref=e774]:
+                        - textbox [ref=e775]
+                        - button [ref=e777] [cursor=pointer]:
+                          - img [ref=e779]
+                        - group
+                  - combobox [ref=e782]:
+                    - generic [ref=e783]:
+                      - generic [ref=e786]: Operating Unit
+                      - generic [ref=e787]:
+                        - textbox [ref=e788]: NSEF OU
+                        - button [ref=e790] [cursor=pointer]:
+                          - img [ref=e792]
+                        - group
+                  - combobox [ref=e795]:
+                    - generic [ref=e796]:
+                      - generic [ref=e799]: Liability Account
+                      - generic [ref=e800]:
+                        - textbox [ref=e801]: "31131002"
+                        - button [ref=e803] [cursor=pointer]:
+                          - img [ref=e805]
+                        - group
+                  - combobox [ref=e808]:
+                    - generic [ref=e809]:
+                      - generic [ref=e812]: Segment 1
+                      - generic [ref=e813]:
+                        - textbox [ref=e814]: "1701"
+                        - button [ref=e816] [cursor=pointer]:
+                          - img [ref=e818]
+                        - group
+            - generic [ref=e821]:
+              - button [expanded] [ref=e822]:
+                - generic [ref=e824]:
+                  - generic [ref=e825] [cursor=pointer]:
+                    - img [ref=e827]
+                    - paragraph [ref=e828]: Line Items
+                    - generic [ref=e829]:
+                      - generic [ref=e831]: PO Match
+                      - generic [ref=e833]: GRN Match
+                  - generic [ref=e834]:
+                    - button [ref=e837] [cursor=pointer]:
+                      - img [ref=e839]
+                    - button [ref=e841] [cursor=pointer]:
+                      - generic [ref=e842]:
+                        - img [ref=e843]
+                        - generic [ref=e844]: Match Line Item
+              - region [ref=e848]:
+                - generic [ref=e849]:
+                  - generic [ref=e853]:
+                    - text:  
+                    - grid [ref=e855]:
+                      - row [ref=e856]:
+                        - columnheader [ref=e857]:
+                          - text: 
+                          - generic [ref=e858]: "#"
+                        - columnheader [ref=e859]:
+                          - text: 
+                          - generic [ref=e860]:
+                            - generic [ref=e862]:
+                              - text: "*"
+                              - generic [ref=e863]: Product
+                            - img [ref=e866]
+                      - rowgroup [ref=e867]:
+                        - row [ref=e868]:
+                          - columnheader [ref=e869]:
+                            - text: 
+                            - generic [ref=e872]:
+                              - text: "*"
+                              - generic [ref=e873]: UOM
+                          - columnheader [ref=e875]:
+                            - text: 
+                            - generic [ref=e878]:
+                              - text: "*"
+                              - generic [ref=e879]: Quantity
+                          - columnheader [ref=e881]:
+                            - text: 
+                            - generic [ref=e884]:
+                              - text: "*"
+                              - generic [ref=e885]: Price
+                          - columnheader [ref=e887]:
+                            - text: 
+                            - generic [ref=e891]: Hsn
+                          - columnheader [ref=e893]:
+                            - text: 
+                            - generic [ref=e897]: Tax
+                          - columnheader [ref=e899]:
+                            - text: 
+                            - generic [ref=e900]:
+                              - generic [ref=e903]: Total Price
+                              - generic [ref=e905]: :f(x)
+                      - row [ref=e906]:
+                        - columnheader [ref=e907]: 
+                      - rowgroup [ref=e908]:
+                        - row [ref=e909]:
+                          - gridcell [ref=e910]:
+                            - generic [ref=e911]:
+                              - text:  
+                              - generic [ref=e913]: "1"
+                          - gridcell [ref=e914]:
+                            - generic [ref=e920] [cursor=pointer]: Manpower (T&M)
+                        - row [ref=e921]:
+                          - gridcell [ref=e922]:
+                            - generic [ref=e923]:
+                              - text:  
+                              - button [ref=e926] [cursor=pointer]:
+                                - generic [ref=e927]:
+                                  - img [ref=e929]
+                                  - generic [ref=e930]: Add Item
+                      - rowgroup [ref=e931]:
+                        - row [ref=e932]:
+                          - gridcell [ref=e933]:
+                            - generic [ref=e934]: EA
+                          - gridcell [ref=e935]:
+                            - generic [ref=e937]: "100"
+                          - gridcell [ref=e938]:
+                            - generic [ref=e940]: 2,000.00000
+                          - gridcell [ref=e941]:
+                            - generic [ref=e942]: Enter Hsn
+                          - gridcell [ref=e943]: "-"
+                          - gridcell [ref=e944]:
+                            - generic [ref=e945]: 2,00,000
+                        - row [ref=e946]:
+                          - gridcell [ref=e947]
+                      - rowgroup [ref=e948]:
+                        - row [ref=e949]:
+                          - gridcell [ref=e950]:
+                            - generic [ref=e951]:
+                              - img [ref=e952] [cursor=pointer]
+                              - img [ref=e955]
+                        - row [ref=e957]:
+                          - gridcell [ref=e958]
+                    - text:    
+                  - generic [ref=e966]:
+                    - generic [ref=e967]: Total Invoice Value
+                    - generic [ref=e970]: "200000"
+          - generic [ref=e972]:
+            - img [ref=e974] [cursor=pointer]
+            - generic [ref=e976]:
+              - generic [ref=e977]:
+                - paragraph [ref=e979]: Sub Total
+                - paragraph [ref=e981]: ₹ 2.00L
+              - generic [ref=e982]:
+                - paragraph [ref=e984]: Total Taxes
+                - paragraph [ref=e986]: ₹ 0.00
+              - generic [ref=e987]:
+                - paragraph [ref=e989]: Grand Total
+                - paragraph [ref=e991]: ₹ 2.00L
+              - generic [ref=e992]:
+                - paragraph [ref=e994]: Payable
+                - paragraph [ref=e996]: ₹ 2.00L
+  - dialog [ref=e999]:
+    - heading "Workflow Summary" [level=2] [ref=e1001]
+    - generic [ref=e1004]:
+      - generic [ref=e1005]: Show Skipped
+      - checkbox [ref=e1010] [cursor=pointer]
+    - generic [ref=e1014]:
+      - generic [ref=e1016]:
+        - paragraph [ref=e1018]: Conditions Analysed
+        - generic [ref=e1019]:
+          - generic [ref=e1021]:
+            - img [ref=e1022]
+            - generic [ref=e1024]:
+              - paragraph [ref=e1025]: Vertical
+              - paragraph [ref=e1026]: Legal
+          - generic [ref=e1028]:
+            - img [ref=e1029]
+            - generic [ref=e1031]:
+              - paragraph [ref=e1032]: Expense Nature (for approval triggers)
+              - paragraph [ref=e1033]: Non-CSR Process
+          - generic [ref=e1035]:
+            - img [ref=e1036]
+            - generic [ref=e1038]:
+              - paragraph [ref=e1039]: Grand Total
+              - paragraph [ref=e1040]: "200000"
+      - generic [ref=e1044]:
+        - generic [ref=e1045]:
+          - generic [ref=e1048]: "2"
+          - generic [ref=e1051]:
+            - generic [ref=e1052]:
+              - generic [ref=e1053]: Capp Review stage
+              - generic [ref=e1054]:
+                - button "Add All Approvers" [ref=e1055] [cursor=pointer]:
+                  - generic [ref=e1056]: Add All Approvers
+                - button "clearIcon Clear List" [ref=e1057] [cursor=pointer]:
+                  - generic [ref=e1058]:
+                    - img "clearIcon" [ref=e1060]
+                    - text: Clear List
+            - generic [ref=e1061]:
+              - generic [ref=e1063]:
+                - img "search" [ref=e1065] [cursor=pointer]
+                - textbox "Select Users" [ref=e1066]
+                - group
+              - generic [ref=e1067]:
+                - button "NS NSEF Support Admin" [ref=e1069] [cursor=pointer]:
+                  - generic [ref=e1071]: NS
+                  - generic [ref=e1073]: NSEF Support Admin
+                - button "NS NSEIL Support User" [ref=e1075] [cursor=pointer]:
+                  - generic [ref=e1077]: NS
+                  - generic [ref=e1079]: NSEIL Support User
+        - generic [ref=e1080]:
+          - generic [ref=e1083]: "3"
+          - generic [ref=e1086]:
+            - generic [ref=e1088]: Vertical Checker r
+            - generic [ref=e1090]: The approver(s) will be selected automatically upon submission.
+        - generic [ref=e1091]:
+          - generic [ref=e1094]: "4"
+          - generic [ref=e1097]:
+            - generic [ref=e1098]:
+              - generic [ref=e1099]: CommercialAuthorizer
+              - generic [ref=e1100]:
+                - button "Add All Approvers" [ref=e1101] [cursor=pointer]:
+                  - generic [ref=e1102]: Add All Approvers
+                - button "clearIcon Clear List" [ref=e1103] [cursor=pointer]:
+                  - generic [ref=e1104]:
+                    - img "clearIcon" [ref=e1106]
+                    - text: Clear List
+            - generic [ref=e1107]:
+              - generic [ref=e1109]:
+                - img "search" [ref=e1111] [cursor=pointer]
+                - textbox "Select Users" [ref=e1112]
+                - group
+              - generic [ref=e1113]:
+                - button "NS NSEF Support Admin" [ref=e1115] [cursor=pointer]:
+                  - generic [ref=e1117]: NS
+                  - generic [ref=e1119]: NSEF Support Admin
+                - button "NS NSEIL Support User" [ref=e1121] [cursor=pointer]:
+                  - generic [ref=e1123]: NS
+                  - generic [ref=e1125]: NSEIL Support User
+                - button "PP Prianshu Prasad" [ref=e1127] [cursor=pointer]:
+                  - generic [ref=e1129]: PP
+                  - generic [ref=e1131]: Prianshu Prasad
+        - generic [ref=e1132]:
+          - generic [ref=e1135]: "5"
+          - generic [ref=e1138]:
+            - generic [ref=e1139]:
+              - generic [ref=e1140]: Chief FinanceOfficer
+              - generic [ref=e1141]:
+                - button "Add All Approvers" [ref=e1142] [cursor=pointer]:
+                  - generic [ref=e1143]: Add All Approvers
+                - button "clearIcon Clear List" [ref=e1144] [cursor=pointer]:
+                  - generic [ref=e1145]:
+                    - img "clearIcon" [ref=e1147]
+                    - text: Clear List
+            - generic [ref=e1148]:
+              - generic [ref=e1150]:
+                - img "search" [ref=e1152] [cursor=pointer]
+                - textbox "Select Users" [ref=e1153]
+                - group
+              - generic [ref=e1154]:
+                - button "NS NSEF Support Admin" [ref=e1156] [cursor=pointer]:
+                  - generic [ref=e1158]: NS
+                  - generic [ref=e1160]: NSEF Support Admin
+                - button "NS NSEIL Support User" [ref=e1162] [cursor=pointer]:
+                  - generic [ref=e1164]: NS
+                  - generic [ref=e1166]: NSEIL Support User
+        - generic [ref=e1167]:
+          - generic [ref=e1170]: "6"
+          - generic [ref=e1172]:
+            - generic [ref=e1173]:
+              - generic [ref=e1174]: Managing Director
+              - generic [ref=e1175]:
+                - button "Add All Approvers" [ref=e1176] [cursor=pointer]:
+                  - generic [ref=e1177]: Add All Approvers
+                - button "clearIcon Clear List" [ref=e1178] [cursor=pointer]:
+                  - generic [ref=e1179]:
+                    - img "clearIcon" [ref=e1181]
+                    - text: Clear List
+            - generic [ref=e1182]:
+              - generic [ref=e1184]:
+                - img "search" [ref=e1186] [cursor=pointer]
+                - textbox "Select Users" [ref=e1187]
+                - group
+              - generic [ref=e1188]:
+                - button "NS NSEF Support Admin" [ref=e1190] [cursor=pointer]:
+                  - generic [ref=e1192]: NS
+                  - generic [ref=e1194]: NSEF Support Admin
+                - button "NS NSEIL Support User" [ref=e1196] [cursor=pointer]:
+                  - generic [ref=e1198]: NS
+                  - generic [ref=e1200]: NSEIL Support User
+                - button "MS Manthan Shah" [ref=e1202] [cursor=pointer]:
+                  - generic [ref=e1204]: MS
+                  - generic [ref=e1206]: Manthan Shah
+                - button "A Aash" [ref=e1208] [cursor=pointer]:
+                  - generic [ref=e1210]: A
+                  - generic [ref=e1212]: Aash
+    - generic [ref=e1214]:
+      - button "Go back" [ref=e1215] [cursor=pointer]:
+        - generic [ref=e1216]: Go back
+      - button "Discard" [ref=e1217] [cursor=pointer]:
+        - generic [ref=e1218]: Discard
+      - button "Submit" [ref=e1219] [cursor=pointer]:
+        - generic [ref=e1220]: Submit
+```
