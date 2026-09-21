@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { NSEFoundationActions } from '../pages/NSEFoundationActions';
 import data from '../pages/NSEFoundationData.json';
+import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Non-PO ("CXO") Invoice — §4 of the NSE Customer Flow Document
@@ -16,6 +17,20 @@ import data from '../pages/NSEFoundationData.json';
 //
 // Runs on the nsef-tests project (NSEF login, auth.nsef.json).
 // ─────────────────────────────────────────────────────────────────────────────
+
+// WHY THIS SUITE BUILDS ITS OWN CXO DATA (QA, 2026-09-17).
+// Only a CXO whose Transaction Flow Type is "Non-PO Based" is offered in the
+// Non-PO invoice's CXO picker; a "PO Based" one is never listed, so selecting it
+// is impossible rather than merely slow. The shared fixture stays "PO Based"
+// because every chain suite (CXO -> Intake -> RFX -> PR -> PO) depends on that,
+// so the override lives here and nowhere else. Live options on /cxos/create are
+// exactly ["PO Based","Non-PO Based"], and _selectDropdown matches option text
+// exactly, so the spelling matters.
+//
+// This is what failed the whole file on the 2026-09-16 full run: all six CXO
+// tests died on the same line, _selectFromAc waiting 15s for a picker that had
+// no option to give.
+const nonPoData = { ...data, cxo: { ...data.cxo, transactionFlowType: 'Non-PO Based' } };
 
 // The flow crosses from V4 (nse-capp-v4-uat) to the slower V3 Ant app
 // (nse-capp-uat); the repo-wide 5s nav/action timeouts are too tight for it.
@@ -39,7 +54,7 @@ async function cxoThenInvoiceForm(page) {
     const a = await openCxoCreate(page);
 
     // Steps 1–2: create the CXO and approve every stage until Released.
-    await a.createAndReleaseCxo(data);
+    await a.createAndReleaseCxo(nonPoData);
     const cxoCode = a.getSavedCxoCode();
 
     // Steps 3–6: Home → all modules → Invoice → Create New → upload → template.
@@ -57,6 +72,14 @@ async function cxoThenInvoiceForm(page) {
 }
 
 test.describe('Non-PO (CXO) Invoice', () => {
+
+    // saveCxoCode()/saveInvoiceCode() rewrite savedCxo / savedInvoice in
+    // NSEFoundationData.json, and the CXOs written here are Non-PO Based - the one
+    // shape the chain suites must NOT inherit. Snapshot and restore, carrying the
+    // invoice counter forward, the same guard the reject-edit and S58 suites use.
+    let dataSnapshot = null;
+    test.beforeAll(() => { dataSnapshot = snapshotFixtures(); });
+    test.afterAll(() => { restoreFixtures(dataSnapshot, { tag: 'CxoInvoice' }); });
 
     // ── A. Happy path ────────────────────────────────────────────────────────
 
@@ -202,7 +225,7 @@ test.describe('Non-PO (CXO) Invoice', () => {
 
         const a = await openCxoCreate(page);
         // A Draft CXO must never appear in the invoice's CXO picker (§4 Step 2).
-        await a.createCxoDraft(data);
+        await a.createCxoDraft(nonPoData);
         const draftCode = a.getSavedCxoCode();
 
         await a.openNonPoInvoiceCreatePage();

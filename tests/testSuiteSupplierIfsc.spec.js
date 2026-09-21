@@ -53,26 +53,44 @@ test.describe('Supplier onboarding — mandatory IFSC', () => {
     test.beforeEach(async ({ page }) => {
         sup = new supplierActions(page);
         await page.setViewportSize({ width: 1800, height: 950 });
-
         attemptedWrites = [];
+    });
+
+    /**
+     * Abort every non-GET request from here on, recording what was attempted.
+     *
+     * Installed EXPLICITLY rather than in beforeEach (QA, 2026-09-21): scenario
+     * 135 now creates its own supplier first, and creation is all writes. The
+     * guard goes up once the data exists and before the IFSC submit, which is
+     * the only part that must not reach the server.
+     */
+    async function installWriteGuard(page) {
         await page.route('**/*', route => {
             const req = route.request();
             if (req.method() === 'GET') return route.continue();
             attemptedWrites.push(`${req.method()} ${req.url()}`);
             return route.abort();
         });
-    });
+    }
 
     // ── 135 ───────────────────────────────────────────────────────────────────
 
-    test('a blank IFSC blocks the onboarding submission @Supplier @Validation @S135', async () => {
-        const found = await sup.findOnboardingSupplier();
-        test.skip(!found,
-            'no pre-Registered supplier with an editable onboarding form carrying IFSC fields ' +
-            '(a Registered supplier redirects /update to its view page)');
-        console.log(`[S135] ${found.name} (${found.id}, ${found.status})`);
+    test('a blank IFSC blocks the onboarding submission @Supplier @Validation @S135', async ({ page }) => {
+        // A NEW supplier, per QA (2026-09-21) — not whichever pre-Registered one
+        // happens to be on the listing. Creation needs writes, so this runs
+        // BEFORE the write guard goes up.
+        test.setTimeout(900000);
+        const made = await sup.createSupplierUpToOnboardingRequested();
+        console.log(`[S135] created ${made.code} (${made.name}, id ${made.id})`);
 
+        // From here nothing may reach the server.
+        await installWriteGuard(page);
+
+        expect(await sup.openOnboardingForm(made.id),
+            `the onboarding form did not open for the new supplier ${made.code}`).toBeTruthy();
+        const found = { ...made, ifsc: await sup.getIfscFields() };
         expect(found.ifsc.length, 'template exposes no IFSC field').toBeGreaterThan(0);
+        console.log(`[S135] IFSC fields: ${found.ifsc.map(f => f.label).join(' · ')}`);
 
         // Leave IFSC blank and submit.
         await sup.setIfscFields('');
@@ -100,7 +118,8 @@ test.describe('Supplier onboarding — mandatory IFSC', () => {
 
     // ── 136 ───────────────────────────────────────────────────────────────────
 
-    test('clearing a stored IFSC while editing raises the same validation @Supplier @Validation @S136', async () => {
+    test('clearing a stored IFSC while editing raises the same validation @Supplier @Validation @S136', async ({ page }) => {
+        await installWriteGuard(page);
         // requireValue: the fields must ALREADY hold a value, otherwise this is
         // a creation-stage blank and indistinguishable from 135.
         const found = await sup.findOnboardingSupplier({ requireValue: true });

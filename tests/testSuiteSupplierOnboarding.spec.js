@@ -410,10 +410,32 @@ test.describe('Supplier module', () => {
         const final = await s.approveUntilPendingSync(
             state.id, code, 'Onboarding approved by automation — scenario 97');
         console.log(`[S97] status after approving the onboarding = ${final}`);
-        // Synced / Registered also pass — they mean the record moved PAST Pending
+
+        // ── "Sync Failed" is ACCEPTED as a known UAT end state (QA, 2026-09-21) ──
+        // Synced / Registered pass because they mean the record moved PAST Pending
         // Sync, and failing on "it already progressed" would be a false negative.
+        //
+        // Sync Failed is different: it is a genuine failure of the DOWNSTREAM
+        // integration, reproduced on two separate suppliers — FNSE-26-3040 (full
+        // run 2026-09-16) and FNSE-26-3043 (2026-09-21), both of which filled and
+        // submitted the onboarding form correctly (65/65 mandatory fields, HTTP
+        // 200) and only then failed to sync. That push is not driven by anything
+        // this test does, so QA accepts it as an environment limitation here
+        // rather than a scenario failure.
+        //
+        // WHAT THIS COSTS: this assertion can no longer detect a sync regression.
+        // Every terminal state now passes, so the only thing still under test is
+        // that the approvals RAN and produced one of them. Scenario 141 is where
+        // the sync itself belongs — see approveUntilRegistered, which stays strict.
+        const ONBOARDING_END_STATES = /^(pending sync|synced|registered|sync failed)$/i;
+        if (SupplierStatus.FAILED.test(final)) {
+            console.warn(`[S97] ACCEPTED KNOWN ENVIRONMENT STATE: onboarding ended at `
+                + `"${final}" for ${code} — the downstream sync did not complete. `
+                + `The form fill and approvals are what this scenario asserts.`);
+        }
         expect(final,
-            `the onboarding approvals did not reach Pending Sync (ended at "${final}")`)
-            .toMatch(SupplierStatus.PENDING_SYNC);
+            `the onboarding approvals ended at "${final}", which is not a terminal `
+            + `onboarding state`)
+            .toMatch(ONBOARDING_END_STATES);
     });
 });

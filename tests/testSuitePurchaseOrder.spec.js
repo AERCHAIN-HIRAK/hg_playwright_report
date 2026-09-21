@@ -66,8 +66,16 @@ test.describe('Purchase Order — action availability', () => {
     });
 
     test('a Completed PO offers no downstream creation @PO @Actions', async () => {
-        const code = await po.openFirstTransactionWithStatus(['Completed'], data.baseUrl);
-        test.skip(!code, 'no Completed PO available');
+        // ACROSS PAGES (QA, 2026-09-21): a Completed PO exists, it is just rarely
+        // on page 1 — which is why this skipped in the 2026-09-16 full run.
+        const code = await po.openFirstTransactionWithStatusAcrossPages(['Completed'],
+            { baseUrl: data.baseUrl, tag: 'PO-Completed' });
+        test.skip(!code, 'no Completed PO on ANY listing page');
+
+        // The Create dropdown is what offers downstream creation, so a Completed
+        // PO must not expose it at all (QA, 2026-09-21).
+        expect(await po.hasCreateDropdown(),
+            `${code} is Completed but still exposes the Create dropdown`).toBe(false);
 
         const items = await po.getMoreMenuItems();
         await po.closeMenu();

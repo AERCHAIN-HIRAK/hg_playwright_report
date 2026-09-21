@@ -26,6 +26,12 @@ import data from '../pages/NSEFoundationData.json';
 // the queue is not being cleared.
 const PENDING_STATUSES = [
     'Pending Approval',
+    // Since QA's workflow change of 2026-09-17 every invoice opens on a REVIEW
+    // stage, so an invoice awaiting that review sits at "Pending Review" and
+    // belongs in this queue - QA confirmed those transactions are displayed here
+    // by design. Without it the test failed on a correctly-listed row
+    // (Invoice-FNSE-26-448, full run of 2026-09-16).
+    'Pending Review',
     'Pending Budget Approval',
     'Pending Amend Approval',
     'Pending Cancellation Approval',

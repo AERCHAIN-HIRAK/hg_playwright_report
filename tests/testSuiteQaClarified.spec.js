@@ -190,12 +190,16 @@ test.describe('QA-clarified scenarios', () => {
         test.beforeEach(async ({ page }) => {
             const pr = new v3DetailActions(page, v3data.modules.requisition);
             await page.setViewportSize({ width: 1800, height: 900 });
-            prCode = await pr.openFirstTransactionWithColumnValue('Source', 'intakes', v3data.baseUrl);
+            // ACROSS PAGES (QA, 2026-09-21). The single-page lookup skipped both
+            // S50 and S51 in the 2026-09-16 full run — the tenant does hold
+            // intake-sourced Requisitions, they had just drifted off page 1.
+            prCode = await pr.openFirstTransactionWithColumnValueAcrossPages(
+                'Source', 'intakes', { baseUrl: v3data.baseUrl, tag: 'S50/S51' });
             sharedPage = page;
         });
 
         test('links back to the Intake it was converted from @PR @Intake @Link @S50', async ({ page }) => {
-            test.skip(!prCode, 'no Requisition with Source "intakes" on the first listing page');
+            test.skip(!prCode, 'no Requisition with Source "intakes" on ANY listing page');
             const pr = new v3DetailActions(page, v3data.modules.requisition);
             console.log(`[S53] ${prCode}`);
 
@@ -217,7 +221,9 @@ test.describe('QA-clarified scenarios', () => {
         });
 
         test('exposes the budget link, which opens the budget @PR @Budget @S51', async ({ page }) => {
-            test.skip(!prCode, 'no Requisition with Source "intakes" on the first listing page');
+            // Same PR as S50 above — QA confirmed the budget link is present on
+            // the very requisition the intake-source search lands on.
+            test.skip(!prCode, 'no Requisition with Source "intakes" on ANY listing page');
             const pr = new v3DetailActions(page, v3data.modules.requisition);
             console.log(`[S54] ${prCode}`);
 
@@ -254,8 +260,10 @@ test.describe('QA-clarified scenarios', () => {
 
         // Released is the state QA described; a Quoted RFX still exposes the
         // control, so accept either rather than skipping on data availability.
-        const rfx = await a.openRfxWithStatus(['Released', 'Quoted'], data.loginUrl);
-        test.skip(!rfx, 'no Released or Quoted RFX on the first listing page');
+        // ACROSS PAGES (QA, 2026-09-21) — see openRfxWithStatusAcrossPages.
+        const rfx = await a.openRfxWithStatusAcrossPages(['Released', 'Quoted'],
+            data.loginUrl, { tag: 'S31' });
+        test.skip(!rfx, 'no Released or Quoted RFX on ANY listing page');
         console.log(`[S34] ${rfx.code} (${rfx.status})`);
 
         expect(await a.hasBulkReminderButton(),

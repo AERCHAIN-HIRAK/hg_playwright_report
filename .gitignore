@@ -13,3 +13,7 @@ auth.supplier.json
 downloads/
 .s35-state.json
 .s97-state.json
+
+# Session scratch logs and per-run artifact dirs
+scratch_*.log
+test-results-*/

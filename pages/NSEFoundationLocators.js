@@ -344,7 +344,13 @@ export const NSEFoundation_Locators = {
     // modal is shared (poApproveNotesField). GRN/Invoice edit re-uses AG-grid
     // col-ids. Selectors below must be verified on the first live run.
     cappRejectBtn:        `//button[normalize-space(.)='Reject']`,
-    cappRejectConfirmBtn: `(//div[@role='dialog']//button[normalize-space(.)='Reject'])[1] | (//textarea[@placeholder='Write your notes here']/following::button[normalize-space(.)='Reject'])[1]`,
+    // The reject dialog was reworked alongside the review stage (QA, 2026-09-17):
+    // it is now titled "Confirm to Reject this Invoice", its field is "Reject
+    // Remarks (Visible to Vendors)" and its confirm button says CONFIRM, not
+    // Reject. Both wordings are accepted so pages still on the old dialog keep
+    // working. P015 died here: remarks typed, dialog open, 8s wait for a button
+    // named Reject that the dialog no longer has.
+    cappRejectConfirmBtn: `(//div[@role='dialog']//button[normalize-space(.)='Confirm'])[1] | (//div[@role='dialog']//button[normalize-space(.)='Reject'])[1] | (//textarea[@placeholder='Write your notes here']/following::button[normalize-space(.)='Reject'])[1]`,
     cappEditBtn:          `//button[normalize-space(.)='Edit']`,
     // Rejected GRN/Invoice expose no text "Edit" (More holds only "Reassign
     // User") — the edit affordance is an unlabelled header pencil icon button.
@@ -407,12 +413,24 @@ export const NSEFoundation_Locators = {
     // Create Invoice page header Submit (single visible MUI button, not in dialog)
     invoiceSubmitBtn:         `//button[normalize-space(.)='Submit']`,
     // "Validations" popup → Proceed (MUI in dialog)
-    invoiceValidationProceedBtn: `//div[@role='dialog']//button[normalize-space(.)='Proceed'] | //div[contains(@class,'MuiDialog')]//button[normalize-space(.)='Proceed']`,
+    // starts-with, not equals: the Validations dialog labels its confirm button
+    // "Proceed" normally, but "Proceed Anyway" when it carries a warning rather
+    // than a clean pass - e.g. "Advance is available against this supplier. Please
+    // Review." An equals match silently missed that variant, so submitInvoice
+    // logged "Validations popup did not appear" and then timed out waiting for a
+    // navigation that the un-dismissed dialog was blocking (2026-09-17).
+    invoiceValidationProceedBtn: `//div[@role='dialog']//button[starts-with(normalize-space(.),'Proceed')] | //div[contains(@class,'MuiDialog')]//button[starts-with(normalize-space(.),'Proceed')]`,
     // "Workflow Summary" popup → Submit (dialog-scoped)
     invoiceWorkflowSummarySubmitBtn: `//div[@role='dialog']//button[normalize-space(.)='Submit'] | //div[contains(@class,'MuiDialog')]//button[normalize-space(.)='Submit']`,
     // After all approvals the invoice goes to "Pending Sync" — the test's terminal
     // state. It only flips to "Accounted" once an external party acknowledges it
     // (out of scope here), so we assert Pending Sync, not Accounted.
+    // WORKFLOW CHANGE (QA, 2026-09-17): EVERY invoice type now opens on a REVIEW
+    // stage whose header offers Review + Reject and NO Approve. An invoice sits at
+    // "Pending Review" until that stage is submitted, so an approve loop that only
+    // knows Approve / Pending Approval / Pending Sync can never terminate.
+    invoiceReviewBtn:             `//button[normalize-space(.)='Review']`,
+    invoicePendingReviewStatus:   `//*[normalize-space(text())='Pending Review']`,
     invoicePendingSyncStatus:     `//*[normalize-space(text())='Pending Sync']`,
     invoicePendingApprovalStatus: `//*[normalize-space(text())='Pending Approval']`,
     // After the external acknowledgement API call, the invoice flips to "Accounted".

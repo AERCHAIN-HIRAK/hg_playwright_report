@@ -11,12 +11,13 @@ import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
 //   "Verify that attachments added in RFX award are carry forwarded to PR to PRC."
 //
 // QA's steps (2026-09-11): CXO → RFX → quote → foreclose → on the award page,
-// SCROLL DOWN to the Attachment section and upload into its 4 fields → submit
+// SCROLL DOWN to the Attachment section and upload into its 3 asserted fields
 // the award → approve it → check the auto-created PR carries the attachments →
 // edit and submit the PR → check the auto-created PRC carries them too.
 //
-// THE FOUR FIELDS (found live 2026-09-11, rows 35-38):
-//   Commercial Comparison | Vendor Quotes | Justification | Others
+// THE FIELDS (found live 2026-09-11, rows 35-38):
+//   Commercial Comparison | Vendor Quotes | Others   (Justification excluded,
+//   QA 2026-09-21)
 //
 // TWO TRAPS, both encoded in the helpers:
 //   · the award grid is VIRTUALISED. Before scrolling, the page exposes 6 file
@@ -31,7 +32,7 @@ import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
 // WHY ONE FILE PER FIELD
 // ----------------------
 // The award page shows only a COUNT ("Upload 1 File"), never a filename. Using
-// the same file four times would make the carry-forward check meaningless: "4
+// the same file for every field would make the carry-forward check meaningless: "4
 // files on the PR" could not be tied back to the field each came from. Each
 // field gets a uniquely named copy and the PR/PRC assertions demand those exact
 // names, so a carry-forward that drops or merges a field fails.
@@ -40,11 +41,14 @@ import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
 // Award field -> PR field, per QA (2026-09-11). Only Justification is renamed;
 // the PR calls it "Justification Att.". The duplicate "Justification Att." field
 // that used to swallow this one was fixed by QA on 2026-09-11.
+// JUSTIFICATION IS DELIBERATELY EXCLUDED (QA, 2026-09-21): the carry-forward is
+// asserted on THREE fields, not four. Dropping it also retires the "two rows
+// called Justification" trap documented above — the text row in the main grid
+// can no longer be confused with the attachment row, because neither is used.
 const AWARD_TO_PR = {
     'Commercial Comparison': 'Commercial Comparison',
     'Vendor Quotes': 'Vendor Quotes',
     'Others': 'Others',
-    'Justification': 'Justification Att.',
 };
 
 let dataSnapshot = null;

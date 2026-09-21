@@ -619,26 +619,59 @@ export class SupplierPortalActions {
      * Returns true when the edit page is open.
      */
     async openPendingReviewEditPage(tag = 'INV', { reassign = true, matchGrn = true } = {}) {
-        // (1) Reassign the workflow approver → NSEF Support Admin (unlocks Review).
-        //     Skipped for a SECOND review gate (scenario 58): the approver is already
-        //     the admin by then, and re-reassigning a stage that is mid-workflow is
-        //     not what the scenario is testing.
-        if (reassign) await this._reassignInvoiceApprover(tag);
+        // (0) REVIEW FIRST. The reassign below is a workaround for a Review action
+        //     that is not yet offered — but when Review IS already on the page it is
+        //     pure cost, and worse, a page that offers no More button strands the
+        //     whole helper before it ever looks for Review.
+        //
+        //     That is what failed S126/S127 three times (2026-09-21): the invoice
+        //     was sitting in pending-review exactly as intended, yet the run logged
+        //     "No More button" and gave up, reporting "the SAPP invoice did not reach
+        //     Pending Review" — which the saved page snapshot disproves.
+        //
+        //     submitInvoiceReviewStage (NSEFoundationActions) has always done it this
+        //     way: click Review, land on /invoices/<id>/edit, no reassign at all. It
+        //     cleared this same gate twice on 2026-09-21 — the SupplierPortal chain
+        //     (Invoice-FNSE-26-516) and the S60 solo run. Both locators are the same
+        //     `//button[.='Review']`, so the only difference was the order.
+        //     MATCHING STILL RUNS FIRST when the caller asked for it — callers rely
+        //     on its side effect, not just on reaching the edit page, so the direct
+        //     attempt must not be allowed to skip it.
 
-        // (2) Match invoice line items to the PO's GRN. Skipped on a re-entry —
+        // (1) Match invoice line items to the PO's GRN. Skipped on a re-entry —
         //     matching pushes the GRN's own qty back into the row, which would
         //     silently undo a deliberately partial qty.
         if (matchGrn) await this._matchInvoiceLineItemToGrn(tag);
 
-        // (3) Review → edit page.
+        // (2) Review, straight away.
+        if (await this._openReviewEditPage(tag, 'direct')) return true;
+
+        // (3) Only now fall back: reassign the workflow approver → NSEF Support
+        //     Admin (unlocks Review). Skipped for a SECOND review gate (scenario
+        //     58): the approver is already the admin by then, and re-reassigning a
+        //     stage that is mid-workflow is not what the scenario is testing.
+        if (!reassign) {
+            console.log(`[${tag}] Review not offered and reassign disabled — giving up`);
+            return false;
+        }
+        console.log(`[${tag}] Review not offered up front — falling back to reassign`);
+        await this._reassignInvoiceApprover(tag);
+
+        // (4) Review → edit page.
+        return await this._openReviewEditPage(tag, 'after reassign');
+    }
+
+    /** Click Review and confirm /invoices/<id>/edit opened. Shared by the direct
+     *  attempt and the post-reassign retry so both behave identically. */
+    async _openReviewEditPage(tag = 'INV', when = 'direct') {
         const review = this.page.locator(`xpath=${S.invReviewBtn}`).first();
         if (!(await review.isVisible({ timeout: 8000 }).catch(() => false))) {
-            console.log(`[${tag}] No Review button after reassign — may already be in workflow`);
+            console.log(`[${tag}] No Review button (${when})`);
             return false;
         }
         await review.scrollIntoViewIfNeeded();
         await review.click();
-        console.log(`[${tag}] Clicked Review → opening invoice in edit mode`);
+        console.log(`[${tag}] Clicked Review (${when}) → opening invoice in edit mode`);
         await this.page.waitForURL(/\/invoices\/\d+\/edit/, { timeout: 20000 }).catch(() => {});
         await this.page.waitForTimeout(2500);
         const open = /\/invoices\/\d+\/edit/.test(this.page.url());
@@ -710,6 +743,13 @@ export class SupplierPortalActions {
         // skipped the reassign that unlocks Review, yet probing the same invoice
         // moments later showed More · Overview · Transactions · Match Line Item
         // all present. It was a race against page settle, not a missing action.
+        //
+        // 2026-09-21: do NOT add reloads here. A 3x30s reload-retry was tried and
+        // removed the same day — on Invoice-FNSE-26-526 the saved page snapshot
+        // showed the header offers Comments · Match Line Item · Download All and a
+        // DISABLED Edit, with no More button at all. The control is absent, not
+        // slow, so re-painting costs 90s and changes nothing. Callers now try the
+        // Review action BEFORE reaching this reassign fallback.
         const more = this.page.locator(`xpath=${S.moreBtn}`).first();
         if (!(await more.isVisible({ timeout: 30000 }).catch(() => false))) {
             console.log(`[${tag}] No More button after 30s — cannot reassign approver`);

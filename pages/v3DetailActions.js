@@ -121,6 +121,136 @@ export class v3DetailActions {
         return code;
     }
 
+    /**
+     * Walk to the next listing page. Returns false when there is no next page.
+     * The "Next" button is how NSEFoundationActions.listingCodesAcrossPages
+     * pages these same v3 listings, so the same control is used here.
+     */
+    async goToNextListingPage() {
+        // The v3 listing pager is NOT a button named "Next" — that is the v4
+        // control used by listingCodesAcrossPages, and assuming it here made
+        // every across-pages search give up after page 1 (observed 2026-09-21:
+        // "Source=intakes not found in 1 page(s)" on a listing with many pages).
+        //
+        // v3 renders  [prev div][span.pagination-selection]["of"][span.total-number][next div]
+        // and the BUTTON carries no disabled attribute — enablement lives on the
+        // wrapper's class (arrow-button vs arrow-button-disabled), so that is
+        // what must be read.
+        const wrapper = this.page.locator(`xpath=${LL.pagination_NextWrapper}`).first();
+        if (!await wrapper.count().catch(() => 0)) return false;
+        const cls = (await wrapper.getAttribute('class').catch(() => '')) || '';
+        if (/arrow-button-disabled/.test(cls)) return false;
+
+        const next = this.page.locator(`xpath=${LL.pagination_Next}`).first();
+        if (!await next.count().catch(() => 0)) return false;
+
+        const before = await this.page.locator(`xpath=${LL.pagination_Current}`)
+            .first().innerText().catch(() => '');
+        await next.click();
+        await this.page.waitForTimeout(2500);
+        await this.page.waitForFunction(
+            () => document.querySelectorAll('tbody tr').length > 0,
+            null, { timeout: 30000 },
+        ).catch(() => {});
+
+        // Confirm the page actually advanced — a click that does nothing would
+        // otherwise spin the caller through maxPages re-reading page 1.
+        const after = await this.page.locator(`xpath=${LL.pagination_Current}`)
+            .first().innerText().catch(() => '');
+        if (before && after && before.trim() === after.trim()) return false;
+        return true;
+    }
+
+    /**
+     * Like openFirstTransactionWithColumnValue, but SEARCHES EVERY PAGE.
+     *
+     * Added 2026-09-21 (QA): the single-page versions skipped whenever the
+     * qualifying record had drifted off page 1, which is what silently parked
+     * scenarios 50/51 ("no Requisition with Source 'intakes' on the first
+     * listing page") in the 2026-09-16 full run — the tenant HAS such records,
+     * just not at the top. Returns null only when no page holds one.
+     */
+    async openFirstTransactionWithColumnValueAcrossPages(header, value,
+        { maxPages = 25, baseUrl = V3_BASE_URL, tag = 'LIST' } = {}) {
+        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.waitForFunction(
+            () => document.querySelectorAll('tbody tr').length > 0,
+            null, { timeout: 30000 },
+        );
+        await this.page.waitForTimeout(800);
+
+        for (let p = 1; p <= maxPages; p++) {
+            const rowIndex = await this.page.evaluate(({ header, value }) => {
+                const ths = [...document.querySelectorAll('th')];
+                const ci = ths.findIndex(t => (t.textContent || '').trim().startsWith(header));
+                if (ci === -1) return -1;
+                const rows = [...document.querySelectorAll('tbody tr')];
+                return rows.findIndex(r => {
+                    const c = r.querySelectorAll('td')[ci];
+                    return c && (c.textContent || '').trim().toLowerCase() === value.toLowerCase();
+                });
+            }, { header, value });
+
+            if (rowIndex !== -1) {
+                const link = this.page.locator(LL.tableRows).nth(rowIndex)
+                    .locator('td').first().locator('a').first();
+                const code = ((await link.innerText()) || '').trim();
+                console.log(`[${tag}] ${header}="${value}" found on page ${p}: ${code}`);
+                await link.click();
+                await this.waitForDetailLoaded();
+                return code;
+            }
+
+            if (!await this.goToNextListingPage()) {
+                console.log(`[${tag}] ${header}="${value}" not found in ${p} page(s)`);
+                return null;
+            }
+        }
+        console.log(`[${tag}] ${header}="${value}" not found within ${maxPages} pages`);
+        return null;
+    }
+
+    /** Like openFirstTransactionWithStatus, but SEARCHES EVERY PAGE. */
+    async openFirstTransactionWithStatusAcrossPages(statuses,
+        { maxPages = 25, baseUrl = V3_BASE_URL, tag = 'LIST' } = {}) {
+        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.waitForFunction(
+            () => document.querySelectorAll('tbody tr').length > 0,
+            null, { timeout: 30000 },
+        );
+        await this.page.waitForTimeout(800);
+
+        for (let p = 1; p <= maxPages; p++) {
+            const rowIndex = await this.page.evaluate((wanted) => {
+                const ths = [...document.querySelectorAll('th')];
+                const si = ths.findIndex(t => (t.textContent || '').trim().startsWith('Status'));
+                if (si === -1) return -1;
+                const rows = [...document.querySelectorAll('tbody tr')];
+                return rows.findIndex(r => {
+                    const c = r.querySelectorAll('td')[si];
+                    return c && wanted.includes((c.textContent || '').trim());
+                });
+            }, statuses);
+
+            if (rowIndex !== -1) {
+                const link = this.page.locator(LL.tableRows).nth(rowIndex)
+                    .locator('td').first().locator('a').first();
+                const code = ((await link.innerText()) || '').trim();
+                console.log(`[${tag}] status ${JSON.stringify(statuses)} found on page ${p}: ${code}`);
+                await link.click();
+                await this.waitForDetailLoaded();
+                return code;
+            }
+
+            if (!await this.goToNextListingPage()) {
+                console.log(`[${tag}] no ${JSON.stringify(statuses)} row in ${p} page(s)`);
+                return null;
+            }
+        }
+        console.log(`[${tag}] no ${JSON.stringify(statuses)} row within ${maxPages} pages`);
+        return null;
+    }
+
     /** Every listing row whose Status column matches one of `statuses`. */
     async listTransactionsWithStatus(statuses, baseUrl = V3_BASE_URL) {
         await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -203,6 +333,19 @@ export class v3DetailActions {
             if (i === 5) await this.page.mouse.click(5, 5);
             await this.page.waitForTimeout(300);
         }
+    }
+
+    /**
+     * Is the header's "Create" dropdown present? (QA, 2026-09-21)
+     *
+     * A Completed PO must not still offer downstream creation, and the control
+     * that offers it is this dropdown — so its ABSENCE is the assertion, rather
+     * than inferring it from which items the More menu happens to list.
+     */
+    async hasCreateDropdown() {
+        const btn = this.page.getByRole('button', { name: /^\s*Create\b/i }).first();
+        if (!await btn.count().catch(() => 0)) return false;
+        return await btn.isVisible().catch(() => false);
     }
 
     async getMoreMenuItems() {

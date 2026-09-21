@@ -46,6 +46,7 @@ const LOWER_QTY = '50';   // RFX, Requisition, PO — decrease quantity
 //
 //   RESUME=1 npx playwright test -g "@InvoiceOnly" --project=nsef-tests
 const RESUME = process.env.RESUME === '1';
+const RESUME_GRN = process.env.RESUME_GRN === '1';
 
 async function openApp(page) {
     const a = new NSEFoundationActions(page);
@@ -276,6 +277,66 @@ test.describe('All-modules reject → edit → resubmit', () => {
         await a.assertPoQtyAvailableForInvoice(LOWER_QTY, data);
         await a.takeScreenshot('re_inv_qty_available');
     });
+
+    // ── 5a-bis. Invoice (resume from the saved PO, starting at GRN create) ──────
+    // Same as test 5 but SKIPS the CXO -> ... -> PO build, resuming at GRN CREATION
+    // against savedPurchaseOrder. Added 2026-09-17: the full run's GRN passed all
+    // three approval stages and then landed on SYNC FAILED, where the header drops
+    // Approve and offers Re-Initiate, so approveGrnUntilInwarded threw "GRN did not
+    // reach Inwarded status". QA cancelled that GRN (INW-NSEFN-26-162) and asked to
+    // continue from GRN creation on the same PO rather than rebuild the ~15 min chain.
+    // Requires: savedPurchaseOrder is an OPEN PO with no live GRN consuming its qty.
+    test('Invoice (resume from saved PO, from GRN create): GRN -> Invoice -> reject -> edit (qty-) -> reduced qty available @RejectEdit @GrnResume',
+        async ({ page }) => {
+            test.skip(!RESUME_GRN, 'resume helper — needs an OPEN savedPurchaseOrder; run with RESUME_GRN=1');
+            test.setTimeout(2400000); // 40 min — GRN + invoice + reject + edit + approvals + ack
+            const a = await openApp(page);
+
+            // GRN against the saved PO — create + inward it.
+            await a.openSavedPurchaseOrder(data);
+            await a.clickPoCreateGrn();
+            await a.submitSelectPoItemsPopup();
+            await a.fillGrnGeneralDetails(data);
+            await a.fillGrnDocumentDetails(data);
+            await a.submitGrn();
+            await a.saveGrnCode();
+            await a.approveGrnUntilInwarded('Approved by automation');
+            await a.assertGrnInwarded();
+
+            // Create the Invoice against the PO (matched to its GRN).
+            await a.openSavedPurchaseOrder(data);
+            await a.clickPoCreateInvoice();
+            await a.submitSelectPoItemsForInvoice();
+            await a.confirmInvoiceCreation();
+            await a.uploadInvoiceDocument(data);
+            await a.fillInvoiceDetails(data);
+            await a.setInvoiceGeneralDetailsNo();
+            await a.matchGrnInItemMatching();
+            await a.submitInvoice();
+            await a.saveInvoiceCode();
+            await a.takeScreenshot('re_inv_grnresume_created');
+
+            // Reject the Invoice during approval — the invoice must be OPEN first.
+            await a.openSavedInvoice(data);
+            await a.rejectCappDoc('Rejected by automation', 'INV');
+            await a.takeScreenshot('re_inv_grnresume_rejected');
+
+            // Edit -> lower the qty + annotate -> resubmit.
+            await a.editInvoiceLowerQtyAndSubmit(LOWER_QTY);
+            await a.takeScreenshot('re_inv_grnresume_edited');
+
+            // Resubmit re-triggers approvals -> Pending Sync -> acknowledge -> Accounted.
+            await a.approveInvoiceUntilPendingSync('Approved by automation');
+            await a.assertInvoicePendingSync();
+            await a.acknowledgeInvoice(data);
+            await a.openSavedInvoice(data);
+            await a.assertInvoiceAccounted();
+            await a.takeScreenshot('re_inv_grnresume_accounted');
+
+            // Confirm the reduced qty is available for creating an Invoice on the PO.
+            await a.assertPoQtyAvailableForInvoice(LOWER_QTY, data);
+            await a.takeScreenshot('re_inv_grnresume_qty_available');
+        });
 
     // ── 5b. Invoice (resume) ────────────────────────────────────────────────────
     // Same as test 5 but SKIPS the CXO → … → PO → GRN build, resuming from the

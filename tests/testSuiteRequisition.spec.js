@@ -61,29 +61,10 @@ test.describe('Requisition detail page', () => {
         await popup.close();
     });
 
-    test('Intake link opens the Intake @Requisition @Links @S50', async ({ page }) => {
-        const code = await pr.openFirstTransactionFromListing(data.baseUrl);
-        const links = await pr.getBlueLinkTexts();
-        const intakeLink = links.find(t => /^INT-/.test(t) || t === 'Intake');
-        test.skip(!intakeLink,
-            `${code} exposes no Intake link — an award-sourced PR shows Awards/CXO only (links: ${links.join(', ')})`);
-
-        const popup = await pr.clickBlueLinkExpectingNewTab(intakeLink);
-        expect(popup.url(), 'Intake link did not open an Intake page').toMatch(/\/intakes?\//);
-        await popup.close();
-    });
-
-    test('Budget link opens the Budget @Requisition @Links @S51', async ({ page }) => {
-        const code = await pr.openFirstTransactionFromListing(data.baseUrl);
-        const links = await pr.getBlueLinkTexts();
-        const budgetLink = links.find(t => /budget/i.test(t));
-        test.skip(!budgetLink,
-            `${code} exposes no Budget link (links: ${links.join(', ')})`);
-
-        const popup = await pr.clickBlueLinkExpectingNewTab(budgetLink);
-        expect(popup.url(), 'Budget link did not open a Budget page').toMatch(/budget/i);
-        await popup.close();
-    });
+    // Intake link (S50) and Budget link (S51) were REMOVED on 2026-09-21 (QA):
+    // both duplicated testSuiteQaClarified, which covers the same two links on a
+    // Requisition sourced from an Intake. These copies opened whatever PR sat
+    // first on the listing, so they skipped whenever that PR was award-sourced.
 
     // ── Line items ────────────────────────────────────────────────────────────
 

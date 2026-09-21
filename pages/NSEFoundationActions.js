@@ -161,15 +161,61 @@ export class NSEFoundationActions {
 
     // ── Generic dropdown helper ───────────────────────────────────────────────
 
-    async _selectDropdown(triggerXpath, optionText) {
-        await this.page.locator(`xpath=${triggerXpath}`).first().click();
-        await this.page.waitForTimeout(600);
-        // Wait for options to appear then click by text
-        await this.page.getByRole('option', { name: optionText, exact: true })
-            .or(this.page.getByRole('option').filter({ hasText: optionText }))
-            .first()
-            .click();
-        await this.page.waitForTimeout(300);
+    async _selectDropdown(triggerXpath, optionText, { attempts = 4 } = {}) {
+        // RETRY UNTIL THE FIELD ACTUALLY SHOWS A SELECTION - the same contract
+        // selectIntakeCXOType has always had, brought to the CXO form (QA, 2026-09-17).
+        //
+        // The old version clicked once after a fixed 600ms and never checked. When the
+        // option list re-renders under the click - routine while the app is slow - the
+        // click dies with "element was detached from the DOM, retrying", Playwright
+        // re-tries THAT ONE stale handle until the action timeout, and the field is
+        // left unset. That is how scenario P012 lost a 20-minute run on 2026-09-17,
+        // 20s of retries on Expense Nature = "Non-CSR Process" before any invoice
+        // existed.
+        //
+        // The re-check is deliberately NEGATIVE: retry only while the trigger still
+        // reads its placeholder. Demanding the trigger contain optionText would fail
+        // every field whose trigger renders a shortened label, converting selections
+        // that work today into failures.
+        const trigger = this.page.locator(`xpath=${triggerXpath}`).first();
+        const placeholder = t => !t || /^(select( an option)?|choose|-|\u2014)$/i.test(t.trim());
+
+        for (let attempt = 1; attempt <= attempts; attempt++) {
+            try {
+                await trigger.click();
+                await this.page.waitForTimeout(600);
+                await this.page.getByRole('option', { name: optionText, exact: true })
+                    .or(this.page.getByRole('option').filter({ hasText: optionText }))
+                    .first()
+                    .click();
+                // Let the menu unmount before reading the trigger back.
+                await this.page.waitForFunction(
+                    () => document.querySelectorAll('[role="option"]').length === 0,
+                    null, { timeout: 3000 }).catch(() => {});
+            } catch (e) {
+                if (attempt === attempts) {
+                    throw new Error(`could not select "${optionText}" after ${attempts} attempts: `
+                        + (e.message || '').split('\n')[0]);
+                }
+                console.log(`[DD] "${optionText}" click failed (attempt ${attempt}/${attempts}) - retrying`);
+                await this.page.keyboard.press('Escape').catch(() => {});
+                await this.page.waitForTimeout(600);
+                continue;
+            }
+
+            const shown = (await trigger.innerText().catch(() => '')).trim();
+            if (!placeholder(shown)) {
+                if (attempt > 1) console.log(`[DD] "${optionText}" selected on attempt ${attempt} (shows "${shown}")`);
+                await this.page.waitForTimeout(300);
+                return;
+            }
+            if (attempt === attempts) {
+                throw new Error(`"${optionText}" did not stick: the field still reads "${shown}" `
+                    + `after ${attempts} attempts`);
+            }
+            console.log(`[DD] "${optionText}" did not stick (attempt ${attempt}/${attempts}) - retrying`);
+            await this.page.waitForTimeout(600);
+        }
     }
 
     // Dropdown anchored to its row container to avoid cross-section matches
@@ -238,6 +284,7 @@ export class NSEFoundationActions {
 
         await this.page.waitForTimeout(600);
 
+        let reached = false;
         for (let attempt = 0; attempt < 48; attempt++) {
             const captionText = await this.page.evaluate(({ longs, shorts }) => {
                 const pattern = new RegExp('(' + [...longs, ...shorts].join('|') + ')\\s+\\d{4}');
@@ -262,17 +309,33 @@ export class NSEFoundationActions {
             const totalCurrent = curYear * 12 + curMonth;
             const diff         = totalTarget - totalCurrent;
 
-            if (diff === 0) break;
-            if (diff > 0) {
-                await this.page.locator('button').filter({ hasText: /^›$|next/i }).or(
-                    this.page.locator('[aria-label*="next"], [aria-label*="Next"]')
-                ).first().click();
-            } else {
-                await this.page.locator('button').filter({ hasText: /^‹$|prev/i }).or(
-                    this.page.locator('[aria-label*="prev"], [aria-label*="Prev"]')
-                ).first().click();
+            if (diff === 0) { reached = true; break; }
+            // The month arrows are re-rendered as the calendar animates, so a click
+            // can die with "element is not stable" inside the 5s action timeout even
+            // though the picker is perfectly healthy - that is how scenario S66/S122
+            // lost a run on 2026-09-17, on the CXO form before any invoice existed.
+            // The caption is re-read every pass, so a swallowed click simply costs one
+            // more iteration of a loop that is already bounded at 48.
+            const arrow = diff > 0
+                ? this.page.locator('button').filter({ hasText: /^›$|next/i }).or(
+                    this.page.locator('[aria-label*="next"], [aria-label*="Next"]'))
+                : this.page.locator('button').filter({ hasText: /^‹$|prev/i }).or(
+                    this.page.locator('[aria-label*="prev"], [aria-label*="Prev"]'));
+            try {
+                await arrow.first().click({ timeout: 10000 });
+            } catch (e) {
+                console.log(`[DATE] month arrow click failed (${captionText} -> ${dateStr}), retrying`);
+                await this.page.waitForTimeout(400);
             }
             await this.page.waitForTimeout(300);
+        }
+
+        // Never pick a day out of the wrong month. Falling through to the day click
+        // after 48 failed navigations would silently set a WRONG DATE, which is worse
+        // than failing: the transaction is created and every later assertion is
+        // measured against it.
+        if (!reached) {
+            throw new Error(`date picker never reached ${dateStr} after 48 navigation attempts`);
         }
 
         // Click the day
@@ -4716,7 +4779,21 @@ export class NSEFoundationActions {
     async _isWorkflowCompleted(tag = 'Award') {
         for (let attempt = 0; attempt < 4; attempt++) {
             const stagesBtn = this.page.locator(`xpath=${L.workflowStagesBtn}`).first();
-            await stagesBtn.waitFor({ state: 'visible', timeout: 20000 });
+            // RELOAD-AND-RETRY, not a bare wait. The loop below already recovers
+            // from a popup that opens empty, but until 2026-09-21 a slow-rendering
+            // BUTTON had no recovery at all: on the S60 run the 20s wait expired on
+            // the award page and took the whole chain build down with it
+            // (chainBuilders.js:128), before the scenario read a single budget.
+            // The app does render it — it just needs another paint, exactly like
+            // _waitForApproveButton assumes.
+            const btnVisible = await stagesBtn.waitFor({ state: 'visible', timeout: 20000 })
+                .then(() => true).catch(() => false);
+            if (!btnVisible) {
+                console.log(`[${tag}] Workflow Stages button not visible after 20s — reloading (${attempt + 1}/4)...`);
+                await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+                await this.page.waitForTimeout(3000);
+                continue;
+            }
             await stagesBtn.click();
             await this.page.waitForTimeout(1500);
 
@@ -4741,7 +4818,7 @@ export class NSEFoundationActions {
             console.log(`[${tag}] Workflow Stages → overall status: "${statusText}" → ${completed ? 'Completed' : 'NOT completed'}`);
             return completed;
         }
-        throw new Error('Workflow Stages popup never loaded its data');
+        throw new Error('Workflow Stages never became readable — button never rendered, or the popup never loaded its data');
     }
 
     async completeAwardApprovals(comments = 'Approved by automation') {
@@ -5982,6 +6059,62 @@ export class NSEFoundationActions {
         console.log(`[INV] Invoice submitted → ${this.page.url()}`);
     }
 
+    /** Clear the invoice REVIEW stage, the first stage of every invoice workflow
+     *  since QA's change of 2026-09-17: the header offers Review + Reject and NO
+     *  Approve, and the invoice reads "Pending Review" until the review is
+     *  submitted. Review opens the invoice in EDIT mode; submitting it there runs
+     *  the same Validations -> Workflow Summary dialogs as a create submit and
+     *  hands the invoice on to the approval stages.
+     *
+     *  Returns true when a review gate was found AND cleared, false when there was
+     *  none to clear, so a caller can treat it as "did I just make progress?".
+     *  It deliberately does not throw on a missing gate: most invoices reach this
+     *  helper already past review.
+     *
+     *  This was invisible until 2026-09-17: approveInvoiceUntilPendingSync spun its
+     *  full 12 iterations looking for an Approve button that the review stage never
+     *  shows, then died on the test timeout with a screenshot of a still-loading
+     *  page - which read as app slowness rather than a workflow change. */
+    async submitInvoiceReviewStage(tag = 'INV') {
+        const review = this.page.locator(`xpath=${L.invoiceReviewBtn}`).first();
+        if (!(await review.isVisible({ timeout: 8000 }).catch(() => false))) return false;
+
+        await review.scrollIntoViewIfNeeded().catch(() => {});
+        await review.click();
+        console.log(`[${tag}] Review stage → opening the invoice in edit mode`);
+        await this.page.waitForURL(/\/invoices\/\d+\/edit/, { timeout: 30000 }).catch(() => {});
+        if (!/\/invoices\/\d+\/edit/.test(this.page.url())) {
+            console.log(`[${tag}] Review did not open the edit page (${this.page.url()})`);
+            return false;
+        }
+        await this.page.waitForTimeout(2500);
+
+        const submit = this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first();
+        await submit.waitFor({ state: 'visible', timeout: 20000 });
+        await submit.click();
+        console.log(`[${tag}] Submitted the review`);
+        await this.page.waitForTimeout(1500);
+
+        // Same two dialogs as a create submit. Proceed matches "Proceed Anyway" too.
+        const proceed = this.page.locator(`xpath=${L.invoiceValidationProceedBtn}`).first();
+        if (await proceed.waitFor({ state: 'visible', timeout: 15000 }).then(() => true).catch(() => false)) {
+            await proceed.click();
+            console.log(`[${tag}] Proceeded Validations popup (review)`);
+        }
+        await this.page.waitForTimeout(1500);
+        const wf = this.page.locator(`xpath=${L.invoiceWorkflowSummarySubmitBtn}`).first();
+        if (await wf.waitFor({ state: 'visible', timeout: 15000 }).then(() => true).catch(() => false)) {
+            await wf.click();
+            console.log(`[${tag}] Confirmed Workflow Summary popup (review)`);
+        }
+
+        // Back on the detail page the header should now carry the approval actions.
+        await this.page.waitForURL(/\/invoices\/\d+(?:$|\/(?!edit))/, { timeout: 60000 }).catch(() => {});
+        await this.page.waitForTimeout(3000);
+        console.log(`[${tag}] Review stage cleared → ${this.page.url()}`);
+        return true;
+    }
+
     // Approve the invoice through all stages until it reaches "Pending Sync".
     // After the final approval the Approve button disappears and the status flips
     // to "Pending Sync" — the terminal state for this test. (It only becomes
@@ -6023,6 +6156,11 @@ export class NSEFoundationActions {
                 console.log(`[INV] Status Pending Sync after ${i} approval(s).`);
                 return;
             }
+            // REVIEW STAGE FIRST. Since 2026-09-17 every invoice workflow opens on a
+            // review gate that shows Review + Reject and no Approve, so hunting for
+            // Approve here would burn all 12 iterations against a button that cannot
+            // exist yet. Clearing the gate is progress, so retry the iteration.
+            if (await this.submitInvoiceReviewStage('INV')) continue;
             const approveVisible = await this._waitForApproveButton({
                 tag: 'INV',
                 selector: L.poApproveBtn,
@@ -6069,10 +6207,26 @@ export class NSEFoundationActions {
     }
 
     async saveInvoiceCode() {
+        // POLL for the code, the same way saveSourcingEventCode does. A single
+        // read here is a race against the invoice page painting: on the S131 run
+        // of 2026-09-21 the invoice was created fine (/invoices/1224) but the
+        // scrape came back null, that null was WRITTEN TO THE FIXTURE, and the
+        // test died two lines later on an empty code. Worse, a null in
+        // savedInvoice silently poisons acknowledgeInvoice(), which would POST
+        // EXPENSE_RECORD_NO: null. Never persist a null — throw instead.
+        let code = null;
+        for (let i = 0; i < 12; i++) { // up to ~60s
+            const bodyText = await this.page.locator('body').textContent() ?? '';
+            const m = bodyText.match(/Invoice-[A-Z0-9\-]*\d+/i);
+            if (m) { code = m[0].trim(); break; }
+            console.log(`[INV] Invoice code not displayed yet — waiting (${i + 1}/12)...`);
+            await this.page.waitForTimeout(5000);
+        }
         const url = this.page.url();
-        const bodyText = await this.page.locator('body').textContent() ?? '';
-        const m = bodyText.match(/Invoice-[A-Z0-9\-]*\d+/i);
-        const code = m ? m[0].trim() : null;
+        if (!code) {
+            throw new Error(`Invoice code never appeared on ${url} — not saving`);
+        }
+
         const idMatch = url.match(/\/invoices\/(\d+)/);
         const dataPath = this._dataPath();
         const current = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
@@ -9468,10 +9622,64 @@ export class NSEFoundationActions {
             return null;
         }, statuses);
 
-        if (!hit) return null;
-        await this.page.goto(`${baseUrl}${hit.href}/overview`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await this.page.waitForTimeout(3000);
-        return hit;
+        if (hit) {
+            await this.page.goto(`${baseUrl}${hit.href}/overview`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await this.page.waitForTimeout(3000);
+            return hit;
+        }
+        return null;
+    }
+
+    /**
+     * openRfxWithStatus, but PAGING THROUGH THE WHOLE LISTING (QA, 2026-09-21).
+     *
+     * The single-page version parked scenario 31 in the 2026-09-16 full run
+     * ("no Released or Quoted RFX on the first listing page") — the listing is
+     * sorted newest-first and the qualifying RFXs had simply scrolled past
+     * page 1. Returns null only when no page holds one.
+     */
+    async openRfxWithStatusAcrossPages(statuses, baseUrl, { maxPages = 25, tag = 'RFX' } = {}) {
+        await this.page.goto(`${baseUrl}/quote-requests`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.waitForFunction(
+            () => document.querySelectorAll('tbody tr').length > 0,
+            null, { timeout: 30000 },
+        );
+        await this.page.waitForTimeout(1200);
+
+        for (let p = 1; p <= maxPages; p++) {
+            const hit = await this.page.evaluate((wanted) => {
+                const ths = [...document.querySelectorAll('th')].map(t => (t.textContent || '').trim());
+                const si = ths.indexOf('Status');
+                if (si === -1) return null;
+                for (const r of [...document.querySelectorAll('tbody tr')]) {
+                    const tds = r.querySelectorAll('td');
+                    const st = ((tds[si] || {}).textContent || '').trim();
+                    if (!wanted.includes(st)) continue;
+                    const a = r.querySelector('a');
+                    if (!a) continue;
+                    return { code: ((tds[0] || {}).textContent || '').trim(), href: a.getAttribute('href'), status: st };
+                }
+                return null;
+            }, statuses);
+
+            if (hit) {
+                console.log(`[${tag}] ${JSON.stringify(statuses)} found on page ${p}: ${hit.code} (${hit.status})`);
+                await this.page.goto(`${baseUrl}${hit.href}/overview`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+                await this.page.waitForTimeout(3000);
+                return hit;
+            }
+
+            // v4 listing control, same as listingCodesAcrossPages. NOTE: the v3
+            // listings use a different pager entirely (see v3DetailActions
+            // .goToNextListingPage) — do not copy this one there.
+            const next = this.page.getByRole('button', { name: 'Next' }).first();
+            if (!await next.count().catch(() => 0)) break;
+            if (await next.isDisabled().catch(() => true)) break;
+            await next.click();
+            await this.page.waitForTimeout(3000);
+        }
+        console.log(`[${tag}] no ${JSON.stringify(statuses)} RFX on any listing page`);
+        return null;
     }
 
     async hasBulkReminderButton() {

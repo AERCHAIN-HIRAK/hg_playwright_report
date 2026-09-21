@@ -96,11 +96,13 @@ test.describe('Invoice — review-stage validations', () => {
             await page.setViewportSize({ width: 1800, height: 900 });
             await a.openApp(data);
 
-            // (0) The collision, off an invoice that ALREADY exists — before the
-            //     SAPP leg replaces savedInvoice.
-            const duplicate = await a.readSavedInvoiceNumber(data);
-            const collidedWith = data.savedInvoice?.code;
-            console.log(`[S126b] will re-use "${duplicate}" (held by ${collidedWith})`);
+            // (0) The collision reference. FIXED by QA (2026-09-21) instead of read
+            //     off whatever savedInvoice happens to hold: the dynamic read made
+            //     the duplicate a moving target — every run collided with a
+            //     different invoice, so a refusal could never be compared between
+            //     runs. Override with S126B_DUPLICATE if the record is ever retired.
+            const duplicate = process.env.S126B_DUPLICATE || 'INV-AUTO-20787';
+            console.log(`[S126b] will re-use the fixed reference "${duplicate}"`);
 
             // DEBUG FAST PATH. Set S126B_INVOICE_ID to the CAPP id of an invoice
             // ALREADY sitting in Pending Review to skip the ~17 min chain build and
@@ -182,7 +184,14 @@ test.describe('Invoice — review-stage validations', () => {
             await page.goto(`https://nse-capp-uat.aerchain.io/invoices/${invId}`,
                 { waitUntil: 'domcontentloaded', timeout: 90000 });
             await page.waitForTimeout(12000);
-            const reEntered = await s.openPendingReviewEditPage('S126b');
+            // matchGrn:false — re-running Item Matching here RE-CLICKS the already
+            // selected GRN, which DESELECTS it, and the duplicate submit below then
+            // goes in unmatched. That is what made the 2026-09-21 "silent refusal"
+            // unreadable: an unmatched invoice is refused for its own reason, with
+            // no duplicate message, and the two look identical. The helper always
+            // documented matching as "skipped on a re-entry" — the call site simply
+            // never passed it.
+            const reEntered = await s.openPendingReviewEditPage('S126b', { matchGrn: false });
             expect(reEntered,
                 'could not re-enter the review edit page after the Subject validation, so the '
                 + 'duplicate half cannot run').toBeTruthy();

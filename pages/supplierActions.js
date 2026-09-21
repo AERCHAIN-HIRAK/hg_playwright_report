@@ -504,6 +504,54 @@ export class supplierActions {
     }
 
     /**
+     * Create a BRAND NEW supplier and take it to "Requested", i.e. to the point
+     * where /suppliers/{id}/update renders its onboarding form (QA, 2026-09-21).
+     *
+     * Scenario 135 asks whether a blank IFSC blocks the ONBOARDING submission,
+     * and QA's instruction is to exercise it on a supplier this test creates —
+     * not on whatever pre-Registered supplier happens to be lying around. The
+     * old findOnboardingSupplier() route skipped in the 2026-09-16 full run
+     * because a Registered supplier redirects /update to its view page, so the
+     * probe found no candidate with an editable form.
+     *
+     * CREATES A REAL SUPPLIER, exactly as scenario 97 does — there is no draft
+     * mode. Returns { id, code, name }.
+     */
+    async createSupplierUpToOnboardingRequested(notes = 'Approved by automation — scenario 135') {
+        await this.openListing();
+        await this.openCreateForm();
+        const name = await this.fillMandatoryFields();
+        await this.submitCreateForm();
+        await this.confirmWorkflowSummary();
+
+        await this.openListing();
+        const href = await this.findSupplierHref(name);
+        if (!href) throw new Error(`the new supplier "${name}" was not created`);
+        const id = href.split('/').pop();
+
+        await this.page.goto(`${V3_BASE}${href}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.waitForTimeout(8000);
+        const code = await this.page.evaluate(() => {
+            const m = document.body.innerText.match(/\(([A-Z]+-\d+-\d+)\)/);
+            return m ? m[1] : null;
+        });
+        if (!code) throw new Error(`no supplier code on the detail page for ${name}`);
+        console.log(`[SUPPLIER] created ${code} (${name}) → ${href}`);
+
+        const status = await this.approveUntilSubmitted(id, code, notes);
+        if (!/^submitted$/i.test(SupplierStatus.normalise(status))) {
+            throw new Error(`the creation workflow did not reach Submitted (ended at "${status}")`);
+        }
+
+        const { status: httpStatus } = await this.sendOnboarding();
+        if (!(httpStatus < 300)) throw new Error(`Send Onboarding was rejected (HTTP ${httpStatus})`);
+
+        const after = await this.readSupplierStatus(code);
+        console.log(`[SUPPLIER] ${code} status after Send Onboarding = ${after}`);
+        return { id, code, name };
+    }
+
+    /**
      * Read the IFSC fields on the open onboarding form.
      *
      * Matched on the input's ID PREFIX, not on a mandatory marker: this template

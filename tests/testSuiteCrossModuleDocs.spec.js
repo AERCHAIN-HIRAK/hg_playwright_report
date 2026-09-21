@@ -42,7 +42,8 @@ const REASSIGN_MODULES = [
     { key: 'requisition',   scenario: 46 },
     { key: 'purchaseOrder', scenario: 48 },
     { key: 'grn',           scenario: 49 },
-    { key: 'invoice',       scenario: 50 },
+    // invoice (scenario 50) REMOVED on 2026-09-21 (QA): not needed. The Invoice
+    // view page offers no "Reassign User" action, so the test only ever skipped.
 ].map(m => ({ ...data.modules[m.key], scenario: m.scenario }));
 
 // Statuses where a transaction is still in flight, so reassignment has
@@ -83,15 +84,22 @@ test.describe('Cross-module — Regenerate + Download Document', () => {
             const code = await detail.openFirstTransactionFromListing(data.baseUrl);
             console.log(`[${mod.name}] opened ${code}`);
 
-            const items = await detail.getMoreMenuItems();
+            // REGENERATE FIRST (QA, 2026-09-21). The download action only appears
+            // once a document EXISTS, so reading the menu before regenerating is
+            // what made this skip in the 2026-09-16 full run ("Purchase Order
+            // exposes no download action"). Generate the document, THEN look.
+            let items = await detail.getMoreMenuItems();
             await detail.closeMenu();
-            const hasDownload = items.includes(L.menu_Download) || items.includes(L.menu_DownloadDocument);
-            test.skip(!hasDownload, `${mod.name} exposes no download action (menu: ${items.join(', ')})`);
-
-            // Regenerate first so a current document is guaranteed to exist.
             if (items.includes(L.menu_RegenerateDocument)) {
                 await detail.regenerateDocumentAndAssert();
+                items = await detail.getMoreMenuItems();
+                await detail.closeMenu();
             }
+
+            const hasDownload = items.includes(L.menu_Download) || items.includes(L.menu_DownloadDocument);
+            test.skip(!hasDownload,
+                `${mod.name} exposes no download action even after Regenerate Document `
+                + `(menu: ${items.join(', ')})`);
 
             const file = await detail.downloadDocumentAndAssert();
             expect(file, 'no download was produced').not.toBeNull();
