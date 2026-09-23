@@ -3,7 +3,7 @@
     "authUrl": "https://nse-auth-uat.aerchain.io/capp/login",
     "login": {
         "email": "nsefsupport@demo.com",
-        "password": "12345"
+        "password": "H1i2r3a4k5@"
     },
     "potentialSuppliers": "1",
     "cxo": {
@@ -170,7 +170,7 @@
         "deliveryNoteReference": "DNR-AUTO-001"
     },
     "invoice": {
-        "invoiceNumber": "INV-AUTO-20791",
+        "invoiceNumber": "INV-AUTO-20806",
         "documentPath": "fixtures/invoice_document.png",
         "ackUrl": "https://nse-api-uat.aerchain.io/invoice/ack",
         "ackTemplateId": 1233,

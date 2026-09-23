@@ -423,7 +423,15 @@ export class SupplierPortalActions {
     /** `opts.beforeSubmit` runs with the filled /invoices/new form still open,
      *  before the Submit gauntlet — scenario 58 uses it to set the line qty to 70
      *  (the form defaults to the PO's full qty). */
-    async createInvoiceFromPo(data, { beforeSubmit = null } = {}) {
+    /** `opts.duplicateFirst` (scenarios 143/144) runs a REFUSAL rehearsal before the
+     *  real submit: the Invoice Number is set to an already-used reference, Submit
+     *  is clicked, the Validations popup is read, and "Make Changes" returns to the
+     *  still-filled form where the fresh number is restored. The outcome is left on
+     *  `this.lastDuplicateAttempt` — the return value stays the created invoice code
+     *  so existing callers are unaffected. The duplicate is NEVER submitted through,
+     *  even if the app wrongly passes it, so a failing app cannot create a colliding
+     *  invoice as a side effect of the test. */
+    async createInvoiceFromPo(data, { beforeSubmit = null, duplicateFirst = null } = {}) {
         await this.openPoCreateMenu('Invoice');
 
         // "Select PO Items" dialog → Submit.
@@ -463,6 +471,11 @@ export class SupplierPortalActions {
             // through it lands on a stale tab and silently does nothing.
             await beforeSubmit(this.page);
             await this.page.waitForTimeout(800);
+        }
+
+        if (duplicateFirst) {
+            this.lastDuplicateAttempt =
+                await this._attemptDuplicateReference(duplicateFirst, invoiceNumber);
         }
 
         // ── Submit → "Validations" (Proceed) → "Approvers" (Submit) ──
@@ -536,6 +549,135 @@ export class SupplierPortalActions {
         fs.writeFileSync(dataPath, JSON.stringify(current, null, 4), 'utf-8');
         console.log(`[SAPP Invoice] Invoice number bumped: ${prev} → ${next}`);
         return next;
+    }
+
+    /**
+     * Rehearse the duplicate-reference refusal on the SAPP create form, then put
+     * the fresh number back — sheet scenarios 143 (a Supplier Portal invoice
+     * carrying an already-used reference) and 144 (that reference belonging to a
+     * BUYER-created invoice, which is what makes the check cross-portal).
+     *
+     * The Validations popup IS this app's duplicate check: a clean submit renders
+     * "Validations / Invoice has passed duplicate validation / Make Changes /
+     * Proceed" (captured verbatim in the CAPP non-PO run log). A duplicate should
+     * therefore render the FAILED wording in the same popup, naming the invoice it
+     * collided with.
+     *
+     * Four outcomes, deliberately distinguished — mirrors
+     * submitInvoiceExpectingDuplicateRejection, and for the same reason: this app
+     * refuses some submits with nothing in the DOM at all, and "no message" is a
+     * finding, not a pass.
+     *   { refused: true,  silent: false }  validation shown            <- wanted
+     *   { refused: true,  silent: true  }  refused, nothing rendered   <- app gap
+     *   { refused: false, passed: true  }  popup says PASSED           <- the defect
+     *   { refused: false }                 no refusal detected
+     *
+     * The duplicate is never carried through the submit: whatever the outcome, the
+     * form is restored to `freshNumber` before returning, so a broken app cannot
+     * create a colliding invoice as a side effect of running this test.
+     */
+    async _attemptDuplicateReference(duplicate, freshNumber) {
+        console.log(`[SAPP Invoice] duplicate rehearsal - setting reference to "${duplicate}"`);
+        await this.page.locator(`xpath=${S.invoiceNumberInput}`).first().fill(String(duplicate));
+        await this.page.waitForTimeout(800);
+
+        const submitBtn = this.page.locator(`xpath=${S.invoiceSubmitBtn}`).last();
+        const dialog = this.page.locator('xpath=//div[@role="dialog"]').last();
+        let dialogText = '';
+        for (let i = 0; i < 4; i++) {
+            await submitBtn.scrollIntoViewIfNeeded().catch(() => {});
+            await submitBtn.click({ force: true }).catch(() => {});
+            console.log(`[SAPP Invoice] duplicate rehearsal - Submit (attempt ${i + 1})`);
+            await this.page.waitForTimeout(4500);
+            dialogText = ((await dialog.innerText().catch(() => '')) || '')
+                .replace(/\s+/g, ' ').trim();
+            if (dialogText) break;
+        }
+
+        // Same failure vocabulary the CAPP helper uses. `passed` must be excluded
+        // explicitly: a bare /duplicate/ also matches the SUCCESS wording, which is
+        // exactly how a clean submit was once scored as a refusal (2026-09-07).
+        const failRe = /failed duplicate validation|duplicate (invoice|reference|entry)|already (exists|exist|used|present)|same (reference|invoice number)|must be unique/i;
+        const passRe = /passed duplicate validation/i;
+
+        const scan = await this.page.evaluate(() => {
+            const errish = [];
+            for (const el of document.querySelectorAll(
+                '[class*="error"], [class*="helper"], [role="alert"], [class*="Mui-error"], [class*="toast"], [class*="Toast"]')) {
+                const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                if (t) errish.push(t.slice(0, 200));
+            }
+            return { errish: [...new Set(errish)].slice(0, 15), url: location.href };
+        });
+
+        const passed = passRe.test(dialogText);
+        const failedInDialog = failRe.test(dialogText) && !passed;
+        const failedInline = !dialogText && scan.errish.some(t => failRe.test(t));
+        const stillOnForm = /\/invoices\/new/.test(this.page.url());
+        const collided = (dialogText.match(/Invoice-[A-Z]+-\d+-\d+/) || [])[0] || null;
+
+        let out;
+        if (failedInDialog || failedInline) {
+            out = {
+                refused: true, silent: false, passed: false,
+                messages: failedInDialog ? [dialogText.slice(0, 300)]
+                    : scan.errish.filter(t => failRe.test(t)),
+                collided, dialogText, errish: scan.errish,
+            };
+            console.log(`[SAPP Invoice] duplicate REFUSED with: ${JSON.stringify(out.messages)}`);
+        } else if (passed) {
+            out = {
+                refused: false, silent: false, passed: true, messages: [dialogText.slice(0, 300)],
+                collided: null, dialogText, errish: scan.errish,
+            };
+            console.log('[SAPP Invoice] duplicate was PASSED by the Validations popup - the app did not '
+                + `detect the collision: ${JSON.stringify(dialogText.slice(0, 200))}`);
+        } else if (stillOnForm) {
+            out = {
+                refused: true, silent: true, passed: false, messages: [],
+                collided: null, dialogText, errish: scan.errish,
+            };
+            console.log('[SAPP Invoice] duplicate refused SILENTLY - still on /invoices/new with no '
+                + `message. Error-shaped text: ${JSON.stringify(scan.errish)}`);
+        } else {
+            out = {
+                refused: false, silent: false, passed: false, messages: [],
+                collided: null, dialogText, errish: scan.errish, url: this.page.url(),
+            };
+            console.log(`[SAPP Invoice] duplicate rehearsal inconclusive - now on ${this.page.url()}, `
+                + `dialog: ${JSON.stringify(dialogText.slice(0, 200))}`);
+        }
+
+        // ── Recover the form and restore the fresh number ──
+        // "Make Changes" is the popup's own way back to the still-filled form; it is
+        // present on BOTH the passed and failed variants, so this works whichever
+        // way the app answered.
+        const makeChanges = this.page.locator(`xpath=${S.dialogMakeChangesBtn}`).first();
+        if (await makeChanges.isVisible({ timeout: 5000 }).catch(() => false)) {
+            await makeChanges.click().catch(() => {});
+            console.log('[SAPP Invoice] Validations popup -> Make Changes (back to the form)');
+            await this.page.waitForTimeout(2500);
+        } else if (dialogText) {
+            await this.page.keyboard.press('Escape').catch(() => {});
+            await this.page.waitForTimeout(1500);
+        }
+
+        // Restore, and VERIFY it stuck: leaving the duplicate in place would make the
+        // caller's submit fail for this rehearsal's reason rather than creating the
+        // invoice the rest of the scenario needs.
+        for (let i = 1; i <= 3; i++) {
+            const num = this.page.locator(`xpath=${S.invoiceNumberInput}`).first();
+            await num.fill(String(freshNumber)).catch(() => {});
+            await this.page.waitForTimeout(1000);
+            const got = (await num.inputValue().catch(() => '')).trim();
+            if (got === String(freshNumber)) {
+                console.log(`[SAPP Invoice] reference restored to "${freshNumber}" (attempt ${i}, verified)`);
+                return out;
+            }
+            console.log(`[SAPP Invoice] reference did not stick on attempt ${i} - field holds "${got}"`);
+        }
+        throw new Error(`[SAPP Invoice] could not restore the invoice reference to "${freshNumber}" after `
+            + 'the duplicate rehearsal - refusing to submit with the duplicate still in the field');
     }
 
     // Invoice Date = today. The picker opens on the current month (SAPP uses

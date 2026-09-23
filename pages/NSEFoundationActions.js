@@ -1924,6 +1924,239 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(600);
     }
 
+    /**
+     * The intake line-item grid, grouped into ROWS by vertical position.
+     *
+     * Every intake cell locator in allLocators is an ABSOLUTE page-scoped index
+     * — intakeItemName is "(…)[1]", Qty "[2]", Delivery Address "[4]" — which has
+     * two fatal problems for a multi-row intake:
+     *   · they all address row 1, so a second fill just overwrites the first;
+     *   · the indices SHIFT. Measured 2026-09-23 with two rows on screen, row 1
+     *     actually occupied [4]…[17] and the old "[4]" pointed at the UOM column
+     *     (clicking it offered ["EA","NOS","LTR"…], unit codes, not addresses).
+     *     Selecting an item collapses the Description cell and shifts the row again.
+     * An earlier attempt at fixed row-2 offsets (intakeItemName1 … nth=16-21) is
+     * commented out in allLocators — guessing offsets did not survive.
+     *
+     * Grouping by bounding-box top gives the row structure directly and survives
+     * both shifts: cells on the same y are one row, ordered left to right.
+     */
+    async readIntakeGridRows() {
+        const cells = await this.page.evaluate(() => {
+            const sel = 'div.w-full.h-full.flex.items-center';
+            return [...document.querySelectorAll(sel)].map((c, i) => {
+                const r = c.getBoundingClientRect();
+                return { i: i + 1, top: Math.round(r.top), left: Math.round(r.left),
+                         text: (c.innerText || '').replace(/\s+/g, ' ').trim() };
+            });
+        });
+        // A line-item row is any y shared by several cells; the toolbar and header
+        // sit alone or in pairs, so require at least 5 to count as a data row.
+        const byTop = new Map();
+        for (const c of cells) {
+            if (!byTop.has(c.top)) byTop.set(c.top, []);
+            byTop.get(c.top).push(c);
+        }
+        const rows = [...byTop.entries()]
+            .filter(([, cs]) => cs.length >= 5)
+            .sort((a, b) => a[0] - b[0])
+            .map(([top, cs]) => ({ top, cells: cs.sort((a, b) => a.left - b.left) }));
+        console.log(`[Intake] grid: ${rows.length} line-item row(s)`);
+        rows.forEach((r, n) => console.log(`[Intake]   row ${n + 1}: `
+            + r.cells.map(c => `x${c.left}[${c.i}]${c.text ? '=' + c.text.slice(0, 18) : ''}`).join(' ')));
+        return rows;
+    }
+
+    /** Click one cell of the line-item grid, addressed by 1-based row and column.
+     *  Re-reads the grid each call so a shift between steps cannot misdirect it. */
+    async clickIntakeCell(row, col, tag = 'Intake') {
+        const rows = await this.readIntakeGridRows();
+        const r = rows[row - 1];
+        if (!r) throw new Error(`[${tag}] line-item row ${row} does not exist (grid has ${rows.length})`);
+        const c = r.cells[col - 1];
+        if (!c) throw new Error(`[${tag}] row ${row} has no column ${col} `
+            + `(row holds ${r.cells.length} cells: ${JSON.stringify(r.cells.map(x => x.text))})`);
+        const sel = 'div.w-full.h-full.flex.items-center';
+        await this.page.locator(sel).nth(c.i - 1).scrollIntoViewIfNeeded().catch(() => {});
+        await this.page.locator(sel).nth(c.i - 1).click({ timeout: 15000 });
+        await this.page.waitForTimeout(800);
+        return c;
+    }
+
+    /** Intake line-item column positions as OFFSETS from the row's leftmost cell,
+     *  derived from the absolute run (330/381/581/781/981/1181/1381/1581).
+     *
+     *  Offsets FROM THE ITEM CELL, not absolutes and not from "#".
+     *
+     *  The grid scrolls HORIZONTALLY as later columns are filled, and the "#"
+     *  column is PINNED — it stays at x330 while everything else slides. So:
+     *    · absolute x is meaningless once scrolled (item measured x381, then x-399);
+     *    · "leftmost cell" flips from "#" to Item when it scrolls, shifting every
+     *      offset by 51 and silently mis-targeting by one column.
+     *  The scrollable columns keep a constant 200px pitch relative to each other,
+     *  so the Item cell is the one stable anchor. Verified in both states:
+     *    unscrolled  item 381  qty 781  delivery 1181  billing 1381
+     *    scrolled    item -399 qty   1  delivery  401  billing  601
+     *
+     *  Column ORDER is not usable either: before a row carries an item the "#" cell
+     *  reports a left that sorts it into the middle of the row. */
+    static INTAKE_COL = {
+        item: 0, desc: 200, qty: 400, uom: 600,
+        deliveryAddress: 800, billingAddress: 1000, price: 1200, total: 1400,
+    };
+
+    /** Click a line-item cell by ROW and COLUMN X. Re-reads the grid first, so a
+     *  layout that shifted between steps cannot misdirect the click. */
+    async clickIntakeCellByX(row, x, tag = 'Intake') {
+        const rows = await this.readIntakeGridRows();
+        const r = rows[row - 1];
+        if (!r) throw new Error(`[${tag}] line-item row ${row} does not exist (grid has ${rows.length})`);
+        // Anchor on the ITEM cell — the leftmost cell that is not the pinned "#".
+        const scrollable = r.cells.filter(c => c.text.trim() !== String(row));
+        const base = Math.min(...(scrollable.length ? scrollable : r.cells).map(c => c.left));
+        const want = base + x;
+        let best = null;
+        for (const c of r.cells) {
+            const d = Math.abs(c.left - want);
+            if (best === null || d < best.d) best = { c, d };
+        }
+        if (!best || best.d > 40) {
+            throw new Error(`[${tag}] no cell at offset +${x} (x=${want}, row base ${base}) on row `
+                + `${row}. Row holds: ${JSON.stringify(r.cells.map(c => `x${c.left}:${c.text.slice(0, 20)}`))}`);
+        }
+        const sel = 'div.w-full.h-full.flex.items-center';
+        await this.page.locator(sel).nth(best.c.i - 1).scrollIntoViewIfNeeded().catch(() => {});
+        await this.page.locator(sel).nth(best.c.i - 1).click({ timeout: 15000 });
+        await this.page.waitForTimeout(900);
+        return best.c;
+    }
+
+    /**
+     * Choose WHICH intake line items the next Process action applies to —
+     * scenario 83 converts line 1 to one RFX and line 2 to another.
+     *
+     * Mapped live 2026-09-23 on a released two-line intake: the overview carries
+     * one checkbox per line plus a select-all at index 0, and ALL of them start
+     * CHECKED. So converting a single line means UNCHECKING the others, not
+     * checking the one wanted — starting from "nothing selected" would be wrong.
+     *
+     * `wanted` is 1-based line numbers. Each toggle is verified, and the select-all
+     * box is never touched directly: clicking it cascades to every row.
+     */
+    async selectIntakeLineItems(wanted, tag = 'Intake') {
+        const box = (i) => this.page.locator('input[type=checkbox], [role=checkbox]').nth(i);
+        const count = await this.page.locator('input[type=checkbox], [role=checkbox]').count();
+        const lines = count - 1;                        // index 0 is select-all
+        if (lines < 1) throw new Error(`[${tag}] no line-item checkboxes on the intake (found ${count})`);
+
+        const state = async (i) => await this.page.locator('input[type=checkbox], [role=checkbox]')
+            .nth(i).evaluate(el => el.checked ?? el.getAttribute('aria-checked') === 'true');
+
+        for (let line = 1; line <= lines; line++) {
+            const want = wanted.includes(line);
+            if (await state(line) === want) continue;
+            await box(line).click({ force: true });
+            await this.page.waitForTimeout(700);
+            const got = await state(line);
+            if (got !== want) {
+                throw new Error(`[${tag}] could not set line ${line} to ${want ? 'selected' : 'cleared'} `
+                    + `— it reads ${got}`);
+            }
+        }
+        const final = [];
+        for (let line = 1; line <= lines; line++) if (await state(line)) final.push(line);
+        console.log(`[${tag}] line items selected: ${JSON.stringify(final)} of ${lines}`);
+        if (JSON.stringify(final) !== JSON.stringify(wanted)) {
+            throw new Error(`[${tag}] wanted lines ${JSON.stringify(wanted)} but ${JSON.stringify(final)} `
+                + 'are selected');
+        }
+        return final;
+    }
+
+    /** The row's Item Name cell: leftmost cell that is not the row-number cell.
+     *  Works on an empty row, where the measured column x's do not yet apply. */
+    async clickIntakeItemCell(row, tag = 'Intake') {
+        const rows = await this.readIntakeGridRows();
+        const r = rows[row - 1];
+        if (!r) throw new Error(`[${tag}] line-item row ${row} does not exist (grid has ${rows.length})`);
+        const candidates = r.cells.filter(c => c.text.trim() !== String(row));
+        const cell = candidates[0] ?? r.cells[0];
+        const sel = 'div.w-full.h-full.flex.items-center';
+        await this.page.locator(sel).nth(cell.i - 1).scrollIntoViewIfNeeded().catch(() => {});
+        await this.page.locator(sel).nth(cell.i - 1).click({ timeout: 15000 });
+        await this.page.waitForTimeout(900);
+        console.log(`[${tag}] row ${row} item cell = [${cell.i}] at x${cell.left}`);
+        return cell;
+    }
+
+    /**
+     * Fill ANY intake line-item row — scenario 83 needs a second row that differs
+     * from the first ONLY by delivery address.
+     *
+     * `addressIndex` is 0-based into the Delivery Address dropdown, so row 1 can
+     * take option 0 and row 2 option 1. fillIntakeLineItem always takes option 0,
+     * which is why it cannot express this scenario on its own.
+     */
+    async fillIntakeLineItemRow(data, { row = 1, qty = null, addressIndex = 0, tag = 'Intake' } = {}) {
+        const C = NSEFoundationActions.INTAKE_COL;
+        const lineQty = String(qty ?? data.intake.itemQty);
+
+        // The ITEM cell is resolved STRUCTURALLY, not by x. The measured column
+        // positions only hold once a row carries an item: on an EMPTY row the cells
+        // lay out differently, so an x-match against 381 misses and the Product Name
+        // box never opens — the fill then times out 20s later pointing at nothing.
+        // On any row the item cell is the leftmost one that is not the "#" cell.
+        await this.clickIntakeItemCell(row, tag);
+        await this.page.locator('[placeholder="Product Name"]').fill(data.intake.itemName);
+        await this.page.waitForTimeout(1200);
+        const nameOpt = this.page
+            .locator(`[role="option"] [title="${data.intake.itemNameOption}"]`).first();
+        if (await nameOpt.isVisible({ timeout: 6000 }).catch(() => false)) await nameOpt.click();
+        else await this.page.getByRole('option').first().click();
+        await this.page.waitForTimeout(1500);
+
+        await this.clickIntakeCellByX(row, C.qty, tag);
+        await this.page.keyboard.type(lineQty);
+        await this.page.keyboard.press('Tab');
+        await this.page.waitForTimeout(800);
+
+        await this.clickIntakeCellByX(row, C.deliveryAddress, tag);
+        await this.page.waitForTimeout(1500);
+        const addrOpts = this.page.locator('[role="option"]');
+        const addrCount = await addrOpts.count();
+        if (addrCount <= addressIndex) {
+            throw new Error(`[${tag}] delivery address option ${addressIndex} was asked for but only `
+                + `${addrCount} are offered: ${JSON.stringify(await addrOpts.allInnerTexts())}`);
+        }
+        const chosenAddress = (await addrOpts.nth(addressIndex).innerText()).replace(/\s+/g, ' ').trim();
+        await addrOpts.nth(addressIndex).click();
+        await this.page.waitForTimeout(900);
+        console.log(`[${tag}] row ${row} delivery address -> "${chosenAddress}"`);
+
+        // Billing and Price go through the KEYBOARD, exactly as fillIntakeLineItem
+        // does. Clicking those cells does not work here: after the delivery address
+        // is chosen the grid advances into edit mode and the cell div sits under the
+        // editor, so a click on it waits out the full timeout even though the cell
+        // was located correctly (verified — the row showed x1381[24] present while
+        // the click timed out).
+        await this.page.keyboard.press('Tab');
+        await this.page.keyboard.press('Enter');
+        await this.page.waitForTimeout(1200);
+        const bilOpt = this.page.locator('[role="option"]').first();
+        await bilOpt.waitFor({ state: 'visible', timeout: 10000 });
+        await bilOpt.click();
+        await this.page.waitForTimeout(900);
+
+        await this.page.keyboard.press('Tab');
+        await this.page.keyboard.press('Enter');
+        await this.page.waitForTimeout(800);
+        await this.page.keyboard.type(data.intake.itemSuggestedPrice);
+        await this.page.keyboard.press('Tab');
+        await this.page.waitForTimeout(1200);
+        console.log(`[${tag}] row ${row} filled: qty ${lineQty} @ ${data.intake.itemSuggestedPrice}`);
+        return chosenAddress;
+    }
+
     /** Fill the intake's single line-item row. `qty` overrides the fixture
      *  quantity — scenarios 1 and 6 split one CXO across two intakes, so the
      *  row is not always the fixture's full 100. */
@@ -4765,6 +4998,71 @@ export class NSEFoundationActions {
             + `/invoices/new (now ${this.page.url()}). Expected a duplicate-reference validation.`);
     }
 
+    /**
+     * Submit an invoice whose quantity exceeds the PO (or the PO's remaining)
+     * balance, and report how the app refused it — sheet scenario 128.
+     *
+     * Modelled on submitInvoiceExpectingDuplicateRejection, and for the same
+     * reason: this app refuses some submits with NO text in the DOM at all, so
+     * "no message" must be reported as a distinct outcome rather than mistaken
+     * for a pass. Three outcomes:
+     *   { refused: true,  silent: false }  validation message found  ← wanted
+     *   { refused: true,  silent: true  }  refused, clean DOM        ← app gap
+     *   throws                              ACCEPTED — the limit is not enforced
+     *
+     * The wording of the real validation was not known when this was written, so
+     * the pattern is deliberately broad and every error-shaped string on the page
+     * is captured in `errish` for the log. Once a live run shows the actual text,
+     * tighten `re` to that message.
+     */
+    async submitInvoiceExpectingQtyRejection(
+        { settleMs = 9000, formUrlRe = /\/invoices\/(new|\d+\/edit)/ } = {}) {
+        await this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first().click({ timeout: 20000 });
+        await this.page.waitForTimeout(settleMs);
+
+        // Some refusals surface behind the same two popups a good submit shows.
+        for (const sel of [L.invoiceValidationProceedBtn, L.invoiceWorkflowSummarySubmitBtn]) {
+            const b = this.page.locator(`xpath=${sel}`).first();
+            if (await b.isVisible({ timeout: 4000 }).catch(() => false)) {
+                await b.click().catch(() => {});
+                await this.page.waitForTimeout(3000);
+            }
+        }
+
+        const found = await this.page.evaluate(() => {
+            const re = /exceed|more than|greater than|cannot be (more|greater)|remaining|balance|available (qty|quantity)|invalid quantity|quantity .*(exceed|available)/i;
+            const hits = [];
+            for (const dlg of document.querySelectorAll('[role="dialog"], [class*="MuiDialog"]')) {
+                const t = (dlg.innerText || '').replace(/\s+/g, ' ').trim();
+                if (t && re.test(t)) hits.push(t.slice(0, 300));
+            }
+            for (const el of document.querySelectorAll('*')) {
+                if (el.children.length) continue;
+                const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                if (t && t.length < 300 && re.test(t)) hits.push(t);
+            }
+            const errish = [];
+            for (const el of document.querySelectorAll('[class*="error"], [class*="helper"], [role="alert"], [class*="Mui-error"], [class*="toast"], [class*="Toast"]')) {
+                const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                if (t) errish.push(t.slice(0, 200));
+            }
+            return { hits: [...new Set(hits)], errish: [...new Set(errish)].slice(0, 15) };
+        });
+
+        const stillOnForm = formUrlRe.test(this.page.url());
+        if (found.hits.length) {
+            console.log(`[INV] over-qty REFUSED with: ${JSON.stringify(found.hits)}`);
+            return { refused: true, silent: false, messages: found.hits, errish: found.errish };
+        }
+        if (stillOnForm) {
+            console.log(`[INV] over-qty refused SILENTLY — still on ${this.page.url()}, no matching message. `
+                + `Error-shaped text on the page: ${JSON.stringify(found.errish)}`);
+            return { refused: true, silent: true, messages: [], errish: found.errish };
+        }
+        throw new Error('[INV] the over-quantity invoice was ACCEPTED — it submitted and left the form '
+            + `(now ${this.page.url()}). Expected a quantity/balance validation.`);
+    }
+
     async submitWorkflowSummary() {
         const btn = this.page.locator(`xpath=${L.workflowSummarySubmitBtn}`).first();
         await btn.waitFor({ state: 'visible', timeout: 15000 });
@@ -6075,7 +6373,19 @@ export class NSEFoundationActions {
      *  full 12 iterations looking for an Approve button that the review stage never
      *  shows, then died on the test timeout with a screenshot of a still-loading
      *  page - which read as app slowness rather than a workflow change. */
-    async submitInvoiceReviewStage(tag = 'INV') {
+    /**
+     * Clear the review gate. `rematchGrn` re-applies FIX → Item Matching → GRN on
+     * the review EDIT form before submitting.
+     *
+     * Needed for the 2nd and subsequent invoices against the same PO/GRN (QA,
+     * 2026-09-22): the existing match does not survive into the review form, and
+     * submitting without re-matching is refused SILENTLY — the page simply stays
+     * on /invoices/<id>/edit with nothing in the DOM. Identical symptom to the
+     * reject-edit path, where editInvoiceLowerQtyAndSubmit already re-matches for
+     * the same reason. `qty` is re-asserted after the match, because Item Matching
+     * pushes the GRN's matched qty back into the row.
+     */
+    async submitInvoiceReviewStage(tag = 'INV', { rematchGrn = false, qty = null } = {}) {
         const review = this.page.locator(`xpath=${L.invoiceReviewBtn}`).first();
         if (!(await review.isVisible({ timeout: 8000 }).catch(() => false))) return false;
 
@@ -6088,6 +6398,12 @@ export class NSEFoundationActions {
             return false;
         }
         await this.page.waitForTimeout(2500);
+
+        if (rematchGrn) {
+            await this.matchGrnInItemMatching();
+            if (qty != null) await this.ensureInvoiceQty(qty);
+            console.log(`[${tag}] Re-matched the GRN on the review form`);
+        }
 
         const submit = this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first();
         await submit.waitFor({ state: 'visible', timeout: 20000 });
@@ -6111,6 +6427,19 @@ export class NSEFoundationActions {
         // Back on the detail page the header should now carry the approval actions.
         await this.page.waitForURL(/\/invoices\/\d+(?:$|\/(?!edit))/, { timeout: 60000 }).catch(() => {});
         await this.page.waitForTimeout(3000);
+
+        // STILL on /edit means the review submit was REFUSED, not cleared. This
+        // used to `return true` regardless, and the caller's approval loop reads
+        // that as progress — so a silently refused review was re-submitted six
+        // times over ~10 minutes, logging "Review stage cleared" each pass while
+        // the URL never changed (observed 2026-09-22, Invoice-FNSE-26-542, the
+        // 2nd invoice against a partially-consumed PO, error-context DOM clean).
+        // Returning false lets the caller stop and report honestly instead.
+        if (/\/invoices\/\d+\/edit/.test(this.page.url())) {
+            console.log(`[${tag}] Review submit was REFUSED — still on ${this.page.url()} with no error in the DOM`);
+            return false;
+        }
+
         console.log(`[${tag}] Review stage cleared → ${this.page.url()}`);
         return true;
     }
@@ -7146,6 +7475,109 @@ export class NSEFoundationActions {
         await rc.click();
         await this.page.waitForTimeout(3500);
         console.log('[PRC] Rate Contract (RC) section expanded');
+    }
+
+    /**
+     * The requisition's "Process" TAB — sheet scenario 147.
+     *
+     * It is a TAB (role=tab, id=nav-tab-1), NOT a button, and it is DISABLED while
+     * the PR is already consumed by a live PRC. Probed live 2026-09-23 on
+     * PR-NSEFN-26-241: Mui-disabled, and a click waits out the full timeout with
+     * "element is not enabled". That disabled→enabled flip is exactly what 147 is
+     * about, so it is read rather than blindly clicked.
+     */
+    async readPrProcessTab() {
+        const info = await this.page.evaluate(() => {
+            const el = [...document.querySelectorAll('button,[role="tab"]')]
+                .find(b => (b.innerText || '').replace(/\s+/g, ' ').trim() === 'Process');
+            if (!el) return null;
+            return { disabled: el.disabled === true || el.getAttribute('aria-disabled') === 'true'
+                        || /Mui-disabled/.test((el.className || '').toString()),
+                     role: el.getAttribute('role') };
+        });
+        console.log(`[PR] Process tab: ${JSON.stringify(info)}`);
+        return info;
+    }
+
+    /** Click the Process tab once it is enabled. */
+    async clickPrProcessTab(tag = 'PR') {
+        const tab = this.page.locator('xpath=//*[self::button or @role="tab"][normalize-space(.)="Process"]').first();
+        await tab.waitFor({ state: 'visible', timeout: 20000 });
+        await tab.click({ timeout: 20000 });
+        await this.page.waitForTimeout(4000);
+        console.log(`[${tag}] opened the Process tab -> ${this.page.url()}`);
+    }
+
+    /**
+     * Process tab → "Convert to" dropdown → the awarded supplier → Convert.
+     *
+     * UNMAPPED WHEN WRITTEN: this surface only exists once a PR is re-processable,
+     * which in this tenant means after its PRC has been cancelled — a state that
+     * did not exist to probe. So each control is tried by several plausible shapes
+     * and, when none matches, every control on the page is dumped rather than
+     * failing with a bare "not found". Tighten once a live run shows the real DOM.
+     */
+    async convertPrToAwardedSupplier(tag = 'PR') {
+        // (1) the "Convert to" dropdown
+        const dropdown = this.page.locator(
+            'xpath=//*[self::button or @role="combobox" or @role="button"]'
+            + '[contains(normalize-space(.),"Convert to") or contains(normalize-space(.),"Convert To")]').first();
+        if (!await dropdown.isVisible({ timeout: 15000 }).catch(() => false)) {
+            throw new Error(`[${tag}] no "Convert to" control on the Process tab. `
+                + `Page offers: ${JSON.stringify(await this._dumpControls())} (url: ${this.page.url()})`);
+        }
+        await dropdown.click();
+        await this.page.waitForTimeout(2500);
+
+        // (2) the awarded-supplier option. The label is the SUPPLIER NAME, so match
+        //     the option list rather than a fixed string where possible.
+        const options = await this.page.evaluate(() =>
+            [...document.querySelectorAll('[role="option"],[role="menuitem"],li')]
+                .map(o => (o.innerText || '').replace(/\s+/g, ' ').trim())
+                .filter(t => t && t.length < 80));
+        console.log(`[${tag}] Convert-to options: ${JSON.stringify(options.slice(0, 15))}`);
+        // Mapped live 2026-09-23: the dropdown offers exactly
+        //   ["Bulk PO", "Direct PO", "PO with awarded supplier"]
+        // so the exact label is preferred and the loose matches are kept only as a
+        // fallback for a future relabel.
+        const wanted = options.find(o => o === 'PO with awarded supplier')
+            ?? options.find(o => /awarded supplier/i.test(o))
+            ?? options.find(o => /supplier/i.test(o));
+        if (!wanted) {
+            throw new Error(`[${tag}] the "Convert to" dropdown offered no options. `
+                + `Page offers: ${JSON.stringify(await this._dumpControls())}`);
+        }
+        await this.page.locator('xpath=//*[@role="option" or @role="menuitem" or self::li]'
+            + `[normalize-space(.)=${JSON.stringify(wanted)}]`).first().click();
+        console.log(`[${tag}] Convert to -> ${JSON.stringify(wanted)}`);
+        await this.page.waitForTimeout(2500);
+
+        // (3) Convert
+        const convert = this.page.locator(
+            'xpath=//button[normalize-space(.)="Convert" or normalize-space(.)="Convert to PR"]').first();
+        if (!await convert.isVisible({ timeout: 12000 }).catch(() => false)) {
+            throw new Error(`[${tag}] no Convert button after picking ${JSON.stringify(wanted)}. `
+                + `Page offers: ${JSON.stringify(await this._dumpControls())}`);
+        }
+        await convert.click();
+        await this.page.waitForTimeout(5000);
+        console.log(`[${tag}] clicked Convert -> ${this.page.url()}`);
+        return wanted;
+    }
+
+    /** Every actionable control on the page — the diagnostic the unmapped helpers
+     *  above fall back to, so one live run maps what guessing could not. */
+    async _dumpControls() {
+        return await this.page.evaluate(() => ({
+            buttons: [...document.querySelectorAll('button')]
+                .map(b => (b.innerText || '').replace(/\s+/g, ' ').trim()
+                    || `[title]${b.getAttribute('title') || ''}`).filter(Boolean).slice(0, 30),
+            tabs: [...document.querySelectorAll('[role="tab"]')]
+                .map(t => (t.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean),
+            options: [...document.querySelectorAll('[role="option"],[role="menuitem"]')]
+                .map(o => (o.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean).slice(0, 20),
+            comboboxes: document.querySelectorAll('[role="combobox"]').length,
+        }));
     }
 
     /** The Convert to PO button's state and computed colour, or null if absent. */
@@ -8460,6 +8892,106 @@ export class NSEFoundationActions {
         return true;
     }
 
+    /**
+     * Cancel a Purchase Order — sheet scenario 146.
+     *
+     * Modelled on cancelInvoice: this app puts Cancel in the header toolbar for
+     * some states and under "More" for others, so both are tried before giving up.
+     * Which one a REJECTED PO uses was not observable up front — no rejected PO
+     * existed in the tenant to probe, and the PRC/PO states that do exist
+     * (In Progress, Completed) offer no Cancel at all — so the failure path lists
+     * every action the page actually offers rather than just reporting "not found".
+     *
+     * The dialog closing is the only proof the cancel was accepted; a validation
+     * refusal leaves it open, which _confirmCancelDialog surfaces as a timeout.
+     */
+    /** Cancel a PO. Thin wrapper — the polling lives in _cancelViaHeaderOrMore,
+     *  which the PRC cancel (scenario 147) reuses unchanged. */
+    async cancelPurchaseOrder(reason = 'Cancelled by automation', tag = 'PO') {
+        return await this._cancelViaHeaderOrMore(reason, tag, 'purchase order');
+    }
+
+    /** Cancel a PRC from its Requisition Conversion View — sheet scenario 147.
+     *  Same toolbar shape and the same repaint lag as the PO, so it shares the
+     *  polling rather than re-learning it. */
+    async cancelPrc(reason = 'Cancelled by automation', tag = 'PRC') {
+        return await this._cancelViaHeaderOrMore(reason, tag, 'PRC');
+    }
+
+    async _cancelViaHeaderOrMore(reason, tag, what) {
+        // POLL WITH RELOADS. The first live run failed here with "no Cancel action"
+        // while the diagnostic dump — taken ~20s later on the SAME page — listed a
+        // "Cancel" button. Probing the rejected PO afterwards confirmed the button
+        // is visible, enabled, and matched by this exact xpath (1 match). So it was
+        // never a locator problem: the toolbar had simply not repainted into the
+        // Rejected state yet, and an 8s window closed before it did.
+        //
+        // rejectCappDoc learned the same lesson ("Re-wait EVERY pass: each reload
+        // drops the toolbar back to blank"), so this mirrors it.
+        const header = () => this.page.locator(`xpath=//button[normalize-space(.)="Cancel"]`).first();
+        const more = () => this.page.locator(`xpath=//button[contains(normalize-space(.),"More")]`).first();
+
+        for (let attempt = 1; attempt <= 6; attempt++) {
+            if (await header().isVisible({ timeout: 6000 }).catch(() => false)) {
+                await header().click();
+                await this._confirmCancelDialog(reason);
+                console.log(`[${tag}] ${what} cancelled (header button, attempt ${attempt})`);
+                return;
+            }
+            if (await more().isVisible({ timeout: 4000 }).catch(() => false)) {
+                await more().click();
+                await this.page.waitForTimeout(1800);
+                const item = this.page
+                    .locator(`xpath=//*[@role="menuitem"][normalize-space(.)="Cancel"]`).first();
+                if (await item.isVisible({ timeout: 6000 }).catch(() => false)) {
+                    await item.click();
+                    await this._confirmCancelDialog(reason);
+                    console.log(`[${tag}] ${what} cancelled (More menu, attempt ${attempt})`);
+                    return;
+                }
+                // Close the menu again so the next pass sees a clean toolbar.
+                await this.page.keyboard.press('Escape').catch(() => {});
+                await this.page.waitForTimeout(800);
+            }
+            console.log(`[${tag}] no Cancel yet (attempt ${attempt}/6) — reloading and re-waiting`);
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+            await this.page.waitForTimeout(6000);
+        }
+
+        const actions = await this.page.evaluate(() => ({
+            buttons: [...document.querySelectorAll('button')]
+                .map(b => (b.innerText || '').replace(/\s+/g, ' ').trim()
+                    || `[title]${b.getAttribute('title') || ''}`).filter(Boolean).slice(0, 25),
+            menuitems: [...document.querySelectorAll('[role="menuitem"]')]
+                .map(i => (i.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean),
+        }));
+        throw new Error(`[${tag}] no Cancel action on the ${what} after 6 passes — neither in the `
+            + `header nor under More. The page offers: ${JSON.stringify(actions)} (url: ${this.page.url()})`);
+    }
+
+    /** Confirm the PO reached Cancelled. Polls: the status chip repaints after the
+     *  cancel POST settles, and a single read raced it. */
+    async assertPoCancelled(tag = 'PO') {
+        return await this.assertDocCancelled(tag, 'purchase order');
+    }
+
+    async assertDocCancelled(tag = 'DOC', what = 'document') {
+        for (let i = 0; i < 10; i++) {
+            const txt = (await this.page.locator('body').innerText().catch(() => '') || '')
+                .replace(/\s+/g, ' ');
+            if (/\bCancelled\b/.test(txt)) {
+                console.log(`[${tag}] ${what} status is Cancelled`);
+                return true;
+            }
+            await this.page.waitForTimeout(2500);
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+            await this.page.waitForTimeout(3000);
+        }
+        const chips = await this._readDocStatusChips().catch(() => []);
+        throw new Error(`[${tag}] the ${what} never showed Cancelled — status chips: `
+            + `${JSON.stringify(chips)} (url: ${this.page.url()})`);
+    }
+
     async cancelInvoice(reason = 'Cancelled by automation') {
         // Cancel sits in the header toolbar on some states (seen on a Rejected /
         // Accounted invoice) and under More on others — try the header first,
@@ -8502,7 +9034,10 @@ export class NSEFoundationActions {
             await notes.fill(reason);
         }
         await dialog.locator('button')
-            .filter({ hasText: /^(Confirm|Submit|Yes|Cancel Invoice)$/ })
+            // PO wording added 2026-09-23 for scenario 146. Additive only — the
+            // invoice labels are untouched, and a bare "Cancel" is deliberately NOT
+            // matched: on these dialogs that is the DISMISS button.
+            .filter({ hasText: /^(Confirm|Submit|Yes|Cancel Invoice|Cancel PO|Cancel Purchase Order|Cancel Order)$/ })
             .first().click({ timeout: 20000 });
         await dialog.waitFor({ state: 'hidden', timeout: 20000 });
         await this.page.waitForTimeout(2500);
@@ -9373,6 +9908,63 @@ export class NSEFoundationActions {
         }
         console.log(`[${tag}] ${codes.length} code(s) in this view across pages`);
         return codes;
+    }
+
+    /**
+     * Status of the row whose Code cell is `code`, on the CURRENT grid, walking
+     * pages until it is found. Returns the status string, or null if the code
+     * never appears in this view.
+     *
+     * One helper serves the v4 dashboard AND the v3 module listings because both
+     * render a <th> header row over <tbody> rows — the same shape
+     * readDashboardRows and findInvoiceWithStatus already depend on.
+     *
+     * Null is a MEANINGFUL result, not just a miss: asking a pending-approval
+     * view for a rejected code and getting null is the assertion that the queue
+     * was cleared. So absence is returned, never thrown.
+     *
+     * The v3 listings expose no pagination at all (probed live, 2026-09-08: no
+     * Next, no pager, no "Showing X of Z"), so there the walk stops after one
+     * page of 20 — which is sound only because those listings are newest-first
+     * and these codes are seconds old. If v3 ever gains a pager, this widens on
+     * its own.
+     */
+    async findRowStatusByCode(code, { maxPages = 15, tag = 'LIST' } = {}) {
+        for (let i = 0; i < maxPages; i++) {
+            const hit = await this.page.evaluate((wanted) => {
+                const norm = t => (t || '').replace(/\s+/g, ' ').trim();
+                const ths = [...document.querySelectorAll('th')].map(t => norm(t.textContent));
+                const si = ths.findIndex(h => h.startsWith('Status'));
+                if (si === -1) return null;
+                for (const r of document.querySelectorAll('tbody tr')) {
+                    const td = r.querySelectorAll('td');
+                    const cells = [...td].map(c => norm(c.textContent));
+                    // The code cell often carries a suffix (version chip, supplier
+                    // name), so an exact match alone is too strict — but a bare
+                    // startsWith is too loose: "Invoice-FNSE-26-534" would then
+                    // also match "Invoice-FNSE-26-5341". Require the character
+                    // after the code to be a genuine boundary.
+                    const matches = c => c === wanted
+                        || (c.startsWith(wanted) && !/[A-Za-z0-9]/.test(c.charAt(wanted.length)));
+                    if (!cells.some(matches)) continue;
+                    return norm((td[si] || {}).textContent);
+                }
+                return null;
+            }, code);
+
+            if (hit !== null) {
+                console.log(`[${tag}] ${code} found on page ${i + 1} — status "${hit}"`);
+                return hit;
+            }
+
+            const next = this.page.getByRole('button', { name: 'Next' }).first();
+            if (!await next.count().catch(() => 0)) break;
+            if (await next.isDisabled().catch(() => true)) break;
+            await next.click();
+            await this.page.waitForTimeout(3500);
+        }
+        console.log(`[${tag}] ${code} is not present in this view`);
+        return null;
     }
 
     /**

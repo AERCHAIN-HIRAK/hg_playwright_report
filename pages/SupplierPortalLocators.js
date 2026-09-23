@@ -98,6 +98,11 @@ export const SupplierPortal_Locators = {
     // (partly/fully) invoiced on a prior run — must click Proceed to continue.
     // Also matches the post-submit "Validations" popup's Proceed button.
     dialogProceedBtn: `//div[@role='dialog']//button[normalize-space()='Proceed']`,
+    // The Validations popup's "Make Changes" button — returns to the still-filled
+    // /invoices/new form instead of proceeding. Used by the duplicate-reference
+    // scenarios (143/144) to retry with a fresh reference after the duplicate is
+    // refused, so one visit to the form covers both the refusal and the creation.
+    dialogMakeChangesBtn: `//div[@role='dialog']//button[normalize-space()='Make Changes']`,
     // The post-Proceed "Approvers" workflow popup's Submit button.
     dialogSubmitBtn: `//div[@role='dialog']//button[normalize-space(.)='Submit']`,
 

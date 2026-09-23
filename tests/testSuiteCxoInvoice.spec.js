@@ -325,4 +325,90 @@ test.describe('Non-PO (CXO) Invoice', () => {
         console.log(`[NONPO] post-cancel invoice created: ${a.getSavedInvoiceCode()}`);
     });
 
+    // ── Sheet scenario 130 ───────────────────────────────────────────────────
+    // "Verify that rejecting an Invoice at the approval stage updates its status
+    //  consistently across the detail page, listing page, and reports."
+    //
+    // QA made it concrete on 2026-09-22: use a CXO (Non-PO) invoice, and check
+    // the VIEW page, the LISTING page and the DASHBOARD — dashboard in place of
+    // reports.
+    //
+    // NOT a duplicate of scenario 131 (testSuiteRejectedNotPending), which proves
+    // a rejected transaction LEAVES the pending-approval queue. This one proves
+    // the status it SHOWS is the same wherever it is displayed — and stops there.
+    //
+    // A "is it gone from My Pending Approval" check was tried here and REMOVED
+    // (QA, 2026-09-22): scenario 131 already owns that question, and switching
+    // dashboard tabs mid-test bought nothing except a second grid to paginate.
+    // The dashboard assertion below deliberately stays on the default All tab,
+    // where a freshly rejected transaction sits at the top.
+    //
+    // THE APPROVAL STAGE IS THE WHOLE POINT. Since QA's workflow change of
+    // 2026-09-17 a submitted invoice opens on a REVIEW stage, so submitting and
+    // rejecting straight away — what the budget test above does — rejects at
+    // REVIEW, which is scenario 131's case, not this one. submitInvoiceReviewStage
+    // clears review first, and the Pending Approval assertion that follows is
+    // what proves the rejection below is genuinely an approval-stage rejection.
+    test('Rejecting a CXO invoice at the approval stage reads Rejected on the view page, listing and dashboard @NonPO @Reject @S130 @S150', async ({ page }) => {
+        test.setTimeout(1800000); // 30 min — CXO create + release, invoice, review, reject, 3 surfaces
+
+        const { a } = await cxoThenInvoiceForm(page);
+
+        await a.fillNonPoBudgetCombination(data);
+        await a.selectNonPoBrf(data);
+        await a.fillNonPoInvoiceDetails(data);
+        await a.addNonPoLineItem(data, { qty: data.nonPoInvoice.fullQty, price: data.nonPoInvoice.fullPrice });
+        await a.submitInvoice();
+        await a.saveInvoiceCode();
+
+        const code = a.getSavedInvoiceCode();
+        expect(code, 'the invoice code was not captured').toBeTruthy();
+        console.log(`[S130] built ${code}`);
+
+        // Clear the review stage so the rejection lands on APPROVAL, not REVIEW.
+        await a.openSavedInvoice(data);
+        const reviewCleared = await a.submitInvoiceReviewStage('S130');
+        console.log(`[S130] review stage cleared: ${reviewCleared}`);
+
+        // If this throws, the invoice never reached an approval stage and the rest
+        // of the test would be asserting the wrong transition — the message names
+        // whatever it actually settled on.
+        const beforeReject = await a.waitForInvoiceStatus(/pending[-\s]?approval/i, { tag: 'S130' });
+        console.log(`[S130] ${code} sits at "${beforeReject}" — rejecting at the approval stage`);
+
+        // rejectCappDoc, NOT rejectInvoice: the invoice's CREATOR is offered no
+        // Reject action, so the workflow approver has to be reassigned to this
+        // user first. Same reason as the budget test above.
+        await a.rejectCappDoc('Rejected at approval by automation', 'S130');
+
+        // ── Surface 1: the view page ─────────────────────────────────────────
+        await a.assertCappDocStatus('Rejected', 'S130');
+
+        // ── Surface 2: the Invoice listing (v3) ──────────────────────────────
+        await page.goto('https://nse-capp-uat.aerchain.io/invoices',
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
+        await page.waitForSelector('tbody tr', { timeout: 90000 }).catch(() => {});
+        await page.waitForTimeout(4000);
+
+        const listingStatus = await a.findRowStatusByCode(code, { tag: 'S130-LIST' });
+        expect(listingStatus,
+            `${code} is Rejected on its view page but does not appear on the Invoice listing at all`)
+            .toBeTruthy();
+        expect(listingStatus,
+            `${code} reads "${listingStatus}" on the Invoice listing but Rejected on its view page`)
+            .toMatch(/rejected/i);
+
+        // ── Surface 3: the dashboard ─────────────────────────────────────────
+        await a.openDashboard(data);
+        const dashStatus = await a.findRowStatusByCode(code, { tag: 'S130-DASH' });
+        expect(dashStatus,
+            `${code} is Rejected on its view page but does not appear on the dashboard at all`)
+            .toBeTruthy();
+        expect(dashStatus,
+            `${code} reads "${dashStatus}" on the dashboard but Rejected on its view page`)
+            .toMatch(/rejected/i);
+
+        console.log(`[S130] ${code} reads Rejected on the view page, the listing and the dashboard`);
+    });
+
 });

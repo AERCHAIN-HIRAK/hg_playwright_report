@@ -154,6 +154,70 @@ export class budgetSpendActions {
     }
 
     /**
+     * ESTIMATED Spend on the parent budget page — sheet scenario 149.
+     *
+     * A separate figure from Actual Spend and it moves on different events: on
+     * /budgets/369 both are shown side by side and they differ by ~11 crore
+     * (Actual 24,33,09,79,329.98 vs Estimated 24,44,07,81,900, read 2026-09-23).
+     * Scenario 149 tracks ESTIMATED, which is what a CXO moves; the PR-submit
+     * consumption that scenario 60 tracks lands on ACTUAL.
+     *
+     * The label renders with no space before the amount ("Estimated Spend₹ 24,44,…"),
+     * hence the optional whitespace.
+     */
+    async readEstimatedSpendAt(budgetUrl, tag = 'BUDGET') {
+        const p = this.page;
+        if (!p.url().startsWith(budgetUrl)) {
+            await p.goto(budgetUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+            await p.waitForTimeout(8000);
+        } else {
+            await p.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+            await p.waitForTimeout(6000);
+        }
+        const text = await p.evaluate(() => (document.body.innerText || '').replace(/\r/g, ''));
+        const m = text.match(/Estimated\s*Spen[dt]\s*:?\s*(₹?\s*[\d,]+(?:\.\d+)?)/i);
+        const value = m ? budgetSpendActions.parseAmount(m[1]) : null;
+        expect(value, `no "Estimated Spend" figure on ${budgetUrl}`).not.toBeNull();
+        console.log(`[${tag}] ${budgetUrl} | Estimated Spend = ${value}`);
+        return value;
+    }
+
+    /**
+     * Poll Estimated Spend until it reaches `expected`.
+     *
+     * Mirrors waitForActualSpend, and for the same reason: these figures settle
+     * asynchronously — Actual Spend was measured taking ~60s after a short close —
+     * so a single read right after the write reports the OLD number and scores a
+     * working app as broken.
+     *
+     * THE BUDGET IS SHARED. Anything else writing to it during the run shifts the
+     * figure, so `seen` carries every observation: a drifting sequence and a figure
+     * that never moved at all look completely different in the failure output, and
+     * only the second one is this scenario's bug.
+     */
+    async waitForEstimatedSpend(budgetUrl, expected, {
+        timeoutMs = 300000, pollMs = 15000, tolerance = 0.01, tag = 'BUDGET',
+    } = {}) {
+        const deadline = Date.now() + timeoutMs;
+        const seen = [];
+        let value = null;
+
+        for (let poll = 1; ; poll++) {
+            value = await this.readEstimatedSpendAt(budgetUrl, `${tag}#${poll}`);
+            seen.push(value);
+            if (Math.abs(value - expected) <= tolerance) {
+                console.log(`[${tag}] Estimated Spend settled at ${value} after ${poll} poll(s)`);
+                return { value, settled: true, seen };
+            }
+            if (Date.now() > deadline) break;
+            console.log(`[${tag}] ${value} != ${expected} (off by ${(value - expected).toFixed(2)}) — waiting`);
+            await this.page.waitForTimeout(pollMs);
+        }
+        console.log(`[${tag}] Estimated Spend never reached ${expected}; saw ${JSON.stringify(seen)}`);
+        return { value, settled: false, seen };
+    }
+
+    /**
      * Re-read the same budget page directly. Once the first walk has revealed
      * the URL there is nothing to gain from repeating the four-hop navigation,
      * and every repeat is another chance for a drawer to not open.
