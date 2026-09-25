@@ -218,6 +218,48 @@ test.describe('Non-PO (CXO) Invoice', () => {
         await a.assertBudgetExceeded(outcome);
     });
 
+    // ── B2. SEZ tax split (sheet scenario 113) ───────────────────────────────
+    //
+    // One Non-PO CXO, two invoices of half its value each, both taxed at 28%:
+    //   Flow 1  HG Automation Supp + "SEZ not applicable" address → CGST + SGST
+    //   Flow 2  HG Test SUP - SEZ  + "sezBILLINGadd" address       → IGST
+    // The split is read in Pending Review WITHOUT clicking Review: scroll to the
+    // summary grid below the line items and open the "Tax total" down arrow.
+
+    test('SEZ delivery address charges IGST; non-SEZ charges CGST + SGST @NonPO @Tax @SEZ @S113', async ({ page }) => {
+        test.setTimeout(1500000);
+        const sez = data.sezTax;
+        const qty = data.nonPoInvoice.halfQty;
+        const price = data.nonPoInvoice.fullPrice;
+        const taxable = Number(qty) * Number(price);   // half the CXO value
+        const rate = parseFloat(sez.taxRate);
+
+        const raiseTaxedInvoice = async (a, flow) => {
+            await a.fillNonPoBudgetCombination(data);
+            await a.selectNonPoBrf(data);
+            await a.fillNonPoInvoiceDetails(data, {
+                supplier: flow.supplier, deliveryAddress: flow.deliveryAddress });
+            await a.addNonPoLineItem(data, { qty, price });
+            await a.setInvoiceLineTax(sez.taxRate, 'S113');
+            await a.reapplyFieldsClearedByAddItem(data);
+            await a.submitInvoice();
+            // Lands on /invoices/<id> in Pending Review — deliberately not reviewed.
+            await a.assertInvoiceTaxSplit(flow.expect, { taxable, rate, tag: `S113-${flow.expect}` });
+        };
+
+        // Flow 1 — non-SEZ.
+        const { a, cxoCode } = await cxoThenInvoiceForm(page);
+        await raiseTaxedInvoice(a, sez.nonSez);
+
+        // Flow 2 — SEZ, for the remaining CXO value.
+        await a.openNonPoInvoiceCreatePage({ direct: true });
+        await a.uploadNonPoInvoiceDocument(data);
+        await a.selectNonPoTemplate(data);
+        await a.expandNonPoSections();
+        await a.selectNonPoCxo(cxoCode);
+        await raiseTaxedInvoice(a, sez.sez);
+    });
+
     // ── C. Governance ────────────────────────────────────────────────────────
 
     test('Only Submitted CXOs with available value are selectable @NonPO @Validation', async ({ page }) => {

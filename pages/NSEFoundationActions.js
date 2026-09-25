@@ -8336,9 +8336,9 @@ export class NSEFoundationActions {
      *  Supplier goes FIRST: the auto-populated fields derive from it, and Payment
      *  Spoc/Terms and Currency only become settable afterwards (§12.3 maps a Payment
      *  SPOC per supplier — picking a SPOC first filtered the supplier list). */
-    async fillNonPoInvoiceDetails(data) {
+    async fillNonPoInvoiceDetails(data, { supplier = null, deliveryAddress = null } = {}) {
         const inv = data.nonPoInvoice;
-        await this._selectAcById('Supplier', data.sourcing.supplierSearch, { exact: false });
+        await this._selectAcById('Supplier', supplier || data.sourcing.supplierSearch, { exact: false });
         await this._fillTextById('Subject', inv.subject);
         // Duplicate invoice numbers are rejected, so take a fresh one each run.
         await this._fillTextById('Invoice Number', this._nextInvoiceNumber());
@@ -8346,7 +8346,9 @@ export class NSEFoundationActions {
         const dateInput = this.page.locator(L.nonPoDateByPh('Enter Invoice Date')).first();
         await this._pickReactDate(dateInput, inv.invoiceDate);
 
-        await this._selectAcById('Delivery Address');
+        // No override → first address offered (the long-standing behaviour). S113
+        // names one, because the address's SEZ flag is what decides IGST vs CGST+SGST.
+        await this._selectAcById('Delivery Address', deliveryAddress, { exact: false });
         await this._selectAcById('Currency', inv.currency, { waitEnabledMs: 15000 });
         await this._selectIfEmptyAndEnabled('Payment Spoc', inv.paymentSpoc);
         await this._selectIfEmptyAndEnabled('Payment Terms', inv.paymentTerms);
@@ -8628,6 +8630,136 @@ export class NSEFoundationActions {
 
     async assertNonPoGrandTotal(expected) {
         expect(await this.readNonPoTotal('Grand Total')).toBeCloseTo(Number(expected), 2);
+    }
+
+    // ── Tax split on the invoice detail page (scenario 113, SEZ) ─────────────
+    //
+    // Below the line items sits a summary AG grid (probed 2026-09-25 on /invoices/1225):
+    // rows "Sub Total", "Tax total", "Total", "Deductible Tax", col-ids
+    // information / po/grn / invoice / variance / tolerance. The "Tax total" cell
+    // carries a MUI chevron svg (path "M16.59 8.59…") that expands the breakdown.
+    // On a zero-tax invoice the click adds nothing, and no taxed invoice existed in
+    // UAT to probe, so the reader collects BOTH the grid rows and any stray GST
+    // text that appears after the click, and logs all of it.
+
+    /** Read every row of the summary grid as { info, cells{col-id: text} }. The
+     *  grid can split a row across pinned/centre containers, so merge by row-index
+     *  within the grid that owns the "Tax total" cell. */
+    async _readInvoiceSummaryRows() {
+        return await this.page.evaluate(() => {
+            const cell = [...document.querySelectorAll('.ag-cell[col-id="information"]')]
+                .find(c => /^Tax total/i.test((c.innerText || '').trim()));
+            if (!cell) return null;
+            const root = cell.closest('.ag-root-wrapper') || cell.closest('.ag-root') || document;
+            const byIdx = new Map();
+            for (const r of root.querySelectorAll('.ag-row')) {
+                const idx = r.getAttribute('row-index');
+                const cells = byIdx.get(idx) || {};
+                r.querySelectorAll('.ag-cell').forEach(c => {
+                    cells[c.getAttribute('col-id')] = (c.innerText || '').replace(/\s+/g, ' ').trim();
+                });
+                byIdx.set(idx, cells);
+            }
+            return [...byIdx.entries()]
+                .sort((a, b) => Number(a[0]) - Number(b[0]))
+                .map(([idx, cells]) => ({ idx, info: cells.information || '', cells }))
+                .filter(r => Object.keys(r.cells).length);
+        });
+    }
+
+    /** Scroll to the summary grid and click the "Tax total" down arrow. Does NOT
+     *  touch Review — scenario 113 reads the split while the invoice sits in
+     *  Pending Review. Returns { rows, gstLines }. */
+    async expandInvoiceTaxTotal(tag = 'S113') {
+        const taxCell = this.page.locator('.ag-cell[col-id="information"]', { hasText: /^Tax total/ }).first();
+        await taxCell.waitFor({ state: 'attached', timeout: 60000 });
+        await taxCell.scrollIntoViewIfNeeded().catch(() => {});
+        await this.page.waitForTimeout(1500);
+        const before = await this._readInvoiceSummaryRows();
+        console.log(`[${tag}] summary rows BEFORE expand → ${JSON.stringify(before)}`);
+
+        const arrow = taxCell.locator('svg').first();
+        if (await arrow.count().catch(() => 0)) await arrow.click();
+        else await taxCell.click();
+        console.log(`[${tag}] clicked the Tax total down arrow`);
+
+        const gstText = async () => await this.page.evaluate(() => {
+            const out = new Set();
+            for (const el of document.querySelectorAll('*')) {
+                if (el.children.length > 3) continue;
+                const t = (el.innerText || '').replace(/\s+/g, ' ').trim();
+                if (t && t.length < 120 && /\b(C|S|I|UT)GST\b/i.test(t)) out.add(t);
+            }
+            return [...out];
+        });
+        let rows = before, gstLines = [];
+        for (let waited = 0; waited < 10000; waited += 1000) {
+            await this.page.waitForTimeout(1000);
+            rows = await this._readInvoiceSummaryRows();
+            gstLines = await gstText();
+            if ((rows?.length || 0) > (before?.length || 0) || gstLines.length) break;
+        }
+        console.log(`[${tag}] summary rows AFTER expand → ${JSON.stringify(rows)}`);
+        console.log(`[${tag}] GST text on page → ${JSON.stringify(gstLines)}`);
+        return { rows: rows || [], gstLines };
+    }
+
+    /** Assert which GST components carry the tax.
+     *  @param mode 'CGST_SGST' (non-SEZ, intra-state) or 'IGST' (SEZ)
+     *  @param taxable line value before tax; rate the line tax % (28).
+     *  A component counts as "applied" only with a non-zero amount — a breakdown
+     *  that lists all three with the unused ones at ₹0.00 must not fail the check. */
+    async assertInvoiceTaxSplit(mode, { taxable, rate = 28, tag = 'S113' } = {}) {
+        const { rows, gstLines } = await this.expandInvoiceTaxTotal(tag);
+        const amountOf = (text) => { try { return this._parseIndianAmount(text); } catch { return null; } };
+
+        const components = {};
+        for (const name of ['CGST', 'SGST', 'IGST', 'UTGST']) {
+            const re = new RegExp(`\\b${name}\\b`, 'i');
+            const row = rows.find(r => re.test(r.info));
+            let amount = null, source = null;
+            if (row) {
+                amount = amountOf(row.cells.invoice ?? '');
+                source = `row ${JSON.stringify(row.cells)}`;
+            } else {
+                const line = gstLines.find(l => re.test(l));
+                if (line) {
+                    // Strip the "(14%)" rate so it is not read as the amount.
+                    amount = amountOf(line.replace(/\(?\s*\d+(?:\.\d+)?\s*%\s*\)?/g, ''));
+                    source = `text "${line}"`;
+                }
+            }
+            components[name] = { amount, source };
+        }
+        const taxTotalRow = rows.find(r => /^Tax total/i.test(r.info));
+        const taxTotal = taxTotalRow ? amountOf(taxTotalRow.cells.invoice ?? '') : null;
+        console.log(`[${tag}] GST components → ${JSON.stringify(components)}; Tax total (invoice) = ${taxTotal}`);
+
+        const applied = n => (components[n].amount ?? 0) > 0.001;
+        const dump = `rows=${JSON.stringify(rows)} gstText=${JSON.stringify(gstLines)}`;
+        const expectedTotal = taxable != null ? taxable * rate / 100 : null;
+
+        if (expectedTotal != null && taxTotal != null) {
+            expect(taxTotal, `Tax total should be ${rate}% of ${taxable}. ${dump}`).toBeCloseTo(expectedTotal, 0);
+        }
+        if (mode === 'CGST_SGST') {
+            expect(applied('CGST') && applied('SGST'),
+                `non-SEZ address: expected tax split into CGST + SGST. ${dump}`).toBeTruthy();
+            expect(applied('IGST'), `non-SEZ address: IGST must not be charged. ${dump}`).toBeFalsy();
+            if (expectedTotal != null) {
+                expect(components.CGST.amount).toBeCloseTo(expectedTotal / 2, 0);
+                expect(components.SGST.amount).toBeCloseTo(expectedTotal / 2, 0);
+            }
+        } else if (mode === 'IGST') {
+            expect(applied('IGST'), `SEZ address: expected tax charged as IGST. ${dump}`).toBeTruthy();
+            expect(applied('CGST') || applied('SGST'),
+                `SEZ address: CGST/SGST must not be charged. ${dump}`).toBeFalsy();
+            if (expectedTotal != null) expect(components.IGST.amount).toBeCloseTo(expectedTotal, 0);
+        } else {
+            throw new Error(`[${tag}] unknown tax mode "${mode}"`);
+        }
+        console.log(`[${tag}] tax split verified as ${mode}`);
+        return { components, taxTotal };
     }
 
     // ── Submit / assertions ──────────────────────────────────────────────────

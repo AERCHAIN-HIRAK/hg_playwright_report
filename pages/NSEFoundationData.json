@@ -170,7 +170,7 @@
         "deliveryNoteReference": "DNR-AUTO-001"
     },
     "invoice": {
-        "invoiceNumber": "INV-AUTO-20806",
+        "invoiceNumber": "INV-AUTO-20808",
         "documentPath": "fixtures/invoice_document.png",
         "ackUrl": "https://nse-api-uat.aerchain.io/invoice/ack",
         "ackTemplateId": 1233,
@@ -238,5 +238,19 @@
         ],
         "poDrivenTemplate": "PO Invoice NSEF",
         "_noFieldsTemplate": "RC Invoice — carries neither field; not used by scenarios 73-80"
+    },
+    "sezTax": {
+        "_note": "Scenario 113: the delivery address's SEZ flag decides the GST split on a Non-PO invoice. Each flow invoices half the CXO (halfQty x fullPrice) at 28%.",
+        "taxRate": "28%",
+        "nonSez": {
+            "supplier": "HG Automation Supp",
+            "deliveryAddress": "SEZ not applicable",
+            "expect": "CGST_SGST"
+        },
+        "sez": {
+            "supplier": "HG Test SUP - SEZ",
+            "deliveryAddress": "sezBILLINGadd",
+            "expect": "IGST"
+        }
     }
 }
