@@ -15,5 +15,7 @@ downloads/
 .s97-state.json
 
 # Session scratch logs and per-run artifact dirs
-scratch_*.log
+*.log
 test-results-*/
+.auction-*-state.json
+run-archive/
