@@ -560,6 +560,33 @@ export class supplierActions {
      * "RTGS IFSC Code-<random>" / "NEFT IFSC Code-<random>" — the suffix is
      * regenerated on every render, so it can never be hardcoded.
      */
+    /**
+     * Open a supplier's view page and click "Update" to reach its onboarding
+     * form at /suppliers/{id}/update (QA's path for scenario 136).
+     */
+    async openOnboardingFormViaUpdate(id) {
+        await this.page.goto(`${V3_BASE}/suppliers/${id}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.getByRole('button', { name: 'Update', exact: true }).first().click({ timeout: 30000 });
+        await this.page.waitForURL(/\/suppliers\/\d+\/update$/, { timeout: 60000 });
+        await this.page.waitForTimeout(13000);
+        console.log(`[SUPPLIER] ${id}: clicked Update -> ${this.page.url()}`);
+    }
+
+    /**
+     * The validation message rendered BELOW each IFSC input - the
+     * `field-error-message` inside that field's own `basic-field-wrapper`
+     * (verified live on supplier 30480, 2026-10-05). Returns { label, error }.
+     */
+    async readIfscFieldErrors() {
+        return this.page.$$eval('input', els => els
+            .filter(e => /ifsc/i.test(e.id || ''))
+            .map(e => {
+                const wrap = e.closest('.basic-field-wrapper');
+                const msg = wrap && wrap.querySelector('.field-error-message');
+                return { label: (e.id || '').split('-')[0], error: msg ? msg.textContent.trim() : '' };
+            }));
+    }
+
     async getIfscFields() {
         return this.page.$$eval('input', els => els
             .filter(e => /ifsc/i.test(e.id || ''))

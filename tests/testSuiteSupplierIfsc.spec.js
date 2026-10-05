@@ -41,6 +41,9 @@ import { supplierActions } from '../pages/supplierActions';
 // instead of the test silently damaging a supplier.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Supplier QA provided for scenario 136 - stored RTGS + NEFT IFSC values.
+const S136_SUPPLIER_ID = '30480';
+
 test.describe('Supplier onboarding — mandatory IFSC', () => {
 
     test.describe.configure({ timeout: 300000 });
@@ -120,31 +123,30 @@ test.describe('Supplier onboarding — mandatory IFSC', () => {
 
     test('clearing a stored IFSC while editing raises the same validation @Supplier @Validation @S136', async ({ page }) => {
         await installWriteGuard(page);
-        // requireValue: the fields must ALREADY hold a value, otherwise this is
-        // a creation-stage blank and indistinguishable from 135.
-        const found = await sup.findOnboardingSupplier({ requireValue: true });
-        test.skip(!found,
-            'no supplier found whose onboarding form already holds an IFSC value to clear');
-        console.log(`[S136] ${found.name} (${found.id}, ${found.status})`);
 
-        // Precondition: this is an EDIT of stored values, not a fresh form.
-        for (const field of found.ifsc) {
+        // QA's supplier (2026-10-05): its onboarding form holds stored values in
+        // both RTGS and NEFT IFSC Code. View page -> Update -> clear -> Submit.
+        await sup.openOnboardingFormViaUpdate(S136_SUPPLIER_ID);
+        const ifsc = await sup.getIfscFields();
+        expect(ifsc.length, 'no IFSC field on the onboarding form').toBeGreaterThan(0);
+        for (const field of ifsc) {
             expect((field.value || '').trim(),
-                `${field.label} was blank, so this is not an edit of a stored value`).not.toBe('');
+                `${field.label} was already blank, so this is not an edit of a stored value`).not.toBe('');
         }
+        console.log(`[S136] supplier ${S136_SUPPLIER_ID}: ` + ifsc.map(f => `${f.label}="${f.value}"`).join(' · '));
 
-        const cleared = await sup.setIfscFields('');
-        expect(cleared.length, 'no IFSC field was cleared').toBeGreaterThan(0);
+        await sup.setIfscFields('');
+        await sup.submitOnboardingAndReadValidation();
 
-        const messages = await sup.submitOnboardingAndReadValidation();
-        const ifscErrors = messages.filter(m => /ifsc/i.test(m) && /mandatory/i.test(m));
-        expect(ifscErrors.length,
-            `clearing a stored IFSC was NOT rejected — messages were ${JSON.stringify(messages)}`)
-            .toBeGreaterThan(0);
+        // The mandatory error must appear BELOW each cleared IFSC field.
+        const errors = await sup.readIfscFieldErrors();
+        console.log(`[S136] errors below the IFSC fields: ${JSON.stringify(errors)}`);
+        for (const { label, error } of errors) {
+            expect(error, `no mandatory error below "${label}"`).toBe(`${label} is Mandatory`);
+        }
 
         expect(await sup.isOnboardingFormOpen(),
             'the form closed, so the cleared-IFSC submit was not blocked').toBeTruthy();
-
         expect(attemptedWrites,
             'the app tried to WRITE with a cleared mandatory IFSC — validation regressed')
             .toEqual([]);
