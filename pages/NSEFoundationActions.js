@@ -2255,9 +2255,12 @@ export class NSEFoundationActions {
         await proceedBtn.click();
         await this.page.waitForTimeout(1500);
 
-        // Step 2: Purchaser assignment
+        // Step 2: Purchaser assignment. WAIT for it - isVisible() does not wait
+        // (its timeout is ignored), so a step that rendered late was skipped,
+        // leaving "Select Users" empty and the final Submit disabled (S59 run
+        // 2026-10-05 #2).
         const dropdown = this.page.locator(IL.intakePurAsignDropdown).first();
-        if (await dropdown.isVisible({ timeout: 10000 }).catch(() => false)) {
+        if (await dropdown.waitFor({ state: 'visible', timeout: 15000 }).then(() => true).catch(() => false)) {
             await dropdown.scrollIntoViewIfNeeded();
             await dropdown.click({ force: true });
             await this.page.waitForTimeout(600);

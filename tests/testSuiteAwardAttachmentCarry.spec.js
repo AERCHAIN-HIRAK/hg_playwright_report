@@ -51,6 +51,39 @@ const AWARD_TO_PR = {
     'Others': 'Others',
 };
 
+/**
+ * Fields whose uploaded file is NOT shown on the current PR/PRC view page.
+ * Each attachment field under General Details lists its files as links, the
+ * name truncated with "..." (verified live on PR 1327, 2026-10-05), so the
+ * shown text must be a prefix of the exact file uploaded into THAT field.
+ */
+async function missingAttachments(pg, uploads) {
+    await pg.waitForTimeout(8000);
+    // Works on both layouts: the PR's General Details and the PRC's expanded
+    // Rate Contract row. Find the label's text node, then climb to the nearest
+    // small container that holds the file link(s).
+    const shown = await pg.evaluate((labels) => Object.fromEntries(labels.map(l => {
+        const links = [];
+        for (const lab of [...document.querySelectorAll('*')]
+            // VISIBLE only: the PR's Overview tab stays in the DOM (hidden) while
+            // the PRC is shown, and would otherwise make the PRC check pass.
+            .filter(e => e.children.length === 0 && e.textContent.trim() === l
+                && e.getClientRects().length > 0)) {
+            let box = lab.parentElement;
+            for (let i = 0; i < 4 && box && !box.querySelector('a'); i++) box = box.parentElement;
+            if (box && (box.innerText || '').length < 200) {
+                links.push(...[...box.querySelectorAll('a')].map(x => x.textContent.trim()));
+            }
+        }
+        return [l, links];
+    })), Object.values(AWARD_TO_PR));
+    console.log(`[S59] ${pg.url()} attachments: ${JSON.stringify(shown)}`);
+    return Object.entries(AWARD_TO_PR).filter(([awardField, prField]) => {
+        const file = uploads.find(u => u.field === awardField)?.name || '';
+        return !(shown[prField] || []).some(t => t && file.startsWith(t.replace(/\.+$/, '')));
+    }).map(([aw, pr]) => `${aw} -> ${pr}`);
+}
+
 let dataSnapshot = null;
 
 test.describe('Award attachments → PR → PRC', () => {
@@ -60,47 +93,25 @@ test.describe('Award attachments → PR → PRC', () => {
     test.beforeAll(() => { dataSnapshot = snapshotFixtures(); });
     test.afterAll(() => { restoreFixtures(dataSnapshot, { tag: 'S59' }); });
 
-    // HELD 2026-09-11 on QA instruction. Skipped rather than left failing, so a
-    // full-suite run does not report a red test for a scenario that is parked.
-    //
-    // WHAT IS ALREADY PROVEN (do not re-derive):
-    //   · the 4 award attachment fields are grid rows 35-38 below the fold -
-    //     Commercial Comparison / Vendor Quotes / Justification / Others - and
-    //     only mount after scrollAwardPageToBottom();
-    //   · all 4 upload and PERSIST on the submitted award (counts "1 File" x4),
-    //     provided the helper waits for the real S3 PUT rather than the
-    //     optimistic "Upload 1 File" label the cell shows immediately;
-    //   · carry-forward to the PR WORKS - the PR edit page shows
-    //     "Commercial Comparison [paperclip 1]" and "Others [paperclip 1]".
-    //
-    // WHY IT IS HELD: submitPr cannot complete. The submit dialog reports
-    // "Budget Amount is exceeded. Please Contact Budget User." and a MANDATORY
-    // "Budget Amend Request" is empty, so its Submit button is genuinely
-    // disabled - not a flaky locator. Reaching the PRC needs that resolved:
-    // lower the line value, fill the amend request, or use a CXO with headroom.
-    //
-    // ALSO OUTSTANDING: readAttachmentFieldValues looks for the award page's
-    // "N File" TEXT, but the PR/PRC render an attachment CHIP with a count
-    // badge. The reader must learn that form before the PR/PRC assertions mean
-    // anything.
-    test.skip('attachments uploaded on the award reach the PR and the PRC '
-        + '@RFX @Award @Attachments @S59 @Slow @Held', async ({ page }) => {
+    // Un-held 2026-10-05 (QA): the hold was the PR submit being blocked by
+    // "Budget Amount is exceeded" because the run REUSED a stored CXO whose
+    // budget earlier runs had consumed (budget is consumed at PR submit). The
+    // chain now builds a FRESH CXO each run, as S12 does.
+    test('attachments uploaded on the award reach the PR and the PRC '
+        + '@RFX @Award @Attachments @S59 @Slow', async ({ page }) => {
         test.setTimeout(3_600_000); // 60 min
 
         const a = new NSEFoundationActions(page);
         await page.setViewportSize({ width: 1800, height: 950 });
         await a.openApp(data);
 
-        const cxoCode = a.getSavedCxoCode();
-        expect(cxoCode, 'no stored CXO in NSEFoundationData.json').toBeTruthy();
-        console.log(`[S59] reusing stored CXO ${cxoCode}`);
-
         const uploads = makeAwardAttachmentFiles();
         const names = uploads.map(u => u.name);
         console.log(`[S59] upload set: ${JSON.stringify(names)}`);
 
-        // ── CXO (reused) → Intake → RFX → quote → foreclose ─────────────────
-        await buildRfxToForeclose(a, data, { skipCxo: true });
+        // ── fresh CXO → Intake → RFX → quote → foreclose ────────────────────
+        await buildRfxToForeclose(a, data);
+        console.log(`[S59] fresh CXO ${a.getSavedCxoCode()}`);
         const rfxCode = a.getSavedSourcingEvent().code;
         console.log(`[S59] foreclosed RFX ${rfxCode}`);
 
@@ -156,8 +167,7 @@ test.describe('Award attachments → PR → PRC', () => {
 
         // ── The PR while still DRAFT — informational only ───────────────────
         // Recorded, not asserted: carry-forward may legitimately land at submit.
-        const prDraftFields = await a.readAttachmentFieldValues(Object.values(AWARD_TO_PR));
-        console.log(`[S59] PR (draft): ${JSON.stringify(prDraftFields)}`);
+        console.log(`[S59] PR (draft) missing: ${JSON.stringify(await missingAttachments(a.page, uploads))}`);
 
         // ── Edit + submit the PR → auto PRC ─────────────────────────────────
         await a.openSavedRequisition(data);
@@ -185,29 +195,27 @@ test.describe('Award attachments → PR → PRC', () => {
         console.log('[S59] PR edited and submitted');
 
         // ── Carry-forward: the submitted PR, field by field ─────────────────
-        const prFields = await a.readAttachmentFieldValues(Object.values(AWARD_TO_PR));
-        const prMissing = Object.entries(AWARD_TO_PR).filter(([, prLabel]) =>
-            !prFields.some(f => f.label === prLabel && /\d+\s*Files?/i.test(f.value || '')));
-        console.log(`[S59] PR (submitted): ${JSON.stringify(prFields)}`);
-        console.log(`[S59] PR missing: ${JSON.stringify(prMissing.map(([aw, pr]) => `${aw} -> ${pr}`))}`);
+        await a.openSavedRequisition(data);
+        const prMissing = await missingAttachments(a.page, uploads);
+        console.log(`[S59] PR missing: ${JSON.stringify(prMissing)}`);
 
         // ── Carry-forward: the PRC ──────────────────────────────────────────
+        // The submitted PR auto-processes into the PRC; the Conversions section
+        // only exists once it has (same wait as buildToPoViaCapp).
+        await a.waitForPrStatus(['Processed', 'Completed']);
+        await a.openSavedRequisition(data);
+        await a.clickPrTransactionsTab();
+        await a.expandPrConversionsSection();
         await a.openPrcFromConversions();
+        await a.expandPrcRateContractSection();   // the attachments live in this row
         await a.takeScreenshot('s59_prc');
-        const prcFields = await a.readAttachmentFieldValues(Object.values(AWARD_TO_PR));
-        const prcMissing = Object.entries(AWARD_TO_PR).filter(([, prLabel]) =>
-            !prcFields.some(f => f.label === prLabel && /\d+\s*Files?/i.test(f.value || '')));
-        console.log(`[S59] PRC: ${JSON.stringify(prcFields)}`);
-        console.log(`[S59] PRC missing: ${JSON.stringify(prcMissing.map(([aw, pr]) => `${aw} -> ${pr}`))}`);
+        const prcMissing = await missingAttachments(a.page, uploads);
+        console.log(`[S59] PRC missing: ${JSON.stringify(prcMissing)}`);
 
-        expect(prMissing.map(([aw, pr]) => `${aw} -> ${pr}`),
-            'these award attachments did not reach the PR')
-            .toEqual([]);
-        expect(prcMissing.map(([aw, pr]) => `${aw} -> ${pr}`),
-            'these award attachments did not reach the PRC')
-            .toEqual([]);
+        expect(prMissing, 'these award attachments did not reach the PR').toEqual([]);
+        expect(prcMissing, 'these award attachments did not reach the PRC').toEqual([]);
 
-        console.log(`[S59] all 4 award attachments carried RFX ${rfxCode} -> PR -> PRC`);
+        console.log(`[S59] all ${Object.keys(AWARD_TO_PR).length} award attachments carried RFX ${rfxCode} -> PR -> PRC`);
     });
 
 });
