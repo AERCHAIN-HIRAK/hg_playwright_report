@@ -10,6 +10,12 @@ export default defineConfig({
   ['json', { outputFile: 'test-results/results.json' }]
   ],
 
+  // One automatic retry by default. A test that fails then passes is reported
+  // as FLAKY, separate from FAILED (failed twice), so a single full run tells
+  // timing noise from real failures without a second day of reruns.
+  // PW_RETRIES=0 turns it off for local debugging.
+  retries: Number(process.env.PW_RETRIES ?? 1),
+
   // Whole-test budget. A test still gets up to 30s overall, but no single
   // locator interaction below is allowed to stall the run.
   timeout: 30000,

@@ -78,7 +78,10 @@ export async function sendReport() {
     let total = 0;
     let passed = 0;
     let failed = 0;
+    let flaky = 0;
+    let skipped = 0;
     let failedTests = [];
+    let flakyTests = [];
 
     function parseSuites(suites) {
       suites.forEach((suite) => {
@@ -88,8 +91,18 @@ export async function sendReport() {
               const result = test.results[test.results.length - 1];
               total++;
 
-              if (result.status === "passed") {
+              // test.status is Playwright's verdict across ALL attempts:
+              //   expected   - passed (first try)
+              //   flaky      - failed, then passed on retry
+              //   skipped    - test.skip(...) - NOT a failure
+              //   unexpected - failed on every attempt
+              if (test.status === "expected") {
                 passed++;
+              } else if (test.status === "flaky") {
+                flaky++;
+                flakyTests.push(spec.title);
+              } else if (test.status === "skipped") {
+                skipped++;
               } else {
                 failed++;
                 const screenshot = result.attachments?.find(
@@ -112,7 +125,7 @@ export async function sendReport() {
 
     parseSuites(report.suites);
 
-    const summary = `Total: ${total} | Passed: ${passed} | Failed: ${failed}`;
+    const summary = `Total: ${total} | Passed: ${passed} | Flaky: ${flaky} | Failed: ${failed} | Skipped: ${skipped}`;
     const date = new Date().toLocaleString();
 
     // ================= EMAIL =================
@@ -158,8 +171,10 @@ ${user1} ${user2} ${user3}
 📊 *Summary:*
 • Total: ${total}
 • Passed: ${passed} ✅
+• Flaky (passed on retry): ${flaky} ⚠️
 • Failed: ${failed} ❌
-
+• Skipped: ${skipped} ⏭
+${flakyTests.length ? `\n⚠️ *Flaky:*\n${flakyTests.map(t => `• ${t}`).join('\n')}\n` : ''}
 🔗 *View Report:* ${reportUrl}
 `,
     };
