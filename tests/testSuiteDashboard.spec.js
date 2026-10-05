@@ -10,7 +10,8 @@ import data from '../pages/NSEFoundationData.json';
 //   22 clicking the Aerchain logo shows the V4 Dashboard
 //   89 all pending-approval transactions appear under the My Pending Approval
 //      view type
-//   92 the pending-approval count matches between Dashboard and listing
+//   (92 / @S88 "CXO pending count matches between Dashboard and listing" was
+//    REMOVED 2026-10-05 at QA's request - it had been skipping on the page cap.)
 //   138 cancelling a transaction clears it from My Pending Approvals
 //   139 the same, at any workflow stage / for all approvers
 //
@@ -134,54 +135,6 @@ test.describe("User's Dashboard", () => {
                 .toContain(r.status);
         }
         console.log(`[DASH] All=${allTotal}, My Pending Approval=${pendingTotal}`);
-    });
-
-    test('CXO pending count matches between Dashboard and CXO listing @Dashboard @S88', async ({ page }) => {
-        const a = new NSEFoundationActions(page);
-        await page.setViewportSize({ width: 1800, height: 900 });
-        await a.openApp(data);
-
-        // 1. Dashboard → My Pending Approval → tally by transaction type.
-        await a.openDashboard(data);
-        await a.clickV4Tab('My Pending Approval');
-        const dashTotal = await a.getListingTotalEntries();
-
-        const { tally, pagesWalked } = await a.tallyDashboardByType();
-        const counted = Object.values(tally).reduce((s, n) => s + n, 0);
-        console.log(`[DASH] walked ${pagesWalked} pages, tally=${JSON.stringify(tally)}`);
-
-        // Guard: a truncated walk would make the comparison meaningless.
-        test.skip(counted < dashTotal,
-            `dashboard walk covered ${counted}/${dashTotal} rows (page cap reached) — cannot compare totals`);
-
-        // 2. CXO listing → My Pending Approval → total + the offending rows.
-        await page.goto(`${data.loginUrl}/cxos`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await page.waitForTimeout(4000);
-        await a.clickV4Tab('My Pending Approval');
-        const listingTotal = await a.getListingTotalEntries();
-
-        const dashCxo = tally['CXO'] ?? 0;
-
-        // Name the culprits rather than just reporting a number mismatch.
-        const terminal = await a.findTerminalStatusRowsAcrossPages();
-        const { exempt, unexpected } = partitionTerminalRows(terminal);
-        console.log(`[DASH] CXO dashboard=${dashCxo}, CXO listing=${listingTotal}, terminal rows in listing=${JSON.stringify(terminal)}`);
-
-        // The Dashboard correctly excludes the stale record while the listing
-        // still carries it, so the listing reads one higher. Discount exactly
-        // the exempted rows — nothing else — and the two must then agree.
-        const adjustedListing = listingTotal - exempt.length;
-        console.log(`[DASH] listing adjusted for ${exempt.length} exempt row(s): ${listingTotal} → ${adjustedListing}`);
-
-        expect(unexpected,
-            `terminal-status rows other than the known stale one are sitting in the CXO listing's pending tab: ${JSON.stringify(unexpected)}`)
-            .toEqual([]);
-
-        expect(dashCxo,
-            `CXO pending count differs: dashboard ${dashCxo} vs CXO listing ${adjustedListing} `
-            + `(raw ${listingTotal}, less ${exempt.length} exempt). `
-            + `Terminal rows seen: ${JSON.stringify(terminal)}`)
-            .toBe(adjustedListing);
     });
 
     // ── Sheet scenarios 138 / 139 ─────────────────────────────────────────────

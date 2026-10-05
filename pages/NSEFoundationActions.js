@@ -9939,29 +9939,6 @@ export class NSEFoundationActions {
         });
     }
 
-    /**
-     * Walk every page of the current dashboard grid and tally rows by
-     * Transaction Type. Bounded by `maxPages` so a data explosion cannot turn
-     * this into an unbounded crawl.
-     */
-    async tallyDashboardByType(maxPages = 12) {
-        const tally = {};
-        let pages = 0;
-
-        for (; pages < maxPages; pages++) {
-            for (const row of await this.readDashboardRows()) {
-                if (!row.type) continue;
-                tally[row.type] = (tally[row.type] ?? 0) + 1;
-            }
-            const next = this.page.getByRole('button', { name: 'Next' }).first();
-            if (await next.count() === 0) break;
-            if (await next.isDisabled().catch(() => true)) break;
-            await next.click();
-            await this.page.waitForTimeout(3000);
-        }
-        return { tally, pagesWalked: pages + 1 };
-    }
-
     // ── Listing "pending approval" view (sheet scenario 131) ─────────────────
     //
     // A rejected transaction must no longer sit in the approver's queue. Scoped
