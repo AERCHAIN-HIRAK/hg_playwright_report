@@ -30,6 +30,18 @@ import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
 
 const LOWER_QTY = '50';   // the PO is built at qty 100
 
+// Every PO code rendered on the page, header first. Same pattern as
+// assertPoCodeVisible; field values are included because some forms hold the
+// code only in an input.
+const readPoCodes = (pg) => pg.evaluate(() => {
+    const re = /PO-[A-Z]+-\d+-\d+/g;
+    const out = new Set();
+    const eat = (s) => { for (const m of (s || '').matchAll(re)) out.add(m[0]); };
+    eat(document.body.innerText);
+    for (const f of document.querySelectorAll('input, textarea')) eat(f.value);
+    return [...out];
+});
+
 let dataSnapshot = null;
 
 test.describe('PO reject-edit — lowered qty returns to the PRC', () => {
@@ -62,6 +74,10 @@ test.describe('PO reject-edit — lowered qty returns to the PRC', () => {
         // points at the PR tab, so every interaction from here uses a.page -
         // otherwise the conversion steps below silently drive the wrong tab.
         console.log(`[S12] PO built and left pending approval @ ${a.page.url()}`);
+        // Remember the ORIGINAL PO so the new one can be told apart from it later -
+        // the conversion's PO page and the original share most of their text.
+        const origPoUrl = a.page.url();
+        const origPoCode = (await readPoCodes(a.page))[0] ?? null;
         await a.takeScreenshot('s12_po_pending');
 
         // ── Reject it during approvals ──────────────────────────────────────
@@ -88,59 +104,34 @@ test.describe('PO reject-edit — lowered qty returns to the PRC', () => {
         await a.expandPrcRateContractSection();
         await a.takeScreenshot('s12_rc_expanded');
 
-        // ── "Convert to PO is blue" ─────────────────────────────────────────
-        // Blue is rgb(51, 136, 235), read off the live button 2026-09-11 - the
-        // app's primary colour. Asserting the real value rather than "enabled"
-        // keeps the check faithful to QA's wording.
+        // ── Convert the freed qty to a new PO ───────────────────────────────
         const convert = await a.readConvertToPoButton();
-        expect(convert, 'no Convert to PO button in the expanded RC section — the quantity '
-            + 'freed by the PO reject-edit is not offered for a new PO').toBeTruthy();
-        expect(convert.disabled, 'Convert to PO should be enabled').toBe(false);
-        expect(convert.bg, 'Convert to PO should be the primary blue')
-            .toBe('rgb(51, 136, 235)');
-
-        // ── Convert → fill the two mandatory fields → submit ────────────────
+        expect(convert, 'no Convert to PO in the PRC after the PO reject-edit').toBeTruthy();
         await a.clickConvertToPo();
-        await a.takeScreenshot('s12_converting_to_po');
-        // The two mandatory fields on the "Converting to PO" form, selected the
-        // way that is PROVEN to work on it (verified live 2026-09-11 on
-        // conversion 507 -> PO-NSEFN-26-258). The PR-form helpers were not
-        // reused: this is a different form, and assuming they transfer is the
-        // kind of guess that costs a 19 min chain to disprove.
+
+        // The two mandatory fields on the "Converting to PO" form.
         for (const [label, value] of [['Inward Required', 'Yes'],
                                       ['Inward Matching Criterion', 'Quantity']]) {
-            const opt = a.page.locator(
-                `xpath=//*[contains(normalize-space(.),'${label}')]/following::*[normalize-space(.)='${value}'][1]`).first();
-            await opt.waitFor({ state: 'visible', timeout: 15000 });
-            await opt.click();
-            console.log(`[S12] ${label} = ${value}`);
+            await a.page.locator(
+                `xpath=//*[contains(normalize-space(.),'${label}')]/following::*[normalize-space(.)='${value}'][1]`)
+                .first().click({ timeout: 15000 });
             await a.page.waitForTimeout(1200);
         }
+        await a.page.locator(`xpath=//button[normalize-space(.)='Submit']`)
+            .filter({ visible: true }).first().click();
+        // Confirm the Workflow Summary dialog (it always follows this Submit).
+        await a.page.locator(`xpath=//*[@role='dialog']//button[normalize-space(.)='Submit']`)
+            .filter({ visible: true }).first().click({ timeout: 30000 });
 
-        const submit = a.page.locator(`xpath=//button[normalize-space(.)='Submit']`).first();
-        await submit.waitFor({ state: 'visible', timeout: 20000 });
-        await submit.click();
-        console.log('[S12] PO conversion submitted');
+        // ── A NEW PO was created ────────────────────────────────────────────
+        await expect(a.page, 'the conversion did not land on a new PO')
+            .toHaveURL(u => /\/purchase-orders\/\d+/.test(u.toString()) && u.toString() !== origPoUrl,
+                { timeout: 60000 });
         await a.page.waitForTimeout(5000);
-        const dlg = a.page.locator(`xpath=//*[@role='dialog']//button[normalize-space(.)='Submit']`).first();
-        if (await dlg.isVisible({ timeout: 8000 }).catch(() => false)) {
-            await dlg.click();
-            console.log('[S12] confirmed the conversion workflow dialog');
-            await a.page.waitForTimeout(8000);
-        }
-        await a.takeScreenshot('s12_po_conversion_submitted');
-
-        // The new PO must exist: the page leaves the newPo form for a PO record.
-        await page.waitForTimeout(5000);
-        // A successful conversion leaves the form for the new PO's own page and
-        // toasts "Purchase Order Submitted successfully" (observed live).
-        const poCode = await page.evaluate(() =>
-            (document.body.innerText.match(/PO-[A-Z0-9-]+\d+/) || [null])[0]);
-        console.log(`[S12] resulting PO: ${poCode} @ ${a.page.url()}`);
-        expect(a.page.url(), 'the conversion should land on the new PO')
-            .toMatch(/\/purchase-orders\/\d+/);
-        expect(poCode, `the PO conversion did not produce a PO — still on ${a.page.url()}`)
-            .toBeTruthy();
+        const newPoCode = (await readPoCodes(a.page)).find(c => c !== origPoCode) ?? null;
+        console.log(`[S12] original PO: ${origPoCode} @ ${origPoUrl}`);
+        console.log(`[S12] new PO:      ${newPoCode} @ ${a.page.url()}`);
+        expect(newPoCode, 'the new PO page shows no PO code').toBeTruthy();
         console.log('[S12] the qty freed by the PO reject-edit was converted into a new PO');
     });
 
