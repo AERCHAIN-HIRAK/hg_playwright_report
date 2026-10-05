@@ -30,6 +30,15 @@ exports.v3Detail_Locators = {
     menu_RegenerateDocument:     'Regenerate Document',
     menu_Recall:                 'Recall',
 
+    // ── Document field in General Details ─────────────────────────────────────
+    // The PO's document is NOT downloaded from "More" (QA 2026-10-05: it never
+    // appears there). General Details has a "PO Document" field whose value is a
+    // bare <a>Download</a> (no href - it opens the file from a click handler).
+    // Verified live on /purchase-orders/1228.
+    documentFieldDownload: (label) =>
+        `//div[contains(@class,"general-details-view-label")][normalize-space()="${label}"]`
+        + `/ancestor::div[contains(@class,"header-field-wrapper")][1]//a[normalize-space()="Download"]`,
+
     // ── Generic MUI dialog ────────────────────────────────────────────────────
     dialog:                '//*[contains(@class,"MuiDialog-root")] | //*[@role="dialog"]',
     dialogTitle:           '//*[contains(@class,"MuiDialogTitle-root")]',

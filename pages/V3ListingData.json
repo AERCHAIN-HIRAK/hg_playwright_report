@@ -32,7 +32,8 @@
       "filterableColumns": ["Status", "Creator/Owner", "Department"],
       "statusColumn": "Status",
       "codeColumn": "Code",
-      "subjectColumn": "Subject"
+      "subjectColumn": "Subject",
+      "documentField": "PO Document"
     },
     "grn": {
       "slug": "inwards",

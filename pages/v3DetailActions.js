@@ -686,7 +686,27 @@ export class v3DetailActions {
     async downloadDocumentAndAssert() {
         const label = await this._downloadLabel();
         if (!label) return null;
+        return this._captureDocument(`"${label}"`, async () => {
+            await this.openMoreMenu();
+            await this.clickMenuItem(label);
+        });
+    }
 
+    /**
+     * Download from a General Details document field (e.g. Purchase Order's
+     * "PO Document" -> Download). That section paints after the header, so the
+     * link is waited for rather than read straight away.
+     */
+    async downloadDocumentFromFieldAndAssert(fieldLabel) {
+        const link = this.page.locator(L.documentFieldDownload(fieldLabel)).first();
+        await expect(link, `no Download under the "${fieldLabel}" field in General Details`)
+            .toBeVisible({ timeout: 30000 });
+        return this._captureDocument(`"${fieldLabel}" Download`, () => link.click());
+    }
+
+    /** Click via `trigger`, then race a new tab against a browser download. */
+    async _captureDocument(what, trigger) {
+        const label = what;
         const context = this.page.context();
         const popupPromise = context.waitForEvent('page', { timeout: 30000 })
             .then(p => ({ kind: 'tab', page: p }))
@@ -695,8 +715,7 @@ export class v3DetailActions {
             .then(d => ({ kind: 'download', download: d }))
             .catch(() => null);
 
-        await this.openMoreMenu();
-        await this.clickMenuItem(label);
+        await trigger();
 
         const result = await Promise.race([
             popupPromise,
@@ -704,7 +723,7 @@ export class v3DetailActions {
             new Promise(r => setTimeout(() => r(null), 32000)),
         ]);
 
-        expect(result, `"${label}" produced neither a new tab nor a download`).not.toBeNull();
+        expect(result, `${label} produced neither a new tab nor a download`).not.toBeNull();
 
         if (result.kind === 'download') {
             const name = result.download.suggestedFilename();

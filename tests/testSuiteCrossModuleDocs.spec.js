@@ -54,6 +54,11 @@ const ACTIVE_STATUSES = [
     'Active', 'Pending Sync', 'To-review', 'To-enrich', 'Draft',
 ];
 
+// PO statuses whose document can be regenerated. Rejected is deliberately
+// absent: Regenerate Document is disabled on rejected POs (QA 2026-10-05).
+const DOC_PO_STATUSES = ['Pending Approval', 'Active', 'Submitted', 'Partially Processed',
+    'Processed', 'Completed'];
+
 test.describe('Cross-module — Regenerate + Download Document', () => {
 
     test.describe.configure({ timeout: 150000 });
@@ -81,7 +86,15 @@ test.describe('Cross-module — Regenerate + Download Document', () => {
             const detail = new v3DetailActions(page, mod);
             await page.setViewportSize({ width: 1800, height: 900 });
 
-            const code = await detail.openFirstTransactionFromListing(data.baseUrl);
+            // PO: open one in a working status, not just the top row. Regenerate
+            // Document is DISABLED on Rejected POs by design (QA 2026-10-05), so a
+            // rejected PO at the top of the listing (e.g. 1229, left by a failed
+            // S12 run) fires no request and times the test out. A normal PO
+            // (1227) fires .../regenerate-po-document.
+            let code = mod.documentField
+                ? await detail.openFirstTransactionWithStatus(DOC_PO_STATUSES, data.baseUrl)
+                : null;
+            if (!code) code = await detail.openFirstTransactionFromListing(data.baseUrl);
             console.log(`[${mod.name}] opened ${code}`);
 
             // REGENERATE FIRST (QA, 2026-09-21). The download action only appears
@@ -96,12 +109,19 @@ test.describe('Cross-module — Regenerate + Download Document', () => {
                 await detail.closeMenu();
             }
 
-            const hasDownload = items.includes(L.menu_Download) || items.includes(L.menu_DownloadDocument);
-            test.skip(!hasDownload,
-                `${mod.name} exposes no download action even after Regenerate Document `
-                + `(menu: ${items.join(', ')})`);
-
-            const file = await detail.downloadDocumentAndAssert();
+            let file;
+            if (mod.documentField) {
+                // Purchase Order (QA 2026-10-05): the download is NEVER in "More" -
+                // it is the Download link under General Details > "PO Document".
+                // Only that field is checked; a missing link FAILS, it does not skip.
+                file = await detail.downloadDocumentFromFieldAndAssert(mod.documentField);
+            } else {
+                const hasDownload = items.includes(L.menu_Download) || items.includes(L.menu_DownloadDocument);
+                test.skip(!hasDownload,
+                    `${mod.name} exposes no download action even after Regenerate Document `
+                    + `(menu: ${items.join(', ')})`);
+                file = await detail.downloadDocumentAndAssert();
+            }
             expect(file, 'no download was produced').not.toBeNull();
             console.log(`[${mod.name}] document via ${file.via}: ${file.name} (${file.size} bytes)`);
         });
