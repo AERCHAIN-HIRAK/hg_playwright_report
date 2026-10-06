@@ -7,7 +7,10 @@ export default defineConfig({
 
   reporter: [
   ['html', { open: 'never' }],
-  ['json', { outputFile: 'test-results/results.json' }]
+  ['json', { outputFile: 'test-results/results.json' }],
+  // A permanent per-run copy: test-results/ is wiped by the NEXT run, which
+  // lost the 2026-10-06 full run's skip list to a follow-up rerun.
+  ['json', { outputFile: `run-archive/results-${new Date().toISOString().replace(/[:.]/g, '-')}.json` }],
   ],
 
   // ONE worker unless told otherwise. Without this Playwright defaults to half
