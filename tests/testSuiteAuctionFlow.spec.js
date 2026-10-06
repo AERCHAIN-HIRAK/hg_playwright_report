@@ -297,7 +297,7 @@ test.describe.serial('Auction Flow A — RFX → Auction → live → Update to 
             await rel.click();
             await page.waitForTimeout(2500);
             const dlg = page.getByRole('dialog').last();
-            if (await dlg.isVisible({ timeout: 4000 }).catch(() => false)) {
+            if (await dlg.waitFor({ state: 'visible', timeout: 4000 }).then(() => true, () => false)) {
                 console.log(`[AUC-A] release dialog: ${(await dlg.innerText()).replace(/\n+/g, ' | ').slice(0, 300)}`);
                 await dlg.getByRole('button', { name: /^(Release|Confirm|Yes|Submit|OK)$/i }).last().click();
             }

@@ -137,7 +137,7 @@ test.describe('Invoice — Vendor Type & RPT flag autopopulation', () => {
         // On this route the template is normally pre-resolved by the PO. Select it
         // only if the picker is still sitting empty.
         const tpl = page.locator('input[placeholder="Choose Template"]').first();
-        if (await tpl.isVisible({ timeout: 20000 }).catch(() => false)
+        if (await tpl.waitFor({ state: 'visible', timeout: 20000 }).then(() => true, () => false)
             && !(await tpl.inputValue().catch(() => '')).trim()) {
             await a.selectNonPoTemplate({ nonPoInvoice: { ...data.nonPoInvoice, template: V.poDrivenTemplate } });
         }

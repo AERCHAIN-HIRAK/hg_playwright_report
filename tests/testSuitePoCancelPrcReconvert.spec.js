@@ -155,7 +155,7 @@ test.describe('PO cancel — the PRC can be converted to a new PO', () => {
         console.log('[S146] PO conversion submitted');
         await a.page.waitForTimeout(5000);
         const dlg = a.page.locator(`xpath=//*[@role='dialog']//button[normalize-space(.)='Submit']`).first();
-        if (await dlg.isVisible({ timeout: 8000 }).catch(() => false)) {
+        if (await dlg.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false)) {
             await dlg.click();
             console.log('[S146] confirmed the conversion workflow dialog');
             await a.page.waitForTimeout(8000);

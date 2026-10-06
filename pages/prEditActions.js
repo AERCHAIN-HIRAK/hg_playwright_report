@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { waitForEditorFocus } from './waitHelpers';
 import { prEdit_Locators as L } from './prEditLocators';
 
 const V3_BASE_URL = 'https://nse-capp-uat.aerchain.io';
@@ -141,6 +142,7 @@ export class prEditActions {
         await cell.scrollIntoViewIfNeeded();
         await cell.dblclick();
         await this.page.waitForTimeout(700);
+        await waitForEditorFocus(this.page);
         await this.page.keyboard.press('ControlOrMeta+a');
         await this.page.keyboard.type(String(value));
         await this.page.keyboard.press('Enter');
@@ -261,7 +263,7 @@ export class prEditActions {
         console.log('[PR edit] clicked Submit');
 
         const mandatory = this.page.locator(`xpath=${L.mandatoryFieldsToast}`).first();
-        if (await mandatory.isVisible({ timeout: 3000 }).catch(() => false)) {
+        if (await mandatory.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false)) {
             throw new Error('Submit was rejected with "Please fill mandatory fields" — ' +
                 'the budget check never ran, so this proves nothing. Fix fillMandatoryDetails().');
         }
@@ -291,7 +293,7 @@ export class prEditActions {
     /** Close the popup without submitting, so the draft is left untouched. */
     async discardWorkflowSummary() {
         const discard = this.page.locator(`xpath=${L.dialogDiscard}`).first();
-        if (await discard.isVisible({ timeout: 5000 }).catch(() => false)) {
+        if (await discard.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
             await discard.click();
             await this.page.waitForTimeout(1500);
             console.log('[PR edit] discarded the Workflow Summary popup');

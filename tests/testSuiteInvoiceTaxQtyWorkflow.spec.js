@@ -366,7 +366,7 @@ if (!resumeAt13) {
 
                 const before = await inv._visibleLeafText();
                 const grnMatch = page.getByText('GRN Match', { exact: true }).first();
-                const clicked = await grnMatch.isVisible({ timeout: 5000 }).catch(() => false);
+                const clicked = await grnMatch.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false);
                 console.log('[S58-P8] GRN Match visible: ' + clicked);
                 if (clicked) {
                     await grnMatch.click();

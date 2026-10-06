@@ -97,7 +97,7 @@ test.describe('Invoice — cancel an Accounted invoice', () => {
         // A cancelled invoice must not still offer Cancel.
         const stillCancellable = await page
             .locator('xpath=//button[normalize-space()="Cancel"]').first()
-            .isVisible({ timeout: 5000 }).catch(() => false);
+            .waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false);
         console.log(`[S81] Cancel still offered after cancelling? ${stillCancellable}`);
     });
 });

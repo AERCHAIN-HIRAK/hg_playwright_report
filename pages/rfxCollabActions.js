@@ -122,7 +122,7 @@ export class rfxCollabActions {
             await box.type('@', { delay: 150 });
             await this.page.waitForTimeout(3000);
             const option = this.page.locator(`text="${mention}"`).first();
-            if (await option.isVisible({ timeout: 5000 }).catch(() => false)) {
+            if (await option.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
                 await option.click();
                 await this.page.waitForTimeout(1500);
                 mentioned = mention;

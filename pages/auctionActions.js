@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { waitForEditorFocus } from './waitHelpers';
 import { NSEFoundation_Locators as L } from './NSEFoundationLocators';
 
 export const V3_BASE_URL = 'https://nse-capp-uat.aerchain.io';
@@ -70,7 +71,7 @@ export class auctionActions {
         console.log(`[AUC] Restrict dialog: ${(await dialog.innerText()).replace(/\n+/g, ' | ').slice(0, 400)}`);
 
         const box = dialog.getByPlaceholder(/reason/i).or(dialog.locator('textarea')).first();
-        if (await box.isVisible({ timeout: 2000 }).catch(() => false)) await box.fill(reason);
+        if (await box.waitFor({ state: 'visible', timeout: 2000 }).then(() => true, () => false)) await box.fill(reason);
 
         // A popover, not a modal: reason box + two icon-only buttons, ✕ then ✓.
         // Neither has an accessible name, so the tick is picked by position.
@@ -109,6 +110,7 @@ export class auctionActions {
                 await cell.scrollIntoViewIfNeeded();
                 await cell.click();
                 await this.page.waitForTimeout(500);
+                await waitForEditorFocus(this.page);
                 await this.page.keyboard.type(want);
                 await this.page.keyboard.press('Tab');
                 await this.page.waitForTimeout(800);
@@ -316,7 +318,7 @@ export class auctionActions {
         const opt = this.page.getByRole('option', { name: option, exact: true }).first();
         for (let i = 0; i < 3; i++) {
             await input.click();
-            if (await opt.isVisible({ timeout: 3000 }).catch(() => false)) break;
+            if (await opt.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false)) break;
             await this.page.keyboard.press('Escape').catch(() => {});
         }
         await opt.click();
@@ -405,7 +407,7 @@ export class auctionActions {
         await cell.evaluate(e => e.scrollIntoView({ block: 'center' }));
         await cell.dblclick();
         const popup = this.page.locator(`.ag-popup textarea, .ag-popup input`).first();
-        if (await popup.isVisible({ timeout: 3000 }).catch(() => false)) {
+        if (await popup.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false)) {
             await popup.fill(String(value));
             await this.page.keyboard.press('Tab');
         } else {
@@ -421,6 +423,7 @@ export class auctionActions {
         const ed = this.page.locator('[contenteditable=true]').first();
         await ed.evaluate(e => e.scrollIntoView({ block: 'center' }));
         await ed.click();
+        await waitForEditorFocus(this.page);
         await this.page.keyboard.type(text);
         await this.page.waitForTimeout(500);
     }
@@ -452,10 +455,10 @@ export class auctionActions {
         await this.page.getByRole('button', { name: /^Submit$/ }).last().click();
         await this.page.waitForTimeout(2500);
         const dlg = this.page.getByRole('dialog').last();
-        if (await dlg.isVisible({ timeout: 4000 }).catch(() => false)) {
+        if (await dlg.waitFor({ state: 'visible', timeout: 4000 }).then(() => true, () => false)) {
             console.log(`[AUC] submit dialog: ${(await dlg.innerText()).replace(/\n+/g, ' | ').slice(0, 400)}`);
             const ok = dlg.getByRole("button", { name: /^(Submit Auction|Submit|Confirm|Yes|Proceed|OK)$/i }).last();
-            if (await ok.isVisible({ timeout: 3000 }).catch(() => false)) await ok.click();
+            if (await ok.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false)) await ok.click();
         }
         await this.page.waitForURL(u => !/\/edit/.test(u.toString()), { timeout: 90000 });
         await this.page.waitForTimeout(5000);
@@ -490,7 +493,7 @@ export class auctionActions {
         await this.page.waitForTimeout(2500);
         const confirm = this.page.getByRole('dialog').last()
             .getByRole('button', { name: /^(Yes|Confirm|OK|Update)$/i }).last();
-        if (await confirm.isVisible({ timeout: 3000 }).catch(() => false)) await confirm.click();
+        if (await confirm.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false)) await confirm.click();
         await this.page.waitForTimeout(5000);
         return t;
     }
@@ -606,7 +609,7 @@ export class auctionActions {
         await this.page.waitForTimeout(1500);
         const pop = this.page.locator('.MuiPopover-paper, [role=dialog]').last();
         const yes = pop.getByRole('button', { name: /^(Yes|OK|Ok|Confirm)$/ }).last();
-        if (await yes.isVisible({ timeout: 2500 }).catch(() => false)) await yes.click();
+        if (await yes.waitFor({ state: 'visible', timeout: 2500 }).then(() => true, () => false)) await yes.click();
         await this.page.waitForTimeout(3000);
     }
 
@@ -617,7 +620,7 @@ export class auctionActions {
         await this.page.waitForTimeout(1500);
         const pop = this.page.locator('.MuiPopover-paper, [role=dialog]').last();
         const yes = pop.getByRole('button', { name: /^(Yes|OK|Ok|Confirm)$/ }).last();
-        if (await yes.isVisible({ timeout: 2500 }).catch(() => false)) await yes.click();
+        if (await yes.waitFor({ state: 'visible', timeout: 2500 }).then(() => true, () => false)) await yes.click();
         await this.page.waitForTimeout(3000);
     }
 
@@ -786,7 +789,7 @@ export class sappAuctionActions {
         const dlg = this.page.getByRole('dialog').last();
         console.log(`[SAPP] reject dialog: ${(await dlg.innerText().catch(() => '')).replace(/\n+/g, ' | ').slice(0, 300)}`);
         const box = dlg.locator('textarea, input[type=text]').first();
-        if (await box.isVisible({ timeout: 2000 }).catch(() => false)) await box.fill(reason);
+        if (await box.waitFor({ state: 'visible', timeout: 2000 }).then(() => true, () => false)) await box.fill(reason);
         await dlg.getByRole('button', { name: /^(Reject|Submit|Yes|Confirm|OK|Regret)$/i }).last().click();
         await this.page.waitForTimeout(4000);
     }
@@ -806,6 +809,7 @@ export class sappAuctionActions {
             await cell.evaluate(e => e.scrollIntoView({ block: 'center' }));
             await cell.dblclick();
             await this.page.waitForTimeout(500);
+            await waitForEditorFocus(this.page);
             await this.page.keyboard.type(String(v));
             await this.page.keyboard.press('Tab');
             await this.page.waitForTimeout(700);
@@ -847,9 +851,9 @@ export class sappAuctionActions {
         await upd.click({ timeout: 8000 }).catch(() => upd.evaluate(b => b.click()));
         await this.page.waitForTimeout(3000);
         const dlg = this.page.getByRole('dialog').last();
-        if (await dlg.isVisible({ timeout: 1000 }).catch(() => false)) {
+        if (await dlg.waitFor({ state: 'visible', timeout: 1000 }).then(() => true, () => false)) {
             const ok = dlg.getByRole('button', { name: /^(Submit|Confirm|Yes|OK|Update Bid|Update)$/i }).last();
-            if (await ok.isVisible({ timeout: 1000 }).catch(() => false)) { await ok.click(); await this.page.waitForTimeout(3000); }
+            if (await ok.waitFor({ state: 'visible', timeout: 1000 }).then(() => true, () => false)) { await ok.click(); await this.page.waitForTimeout(3000); }
         }
         const msgs = await this.page.$$eval('[role=alert], .MuiSnackbar-root, .Toastify__toast, .ant-message, .ant-notification, .MuiFormHelperText-root, .error, [class*=error]',
             els => els.map(e => (e.innerText || '').trim()).filter(Boolean));
@@ -923,6 +927,7 @@ export class sappAuctionActions {
     async replyComment(msg) {
         const ed = this.page.locator('[contenteditable=true]').locator('visible=true').last();
         await ed.click();
+        await waitForEditorFocus(this.page);
         await this.page.keyboard.type(msg);
         await this.page.waitForTimeout(500);
         const send = this.page.getByRole('button', { name: /^(Add Reply|Reply|Send|Submit|Post)$/i }).locator('visible=true').last();

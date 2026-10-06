@@ -384,7 +384,7 @@ export class intakeListingActions {
         // navigation — the URL stays on the create page until it's dismissed.
         // Click "Leave without saving" FIRST, then wait for the listing URL.
         const leaveBtn = this.page.getByRole('button', { name: 'Leave without saving' });
-        if (await leaveBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        if (await leaveBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false)) {
             await leaveBtn.click();
         }
         await this.page.waitForURL(/\/intakes$/, { timeout: 15000 });

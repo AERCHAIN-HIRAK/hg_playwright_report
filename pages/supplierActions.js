@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { waitForEditorFocus } from './waitHelpers';
 import { supplier_Locators as S } from './supplierLocators';
 
 export const V3_BASE = 'https://nse-capp-uat.aerchain.io';
@@ -110,6 +111,7 @@ export class supplierActions {
         await this.page.waitForTimeout(1000);
 
         for (const value of [name, email, phone]) {
+            await waitForEditorFocus(this.page);
             await this.page.keyboard.type(value);
             await this.page.waitForTimeout(700);
             await this.page.keyboard.press('Tab');   // NOT Escape — that closes the drawer

@@ -140,7 +140,7 @@ test.describe('Intake → RFX — same intake converted from two tabs', () => {
         const txnTab = page.locator(
             `xpath=//*[@role='tab' or @data-slot='tabs-trigger'][contains(normalize-space(.),'Transactions')]`).first();
         let rfxCodes = [];
-        if (await txnTab.isVisible({ timeout: 8000 }).catch(() => false)) {
+        if (await txnTab.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false)) {
             await txnTab.click();
             for (let i = 0; i < 6; i++) {
                 await page.waitForTimeout(3000);

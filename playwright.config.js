@@ -10,6 +10,12 @@ export default defineConfig({
   ['json', { outputFile: 'test-results/results.json' }]
   ],
 
+  // ONE worker unless told otherwise. Without this Playwright defaults to half
+  // the CPU cores (5 here) as soon as several files run, and the suites then
+  // race on the shared pages/NSEFoundationData.json (saved records + the
+  // invoice counter). Parallel runs need per-worker data first.
+  workers: Number(process.env.PW_WORKERS ?? 1),
+
   // One automatic retry by default. A test that fails then passes is reported
   // as FLAKY, separate from FAILED (failed twice), so a single full run tells
   // timing noise from real failures without a second day of reruns.

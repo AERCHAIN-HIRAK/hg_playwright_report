@@ -156,7 +156,7 @@ test.describe('Intake → RFX — quantity above the intake', () => {
             for (let i = 0; i < 3; i++) {
                 const dlgSubmit = page.locator(
                     `xpath=//*[@role='dialog']//button[normalize-space(.)='Submit']`).first();
-                if (!(await dlgSubmit.isVisible({ timeout: 4000 }).catch(() => false))) {
+                if (!(await dlgSubmit.waitFor({ state: 'visible', timeout: 4000 }).then(() => true, () => false))) {
                     console.log(`[S17] no dialog Submit visible on pass ${i + 1} - dialog is gone`);
                     break;
                 }

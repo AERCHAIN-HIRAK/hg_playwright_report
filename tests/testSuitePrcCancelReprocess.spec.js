@@ -157,7 +157,7 @@ test.describe('PRC cancel — the requisition can be processed again', () => {
                                       ['Inward Matching Criterion', 'Quantity']]) {
             const opt = a.page.locator(
                 `xpath=//*[contains(normalize-space(.),'${label}')]/following::*[normalize-space(.)='${value}'][1]`).first();
-            if (await opt.isVisible({ timeout: 8000 }).catch(() => false)) {
+            if (await opt.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false)) {
                 await opt.click();
                 console.log(`[S147] ${label} = ${value}`);
                 await a.page.waitForTimeout(1200);
@@ -175,7 +175,7 @@ test.describe('PRC cancel — the requisition can be processed again', () => {
         let submit = null;
         for (let i = (await submits.count()) - 1; i >= 0; i--) {
             const cand = submits.nth(i);
-            if (await cand.isVisible({ timeout: 2000 }).catch(() => false)
+            if (await cand.waitFor({ state: 'visible', timeout: 2000 }).then(() => true, () => false)
                 && await cand.isEnabled().catch(() => false)) { submit = cand; break; }
         }
         if (submit) {
@@ -184,7 +184,7 @@ test.describe('PRC cancel — the requisition can be processed again', () => {
             console.log('[S147] conversion submitted');
             await a.page.waitForTimeout(5000);
             const dlg = a.page.locator(`xpath=//*[@role='dialog']//button[normalize-space(.)='Submit']`).first();
-            if (await dlg.isVisible({ timeout: 8000 }).catch(() => false)) {
+            if (await dlg.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false)) {
                 await dlg.click();
                 console.log('[S147] confirmed the conversion workflow dialog');
                 await a.page.waitForTimeout(8000);

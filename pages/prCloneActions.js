@@ -212,13 +212,13 @@ export class prCloneActions {
             console.log(`[PR clone] clicked Submit (attempt ${attempt})`);
 
             const mandatory = this.page.locator(`xpath=${PL.mandatoryFieldsToast}`).first();
-            if (await mandatory.isVisible({ timeout: 3000 }).catch(() => false)) {
+            if (await mandatory.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false)) {
                 throw new Error('Submit was rejected with "Please fill mandatory fields" — ' +
                     'the budget check never ran, so this proves nothing. The clone form was ' +
                     'expected to arrive pre-filled from its parent.');
             }
 
-            if (await dialog.isVisible({ timeout: 25000 }).catch(() => false)) break;
+            if (await dialog.waitFor({ state: 'visible', timeout: 25000 }).then(() => true, () => false)) break;
             await this.page.waitForTimeout(2000);
         }
 
@@ -269,7 +269,7 @@ export class prCloneActions {
     /** Close the popup without submitting, leaving the tenant untouched. */
     async discardWorkflowSummary() {
         const discard = this.page.locator(`xpath=${PL.dialogDiscard}`).first();
-        if (await discard.isVisible({ timeout: 8000 }).catch(() => false)) {
+        if (await discard.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false)) {
             await discard.click({ timeout: 15000 });
             await this.page.waitForTimeout(1500);
             console.log('[PR clone] discarded the Workflow Summary popup');

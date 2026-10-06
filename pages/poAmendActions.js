@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { waitForEditorFocus } from './waitHelpers';
 
 const V3_BASE_URL = 'https://nse-capp-uat.aerchain.io';
 
@@ -99,6 +100,7 @@ export class poAmendActions {
         await cell.scrollIntoViewIfNeeded();
         await cell.dblclick();
         await this.page.waitForTimeout(700);
+        await waitForEditorFocus(this.page);
         await this.page.keyboard.press('ControlOrMeta+a');
         await this.page.keyboard.type(String(value));
         await this.page.keyboard.press('Enter');
@@ -154,7 +156,7 @@ export class poAmendActions {
     async discard() {
         const discard = this.page.locator(
             '//*[contains(@class,"MuiDialog-root")]//button[normalize-space()="Discard"]').first();
-        if (await discard.isVisible({ timeout: 5000 }).catch(() => false)) {
+        if (await discard.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
             await discard.click();
             await this.page.waitForTimeout(1500);
             console.log('[PO] discarded the Workflow Summary popup');

@@ -77,7 +77,7 @@ export class roleAccessActions {
             await this.page.waitForTimeout(2500);
             const hasAccessOptions = await this.page
                 .locator('[role="option"]', { hasText: 'All Access' }).first()
-                .isVisible({ timeout: 3000 }).catch(() => false);
+                .waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false);
             if (hasAccessOptions) {
                 console.log(`[ROLE] Access dropdown open (combobox ${i})`);
                 return;
