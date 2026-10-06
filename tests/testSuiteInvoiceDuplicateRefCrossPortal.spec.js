@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { RESERVED_CODES } from '../pages/reservedRecords';
 import { NSEFoundationActions } from '../pages/NSEFoundationActions';
 import { SupplierPortalActions } from '../pages/SupplierPortalActions';
 import { buildToGrnViaSapp } from '../pages/chainBuilders';
@@ -119,12 +120,12 @@ async function findReusablePo(page, shellUrl, max = 8) {
             if (m && !/Cancelled|Completed|Short Closed/.test(t)) out.push(m[0]);
         }
         return out;
-    });
+    }).then(c => c.filter(code => !RESERVED_CODES.includes(code)));   // pinned by other tests
     console.log(`[S143] discovery — ${codes.length} open PO(s) on the SAPP listing`);
 
     for (const code of codes.slice(0, max)) {
         const cell = page.locator(`xpath=//*[normalize-space(text())='${code}']`).first();
-        if (!(await cell.isVisible({ timeout: 5000 }).catch(() => false))) continue;
+        if (!(await cell.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false))) continue;
         await cell.click().catch(() => {});
         const opened = await page.waitForURL(/\/purchase-orders\/\d+/, { timeout: 20000 })
             .then(() => true).catch(() => false);
@@ -135,6 +136,11 @@ async function findReusablePo(page, shellUrl, max = 8) {
                 // The SAPP page cannot answer this — the invoice/inward columns live
                 // on the CAPP view — so probe it in a throwaway tab.
                 const probe = await page.context().newPage();
+                // Same width as the main page: the PO grid only renders the columns
+                // that fit, and at the default 1280px Invoice Quantity was not in the
+                // DOM at all - read as 0, so PO-NSEFN-26-411 (100 invoiced) was taken
+                // as a clean slate (full run 2026-10-06).
+                await probe.setViewportSize({ width: 1800, height: 900 });
                 let hit = null;
                 try {
                     await probe.goto(`${CAPP_BASE}/purchase-orders/${id}`,
@@ -145,9 +151,11 @@ async function findReusablePo(page, shellUrl, max = 8) {
                     const inwardReq = /Inward Required Yes/.test(txt);
                     const invQty = num(row.line_items_invoice_quantity);
                     const inwQty = num(row.line_items_inward_quantity);
-                    const clean = txt.includes(code) && inwardReq && invQty === 0 && inwQty === 0;
+                    // A column that is NOT rendered is unknown, never 0.
+                    const read = 'line_items_invoice_quantity' in row && 'line_items_inward_quantity' in row;
+                    const clean = read && txt.includes(code) && inwardReq && invQty === 0 && inwQty === 0;
                     console.log(`[S143] discovery — ${code} (id ${id}): inwardRequired=${inwardReq} `
-                        + `invoiceQty=${invQty} inwardQty=${inwQty} → ${clean ? 'CLEAN SLATE' : 'skip'}`);
+                        + `invoiceQty=${read ? invQty : 'not rendered'} inwardQty=${read ? inwQty : 'not rendered'} → ${clean ? 'CLEAN SLATE' : 'skip'}`);
                     if (clean) hit = { code, id };
                 } finally {
                     await probe.close().catch(() => {});
@@ -272,6 +280,9 @@ test.describe('Invoice — duplicate reference across the supplier and buyer por
 
             // ── (3) CAPP review edit: the SAME duplicate, now on an EDIT ─────────
             await a.openSavedInvoice(data);
+            // Review on the CAPP tab `a` just opened - `s` is still on the SAPP tab
+            // after the chain, where there is no More/Review (rerun 2026-10-06).
+            s.page = a.page;
             const onEdit = await s.openPendingReviewEditPage('S143');
             expect(onEdit,
                 'the review edit page never opened — the SAPP invoice did not reach Pending Review, '

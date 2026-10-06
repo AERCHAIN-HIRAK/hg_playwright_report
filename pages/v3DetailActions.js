@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { RESERVED_CODES } from './reservedRecords';
 import { v3Detail_Locators as L } from './v3DetailLocators';
 import { v3Listing_Locators as LL } from './v3ListingLocators';
 import fs from 'fs';
@@ -43,8 +44,13 @@ export class v3DetailActions {
             null, { timeout: 30000 },
         );
         await this.page.waitForTimeout(800);
-        const code = ((await this.page.locator(LL.firstRowCodeLink).first().innerText()) || '').trim();
-        await this.page.locator(LL.firstRowCodeLink).first().click();
+        // First row that is not reserved for another test (see reservedRecords).
+        const rowIndex = await this.page.evaluate((reserved) =>
+            [...document.querySelectorAll('tbody tr')].findIndex(r =>
+                !reserved.includes(((r.querySelector('td') || {}).textContent || '').trim())), RESERVED_CODES);
+        const link = this.page.locator(LL.tableRows).nth(Math.max(rowIndex, 0)).locator('td').first().locator('a').first();
+        const code = ((await link.innerText()) || '').trim();
+        await link.click();
         await this.waitForDetailLoaded();
         return code;
     }
@@ -62,16 +68,17 @@ export class v3DetailActions {
         );
         await this.page.waitForTimeout(800);
 
-        const rowIndex = await this.page.evaluate((wanted) => {
+        const rowIndex = await this.page.evaluate(({ wanted, RESERVED }) => {
             const ths = [...document.querySelectorAll('th')];
             const si = ths.findIndex(t => (t.textContent || '').trim().startsWith('Status'));
             if (si === -1) return -1;
             const rows = [...document.querySelectorAll('tbody tr')];
             return rows.findIndex(r => {
+                if (RESERVED.includes(((r.querySelector('td') || {}).textContent || '').trim())) return false;
                 const c = r.querySelectorAll('td')[si];
                 return c && wanted.includes((c.textContent || '').trim());
             });
-        }, statuses);
+        }, { wanted: statuses, RESERVED: RESERVED_CODES });
 
         if (rowIndex === -1) return null;
 
@@ -101,16 +108,17 @@ export class v3DetailActions {
         );
         await this.page.waitForTimeout(800);
 
-        const rowIndex = await this.page.evaluate(({ header, value }) => {
+        const rowIndex = await this.page.evaluate(({ header, value, RESERVED }) => {
             const ths = [...document.querySelectorAll('th')];
             const ci = ths.findIndex(t => (t.textContent || '').trim().startsWith(header));
             if (ci === -1) return -1;
             const rows = [...document.querySelectorAll('tbody tr')];
             return rows.findIndex(r => {
+                if (RESERVED.includes(((r.querySelector('td') || {}).textContent || '').trim())) return false;
                 const c = r.querySelectorAll('td')[ci];
                 return c && (c.textContent || '').trim().toLowerCase() === value.toLowerCase();
             });
-        }, { header, value });
+        }, { header, value, RESERVED: RESERVED_CODES });
 
         if (rowIndex === -1) return null;
 
@@ -180,16 +188,17 @@ export class v3DetailActions {
         await this.page.waitForTimeout(800);
 
         for (let p = 1; p <= maxPages; p++) {
-            const rowIndex = await this.page.evaluate(({ header, value }) => {
+            const rowIndex = await this.page.evaluate(({ header, value, RESERVED }) => {
                 const ths = [...document.querySelectorAll('th')];
                 const ci = ths.findIndex(t => (t.textContent || '').trim().startsWith(header));
                 if (ci === -1) return -1;
                 const rows = [...document.querySelectorAll('tbody tr')];
                 return rows.findIndex(r => {
+                    if (RESERVED.includes(((r.querySelector('td') || {}).textContent || '').trim())) return false;
                     const c = r.querySelectorAll('td')[ci];
                     return c && (c.textContent || '').trim().toLowerCase() === value.toLowerCase();
                 });
-            }, { header, value });
+            }, { header, value, RESERVED: RESERVED_CODES });
 
             if (rowIndex !== -1) {
                 const link = this.page.locator(LL.tableRows).nth(rowIndex)
@@ -221,16 +230,17 @@ export class v3DetailActions {
         await this.page.waitForTimeout(800);
 
         for (let p = 1; p <= maxPages; p++) {
-            const rowIndex = await this.page.evaluate((wanted) => {
+            const rowIndex = await this.page.evaluate(({ wanted, RESERVED }) => {
                 const ths = [...document.querySelectorAll('th')];
                 const si = ths.findIndex(t => (t.textContent || '').trim().startsWith('Status'));
                 if (si === -1) return -1;
                 const rows = [...document.querySelectorAll('tbody tr')];
                 return rows.findIndex(r => {
+                    if (RESERVED.includes(((r.querySelector('td') || {}).textContent || '').trim())) return false;
                     const c = r.querySelectorAll('td')[si];
                     return c && wanted.includes((c.textContent || '').trim());
                 });
-            }, statuses);
+            }, { wanted: statuses, RESERVED: RESERVED_CODES });
 
             if (rowIndex !== -1) {
                 const link = this.page.locator(LL.tableRows).nth(rowIndex)
@@ -273,7 +283,7 @@ export class v3DetailActions {
                 }
             }
             return out;
-        }, statuses);
+        }, statuses).then(rows => rows.filter(r => !RESERVED_CODES.includes(r.code)));
     }
 
     async waitForDetailLoaded() {
@@ -595,7 +605,10 @@ export class v3DetailActions {
         await popup.waitForLoadState('domcontentloaded').catch(() => {});
         const url = popup.url();
 
-        const res = await this.page.context().request.get(url);
+        // 60s, not the 5s actionTimeout this inherits: the file is ~3.6 MB, and on
+        // the 2026-10-06 overnight run S3 answered 200 but the body was still
+        // streaming at 5s, so a WORKING download failed twice.
+        const res = await this.page.context().request.get(url, { timeout: 60000 });
         const body = await res.body();
         await popup.close().catch(() => {});
 
@@ -743,7 +756,7 @@ export class v3DetailActions {
         expect(url, 'document tab opened with no URL').toBeTruthy();
         expect(url, `document URL does not look like a file: ${url}`).toMatch(/\.pdf|response-content-disposition/i);
 
-        const res = await context.request.get(url);
+        const res = await context.request.get(url, { timeout: 60000 });   // not the 5s actionTimeout
         expect(res.ok(), `document URL returned ${res.status()}`).toBeTruthy();
         const body = await res.body();
         expect(body.length, 'document is empty').toBeGreaterThan(0);

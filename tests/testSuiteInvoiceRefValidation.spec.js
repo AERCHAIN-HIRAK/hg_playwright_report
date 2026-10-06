@@ -42,16 +42,23 @@ test.describe('Invoice — reference validation (CAPP)', () => {
         const a = new NSEFoundationActions(page);
         await a.openApp(data);
 
-        const fresh = JSON.parse(fs.readFileSync(path.resolve('pages/NSEFoundationData.json'), 'utf-8'));
-        const poCode = fresh.savedPurchaseOrder?.code;
-        expect(poCode, 'no savedPurchaseOrder — run the S68 chain first to leave a PO with open qty').toBeTruthy();
+        // A PINNED PO, not the last-saved one: later suites fully invoice the saved
+        // PO (full run 2026-10-06 left PO-NSEFN-26-431 with no Create button). This
+        // scenario's submit is always REFUSED, so it never consumes the PO's open
+        // qty and one suitable PO stays reusable. PO-NSEFN-26-410 has a GRN and 50
+        // open (verified 2026-10-06). Override with S126_PO_CODE / S126_PO_ID.
+        const poCode = process.env.S126_PO_CODE || 'PO-NSEFN-26-410';
+        const poId   = process.env.S126_PO_ID   || '1253';
+        const pinnedPo = { code: poCode, url: `https://nse-capp-uat.aerchain.io/purchase-orders/${poId}` };
         // Read the collision off the SAVED INVOICE itself, not the data file's
         // generated counter — see readSavedInvoiceNumber for why that counter lies.
-        const duplicate = await a.readSavedInvoiceNumber(data);
+        // ...and from an ACTIVE invoice of the same supplier: a cancelled invoice's
+        // reference is free to reuse, so it is no duplicate (see the helper).
+        const duplicate = await a.readActiveInvoiceReference(data, data.sourcing.supplierSearch);
         console.log(`[S126] using PO ${poCode}, deliberately re-using invoice number "${duplicate}"`);
 
         // Create a second invoice against that PO, from CAPP.
-        await a.openSavedPurchaseOrder(data);
+        await a.openSavedPurchaseOrder(data, pinnedPo);
         await a.clickPoCreateInvoice();
         await a.submitSelectPoItemsForInvoice();
         await a.confirmInvoiceCreation();

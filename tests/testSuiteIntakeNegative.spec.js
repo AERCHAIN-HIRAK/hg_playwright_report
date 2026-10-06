@@ -550,6 +550,31 @@ test.describe('Intake — Transactions tab & action availability', () => {
         }, statuses);
     }
 
+    /** Every listed intake (first page) whose Status is one of `statuses`. */
+    async function listIntakesWithStatus(page, statuses) {
+        await page.goto(`${data.loginUrl}/intakes`, { waitUntil: 'domcontentloaded' });
+        await page.waitForFunction(
+            () => document.querySelectorAll('tbody tr').length > 0,
+            null, { timeout: 30000 },
+        );
+        await page.waitForTimeout(1500);
+        return page.evaluate((wanted) => {
+            const ths = [...document.querySelectorAll('th')];
+            const si = ths.findIndex(t => (t.textContent || '').trim().startsWith('Status'));
+            if (si === -1) return [];
+            const out = [];
+            for (const r of document.querySelectorAll('tbody tr')) {
+                const tds = r.querySelectorAll('td');
+                const st = ((tds[si] || {}).textContent || '').trim();
+                const a = r.querySelector('a');
+                if (wanted.includes(st) && a) {
+                    out.push({ code: (tds[0].textContent || '').trim(), href: a.getAttribute('href'), status: st });
+                }
+            }
+            return out;
+        }, statuses);
+    }
+
     async function openApp(page) {
         const a = new NSEFoundationActions(page);
         await page.setViewportSize({ width: 1800, height: 900 });
@@ -558,13 +583,25 @@ test.describe('Intake — Transactions tab & action availability', () => {
     }
 
     test('Transactions tab lists the Intake\'s linked requisitions, negotiations and quote requests @Intake @Transactions', async ({ page }) => {
+        test.setTimeout(240000);
         const a = await openApp(page);
 
-        const target = await findIntakeWithStatus(page, [...PROCESSED_STATUSES, ...RELEASED_STATUSES]);
-        test.skip(!target, 'no Processed or Released intake available');
-
-        const id = target.href.split('/').pop();
-        await a.openIntakeById(id, 'transactions');
+        // Use a Processed intake that was CONVERTED (has downstream records), not
+        // just the top Processed row. "Mark Processed" (test above) sets Processed
+        // with NO transaction, and its intake then sits first in the listing - the
+        // tab correctly shows "No Transactions Yet" and this test failed on it
+        // (full runs 2026-10-01 and 2026-10-06, INT-FNSE-26-715).
+        const candidates = await listIntakesWithStatus(page, PROCESSED_STATUSES);
+        let target = null;
+        for (const c of candidates.slice(0, 8)) {
+            await a.openIntakeById(c.href.split('/').pop(), 'transactions');
+            const empty = await page.getByText('No Transactions Yet').first()
+                .waitFor({ state: 'visible', timeout: 4000 }).then(() => true, () => false);
+            if (!empty) { target = c; break; }
+            console.log(`[INTAKE] ${c.code} is Processed with no transactions (marked, not converted) - skipping`);
+        }
+        expect(target, 'none of the first 8 Processed intakes has any linked transaction').not.toBeNull();
+        console.log(`[INTAKE] using ${target.code}`);
 
         const sections = await a.assertIntakeTransactionsTabStructure();
 

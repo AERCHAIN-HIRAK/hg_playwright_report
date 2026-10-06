@@ -138,6 +138,13 @@ test.describe('Invoice — review-stage validations', () => {
             console.log('[S126b] SAPP invoice created — expected Pending Review in CAPP');
 
             // (3) CAPP: get onto the review EDIT page without submitting.
+            // Run the review helper on the CAPP tab `a` just opened the invoice in.
+            // After buildToGrnViaSapp, `a` works on its own tab while `s` is still on
+            // the SAPP tab - the review step then looked for More/Review on the
+            // SUPPLIER invoice page, found neither, and reported "never reached
+            // Pending Review" for an invoice that WAS pending review (full run
+            // 2026-10-06, Invoice-FNSE-26-722).
+            s.page = a.page;
             const onEdit = await s.openPendingReviewEditPage('S126b');
             expect(onEdit,
                 'the review edit page never opened — the SAPP invoice did not reach Pending Review, '
@@ -180,10 +187,15 @@ test.describe('Invoice — review-stage validations', () => {
             //     A bare reload of /invoices/<id>/edit does NOT render the form — the
             //     edit mode is only entered through the Review action — so re-enter
             //     the same way the flow got here the first time.
-            const invId = (page.url().match(/\/invoices\/(\d+)/) || [])[1];
-            await page.goto(`https://nse-capp-uat.aerchain.io/invoices/${invId}`,
+            // On the CAPP tab (a.page = s.page since step 3), NOT the `page` fixture,
+            // which is still the SAPP tab after the chain: reloading that one left
+            // the CAPP edit page untouched with its Workflow Summary still open, and
+            // the re-entry found no More/Review (rerun 2026-10-06).
+            const cappPage = a.page;
+            const invId = (cappPage.url().match(/\/invoices\/(\d+)/) || [])[1];
+            await cappPage.goto(`https://nse-capp-uat.aerchain.io/invoices/${invId}`,
                 { waitUntil: 'domcontentloaded', timeout: 90000 });
-            await page.waitForTimeout(12000);
+            await cappPage.waitForTimeout(12000);
             // matchGrn:false — re-running Item Matching here RE-CLICKS the already
             // selected GRN, which DESELECTS it, and the duplicate submit below then
             // goes in unmatched. That is what made the 2026-09-21 "silent refusal"

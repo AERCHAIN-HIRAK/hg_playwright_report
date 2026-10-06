@@ -105,7 +105,7 @@ export class cxoListingActions {
         // The collapsed search has an icon overlay that intercepts pointer clicks
         // on the input — click the icon to expand the box first.
         const icon = this.page.locator(L.searchIcon).first();
-        if (await icon.isVisible({ timeout: 2000 }).catch(() => false)) {
+        if (await icon.waitFor({ state: 'visible', timeout: 2000 }).then(() => true, () => false)) {
             await icon.click();
             await this.page.waitForTimeout(400);
         }
@@ -254,8 +254,20 @@ export class cxoListingActions {
     }
 
     async navigateToLastPage() {
+        // Jump straight to the highest page number the pager shows. The old loop
+        // clicked Next at most 30 times and the listing outgrew that (36 pages on
+        // 2026-10-06), leaving the test on page 31 with Next still enabled.
+        const nums = this.page.locator('xpath=//nav[@aria-label="pagination"]//li');
+        const texts = await nums.allInnerTexts();
+        const pages = texts.map(t => parseInt(t.trim(), 10)).filter(n => Number.isFinite(n));
+        if (pages.length) {
+            const last = Math.max(...pages);
+            await nums.filter({ hasText: new RegExp(`^\\s*${last}\\s*$`) }).first().click();
+            await this.waitForListingPageLoad();
+        }
+        // Fallback / safety: finish with Next if a gap remains.
         let guard = 0;
-        while (await this.isNextPageEnabled() && guard < 30) {
+        while (await this.isNextPageEnabled() && guard < 200) {
             await this.clickNextPage();
             guard++;
         }

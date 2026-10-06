@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { serverToday } from './waitHelpers';
 import { SupplierPortal_Locators as S } from './SupplierPortalLocators';
 import fs from 'fs';
 import path from 'path';
@@ -85,7 +86,7 @@ export class SupplierPortalActions {
         await this.page.goto(url);
         await this.page.waitForLoadState('domcontentloaded');
         const emailField = this.page.locator(S.loginEmailField);
-        if (await emailField.isVisible({ timeout: 5000 }).catch(() => false)) {
+        if (await emailField.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
             await this.fillLoginAndSubmit();
             await this.page.goto(url);
             await this.page.waitForLoadState('domcontentloaded');
@@ -110,7 +111,7 @@ export class SupplierPortalActions {
         const { code } = this.getSavedSourcingEvent();
         console.log(`[SAPP RFX] Opening ${code}`);
         const search = this.page.locator(`xpath=${S.rfxSearchInput}`).first();
-        if (await search.isVisible({ timeout: 5000 }).catch(() => false)) {
+        if (await search.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
             await search.fill(code).catch(() => {});
             await search.press('Enter').catch(() => {});
             await this.page.waitForTimeout(2000);
@@ -150,9 +151,9 @@ export class SupplierPortalActions {
 
         // Terms & Conditions dialog.
         const dialog = this.page.locator(`xpath=${S.dialogRoot}`).first();
-        if (await dialog.isVisible({ timeout: 8000 }).catch(() => false)) {
+        if (await dialog.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false)) {
             const checkbox = dialog.locator('[role=checkbox], input[type=checkbox]').first();
-            if (await checkbox.isVisible({ timeout: 3000 }).catch(() => false)) {
+            if (await checkbox.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false)) {
                 await checkbox.click();
                 console.log('[SAPP RFX] Agreed to Terms & Conditions');
             }
@@ -222,7 +223,7 @@ export class SupplierPortalActions {
         await this.page.waitForTimeout(800);
 
         const search = this.page.locator(`xpath=${S.rfxCurrencySearch}`).last();
-        if (await search.isVisible({ timeout: 2000 }).catch(() => false)) {
+        if (await search.waitFor({ state: 'visible', timeout: 2000 }).then(() => true, () => false)) {
             await search.fill(currency);
             await this.page.waitForTimeout(500);
         }
@@ -271,7 +272,7 @@ export class SupplierPortalActions {
         await this.page.waitForTimeout(500);
         // The cell renders an inline input on focus; fall back to keyboard typing.
         const input = cell.locator(`${S.rfxQuoteEditInput}`).first();
-        if ((await input.count()) && await input.isVisible({ timeout: 1500 }).catch(() => false)) {
+        if ((await input.count()) && await input.waitFor({ state: 'visible', timeout: 1500 }).then(() => true, () => false)) {
             await input.fill(rate);
         } else {
             await this.page.keyboard.type(rate);
@@ -294,7 +295,7 @@ export class SupplierPortalActions {
     async assertRfxQuoted() {
         for (let i = 0; i < 4; i++) {
             if (await this.page.locator(`xpath=${S.rfxQuotedStatusBadge}`).first()
-                .isVisible({ timeout: 5000 }).catch(() => false)) {
+                .waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
                 console.log('[SAPP RFX] Status = Quoted');
                 return;
             }
@@ -318,7 +319,7 @@ export class SupplierPortalActions {
         const { code } = this.getSavedPurchaseOrder();
         console.log(`[SAPP PO] Searching for ${code}`);
         const search = this.page.locator(`xpath=${S.poSearchInput}`).first();
-        if (await search.isVisible({ timeout: 8000 }).catch(() => false)) {
+        if (await search.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false)) {
             await search.fill(code);
             await search.press('Enter');
             await this.page.waitForTimeout(2000);
@@ -345,10 +346,10 @@ export class SupplierPortalActions {
 
         let visible = false;
         for (let i = 0; i < 8; i++) {
-            if (await btn.isVisible({ timeout: 2000 }).catch(() => false)) { visible = true; break; }
+            if (await btn.waitFor({ state: 'visible', timeout: 2000 }).then(() => true, () => false)) { visible = true; break; }
             // Only conclude "already accepted" once the page has actually rendered
             // its actions (Create present) without an Accept button.
-            if (await create.isVisible({ timeout: 1000 }).catch(() => false)) {
+            if (await create.waitFor({ state: 'visible', timeout: 1000 }).then(() => true, () => false)) {
                 console.log('[SAPP PO] Create present, no Accept — PO already accepted');
                 return;
             }
@@ -364,9 +365,9 @@ export class SupplierPortalActions {
 
         // Confirmation dialog → "Accept" (fall back to the generic primary button).
         const dialog = this.page.locator(`xpath=${S.dialogRoot}`).first();
-        if (await dialog.isVisible({ timeout: 6000 }).catch(() => false)) {
+        if (await dialog.waitFor({ state: 'visible', timeout: 6000 }).then(() => true, () => false)) {
             const accept = this.page.locator(`xpath=${S.dialogAcceptBtn}`).first();
-            const confirm = (await accept.isVisible({ timeout: 3000 }).catch(() => false))
+            const confirm = (await accept.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false))
                 ? accept
                 : this.page.locator(`xpath=${S.dialogPrimaryBtn}`).first();
             await confirm.click();
@@ -395,7 +396,7 @@ export class SupplierPortalActions {
         await this.openPoCreateMenu('GRN');
         // Select-PO-items popup → Create GRN page → fill received qty → Submit.
         const dialogSubmit = this.page.locator(`xpath=${S.dialogPrimaryBtn}`).first();
-        if (await dialogSubmit.isVisible({ timeout: 5000 }).catch(() => false)) {
+        if (await dialogSubmit.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
             await dialogSubmit.click();
             await this.page.waitForTimeout(2000);
         }
@@ -404,7 +405,7 @@ export class SupplierPortalActions {
         await submit.click();
         console.log('[SAPP GRN] Submitted GRN (→ Pending Review in CAPP)');
         const confirm = this.page.locator(`xpath=${S.dialogPrimaryBtn}`).first();
-        if (await confirm.isVisible({ timeout: 5000 }).catch(() => false)) {
+        if (await confirm.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
             await confirm.click();
         }
         await this.page.waitForTimeout(2500);
@@ -436,7 +437,7 @@ export class SupplierPortalActions {
 
         // "Select PO Items" dialog → Submit.
         const selectSubmit = this.page.locator(`xpath=${S.dialogPrimaryBtn}`).first();
-        if (await selectSubmit.isVisible({ timeout: 5000 }).catch(() => false)) {
+        if (await selectSubmit.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
             await selectSubmit.click();
             console.log('[SAPP Invoice] Submitted "Select PO Items" dialog');
             await this.page.waitForTimeout(1500);
@@ -444,7 +445,7 @@ export class SupplierPortalActions {
 
         // Optional "Confirm Invoice Creation" dialog (items already invoiced) → Proceed.
         const proceed = this.page.locator(`xpath=${S.dialogProceedBtn}`).first();
-        if (await proceed.isVisible({ timeout: 5000 }).catch(() => false)) {
+        if (await proceed.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
             await proceed.click();
             console.log('[SAPP Invoice] Confirmed "Confirm Invoice Creation" → Proceed');
         }
@@ -489,7 +490,7 @@ export class SupplierPortalActions {
             await submitBtn.scrollIntoViewIfNeeded().catch(() => {});
             await submitBtn.click({ force: true }).catch(() => {});
             console.log(`[SAPP Invoice] Clicked Submit (attempt ${i + 1})`);
-            if (await validationsProceed.isVisible({ timeout: 6000 }).catch(() => false)) {
+            if (await validationsProceed.waitFor({ state: 'visible', timeout: 6000 }).then(() => true, () => false)) {
                 validationsShown = true;
                 break;
             }
@@ -510,7 +511,7 @@ export class SupplierPortalActions {
         const approversSubmit = this.page.locator(`xpath=${S.dialogSubmitBtn}`).last();
         for (let i = 0; i < 4; i++) {
             const shown = await approversSubmit
-                .isVisible({ timeout: i === 0 ? 15000 : 3000 }).catch(() => false);
+                .waitFor({ state: 'visible', timeout: i === 0 ? 15000 : 3000 }).then(() => true, () => false);
             if (!shown) break;
             await approversSubmit.scrollIntoViewIfNeeded().catch(() => {});
             await approversSubmit.click({ force: true }).catch(() => {});
@@ -653,7 +654,7 @@ export class SupplierPortalActions {
         // present on BOTH the passed and failed variants, so this works whichever
         // way the app answered.
         const makeChanges = this.page.locator(`xpath=${S.dialogMakeChangesBtn}`).first();
-        if (await makeChanges.isVisible({ timeout: 5000 }).catch(() => false)) {
+        if (await makeChanges.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
             await makeChanges.click().catch(() => {});
             console.log('[SAPP Invoice] Validations popup -> Make Changes (back to the form)');
             await this.page.waitForTimeout(2500);
@@ -684,8 +685,9 @@ export class SupplierPortalActions {
     // month/year dropdowns, not nav arrows), so just click today's day. The MUI
     // label overlays the input, so the opening click must be forced.
     async _pickTodayInvoiceDate() {
-        const now = new Date();
-        const dd = String(now.getDate()).padStart(3, '0'); // react-datepicker day class is 3-digit
+        // The day the SERVER calls today (UTC) - see serverToday(). Its
+        // "future dated" check refuses IST-today between 00:00 and 05:30 IST.
+        const dd = serverToday().slice(8, 10).padStart(3, '0'); // react-datepicker day class is 3-digit
         const input = this.page.locator(S.invoiceDateInput).first();
         await input.scrollIntoViewIfNeeded();
         await input.click({ force: true });
@@ -807,7 +809,7 @@ export class SupplierPortalActions {
      *  attempt and the post-reassign retry so both behave identically. */
     async _openReviewEditPage(tag = 'INV', when = 'direct') {
         const review = this.page.locator(`xpath=${S.invReviewBtn}`).first();
-        if (!(await review.isVisible({ timeout: 8000 }).catch(() => false))) {
+        if (!(await review.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false))) {
             console.log(`[${tag}] No Review button (${when})`);
             return false;
         }
@@ -857,7 +859,7 @@ export class SupplierPortalActions {
             await submit.scrollIntoViewIfNeeded().catch(() => {});
             await submit.click({ force: true }).catch(() => {});
             console.log(`[${tag}] Clicked review Submit (attempt ${i + 1})`);
-            if (await proceed.isVisible({ timeout: 6000 }).catch(() => false)) { shown = true; break; }
+            if (await proceed.waitFor({ state: 'visible', timeout: 6000 }).then(() => true, () => false)) { shown = true; break; }
             await this.page.waitForTimeout(2000);
         }
         await sayWhatIsOnScreen('after Submit clicks');
@@ -867,7 +869,7 @@ export class SupplierPortalActions {
             await this.page.waitForTimeout(1500);
             await sayWhatIsOnScreen('after Proceed');
             const approvers = this.page.locator(`xpath=${S.dialogSubmitBtn}`).last();
-            if (await approvers.isVisible({ timeout: 10000 }).catch(() => false)) {
+            if (await approvers.waitFor({ state: 'visible', timeout: 10000 }).then(() => true, () => false)) {
                 await approvers.click();
                 console.log(`[${tag}] Approvers popup → Submit`);
             }
@@ -893,14 +895,14 @@ export class SupplierPortalActions {
         // slow, so re-painting costs 90s and changes nothing. Callers now try the
         // Review action BEFORE reaching this reassign fallback.
         const more = this.page.locator(`xpath=${S.moreBtn}`).first();
-        if (!(await more.isVisible({ timeout: 30000 }).catch(() => false))) {
+        if (!(await more.waitFor({ state: 'visible', timeout: 30000 }).then(() => true, () => false))) {
             console.log(`[${tag}] No More button after 30s — cannot reassign approver`);
             return false;
         }
         await more.click();
         await this.page.waitForTimeout(800);
         const opt = this.page.locator(`xpath=${S.reassignApproverOption}`).first();
-        if (!(await opt.isVisible({ timeout: 6000 }).catch(() => false))) {
+        if (!(await opt.waitFor({ state: 'visible', timeout: 6000 }).then(() => true, () => false))) {
             console.log(`[${tag}] Reassign option not available`);
             await this.page.keyboard.press('Escape').catch(() => {});
             return false;
@@ -919,7 +921,7 @@ export class SupplierPortalActions {
         await this.page.waitForTimeout(500);
 
         const reason = this.page.locator(`xpath=${S.reassignReasonField}`).first();
-        if (await reason.isVisible({ timeout: 4000 }).catch(() => false)) {
+        if (await reason.waitFor({ state: 'visible', timeout: 4000 }).then(() => true, () => false)) {
             await reason.fill('Reassigned for automated testing');
         }
         await this.page.locator(`xpath=${S.reassignSubmitBtn}`).first().click();
@@ -933,7 +935,7 @@ export class SupplierPortalActions {
     // Match Line Item → Item Matching dialog → Add the PO's GRN → Submit.
     async _matchInvoiceLineItemToGrn(tag = 'INV') {
         const match = this.page.locator(`xpath=${S.invMatchLineItemBtn}`).first();
-        if (!(await match.isVisible({ timeout: 8000 }).catch(() => false))) {
+        if (!(await match.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false))) {
             console.log(`[${tag}] No Match Line Item button — skipping GRN match`);
             return false;
         }
@@ -942,7 +944,7 @@ export class SupplierPortalActions {
 
         const grnCode = this._data().savedGrn?.code;
         const addGrn = this.page.locator(`xpath=${S.itemMatchingAddGrnField}`).first();
-        if (await addGrn.isVisible({ timeout: 8000 }).catch(() => false)) {
+        if (await addGrn.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false)) {
             await addGrn.click();
             await this.page.waitForTimeout(1000);
             // Prefer the chain's own GRN, but FALL BACK to whatever GRN the picker
@@ -957,13 +959,13 @@ export class SupplierPortalActions {
                 ? this.page.locator(`xpath=${S.itemMatchingGrnOption(grnCode)}`).first()
                 : anyGrn;
             let picked = grnCode || '(first)';
-            if (!await opt.isVisible({ timeout: 8000 }).catch(() => false)) {
+            if (!await opt.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false)) {
                 const offered = await this.page.locator(`xpath=//li[@role='option']`)
                     .allInnerTexts().catch(() => []);
                 console.log(`[${tag}] GRN "${grnCode}" not offered — options: ${JSON.stringify(offered.slice(0, 8))}`);
                 opt = anyGrn;
                 picked = '(fallback: first INW-)';
-                if (!await opt.isVisible({ timeout: 5000 }).catch(() => false)) {
+                if (!await opt.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
                     console.log(`[${tag}] no GRN option at all — leaving Item Matching unmatched`);
                     await this.page.keyboard.press('Escape').catch(() => {});
                     await this.page.waitForTimeout(1000);
@@ -986,7 +988,7 @@ export class SupplierPortalActions {
         // may be nothing to match at all. Report what the dialog offered and let
         // the caller decide; the Review button is the real gate.
         const submit = this.page.locator(`xpath=${S.dialogSubmitBtn}`).last();
-        if (!await submit.isVisible({ timeout: 10000 }).catch(() => false)) {
+        if (!await submit.waitFor({ state: 'visible', timeout: 10000 }).then(() => true, () => false)) {
             const txt = await this.page.locator('xpath=//div[@role="dialog"]').last()
                 .innerText().catch(() => '');
             console.log(`[${tag}] Item Matching dialog offers no Submit — nothing to match. `

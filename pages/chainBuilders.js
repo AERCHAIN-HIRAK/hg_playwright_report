@@ -1,4 +1,5 @@
 import defaultData from './NSEFoundationData.json';
+import { serverToday } from './waitHelpers';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared chain builders.
@@ -479,8 +480,7 @@ export async function buildAckToPayment(a, data = defaultData) {
     // + Payment → paid amount = invoice amount, unique UTR, today's date.
     const invoiceAmount = await a.readInvoiceAmount();
     await a.clickAddPayment();
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const today = serverToday();   // UTC "today" - see serverToday()
     const utr = 'UTR' + Date.now() + Math.floor(Math.random() * 1000);
     await a.fillPaymentForm(invoiceAmount, utr, today);
     await a.submitPayment();

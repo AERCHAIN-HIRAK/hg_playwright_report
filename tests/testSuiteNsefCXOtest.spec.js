@@ -834,8 +834,32 @@ test.describe('CXO — Transactions tab & action availability', () => {
     }
 
     test('Transactions tab lists the CXO\'s linked intakes and Non-PO invoices @CXO @Transactions', async ({ page }) => {
-        const a = await openSavedCxo(page);
-        await a.openCxoTransactionsTab();
+        test.setTimeout(300000);
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+        await a.openApp(data);
+
+        // Use a CXO that HAS downstream records, not the last-saved one: chain
+        // suites save fresh CXOs with nothing linked yet, whose tab correctly reads
+        // "No Transactions Yet" (full run 2026-10-06, /cxos/7257).
+        await page.goto(`${data.loginUrl}/cxos`, { waitUntil: 'domcontentloaded' });
+        await page.waitForFunction(() => document.querySelectorAll('tbody tr a[href*="/cxos/"]').length > 0,
+            null, { timeout: 60000 });
+        const hrefs = await page.evaluate(() => [...new Set([...document.querySelectorAll('tbody tr a[href*="/cxos/"]')]
+            .map(x => x.getAttribute('href')))]);
+        let found = null;
+        for (const href of hrefs.slice(0, 10)) {
+            const id = (href.match(/\/cxos\/(\d+)/) || [])[1];
+            if (!id) continue;
+            await page.goto(`${data.loginUrl}/cxos/${id}/overview`, { waitUntil: 'domcontentloaded' });
+            await a.openCxoTransactionsTab();
+            const empty = await page.getByText('No Transactions Yet').first()
+                .waitFor({ state: 'visible', timeout: 4000 }).then(() => true, () => false);
+            if (!empty) { found = id; break; }
+            console.log(`[CXO] /cxos/${id} has no transactions yet - skipping`);
+        }
+        expect(found, 'none of the first 10 listed CXOs has any linked transaction').not.toBeNull();
+        console.log(`[CXO] using /cxos/${found}`);
 
         const sections = await a.assertCxoTransactionsTabStructure();
 

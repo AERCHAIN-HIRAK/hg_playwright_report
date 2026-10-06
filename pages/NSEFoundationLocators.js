@@ -676,7 +676,11 @@ export const NSEFoundation_Locators = {
     activityLogDownloadBtn:   `//*[@role="dialog"]//button[.//*[contains(@class,"lucide-download")]]`,
     activityLogDownloadItem:  (label) => `//*[@role="menuitem"][normalize-space()="${label}"]`,
     activityLogCloseBtn:      `//*[@role="dialog"]//button[.//*[contains(@class,"lucide-x")]]`,
-    activityLogEntries:       `//*[@role="dialog"]//*[contains(@class,"lucide-circle-check-big")]`,
+    // Every entry carries an image labelled "Activity", whatever its state. The
+    // old match on the green lucide-circle-check-big icon counted 0 on an RFX
+    // whose entries are all rejected / sent-for-approval (orange icon), so a
+    // log with 5 entries failed as empty (full run 2026-10-05, RFX-26-490).
+    activityLogEntries:       `//*[@role="dialog"]//*[@alt="Activity" or @aria-label="Activity"]`,
     // Add-comment affordance inside the same sheet (verified live 2026-09-04).
     // The send control is the blue right-arrow beside the field: a button whose
     // only child is a lucide-send-horizontal icon. It ships DISABLED and only
@@ -706,7 +710,11 @@ export const NSEFoundation_Locators = {
     // The calendar renders in a Radix popper OUTSIDE the dialog, so day cells
     // must be matched there — not under the dialog node.
     datePickerPopper:           `//*[@data-radix-popper-content-wrapper]`,
-    datePickerDay:              (d) => `//*[@data-radix-popper-content-wrapper]//button[normalize-space()="${d}"]`,
+    // Scoped to the calendar GRID: the popper also holds a time selector, and
+    // when the hour equals the target day (11:36 vs day 11, 2026-10-06) the
+    // unscoped match clicked the HOUR, so no date changed and Update stayed
+    // disabled.
+    datePickerDay:              (d) => `//*[@data-radix-popper-content-wrapper]//*[@role="grid"]//button[normalize-space()="${d}"]`,
 
     // ── Create Evaluation dialog (sheet scenario 35) ──────────────────────────
     // Same dialog on the Intake → RFX conversion page and on an RFX that has not
