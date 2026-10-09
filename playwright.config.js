@@ -5,6 +5,9 @@ export default defineConfig({
 
   testDir: './tests',
 
+  // Clears the auction suite's saved state so its tests run instead of skipping.
+  globalSetup: './utils/globalSetup.js',
+
   reporter: [
   ['html', { open: 'never' }],
   ['json', { outputFile: 'test-results/results.json' }],
@@ -90,6 +93,18 @@ export default defineConfig({
       },
       dependencies: ['nsef-setup'],
     },
+
+    // Invoice reject-edit RESUME helpers. Loaded only on demand: they start from
+    // saved records a full run leaves in the wrong state, so in a full run they
+    // could only skip or fail. See resumeRejectEditInvoice.spec.js.
+    ...((process.env.RESUME === '1' || process.env.RESUME_GRN === '1') ? [{
+      name: 'nsef-resume',
+      testMatch: /resumeRejectEditInvoice\.spec\.js/,
+      use: {
+        storageState: 'auth.nsef.json',
+      },
+      dependencies: ['nsef-setup'],
+    }] : []),
 
     {
       name: 'supplier-setup',
