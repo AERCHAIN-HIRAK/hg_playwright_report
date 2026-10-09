@@ -127,8 +127,14 @@ test.describe('Supplier module', () => {
         await openSupplierListing(page);
 
         // Onboarding only makes sense once the supplier is past intake.
-        const href = await findSupplierHref(page, 'Registered');
-        test.skip(!href, 'no Registered supplier on the first page');
+        // The first page can hold no Registered supplier at all (the 2026-10-06 run
+        // skipped on that), so fall back to HG Automation SUPP — the designated
+        // throwaway supplier, Registered whenever the #147 block/unblock restores it.
+        let href = await findSupplierHref(page, 'Registered');
+        if (!href && await searchSupplierHref(page, 'HG Automation SUPP')) {
+            href = await findSupplierHref(page, 'Registered');
+        }
+        expect(href, 'no Registered supplier on the first page, and HG Automation SUPP is not Registered').toBeTruthy();
 
         await page.goto(`${V3_BASE_URL}${href}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForTimeout(6000);

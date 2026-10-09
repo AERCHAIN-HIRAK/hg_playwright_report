@@ -3,6 +3,9 @@ import { waitForEditorFocus } from './waitHelpers';
 import { NSEFoundation_Locators as L } from './NSEFoundationLocators';
 
 export const V3_BASE_URL = 'https://nse-capp-uat.aerchain.io';
+
+// Toast / snackbar containers the SAPP live page uses for bid results.
+const TOAST_SELECTOR = '[role=alert], .MuiSnackbar-root, .Toastify__toast, .ant-message, .ant-notification';
 export const V4_BASE_URL = 'https://nse-capp-v4-uat.aerchain.io';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -847,6 +850,29 @@ export class sappAuctionActions {
         // A sticky snackbar (e.g. "Information — This is the final bid extension…") sits over
         // Update Bid and swallows the click (AUC-121). Clear toasts first; fall back to a DOM click.
         await this.page.evaluate(() => document.querySelectorAll('.MuiSnackbar-root').forEach(e => e.remove()));
+
+        // Record every toast from the moment Update Bid is clicked. "Bid Updated
+        // Successfully!" is gone within a few seconds, and reading the DOM only
+        // after the confirm-dialog wait missed it: valid bids came back as "" or a
+        // bare "Success" heading and were reported as refused (A4/B2/C2,
+        // 2026-10-08 — they passed on 10-02, before the 10-06 timing change made
+        // that dialog wait real). Each toast's text is refreshed on every
+        // mutation, so its body is kept even if it renders after its title.
+        await this.page.evaluate((sel) => {
+            window.__bidObs?.disconnect();
+            const seen = window.__bidToasts = [];
+            const track = (node) => {
+                const el = node && (node.nodeType === 1 ? node : node.parentElement);
+                const toast = el && el.closest(sel);
+                if (toast && !seen.some(s => s.el === toast)) seen.push({ el: toast, text: '' });
+            };
+            window.__bidObs = new MutationObserver((muts) => {
+                for (const m of muts) { track(m.target); m.addedNodes.forEach(track); }
+                for (const s of seen) if (s.el.isConnected) s.text = (s.el.innerText || '').trim() || s.text;
+            });
+            window.__bidObs.observe(document.body, { childList: true, subtree: true, characterData: true });
+        }, TOAST_SELECTOR);
+
         const upd = this.page.getByRole('button', { name: 'Update Bid' });
         await upd.click({ timeout: 8000 }).catch(() => upd.evaluate(b => b.click()));
         await this.page.waitForTimeout(3000);
@@ -855,14 +881,23 @@ export class sappAuctionActions {
             const ok = dlg.getByRole('button', { name: /^(Submit|Confirm|Yes|OK|Update Bid|Update)$/i }).last();
             if (await ok.waitFor({ state: 'visible', timeout: 1000 }).then(() => true, () => false)) { await ok.click(); await this.page.waitForTimeout(3000); }
         }
-        const msgs = await this.page.$$eval('[role=alert], .MuiSnackbar-root, .Toastify__toast, .ant-message, .ant-notification, .MuiFormHelperText-root, .error, [class*=error]',
+        // Toasts recorded since the click, plus whatever (inline errors included) is
+        // still on screen now.
+        const recorded = await this.page.evaluate(() => {
+            window.__bidObs?.disconnect();
+            return (window.__bidToasts || []).map(s => s.text).filter(Boolean);
+        });
+        const onScreen = await this.page.$$eval(`${TOAST_SELECTOR}, .MuiFormHelperText-root, .error, [class*=error]`,
             els => els.map(e => (e.innerText || '').trim()).filter(Boolean));
-        const msg = [...new Set(msgs)].join(' | ');
+        const msg = [...new Set([...recorded, ...onScreen])].join(' | ');
         console.log(`[SAPP] update bid ${JSON.stringify(bids)} → ${msg}`);
         // The bid that uses the LAST allowed extension answers with an Information toast
         // ("This is the final bid extension for this auction…") instead of "Bid Updated
-        // Successfully!" — it is still an accepted bid.
-        const ok = /Bid Updated Successfully|final bid extension/i.test(msg) && !/\bError\b/.test(msg);
+        // Successfully!" — it is still an accepted bid. A toast whose body was never
+        // caught still carries its "Success" heading — and the final-extension toast its
+        // "Information" heading (A4 move 3, 2026-10-09: only the heading was read and an
+        // accepted bid was reported as refused). Refusals are always headed "Error".
+        const ok = /Bid Updated Successfully|final bid extension|\bSuccess\b|\bInformation\b/i.test(msg) && !/\bError\b/.test(msg);
         return { ok, msg };
     }
 

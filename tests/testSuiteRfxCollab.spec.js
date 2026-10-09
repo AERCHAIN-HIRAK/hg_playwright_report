@@ -40,16 +40,23 @@ test.describe('RFX — negotiations and comments', () => {
     // ── 30 ────────────────────────────────────────────────────────────────────
 
     test('a quoted RFX offers Negotiation and opens the negotiation request form @RFX @Negotiation @S30', async ({ page }) => {
-        const target = await rfx.findQuotedRfx();
-        test.skip(!target, 'no Quoted "HG Automation" RFX available');
+        const candidates = await rfx.listQuotedRfx();
+        expect(candidates.length, 'no Quoted "HG Automation" RFX available').toBeGreaterThan(0);
 
-        await rfx.openOverview(target.id);
-        await rfx.openAnalysis();
-
-        const actions = await rfx.analysisActionLabels();
-        console.log(`[S30] ${target.code} analysis actions: ${actions.join(' · ')}`);
-        expect(actions, `${target.code} is Quoted but exposes no Negotiation action`)
-            .toContain('Negotiation');
+        // An RFX whose deadline was extended after foreclose has quoting reopened
+        // and rightly offers no Negotiation (S36 does exactly that to the newest
+        // Quoted RFX), so move on to the next candidate instead of failing on it.
+        let target = null;
+        for (const c of candidates) {
+            await rfx.openOverview(c.id);
+            await rfx.openAnalysis();
+            const actions = await rfx.analysisActionLabels();
+            console.log(`[S30] ${c.code} analysis actions: ${actions.join(' · ')}`);
+            if (actions.includes('Negotiation')) { target = c; break; }
+            console.log(`[S30] ${c.code} offers no Negotiation (quoting reopened?) — trying the next one`);
+        }
+        expect(target, `none of ${candidates.map(c => c.code).join(', ')} offers a Negotiation action`)
+            .toBeTruthy();
 
         await rfx.openNegotiation();
         expect(page.url(), 'Negotiation did not open the negotiations route').toMatch(/\/negotiations/);

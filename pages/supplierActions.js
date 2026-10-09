@@ -204,16 +204,46 @@ export class supplierActions {
         return '(unknown)';
     }
 
-    /** Confirm the Workflow Summary popup shown after the create Submit. */
-    async confirmWorkflowSummary() {
+    /**
+     * Confirm the Workflow Summary popup if one opens.
+     *
+     * `waitMs` > 0 waits that long for it to appear. A bare count() only sees a
+     * popup that is ALREADY rendered: in the 2026-10-08 full run the onboarding
+     * popup opened a moment later, was never submitted, and S97 stalled at
+     * Pending Approval with "no workflow action available".
+     */
+    async confirmWorkflowSummary({ waitMs = 0 } = {}) {
         const wf = this.page.locator(`xpath=${S.workflowSummaryHeading}`);
-        if (!await wf.count()) return false;
-        const stages = await this.page.evaluate(() => [...new Set(
-            [...document.querySelectorAll('*')]
-                .filter(e => e.children.length === 0 && /^Sup /.test((e.textContent || '').trim()))
-                .map(e => (e.textContent || '').trim()))]);
-        console.log(`[SUPPLIER] workflow summary stages: ${JSON.stringify(stages)}`);
-        await this.page.getByRole('button', { name: 'Submit', exact: true }).last().click();
+        const open = waitMs > 0
+            ? await wf.first().waitFor({ state: 'visible', timeout: waitMs }).then(() => true).catch(() => false)
+            : await wf.count() > 0;
+        if (!open) return false;
+
+        // The popup opens with its Submit DISABLED while it loads the stages, and
+        // can then close by itself once the submission lands (2026-10-08 rerun:
+        // clicking straight away timed out on the disabled button while
+        // FNSE-26-3055 moved on to Pending Approval). So wait for Submit to enable;
+        // a popup that closes on its own counts as done.
+        const submit = this.page.getByRole('button', { name: 'Submit', exact: true }).last();
+        const deadline = Date.now() + 30000;
+        let clicked = false;
+        while (Date.now() < deadline) {
+            if (!await wf.count()) break;
+            if (await submit.isEnabled().catch(() => false)) {
+                const stages = await this.page.evaluate(() => [...new Set(
+                    [...document.querySelectorAll('*')]
+                        .filter(e => e.children.length === 0 && /^Sup /.test((e.textContent || '').trim()))
+                        .map(e => (e.textContent || '').trim()))]);
+                console.log(`[SUPPLIER] workflow summary stages: ${JSON.stringify(stages)}`);
+                clicked = await submit.click({ timeout: 5000 }).then(() => true, () => false);
+                if (clicked) break;
+            }
+            await this.page.waitForTimeout(500);
+        }
+        if (!clicked && await wf.count()) {
+            throw new Error('Workflow Summary popup stayed open with its Submit disabled for 30s');
+        }
+        if (!clicked) console.log('[SUPPLIER] workflow summary closed on its own — submission already sent');
         await this.page.waitForTimeout(12000);
         return true;
     }
@@ -229,6 +259,7 @@ export class supplierActions {
      *                            "Pending  Sync" still matches)
      */
     async _approveUntil(id, code, terminal, { notes = 'Approved by automation', rounds = 8, label = 'target' } = {}) {
+        let idle = 0;
         for (let round = 1; round <= rounds; round++) {
             await this.page.goto(`${V3_BASE}/suppliers/${id}`,
                 { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -280,14 +311,29 @@ export class supplierActions {
                 await this.page.waitForTimeout(500);
                 const confirm = this.page.locator(`xpath=${S.dialogConfirmBtn}`).first();
                 if (await confirm.count()) await confirm.click();
-                await this.page.waitForTimeout(10000);
+                // Approving can open a Workflow Summary for the next stage; it must be
+                // submitted or the approval never lands. The 10s wait doubles as the
+                // settle time when no popup comes.
+                await this.confirmWorkflowSummary({ waitMs: 10000 });
                 acted = true;
                 break;
             }
             if (!acted) {
+                // The next stage's Approve renders a little after the status chip: S97
+                // read "Pending Approval" with no button 8s after load and gave up,
+                // while the same page showed Approve moments later (FNSE-26-3056,
+                // 2026-10-09). Reload a few times before calling it a dead end.
+                if (idle < 3) {
+                    idle++;
+                    console.log(`[SUPPLIER] round ${round}: ${status} — no workflow action yet, reloading (${idle}/3)`);
+                    round--;    // a reload is not an approval round
+                    await this.page.waitForTimeout(15000);
+                    continue;
+                }
                 console.log(`[SUPPLIER] round ${round}: ${status} — no workflow action available (wanted ${label})`);
                 return status;
             }
+            idle = 0;
         }
         const last = SupplierStatus.normalise(await this.readSupplierStatus(code));
         console.log(`[SUPPLIER] gave up after ${rounds} rounds at "${last}" (wanted ${label})`);
@@ -766,6 +812,9 @@ export class supplierActions {
             { timeout: 90000 },
         ).catch(() => null);
         await this.page.getByRole('button', { name: 'Submit', exact: true }).first().click();
+        // The onboarding Submit can open a Workflow Summary popup that needs its
+        // own Submit (seen unsubmitted on FNSE-26-3054, 2026-10-08).
+        await this.confirmWorkflowSummary({ waitMs: 10000 });
         const resp = await posted;
         await this.page.waitForTimeout(10000);
 

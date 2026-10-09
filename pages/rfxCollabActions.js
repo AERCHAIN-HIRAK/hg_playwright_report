@@ -49,6 +49,17 @@ export class rfxCollabActions {
         return hit || null;
     }
 
+    /**
+     * Quoted "HG Automation" RFXs, newest first, up to `limit`. Sheet 30 needs a
+     * list rather than the first hit: S36 (testSuiteRFXAnalysis) picks the same
+     * newest Quoted RFX and extends its deadline after foreclose, which reopens
+     * quoting and correctly removes Negotiation — 2026-10-06 run, RFX-26-570.
+     */
+    async listQuotedRfx(limit = 5, baseUrl = V4_BASE_URL) {
+        const all = await this.listRfx(baseUrl);
+        return all.filter(r => /quoted/i.test(r.status) && /HG Automation/i.test(r.subject)).slice(0, limit);
+    }
+
     async openOverview(id, baseUrl = V4_BASE_URL) {
         await this.page.goto(`${baseUrl}/quote-requests/${id}/overview`,
             { waitUntil: 'domcontentloaded', timeout: 90000 });

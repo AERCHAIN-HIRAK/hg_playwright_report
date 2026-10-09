@@ -612,7 +612,17 @@ test.describe.serial('Auction Flow A — RFX → Auction → live → Update to 
                 await x.openLivePage(st.auctionUrl);
                 let before = await x.readLivePage();
                 // resumable: a retry inside the same live window must not replay accepted moves
-                const movesDone = readState().extMovesDone || 0;
+                let movesDone = readState().extMovesDone || 0;
+                // A move can be accepted by the app yet recorded as refused (its toast misread),
+                // so the state file lags the auction. The extensions left on the buyer page are
+                // the real count: each of the first 3 moves used one. Replaying an applied move
+                // is refused ("Price cannot be increased"), so skip past it.
+                const applied = Math.min(3, 3 - Number(before.extLeft));
+                if (movesDone && applied > movesDone) {
+                    console.log(`[AUC-A] state says ${movesDone} move(s) done but ${applied} extension(s) are used — resuming after move ${applied}`);
+                    movesDone = applied;
+                    writeState({ extMovesDone: movesDone });
+                }
                 if (movesDone) console.log(`[AUC-A] resuming extensions after ${movesDone} accepted move(s)`);
                 for (let m = movesDone; m < moves.length; m++) {
                     const [k, bids] = moves[m];
