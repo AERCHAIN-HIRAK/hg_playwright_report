@@ -825,23 +825,13 @@ test.describe('CXO — Transactions tab & action availability', () => {
 
     test.describe.configure({ timeout: 150000 });
 
-    async function openSavedCxo(page) {
-        const a = new NSEFoundationActions(page);
-        await page.setViewportSize({ width: 1800, height: 900 });
-        await a.openApp(data);
-        await a.openCxoByCode(data.savedCxo.code);
-        return a;
-    }
-
-    test('Transactions tab lists the CXO\'s linked intakes and Non-PO invoices @CXO @Transactions', async ({ page }) => {
-        test.setTimeout(300000);
-        const a = new NSEFoundationActions(page);
-        await page.setViewportSize({ width: 1800, height: 900 });
-        await a.openApp(data);
-
-        // Use a CXO that HAS downstream records, not the last-saved one: chain
-        // suites save fresh CXOs with nothing linked yet, whose tab correctly reads
-        // "No Transactions Yet" (full run 2026-10-06, /cxos/7257).
+    /**
+     * Open a CXO that HAS downstream records, not the last-saved one: chain
+     * suites save fresh CXOs with nothing linked yet, whose tab correctly reads
+     * "No Transactions Yet" (full run 2026-10-06, /cxos/7257). Leaves the page on
+     * that CXO's Transactions tab and returns its id.
+     */
+    async function openCxoWithTransactions(page, a) {
         await page.goto(`${data.loginUrl}/cxos`, { waitUntil: 'domcontentloaded' });
         await page.waitForFunction(() => document.querySelectorAll('tbody tr a[href*="/cxos/"]').length > 0,
             null, { timeout: 60000 });
@@ -860,6 +850,16 @@ test.describe('CXO — Transactions tab & action availability', () => {
         }
         expect(found, 'none of the first 10 listed CXOs has any linked transaction').not.toBeNull();
         console.log(`[CXO] using /cxos/${found}`);
+        return found;
+    }
+
+    test('Transactions tab lists the CXO\'s linked intakes and Non-PO invoices @CXO @Transactions', async ({ page }) => {
+        test.setTimeout(300000);
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+        await a.openApp(data);
+
+        await openCxoWithTransactions(page, a);
 
         const sections = await a.assertCxoTransactionsTabStructure();
 
@@ -879,19 +879,22 @@ test.describe('CXO — Transactions tab & action availability', () => {
     });
 
     test('Cancel is disabled while the CXO has active transactions @CXO @Cancel @Negative', async ({ page }) => {
-        const a = await openSavedCxo(page);
+        test.setTimeout(300000);
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 900 });
+        await a.openApp(data);
 
-        // Establish the precondition rather than assuming it: the CXO must have
-        // at least one linked transaction that is not Cancelled/Rejected.
-        await a.openCxoTransactionsTab();
+        // The last-saved CXO is usually fresh with nothing linked, which skipped this
+        // test on every full run (2026-10-14). Use one that has transactions instead.
+        const id = await openCxoWithTransactions(page, a);
         const sections = await a.readCxoTransactionSections();
-        const active = [
+        const linked = [
             ...(sections['Linked Intakes']?.codes ?? []),
             ...(sections['Linked Non-PO Invoices']?.codes ?? []),
         ];
-        test.skip(active.length === 0, 'saved CXO has no linked transactions — precondition not met');
+        expect(linked.length, `/cxos/${id} lists no linked transaction codes`).toBeGreaterThan(0);
 
-        await page.goto(data.savedCxo.url);
+        await page.goto(`${data.loginUrl}/cxos/${id}/overview`);
         await page.waitForLoadState('domcontentloaded');
         await page.waitForTimeout(3000);
 
