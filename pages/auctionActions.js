@@ -60,6 +60,44 @@ export class auctionActions {
         });
     }
 
+    /**
+     * Which of `names` appear as supplier columns on the RFX Analysis tab.
+     *
+     * The grid is a horizontally scrolling virtualized table
+     * (div.virtualized-table-container; mapped 2026-10-16 on RFX-26-701: 2218px of
+     * columns in a 1756px viewport, supplier names in its <thead>), so a column out
+     * of view may not be rendered. Scroll fully right, then step back to the far
+     * left, recording every supplier seen at each position.
+     */
+    async readAnalysisSuppliers(rfxUrl, names) {
+        await this.page.goto(rfxUrl.replace(/\/overview.*$/, '/analysis'), { waitUntil: 'domcontentloaded', timeout: 60000 });
+        const box = this.page.locator('div.virtualized-table-container').first();
+        await box.waitFor({ state: 'visible', timeout: 60000 });
+        await this.page.waitForTimeout(6000);
+        const seen = new Set();
+        const look = async () => {
+            const r = await box.evaluate((el, names) => ({
+                left: Math.round(el.scrollLeft), max: el.scrollWidth - el.clientWidth, step: Math.floor(el.clientWidth / 2),
+                hits: names.filter(n => (el.innerText || '').includes(n)),
+            }), names);
+            r.hits.forEach(h => seen.add(h));
+            return r;
+        };
+        await look();
+        await box.evaluate(el => { el.scrollLeft = el.scrollWidth; });
+        await this.page.waitForTimeout(1500);
+        let r = await look();
+        const stops = [r.left];
+        while (r.left > 0) {
+            await box.evaluate((el, s) => { el.scrollLeft = Math.max(0, el.scrollLeft - s); }, r.step);
+            await this.page.waitForTimeout(1200);
+            r = await look();
+            stops.push(r.left);
+        }
+        console.log(`[AUC] analysis scrolled right→left at ${JSON.stringify(stops)} (max ${r.max}); suppliers seen: ${JSON.stringify([...seen])}`);
+        return [...seen];
+    }
+
     /** Restrict Supplier (lock icon on the supplier row) and confirm the dialog. */
     async restrictRfxSupplier(name, reason = 'Restricted by automation') {
         const row = this.supplierRow(name);

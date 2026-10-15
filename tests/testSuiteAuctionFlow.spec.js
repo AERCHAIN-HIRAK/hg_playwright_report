@@ -11,12 +11,13 @@ import path from 'path';
 // Auction suite — QA's 6-stage auction sheet, dictated 2026-09-28/29.
 //
 // ONE continuous flow (Flow A) carries stages 1-6 on a single RFX → auction,
-// each stage continuing from the last. Three short side flows cover what one
+// each stage continuing from the last. Short side flows cover what one
 // auction cannot hold at the same time:
 //   B  bid improvement Yes / 50 / multiples No
 //   C  bid improvement Yes / 50 / multiples Yes + ceiling 600
 //   D  new-supplier pre-bid, RFX quoter cannot regret, reassign, cancel before start
 //   E  a new supplier (S5) regrets before start → CAPP Regretted view
+//   F  a reset new supplier bids again → Update RFQ adds it to the RFX + Analysis
 //
 // Rules QA stated:
 //   • an RFX converts to an auction only once quoted by ≥2 suppliers AND foreclosed
@@ -692,8 +693,10 @@ test.describe.serial('Auction Flow A — RFX → Auction → live → Update to 
     });
 
     // ── Stages 5 & 6: close → Update to RFQ ──────────────────────────────────
-    test('A5 stages 5-6: Bid Submitted before update, close logged, Update RFQ carries bids + new supplier '
-        + '@auction', async ({ page, browser }) => {
+    // QA 2026-10-16: a reset supplier's prices drop to zero, so a new supplier that is reset
+    // and does NOT bid again is left out of the RFX on Update RFQ. The re-bid case is Flow F.
+    test('A5 stages 5-6: Bid Submitted before update, close logged, Update RFQ carries the bids; '
+        + 'the reset new supplier stays out of the RFX @auction', async ({ page, browser }) => {
         test.setTimeout(900_000);
         const st = readState();
         test.skip(!st.stage4Done, 'stage 4 not verified yet (A4)');
@@ -723,7 +726,7 @@ test.describe.serial('Auction Flow A — RFX → Auction → live → Update to 
             expect(tl.some(l => /clos|ended/i.test(l)), 'no close entry in the auction timeline').toBeTruthy();
         }));
 
-        await doneOnce('A5 6.x update rfq', () => test.step('6.1-6.3 Update RFQ: new supplier joins the RFX, statuses, both timelines', async () => {
+        await doneOnce('A5 6.x update rfq', () => test.step('6.1-6.3 Update RFQ: statuses, both timelines; the reset supplier (S5) is not on the RFX view page', async () => {
             await x.openAuction(st.auctionUrl);
             await x.updateRfq();
             await x.openAuction(st.auctionUrl);
@@ -739,9 +742,17 @@ test.describe.serial('Auction Flow A — RFX → Auction → live → Update to 
             await page.waitForTimeout(8000);
             const rows = await x.readRfxSupplierRows();
             console.log(`[AUC-A] RFX suppliers after Update RFQ: ${JSON.stringify(rows.map(r => r.cells))}`);
-            expect(rows.some(r => r.name.includes(S.S5)), 'the supplier added in the auction did not reach the RFX').toBeTruthy();
+            for (const k of ['S1', 'S2']) expect(rows.some(r => r.name.includes(S[k])), `${k} missing from the RFX after Update RFQ`).toBeTruthy();
+            expect(rows.some(r => r.name.includes(S.S5)), 'S5 (reset, no re-bid) was added to the RFX').toBeFalsy();
             const rtl = await a.readRfxActivityTimeline();
             console.log(`[AUC-A] RFX timeline after Update RFQ: ${JSON.stringify(rtl.slice(-12))}`);
+        }));
+
+        await doneOnce('A5 analysis S5 absent', () => test.step('the reset supplier (S5) is not on the RFX Analysis tab, scrolled fully right to left', async () => {
+            const seen = await x.readAnalysisSuppliers(st.rfxUrl, [S.S1, S.S2, S.S5]);
+            // S1 + S2 prove the sweep actually read the supplier columns
+            for (const k of ['S1', 'S2']) expect(seen, `${k} missing from RFX Analysis`).toContain(S[k]);
+            expect(seen, 'S5 (reset, no re-bid) is shown on RFX Analysis').not.toContain(S.S5);
         }));
 
         await doneOnce('A5 5.3 analysis', () => test.step('5.3 the RFX Analysis tab carries the final prices (S1 RFX quote, S2 final auction bid)', async () => {
@@ -755,7 +766,7 @@ test.describe.serial('Auction Flow A — RFX → Auction → live → Update to 
             const totals = rupees(lines.slice(ti + 1, ti + 12).join(' ')).slice(0, order.length);
             const got = Object.fromEntries(order.map((n, i) => [n, totals[i]]));
             console.log(`[AUC-A] RFX Analysis totals: ${JSON.stringify(got)} (pre-reset auction standing ${JSON.stringify(st.preReset)})`);
-            for (const k of ['S1', 'S2', 'S5']) expect(order, `${k} missing from RFX Analysis`).toContain(S[k]);
+            for (const k of ['S1', 'S2']) expect(order, `${k} missing from RFX Analysis`).toContain(S[k]);
             // S1 never bid in the auction and was never reset → its RFX quote 500/700/800
             expect(got[S.S1], 'S1 total in RFX Analysis').toBe(2000);
             // S2 was not reset (Bug 3 parked) → its FINAL auction bid must flow back to the RFX
@@ -763,8 +774,6 @@ test.describe.serial('Auction Flow A — RFX → Auction → live → Update to 
             console.log(`[AUC-A] S2 final auction total ${s2Final}`);
             expect(s2Final, 'no pre-reset S2 standing recorded').toBeTruthy();
             expect(got[S.S2], 'S2 did not reach the RFX at its final auction bid').toBe(s2Final);
-            // S5 (new to the auction, reset, no re-bid): expected value not specified by QA — recorded only.
-            console.log(`[AUC-A] S5 reached the RFX at: ${got[S.S5]}`);
         }));
     });
 });
@@ -1128,6 +1137,145 @@ for (const flow of [
                 await dlg.getByRole('button', { name: /^(Submit|Confirm|Yes|OK)$/i }).last().click();
                 await page.waitForTimeout(5000);
             }), TAG);
+        });
+    });
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Flow F — a reset new supplier bids AGAIN, then Update RFQ (QA 2026-10-16).
+//   Flow A covers reset-and-stay-out: the reset drops S5's prices to zero, so
+//   Update RFQ leaves it off the RFX. Here S5 re-bids after the reset, so Update
+//   RFQ must add it to the RFX view page AND the Analysis tab at the re-bid prices.
+//
+//   S5 first bid 450 / 550 / 750 → reset → re-bid 410 / 520 / 730 (none of these
+//   collide with S1 500/700/800 or S2 1000/600/1400, so each is S5's own).
+// ═════════════════════════════════════════════════════════════════════════════
+{
+    const st = makeState('.auction-f-state.json');
+    const TAG = 'AUC-F';
+    const FIRST = [450, 550, 750];
+    const REBID = [410, 520, 730];
+    const inr = (v) => `₹ ${v.toFixed(2)}`;
+    let snap = null;
+
+    test.describe.serial('Auction Flow F — reset new supplier re-bids, then Update RFQ', () => {
+        test.use({ actionTimeout: 20000, navigationTimeout: 60000 });
+        test.beforeAll(() => { snap = snapshotFixtures(); });
+        test.afterAll(() => { restoreFixtures(snap, { tag: TAG }); });
+
+        test('F0 build: S1 + S2 quoted, foreclosed, converted @auction @Slow', async ({ page }) => {
+            test.setTimeout(3_000_000);
+            test.skip(!!st.read().auctionUrl, `reusing ${st.read().auctionUrl}`);
+            const a = new NSEFoundationActions(page);
+            const x = new auctionActions(page);
+            await page.setViewportSize({ width: 1800, height: 950 });
+            await a.openApp(data);
+            await buildConvertedAuction({ page, a, x, data, st, rfxSuppliers: ['S1', 'S2'], quoters: ['S1', 'S2'], tag: TAG });
+        });
+
+        test('F1 edit (add S5) + release @auction', async ({ page }) => {
+            test.setTimeout(900_000);
+            test.skip(!st.read().auctionUrl, 'no auction yet');
+            test.skip(!!st.read().released, 'already released');
+            const a = new NSEFoundationActions(page);
+            const x = new auctionActions(page);
+            await page.setViewportSize({ width: 1800, height: 1000 });
+            await a.openApp(data);
+            await editAndRelease({ page, x, st, tag: TAG, auctionClass: auctionActions,
+                cfg: { bidImprovement: 'No', feedback: 'Bid Rank with Lead Bid', startInMin: 8, runtimeMin: 20, addSuppliers: ['S5'] } });
+        });
+
+        test('F2 live: S5 bids, is reset, bids again; the buyer closes the auction @auction', async ({ page, browser }) => {
+            test.setTimeout(2_400_000);
+            const s = st.read();
+            test.skip(!s.released, 'not released yet');
+            test.skip(!!s.liveDone, 'already verified');
+            const a = new NSEFoundationActions(page);
+            const x = new auctionActions(page);
+            await page.setViewportSize({ width: 1800, height: 1000 });
+            await a.openApp(data);
+            await waitUntil(page, s.bidStart, 20_000, `for ${s.auctionCode} to go live`);
+
+            const s5Row = async () => {
+                await x.openLivePage(s.auctionUrl);
+                const lp = await x.readLivePage();
+                return (lp.suppliers.find(r => r.join(' ').includes(S.S5)) || []).join(' ');
+            };
+            const sp = await sappAuctionActions.login(browser, LOGIN.S5);
+            try {
+                await st.once('S5 first bid', () => test.step(`S5 accepts and bids ${FIRST.join(' / ')}`, async () => {
+                    await sp.openAuction(s.auctionCode);
+                    await sp.acceptAuction();
+                    expect(await sp.joinLive(), 'S5 (new) did not get the first-time Bid Submission screen').toBe('bid');
+                    await sp.submitFirstBid(FIRST);
+                    const row = await s5Row();
+                    console.log(`[${TAG}] after first bid: S5 "${row}"`);
+                    expect(row, 'S5 is not ranked after its first bid').toMatch(/#\s*[1-9]/);
+                }), TAG);
+
+                await st.once('S5 reset', () => test.step('the buyer resets S5 — it drops out of the ranking', async () => {
+                    await x.openLivePage(s.auctionUrl);
+                    await x.resetSupplier(S.S5);
+                    const row = await s5Row();
+                    console.log(`[${TAG}] after reset: S5 "${row}"`);
+                    expect(row, 'S5 still carries a rank after its reset').not.toMatch(/#\s*[1-9]/);
+                }), TAG);
+
+                await st.once('S5 re-bid', () => test.step(`S5 bids again after the reset: ${REBID.join(' / ')}`, async () => {
+                    let screen = await sp.ensureLive(s.auctionCode);
+                    if (screen === 'not-accepted') { await sp.acceptAuction(); screen = await sp.joinLive(); }
+                    console.log(`[${TAG}] S5 screen after reset: ${screen}`);
+                    if (screen === 'bid') {
+                        await sp.submitFirstBid(REBID);
+                    } else {
+                        const r = await sp.updateBid(Object.fromEntries(REBID.map((v, i) => [i, v])));
+                        expect(r.ok, `S5 re-bid refused: ${r.msg}`).toBeTruthy();
+                    }
+                    const row = await s5Row();
+                    console.log(`[${TAG}] after re-bid: S5 "${row}"`);
+                    expect(row, 'S5 is not ranked again after re-bidding').toMatch(/#\s*[1-9]/);
+                    expect(rupees(row)[0], 'S5 total on the buyer live page is not its re-bid total')
+                        .toBe(REBID.reduce((p, q) => p + q, 0));
+                }), TAG);
+
+                await st.once('close', () => test.step('the buyer closes the live auction', async () => {
+                    await x.openLivePage(s.auctionUrl);
+                    await x.closeAuction();
+                }), TAG);
+            } finally { await sp.close(); }
+            st.write({ liveDone: true });
+        });
+
+        test('F3 Update RFQ: the re-bid supplier joins the RFX view page and the Analysis tab @auction', async ({ page }) => {
+            test.setTimeout(900_000);
+            const s = st.read();
+            test.skip(!s.liveDone, 'live stage not verified yet (F2)');
+            const a = new NSEFoundationActions(page);
+            const x = new auctionActions(page);
+            await page.setViewportSize({ width: 1800, height: 1000 });
+            await a.openApp(data);
+
+            await st.once('update rfq', () => test.step('Update RFQ', async () => {
+                await x.openAuction(s.auctionUrl);
+                await x.updateRfq();
+                await x.openAuction(s.auctionUrl);
+                expect(await page.locator('body').innerText(), 'the auction is not Converted after Update RFQ').toMatch(/Converted/);
+            }), TAG);
+
+            await test.step('S5 is on the RFX view page', async () => {
+                await page.goto(s.rfxUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+                await page.waitForTimeout(8000);
+                const rows = await x.readRfxSupplierRows();
+                console.log(`[${TAG}] RFX suppliers after Update RFQ: ${JSON.stringify(rows.map(r => r.cells))}`);
+                for (const k of ['S1', 'S2', 'S5']) expect(rows.some(r => r.name.includes(S[k])), `${k} missing from the RFX after Update RFQ`).toBeTruthy();
+            });
+
+            await test.step('S5 is on the RFX Analysis tab at its re-bid prices, scrolled fully right to left', async () => {
+                const want = [S.S1, S.S2, S.S5, ...REBID.map(inr)];
+                const seen = await x.readAnalysisSuppliers(s.rfxUrl, [...want, ...FIRST.map(inr)]);
+                for (const t of want) expect(seen, `"${t}" not found on RFX Analysis`).toContain(t);
+                for (const v of FIRST) expect(seen, `S5's pre-reset bid ${v} reached RFX Analysis`).not.toContain(inr(v));
+            });
         });
     });
 }
