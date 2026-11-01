@@ -14,6 +14,7 @@ import data from '../pages/NSEFoundationData.json';
 // holding both authenticates every page the suite touches. We log into each
 // portal in turn, then save the combined session to auth.supplier.json.
 setup('CAPP + SAPP login and save combined session', async ({ page }) => {
+    setup.setTimeout(180000);
     await page.setViewportSize({ width: 1800, height: 900 });
 
     // 1) CAPP login (sets x-capp-nse-uat-token)

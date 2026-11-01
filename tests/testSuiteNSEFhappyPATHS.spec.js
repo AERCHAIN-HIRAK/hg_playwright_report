@@ -67,6 +67,9 @@ test.describe('NSEF Happy Paths', () => {
         await a.selectCxoTransactionFlowType(data);     // Step 9: PO Based
         await a.selectCxoExpenseNature(data);           // Step 10: Non-CSR Process
 
+        // Previous FYs Purchase Order (now required on the UAT form)
+        await a.fillPreviousFyPurchaseOrder(data);
+
         // Step 11: Basic Information mandatory fields
         await a.fillCxoStartDate(data);
         await a.fillCxoEndDate(data);

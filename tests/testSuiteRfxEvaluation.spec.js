@@ -18,7 +18,7 @@ import fs from 'fs';
 //      add a reason → tick → tick again to submit
 //   6. the answers turn GREEN, and the Activity Timeline records the submission
 //
-// Built on a Released intake found on the listing, so each run creates its own
+// Creates and releases a fresh intake every run, then converts it, so each run creates its own
 // RFX rather than consuming an ambient one. That makes it SLOW and it CREATES
 // REAL RECORDS on UAT — one RFX per run.
 //
@@ -51,24 +51,51 @@ test.describe.serial('RFX Evaluation (scenario 35)', () => {
         page.setDefaultTimeout(30000);
         await a.openApp(data);
 
-        // ── find a Released intake ────────────────────────────────────────────
-        await page.goto(`${data.loginUrl}/intakes`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await page.waitForFunction(() => document.querySelectorAll('tbody tr').length > 0, null, { timeout: 40000 });
-        await page.waitForTimeout(2500);
+        // ── create a fresh intake and approve it until Released ──────────────
+        // Same steps as the Happy Path intake test, but WITHOUT saveIntakeCode():
+        // that rewrites savedIntake in NSEFoundationData.json.
+        await a.clickIntakeTab();
+        await a.clickCreateIntake();
+        await a.assertIntakeCreatePage();
 
-        const intake = await page.evaluate(() => {
-            const ths = [...document.querySelectorAll('th')].map(t => (t.textContent || '').trim());
-            const si = ths.indexOf('Status');
-            for (const r of document.querySelectorAll('tbody tr')) {
-                const tds = [...r.querySelectorAll('td')].map(t => (t.textContent || '').trim());
-                if (tds[si] !== 'Released') continue;
-                const link = r.querySelector('a');
-                if (link) return { code: tds[0], href: link.getAttribute('href') };
-            }
-            return null;
-        });
-        test.skip(!intake, 'no Released intake available to convert');
-        console.log(`[S35] converting ${intake.code} (${intake.href})`);
+        await a.closeAskAieraIfVisible();
+        await a.expandIntakeSections();
+
+        await a.fillIntakeTitle(data);
+        await a.fillIntakeSummary(data);
+        await a.selectIntakeCompany1();
+        await a.selectIntakeCompany2();
+        await a.selectIntakeDepartment(data);
+        await a.selectIntakeExpenseNatureApproval(data);
+        await a.selectIntakeCurrency(data);
+        await a.selectIntakeFunction(data);
+        await a.selectIntakeVertical(data);
+        await a.selectIntakeProjectName();
+        await a.selectIntakeNatureOfExpense(data);
+        await a.selectIntakeGLAccount();
+        await a.selectIntakeProfitCenter();
+        await a.selectIntakeCostCenter();
+        await a.selectIntakeSEBICategorization();
+        await a.selectIntakeSubSegment();
+        await a.selectIntakeProjectCategory();
+        await a.selectIntakeCXOType(data);
+        await a.selectIntakeCXOTransaction(data);
+        await a.assertIntakeBRFAutoPopulated();
+
+        await a.addIntakeLineRow();
+        await a.fillIntakeLineItem(data);
+        await a.fillIntakePotentialSuppliers(data);
+
+        await a.submitIntake();
+        await a.completeIntakeSubmissionPopup();
+        await a.approveIntakeUntilReleased(data, 'Approved by automation');
+        await a.assertIntakeStatusReleased();
+
+        const intakeId = (page.url().match(/\/intakes\/([^\/\?#]+)/) || [])[1];
+        expect(intakeId, `no intake id in ${page.url()}`).toBeTruthy();
+        const codeMatch = ((await page.locator('body').textContent()) || '').match(/INT[A-Z0-9\-]*\d+/i);
+        const intake = { code: codeMatch ? codeMatch[0].trim() : intakeId, href: `/intakes/${intakeId}` };
+        console.log(`[S35] created + released ${intake.code}; converting (${intake.href})`);
 
         await page.goto(`${data.loginUrl}${intake.href}/overview`, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForTimeout(7000);

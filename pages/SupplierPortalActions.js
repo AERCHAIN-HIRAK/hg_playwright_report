@@ -59,7 +59,7 @@ export class SupplierPortalActions {
         await this.page.locator(S.loginEmailField).fill(cfg.login.email);
         await this.page.locator(S.loginPasswordField).fill(cfg.login.password);
         await this.page.locator(`xpath=${S.loginSubmitBtn}`).click();
-        await this.page.waitForURL(/nse-sapp-uat\.aerchain\.io/, { timeout: 30000 });
+        await this.page.waitForURL(/nse-sapp-uat\.aerchain\.io/, { timeout: 120000 });
     }
 
     async assertLoggedIn() {

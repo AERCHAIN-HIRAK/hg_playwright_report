@@ -976,20 +976,19 @@ export class sappAuctionActions {
 
 
     /**
-     * SAPP comments: on the auction VIEW page, the textless header button right
-     * of "Create Ticket" (no hover text) opens a "Comments | n | Add Reply" panel.
+     * SAPP comments: on the auction VIEW page, the rightmost textless header
+     * button (after refresh, before Join Live) opens a "Comments | n | Add Reply"
+     * panel. "Create Ticket" used to sit left of it but has been removed.
      */
     async openComments(code) {
         await this.openAuction(code);
         const idx = await this.page.evaluate(() => {
             const all = [...document.querySelectorAll('button')].map((b, i) => ({ i, r: b.getBoundingClientRect(), t: (b.innerText || '').trim() }))
                 .filter(x => x.r.width > 0 && x.r.top < 140 && x.r.top > 60);
-            const ct = all.find(x => /Create Ticket/.test(x.t));
-            if (!ct) return -1;
-            const next = all.filter(x => !x.t && x.r.left > ct.r.right - 2).sort((a, b) => a.r.left - b.r.left)[0];
-            return next ? next.i : -1;
+            const last = all.filter(x => !x.t).sort((a, b) => b.r.left - a.r.left)[0];
+            return last ? last.i : -1;
         });
-        if (idx === -1) throw new Error('[SAPP] comments button (right of Create Ticket) not found');
+        if (idx === -1) throw new Error('[SAPP] comments button (rightmost textless header button) not found');
         await this.page.locator('button').nth(idx).click();
         await this.page.getByText('Comments', { exact: true }).last().waitFor({ state: 'visible', timeout: 15000 });
         await this.page.waitForTimeout(2500);

@@ -62,6 +62,7 @@ test.describe.serial('Supplier Portal Happy Path', () => {
         await a.selectCxoType(data);
         await a.selectCxoTransactionFlowType(data);
         await a.selectCxoExpenseNature(data);
+        await a.fillPreviousFyPurchaseOrder(data);
         await a.fillCxoStartDate(data);
         await a.fillCxoEndDate(data);
         await a.selectCxoTypeOfProcurement(data);

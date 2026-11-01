@@ -116,7 +116,7 @@ test.describe('CXO Create — Negative', () => {
         const a = await loginAndOpenCxoCreate(page);
         await a.clickSubmitExpectingError();
 
-        // Badges render in section order: Header(6), Basic(4), Particulars(9),
+        // Badges render in section order: Header(6), Previous FYs PO(9), Basic(4), Particulars(9),
         // Purchase Business Case(4), Item Details(1), Suggested Suppliers(1)
         expect(await a.getErrorBadgeCounts()).toEqual(data.cxoValidation.expectedErrorBadgeCounts);
         await a.assertStillOnCreatePage();

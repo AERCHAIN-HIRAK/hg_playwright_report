@@ -407,6 +407,32 @@ export class NSEFoundationActions {
         await input.fill(data.cxo.natureOfDataShared);
     }
 
+    // ── Previous FYs Purchase Order ───────────────────────────────────────────
+    // A 3-column table: row 1 = PO values (number), row 2 = PO numbers (text),
+    // row 3 = remarks. All 9 cells count toward the section's "N errors!" badge.
+    // The section is absent on tenants that have not rolled it out, so skip then.
+
+    async fillPreviousFyPurchaseOrder(data) {
+        const po = data.cxo.previousFyPo ?? {
+            values: ['100000', '90000', '80000'],
+            numbers: ['PO-AUTO-FY1', 'PO-AUTO-FY2', 'PO-AUTO-FY3'],
+            remarks: 'Automation',
+        };
+        const table = this.page.locator('table').filter({ hasText: 'Last year PO Value' }).first();
+        if (!(await table.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false))) {
+            console.log('[CXO] No "Previous FYs Purchase Order" section — skipping');
+            return;
+        }
+        const values = table.getByPlaceholder('Enter a number');
+        const numbers = table.getByPlaceholder('Enter text');
+        const remarks = table.locator('tr').filter({ hasText: 'Remarks' }).getByRole('textbox');
+        for (let i = 0; i < 3; i++) {
+            await values.nth(i).fill(po.values[i]);
+            await numbers.nth(i).fill(po.numbers[i]);
+            await remarks.nth(i).fill(po.remarks);
+        }
+    }
+
     async selectRpwdCompliance(data) {
         await this._selectNativeDropdown('RPwD', data.cxo.rpwdCompliance);
     }
@@ -627,6 +653,23 @@ export class NSEFoundationActions {
         await trigger.scrollIntoViewIfNeeded();
         await trigger.click();
         await this._pickDate(data.purchaseBusinessCase.deliveryTimeline);
+    }
+
+    /** BRF is sometimes not auto-populated from Vertical (UAT 2026-10 has flipped
+     *  both ways): the cell is then a mandatory "Select budget item" combobox.
+     *  Keep a value UAT filled in itself; otherwise double-click the cell to show
+     *  the combobox and pick the budget item the budget tests are built around. */
+    async selectItemBrf(data) {
+        const cell = this.page.locator(L.itemBrfCell);
+        await cell.scrollIntoViewIfNeeded();
+        await this.page.waitForTimeout(1500);
+        if ((await cell.textContent() ?? '').includes(data.expectedBrfValue)) return;
+        await cell.dblclick();
+        const trigger = this.page.getByRole('combobox').filter({ hasText: 'Select budget item' }).first();
+        await trigger.waitFor({ state: 'visible', timeout: 10000 });
+        await trigger.click();
+        await this.page.getByRole('option', { name: data.expectedBrfValue, exact: true }).first().click();
+        await this.page.waitForTimeout(500);
     }
 
     async assertBrfAutoPopulated(data) {
@@ -1053,6 +1096,9 @@ export class NSEFoundationActions {
         await this.selectCxoTransactionFlowType(data);
         await this.selectCxoExpenseNature(data);
 
+        // Previous FYs Purchase Order (added to the UAT form 2026-10)
+        await this.fillPreviousFyPurchaseOrder(data);
+
         // Basic Information
         await this.fillCxoStartDate(data);
         await this.fillCxoEndDate(data);
@@ -1094,6 +1140,7 @@ export class NSEFoundationActions {
         // Suggested Suppliers
         await this.fillPotentialSuppliers(data);
 
+        await this.selectItemBrf(data);
         await this.assertBrfAutoPopulated(data);
     }
 
@@ -1776,13 +1823,24 @@ export class NSEFoundationActions {
         }
     }
 
-    async assertIntakeBRFAutoPopulated() {
-        // BRF No. header field — soft assert (auto-populate depends on CXO linkage)
+    /** BRF No. no longer auto-populates from the linked CXO (UAT 2026-10): it is a
+     *  mandatory "Select budget item" combobox, and an empty one blocks Submit with
+     *  "1 error!" on Header Details — the Process Request dialog never opens. Keep a
+     *  value UAT filled in itself; otherwise pick the CXO's budget item. */
+    async assertIntakeBRFAutoPopulated(data) {
+        const brfValue = data?.expectedBrfValue ?? 'Dont Touch';
         const brfEl = this.page.locator(IL.intakeBRFNo).first();
         if (!(await brfEl.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false))) return;
         await brfEl.scrollIntoViewIfNeeded().catch(() => {});
-        const text = await brfEl.textContent().catch(() => '');
-        console.log(`BRF No. value: "${text?.trim()}"`);
+        const text = (await brfEl.textContent().catch(() => '') ?? '').trim();
+        if (text && !text.includes('Select budget item')) {
+            console.log(`BRF No. value: "${text}"`);
+            return;
+        }
+        await brfEl.click();
+        await this.page.getByRole('option', { name: brfValue, exact: true }).first().click();
+        await expect(brfEl, `BRF No. did not take "${brfValue}"`).toContainText(brfValue, { timeout: 5000 });
+        console.log(`BRF No. was empty — selected "${brfValue}"`);
     }
 
     // ── Intake – Generic first-option helper ─────────────────────────────────
@@ -2441,7 +2499,7 @@ export class NSEFoundationActions {
         await this.selectIntakeProjectCategory();
         await this.selectIntakeCXOType(data);
         await this.selectIntakeCXOTransaction(data);
-        await this.assertIntakeBRFAutoPopulated();
+        await this.assertIntakeBRFAutoPopulated(data);
 
         await this.addIntakeLineRow();
         await this.fillIntakeLineItem(data, { qty });

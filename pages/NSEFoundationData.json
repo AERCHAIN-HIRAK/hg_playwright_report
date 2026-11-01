@@ -60,6 +60,7 @@
         ],
         "expectedErrorBadgeCounts": [
             6,
+            9,
             4,
             9,
             4,
@@ -101,9 +102,9 @@
         "deliveryTimeline": "2026-12-31"
     },
     "savedCxo": {
-        "code": "CXO-FNSE-26-950",
-        "id": "7507",
-        "url": "https://nse-capp-v4-uat.aerchain.io/cxos/7507/overview"
+        "code": "CXO-FNSE-26-1088",
+        "id": "7726",
+        "url": "https://nse-capp-v4-uat.aerchain.io/cxos/7726/overview"
     },
     "intake": {
         "title": "HG Automation NSEF Intake",
@@ -125,9 +126,9 @@
         "notes": "Automation test notes"
     },
     "savedIntake": {
-        "code": "INT-FNSE-26-966",
-        "id": "2845",
-        "url": "https://nse-capp-v4-uat.aerchain.io/intakes/2845/overview"
+        "code": "INT-FNSE-26-1074",
+        "id": "2955",
+        "url": "https://nse-capp-v4-uat.aerchain.io/intakes/2955/overview"
     },
     "sourcing": {
         "commercialBidDueDate": "2026-12-15",
@@ -139,9 +140,9 @@
         "forecloseReason": "Foreclosed by automation"
     },
     "savedSourcingEvent": {
-        "code": "RFX-26-700",
-        "id": "2057",
-        "url": "https://nse-capp-v4-uat.aerchain.io/quote-requests/2057/overview"
+        "code": "RFX-26-789",
+        "id": "2163",
+        "url": "https://nse-capp-v4-uat.aerchain.io/quote-requests/2163/overview"
     },
     "multiCurrencyRfx": {
         "currencies": [
@@ -170,31 +171,31 @@
         "deliveryNoteReference": "DNR-AUTO-001"
     },
     "invoice": {
-        "invoiceNumber": "INV-AUTO-29022",
+        "invoiceNumber": "INV-AUTO-30070",
         "documentPath": "fixtures/invoice_document.png",
         "ackUrl": "https://nse-api-uat.aerchain.io/invoice/ack",
         "ackTemplateId": 1233,
         "ackApiKey": "7db7048329bbb0d3c4f48be228ffb0d5b5fdce2b93991919ca9b9315a26474d1"
     },
     "savedRequisition": {
-        "code": "PR-NSEFN-26-427",
-        "id": "1488",
-        "url": "https://nse-capp-uat.aerchain.io/requisitions/1488"
+        "code": "PR-NSEFN-26-470",
+        "id": "1553",
+        "url": "https://nse-capp-uat.aerchain.io/requisitions/1553"
     },
     "savedPurchaseOrder": {
-        "code": "PO-NSEFN-26-538",
-        "id": "1383",
-        "url": "https://nse-capp-uat.aerchain.io/purchase-orders/1383"
+        "code": "PO-NSEFN-26-586",
+        "id": "1435",
+        "url": "https://nse-capp-uat.aerchain.io/purchase-orders/1435"
     },
     "savedGrn": {
-        "code": "INW-NSEFN-26-310",
-        "id": "796",
-        "url": "https://nse-capp-uat.aerchain.io/inwards/796"
+        "code": "INW-NSEFN-26-329",
+        "id": "819",
+        "url": "https://nse-capp-uat.aerchain.io/inwards/819"
     },
     "savedInvoice": {
-        "code": "Invoice-FNSE-26-952",
-        "id": "1448",
-        "url": "https://nse-capp-uat.aerchain.io/invoices/1448"
+        "code": "Invoice-FNSE-26-1061",
+        "id": "1505",
+        "url": "https://nse-capp-uat.aerchain.io/invoices/1505"
     },
     "supplierPortal": {
         "authUrl": "https://nse-auth-uat.aerchain.io/sapp/login",
