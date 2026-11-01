@@ -19,3 +19,6 @@ downloads/
 test-results-*/
 .auction-*-state.json
 run-archive/
+
+# QA bot run evidence (reports are kept, screenshots are not)
+qa-bot/runs/**/*.png

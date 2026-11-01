@@ -76,3 +76,9 @@ The `test:full` script automates the full cycle: delete old artifacts → run te
 - **Target app:** `https://nse-capp-v4-uat.aerchain.io` (UAT environment)
 - **`.env`** file holds `SLACK_WEBHOOK` (gitignored). Required for `sendReports.js`.
 - Tests run headed (`headless: false`) by default. Screenshots and videos are captured only on failure.
+
+## QA Bot (manual-testing assistant)
+
+`qa-bot/` holds the product knowledge and run reports for the manual-testing bot. Its commands live in `.claude/skills/qa-*`:
+`/qa-learn <module>` · `/qa-hotfix <Linear ID>` · `/qa-gaps [module]` · `/qa-explore <area>` · `/qa-report`.
+Before any manual testing, read `qa-bot/PLAYBOOK.md`. Never act on the saved records in `pages/NSEFoundationData.json` or `pages/reservedRecords.js`.

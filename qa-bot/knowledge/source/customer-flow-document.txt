@@ -1,0 +1,1156 @@
+
+
+
+
+
+
+NSE (National Stock Exchange of India Limited)
+Customer Case Document
+Aerchain Procurement Platform
+
+
+Business Flows | Product Solutioning | Technical Implementation
+
+For internal use: Tech | Product | QA | CS
+Can be shared with customer as needed
+
+
+
+
+Document Version: 1.0  |  Date: August 2026 |  Author: Srinitesh M
+
+Table of Contents
+Table of Contents	2
+1. NSE Account Overview	7
+1.1 About NSE	7
+1.2 Entity Master	7
+1.3 NSE Journey on Aerchain	7
+Phase 1 — NSEIL Go-Live (Old Architecture)	7
+The Problem — Why the Architecture Change Was Needed	7
+Phase 2 — New Architecture (CXO as Foundation)	8
+Multi-Entity Rollout	8
+NSEIL Migration to New Architecture (June 26, 2026)	8
+1.4 Key Controls Across All Flows (New Architecture)	8
+2. Budget & Budget Items (BRF)	9
+2.1 Overview	9
+2.2 Budget Defining Dimensions	9
+2.3 Budget Item Structure	9
+2.4 Budget Consumption — How It Works	9
+Old Architecture (NSEIL Phase 1)	9
+New Architecture (All Entities + NSEIL Migration)	10
+Example Flow (New Architecture)	10
+2.5 Budget Blocking vs Consumption (Business Terminology)	10
+2.6 Budget Reversal & Cancellation	10
+Manual Budget Rollback	11
+Auto Budget Rollback	11
+Rollback Example	11
+2.7 User Dimension Access	11
+2.8 Budget Item Field Customisation	11
+2.9 Budget Items Listing Page	11
+2.10 Budget Transfer	12
+3. CXO (Custom App — Budget Blocking & Approval)	13
+3.1 Overview	13
+3.2 CXO in the Procurement Lifecycle	13
+3.3 CXO Creation Flow	13
+3.4 Key Features	14
+CXO Cancel	14
+CXO Mark Completed	14
+CXO Amend	14
+CXO Type — Old/New	14
+CXO Clone	14
+CXO Recall	14
+CXO Edit (Draft/Rejected)	15
+CXO Value in Words	15
+CXO PDF Document	15
+Random Approver Assignment for CXO Committee	15
+Lock Mandatory Approvers	15
+CXO Transaction Display on Downstream Modules	15
+Multi-line Text Fields for Justifications	15
+CXO Error Messaging	15
+3.5 CXO Approval Workflow Configuration	15
+3.6 CXO Listing Page	16
+3.7 CXO Emails & Notifications	16
+3.8 CXO in Old vs New Architecture	16
+4. Non-PO Invoice Flow	17
+4.1 Overview	17
+4.2 User Flow	17
+4.3 Key Features	17
+CXO Access for All Department Users	17
+CXO Display on Invoice	17
+4.4 Configuration	17
+4.5 Non-PO Invoice vs PO-based Invoice	18
+4.6 Advances & Credit Notes (Non-PO)	18
+5. Intake	19
+5.1 Overview	19
+5.2 Old Architecture (NSEIL Phase 1)	19
+5.3 New Architecture (All Entities + NSEIL Migration)	19
+5.4 Intake Creation Flow (New Architecture)	19
+5.5 Key Features	20
+Non-Stock Item Validation	20
+UOM Auto-population & Lock	20
+Intake Recall	20
+Intake Clone	20
+Intake Bulk Upload	20
+Intake PDF Document	20
+Multi-line Text Fields	20
+Mark as Processed	20
+Buyer Accept/Reject	20
+Purchaser Re-assignment	20
+Purchaser Assignment Enhancements	20
+Intake Audit Logs	21
+Backward Linkage / Traceability	21
+5.6 Intake Listing Page	21
+5.7 Intake Emails & Notifications	21
+6. RFX & Sourcing	22
+6.1 Overview	22
+6.2 RFX Creation & Processing Flow	22
+Partial Intake Conversion	22
+RFX Excel for Buyer	22
+Buyer/Supplier Field Visibility	22
+6.3 RFX Listing Page	22
+7. Award	23
+7.1 Overview	23
+7.2 Award Flow	23
+Supplier Split Logic	23
+7.3 Key Features	23
+Award Listing Page	23
+Savings & Justification Fields	23
+Award Screen — Field Cleanup	23
+Award Cancellation	23
+Intake Code Hyperlink	23
+8. Purchase Requisition (PR)	24
+8.1 Overview	24
+8.2 PR Creation & Processing Flow	24
+Auto-convert Failure Handling	24
+PR Amendment	24
+8.3 Key Features	24
+External Notes & Attachments	24
+CXO Code Display	24
+PR Cancellation & Budget Reversal	25
+8.4 Old vs New Architecture	25
+9. Requisition Conversion (PRC)	26
+9.1 Overview	26
+9.2 PRC Flow	26
+9.3 Key Features	26
+PRC Listing Page	26
+PRC Budget Rollback	26
+PRC Cancellation	26
+10. Purchase Order (PO)	27
+10.1 Overview	27
+10.2 PO Flow	27
+10.3 PO Document (PDF)	27
+10.4 Key Features	27
+PO Edit & Amend	27
+PO Edit for Rejected Conversions	27
+PO Cancellation & Budget Reversal	27
+PO Short-close	27
+PO closure	27
+PO Description Editable	27
+Inward Value on PO	28
+Invoice Status on PO Transaction Tab	28
+PO Listing Page	28
+11. GRN (Goods Receipt Note)	29
+11.1 Overview	29
+11.2 GRN Flow	29
+11.3 Inward Matching Criteria	29
+GRN Custom Table Enforcement	29
+11.4 GRN Listing Page	29
+12. PO-based Invoice	30
+12.1 Overview	30
+12.2 PO Invoice Flow	30
+12.3 Key Features	30
+Payment SPOC	30
+Invoice Rejection Remarks Visible to Supplier	30
+Invoice via Email (AI-powered) — Built, Not Enabled	30
+Invoice Date Validation (Configurable)	30
+GST & SEZ Calculation	31
+Invoice Cancel	31
+Invoice Workbench	31
+Invoice Price Change Restriction	31
+Invoice PDF Document	31
+MSME Tag on Invoice Pages	31
+12.4 Invoice Template-level Defaults	31
+12.5 Invoice Payment Status	32
+13. Payments	33
+13.1 Overview	33
+13.2 Payment Flow	33
+14. Advances	34
+14.1 Overview	34
+14.2 Types	34
+14.3 Advance Flow	34
+14.4 Advance Settlement	34
+14.5 Budget Consumption	34
+14.6 Supplier Portal Visibility	34
+15. Credit Notes	35
+15.1 Overview	35
+15.2 Credit Note Flow	35
+15.3 Credit Note for Accounted Invoices	35
+15.4 Budget Consumption	35
+16. Supplier / Vendor Management	36
+16.1 Overview	36
+16.2 Vendor Master	36
+16.3 Vendor Onboarding Flow	36
+16.4 Key Features	36
+Vendor Duplicate Check & Create Approvals	36
+GST & PAN on Supplier Listing	36
+Vendor Block/Unblock	36
+NDA Expiry Notifications	37
+Multiple Bank Accounts per Vendor	37
+Vendor Onboarding Reminder Emails	37
+Vendor Field Validations	37
+SAPP Entity Filter	37
+16.5 Supplier Portal (SAPP)	37
+17. Workflows & Approvals	38
+17.1 Workflow Architecture	38
+Stage-level Configuration	38
+Header-level (Workflow-level) Settings	38
+17.2 Key Workflow Features	38
+Recall	38
+Bulk Reassignment	38
+Workflow Delegation	38
+Random Approver Assignment	38
+Lock Mandatory Approvers	38
+View Button in Approval Emails	39
+17.3 Workflow Audit Logs	39
+17.4 Email Notifications	39
+18. General Features & Platform Configuration	40
+18.1 Department-wise Access & Compliance	40
+18.2 Listing Pages	40
+18.3 Mobile App	40
+18.4 Amendment Rules	40
+18.5 V4 to V3 Data Flow	40
+Critical Configuration Note	41
+18.6 Activity Timeline	41
+18.7 Product Master Management	41
+18.8 Number Formatting	41
+19. Integration	42
+19.1 Overview	42
+19.2 Integration Summary	42
+19.3 Technical Notes for CS Reference	42
+User Integration	42
+20. Reports	43
+20.1 Overview	43
+21. Common Queries & Troubleshooting (FAQ)	44
+22. Glossary	47
+23. Contracts Flow (Planned)	48
+
+1. NSE Account Overview
+1.1 About NSE
+NSE (National Stock Exchange of India Limited) is one of the largest stock exchanges in the world. NSE operates as a multi-entity organisation on Aerchain, with 10 entities spanning the exchange, clearing, data analytics, foundation, indices, administration, IFSC operations, and sustainability domains.
+1.2 Entity Master
+The following entities are configured on Aerchain:
+Customer ID
+Entity Name
+Code
+1
+National Stock Exchange
+NSEI
+3
+NSE Foundation
+NSEF
+4
+NSE Data & Analytics Ltd
+NDAL
+5
+NSE Indices Limited
+NINDI
+6
+NSE Administration and Supervision Ltd
+NSEASL
+7
+NSE Clearing Limited
+NSECL
+8
+NSE IFSC Clearing Corporation Ltd
+NSEICC
+9
+NSEIX Global Access IFSC Limited
+NSEIXGA
+10
+NSE Sustainability Ratings & Analytics Ltd
+NSRAL
+11
+NSE IFSC Limited
+NSEIX
+1.3 NSE Journey on Aerchain
+Phase 1 — NSEIL Go-Live (Old Architecture)
+NSEIL (Customer ID 1) was the first entity to go live on Aerchain. The implementation covered the complete procurement lifecycle from Intake to Payments, with budget consumption tracked at four touchpoints: Intake, PR (Purchase Requisition), PRC (Requisition Conversion), and PO (Purchase Order).
+In this architecture, there was no CXO application. Users created Intakes directly, which went through approval workflows (including CXO Committee approvals). The Intake form was essentially a combined CXO + procurement request — a large form capturing budget approval details, procurement justification, vendor preferences, and item details all in one transaction.
+Budget consumption operated on a total-available basis: as long as the budget item had available value, the system allowed the transaction. There was no intermediate ceiling controlling how much a single procurement request could consume from the budget.
+The Problem — Why the Architecture Change Was Needed
+Six months after NSEIL's go-live, the team identified that the real business constraint was budget governance, not just procurement execution. The old architecture had several limitations:
+1. The combined CXO + Intake form was complex and time-consuming for users. Budget approval and procurement specification were overloaded into a single transaction.
+2. Budget consumption at the item level on Intake, combined with 11 budget dimensions, made the process rigid and error-prone.
+3. There was no way to control how much of the budget a single procurement request could consume. A PO could consume any amount from the budget as long as overall budget was available.
+4. Upper management needed a simpler mechanism to block budgets for procurement categories (e.g., "₹3 Crore for office stationery this financial year") without getting into item-level procurement details.
+Phase 2 — New Architecture (CXO as Foundation)
+A new custom V4 application called CXO was introduced as the central budget blocking and approval mechanism. The key architectural decision was to split the old combined form into two distinct layers:
+1. CXO — A pure budget-blocking/approval transaction. End User creates CXOs to block budget for specific procurement categories. Multiple budget items can be selected at the item level. This is where CXO Committee approvals happen.
+2. Intake — A streamlined procurement request. End users create Intakes linked to an approved CXO, specifying what they need to procure. In the new architecture, Intake is straightforward — just header details, item table, notes, and attachments. A user with clarity should take less than 60 seconds to create an Intake with 5 items.
+The new architecture introduced three distinct procurement pathways, all starting from CXO:
+• Non-PO Invoice Flow: CXO → Direct Invoice (no PO needed) — for direct payments, utilities, statutory expenses
+• Standard Sourcing Flow: CXO → Intake → RFX → Award → PR → PRC → PO — for competitive bidding
+• Contracts Flow: CXO → Intake → Catalogue/Contract → PR → PO — for pre-negotiated contracts (not live yet)
+Multi-Entity Rollout
+The remaining 9 entities (NSEF, NDAL, NINDI, NSEASL, NSECL, NSEICC, NSEIXGA, NSRAL, NSEIX) went live directly on the new architecture. They never had the old combined CXO + Intake flow.
+NSEIL Migration to New Architecture (June 26, 2026)
+NSEIL was migrated to the new architecture on June 26, 2026. The migration involved:
+• Creating new templates from Intake through Invoice with all dimensions at the header level. CXO to Invoice flow was already live since April.
+• Disabling budget consumption on Intake
+Important constraint: Old NSEIL transactions (created before June 26) where budget consumption was already present on Intake cannot be edited or amended. Budget consumption is off on Intake in the new architecture, and editing these old transactions would cause the system to fail. Old transactions can only be processed forward as-is. PRs and POs from the old architecture can still be edited and amended since they still have budget consumption active.
+1.4 Key Controls Across All Flows (New Architecture)
+• Mandatory CXO Selection: All procurement flows require a CXO at the header level to ensure budget tracking and approval.
+• Single Budget Selection: From Intake through Invoice, users select one budget item at the header level based on the CXO. Only on CXO itself can multiple budget items be selected at the item level.
+• Approved Value Limits: Downstream transactions can only consume within the CXO approved value. Each module checks its immediate parent — PR checks CXO, PRC checks PR, PO checks PRC.
+• Multiple Transactions per CXO: Users can create multiple Intakes, Invoices, or POs against a single CXO, providing flexibility within the budget value ceiling.
+
+2. Budget & Budget Items (BRF)
+2.1 Overview
+The Budget module is the financial foundation of NSE's procurement on Aerchain. NSE creates annual budgets directly on Aerchain via bulk upload. Each budget is structured around 11 dimension parameters that define the organisational and financial context of every procurement transaction.
+The core unit is the Budget Item, referred to as BRF (Budget Request Form) in NSE's terminology. A Budget is simply a top-level container — a cluster of budget items grouped by start date, end date, and expiry. All meaningful governance — values, consumption tracking, dimension combinations, validity — lives at the budget item level.
+2.2 Budget Defining Dimensions
+The following 11 dimensions are configured for NSE's budget structure:
+1. Department
+2. Function
+3. Nature of Expense (for budget tracking — Capex/Opex)
+4. Project Name
+5. GL Account
+6. Profit Center
+7. Cost Center
+8. SEBI Categorization
+9. Sub Segment
+10. Project Category
+11. Vertical
+2.3 Budget Item Structure
+Each budget item contains:
+• Name of the budget item
+• Dimension combinations (the 11 parameters above)
+• Custom fields (e.g., quarterly breakdowns, project-specific fields)
+• Start date and end date
+• The value for the budget item
+• Consumed value — system-calculated, tracked against each budget item across the transaction lifecycle
+2.4 Budget Consumption — How It Works
+Old Architecture (NSEIL Phase 1)
+The consumption chain was: Budget Item → Intake → PR → PRC → PO
+Four modules consumed budget. Each downstream transaction consumed from its immediate parent. If the parent did not have sufficient value, the system would fall back to the source (the budget item directly). The key constraint was: the user could never create a transaction exceeding the budget item's total value. However, there was no intermediate ceiling — the system only checked against total budget item availability.
+New Architecture (All Entities + NSEIL Migration)
+The consumption chain is: Budget Item → CXO → PR → PRC → PO / Non-PO Invoice
+Key changes from the old architecture:
+• CXO is the only transaction that directly consumes from the budget item. All other downstream transactions must consume from their immediate parent only.
+• Budget consumption on Intake is removed. The chain goes CXO → PR → PRC → PO.
+• Hard parent check at every level. If a transaction's value exceeds its immediate parent's available value, the system blocks creation with an error. PR checks against CXO. PRC checks against PR. PO checks against PRC. The validation is always parent-to-child — it is not routing through the entire chain to check CXO. Effectively, the ceiling traces back to the CXO approved amount, but the check is always against the immediate parent.
+• The same overall budget constraint applies in both architectures. If the budget item's total approved value is ₹10,00,000, no combination of transactions can exceed that. The system blocks transaction creation at the budget item level as well.
+Example Flow (New Architecture)
+	•	Budget Item approved value: ₹10,00,000. 
+	•	User creates CXO for ₹8,00,000 → CXO approved → ₹8,00,000 consumed from budget item. 
+	•	PR created for ₹7,50,000 → system checks against CXO (₹8,00,000 available) → allowed, ₹7,50,000 consumed from CXO. 
+	•	PRC created for ₹7,50,000 → checks against PR → allowed. 
+	•	PO created for ₹7,80,000 → checks against PRC (only ₹7,50,000 available) → blocked, error thrown.
+2.5 Budget Blocking vs Consumption (Business Terminology)
+NSE's business terminology distinguishes between "blocking" and "consumption":
+• CXO level = Budget Blocking — when a CXO is approved, the value is considered "blocked" from the budget item.
+• PO and Invoice level = Budget Consumption — when a PO is released or invoice is processed, the value is considered "consumed."
+From a system perspective, it is consumption everywhere — a carry-forward of consumption from parent to child. But the business distinction matters for reporting and communication with NSE stakeholders.
+2.6 Budget Reversal & Cancellation
+• Transaction Rejection: A rejected transaction is still considered active. No budget is released on rejection. The user can edit and resubmit.
+• Transaction Cancellation: When a transaction is cancelled, the budget consumption is released back to the budget item so it can be consumed by future transactions. This applies to any type of consumption (value, quantity, etc.).
+• CXO Mark Completed: When a CXO is marked as completed, the system does not auto-reverse the remaining unused value. If the user wants to release unused blocked budget, they must manually initiate a rollback.
+• No auto-reversal anywhere: The system never auto-reverses pending value consumption. This is manual across all modules. Initially, auto-rollback was built on Intake, but it was subsequently removed. Only manual rollback exists now.
+Manual Budget Rollback
+Manual budget rollback is available on CXO, Intake, PRC, and PO. The rollback button is under the "More" dropdown, visible only to users with the Budget Amend Role.
+On CXO and Intake, rollback supports item-level and partial amounts — the user gets checkbox selection to choose specific budget items and can enter a partial amount to rollback instead of the full pending value.
+NSE intentionally keeps budget blocked on CXO to show savings to leadership. They only release budget if they absolutely need it for other procurement needs.
+Auto Budget Rollback
+On PR, the pending budget value is auto-rolled back to the budget item when PO is created.
+On PO, the budget is auto-reverted on short-close. The reverted budget flows back to the budget item.
+
+Rollback Example
+	•	A CXO is created for ₹10,00,000. 
+	•	PR is created for ₹8,00,000 (consuming from CXO). 
+	•	The PR is later cancelled — ₹8,00,000 is returned to CXO. 
+	•	Now a new PR is created for ₹9,50,000 — the system checks CXO's available value (₹10,00,000 minus any other active consumption). If CXO had previously been partially rolled back (e.g., user manually rolled back ₹2,00,000), the available value reflects this deduction. 
+	•	The system always calculates: Budget Item Value - Consumed - Rolled Back = Available.
+2.7 User Dimension Access
+Users are restricted in what they can see and select based on dimension-level access mappings. 
+The system provides selection options based on the individual user's dimension access only. Once the user selects their dimension values, the system matches the combination against the budget master and presents only the applicable budget items.
+2.8 Budget Item Field Customisation
+Budget items support custom fields. NSE requested a specific field sequence for the create, edit, and amend pages. This hit technical limitations on the UI layer in V4, but field ordering was customised in the reports layer to match NSE's preferred sequence.
+2.9 Budget Items Listing Page
+A dedicated Budget Items listing page was built, controlled by a customer-level feature flag. The behaviour varies based on user role:
+• Regular users (non-admin) with BudgetView access: See only the Budget Items listing page, filtered by their dimension access (department-level). They cannot access the Budgets container page.
+• Org Admins with BudgetView access: Can access both the Budget Items listing page and the Budgets container page.
+• If the feature flag is off: Only the Budgets container page is visible to everyone (standard product behaviour).
+Listing page columns include: Budget Code, Owner (Budget Created By), Budget Created At, Budget Item Name, Value, Start Date, End Date, and all configured dimension fields.
+2.10 Budget Transfer
+NSE can transfer budget value from one budget item to another. This supports both internal transfers (within the same budget, between budget items) and external transfers (across different budgets), controlled by a toggle/radio selection.
+The feature includes audit logs capturing: who transferred, when, value before and after transfer for both source and target budget items. 
+A Custom Budget Transfer Report is available in System & Admin Reports showing available balance and historical transfer data.
+
+3. CXO (Custom App — Budget Blocking & Approval)
+3.1 Overview
+CXO is a custom V4 application built specifically for NSE that serves as the central budget blocking and approval mechanism. It is the mandatory starting point for all procurement activity in the new architecture. Before any procurement can happen — whether sourcing, direct PO, or non-PO invoice — a CXO must be created, approved, and the budget must be blocked.
+In NSE's business terminology, the CXO is their "Budget Approval Note" or "Procurement Approval Note." CXO replaces the earlier DMS (Document Management System) note that NSE used in their legacy Trackwiz system.
+CXO usage pattern: End User blocks budget for procurement categories. For example, a user might create a CXO blocking ₹3 Crore from the stationery budget for the financial year. End users then slowly consume from this CXO by creating Intakes. CXO is essentially a split-layer definition of procurement needs against the budget — the company divides budgets into multiple procurement categories, and CXO captures this as a transaction.
+3.2 CXO in the Procurement Lifecycle
+CXO sits at the top of all procurement pathways:
+• Standard Sourcing: CXO → Intake → RFX → Award → PR → PRC → PO
+• Non-PO Invoice: CXO → Direct Invoice
+• Contracts (not live yet): CXO → Intake → Catalogue → PR → PO
+3.3 CXO Creation Flow
+Step 1 — User initiates CXO:
+User navigates to CXO listing and creates a new CXO. The CXO form captures:
+• Title/Subject (mandatory — system will not allow save without it)
+• Item details at line-item level: Item Name, Description, Quantity, UOM, Unit Price, Amount.  This is a free-text item table with no correlation to the item master. Users enter whatever text they want. This is because CXO is purely a budget-blocking transaction — actual item selection happens at the Intake level.
+• Between CXO and Intake, the linkage is header-level only. There is no item-to-item linkage.
+• Budget items (BRF) are selected at the item level on CXO. This is the only module where multiple budget items can be selected. From Intake through Invoice, budget selection is at the header level (single budget).
+• Budget dimensions are selected per line item (Department, Function, etc.). Based on the dimension combination, the system auto-populates the applicable budget item. If multiple BRFs match, the user selects manually.
+• Custom fields (e.g., Purchase Business Case/Justification, Particulars of Procurement, etc.)
+• Attachments
+Step 2 — Budget validation:
+Budget validation happens only on submit (not on save as draft). The system validates that the CXO total value does not exceed the available balance on the selected budget item(s). If it exceeds, the system blocks submission with a "Budget Exceeded" error.
+Step 3 — Budget consumption:
+Budget is consumed the moment the CXO is created — when it enters either pending-approval workflow status or submitted status (if there are no approvals configured). As long as the CXO is not in cancelled or draft status, the budget is consumed.
+Step 4 — Approval workflow:
+The CXO goes through a configured multi-level approval workflow based on NSE's DFP (Delegation of Financial Power). Workflow routing is driven by:
+• CXO value (different thresholds trigger different approval levels)
+• Department
+• Expense Nature (IT Opex, IT Capex, Non-IT, etc.)
+• Type (Old or New)
+Key approval stages include: HOD Approval, Vertical Approver/Checker, CXO Committee (2 CXOs or All CXOs depending on value threshold), ED, MD.
+Step 5 — Budget blocked:
+Once all approvals are complete, the CXO moves to "Submitted" status. The approved value is now considered "blocked" from the budget item (business terminology). This blocked value becomes the ceiling for all downstream transactions.
+3.4 Key Features
+CXO Cancel
+A "Cancel" action is available on the CXO. On cancellation, the budget consumption is released back to the budget item, making it available for future transactions. Cancellation is available on both draft and approved CXOs.
+CXO Mark Completed
+When all procurement against a CXO is done but the full CXO value was not consumed (e.g., CXO was for ₹10L but final PO was only ₹8L), the user can mark the CXO as "Completed" via the "More" dropdown. The system does not auto-reverse the remaining unused value. Manual budget rollback must be used separately if the user wants to release unused budget. This button is under the "More" dropdown.
+CXO Amend
+CXO can be amended. The value can be increased (upward) if the budget item has available room, or decreased (downward) but not below the value already consumed by child transactions. Amendment goes through the re-approval workflow. For example, if a CXO was approved for ₹10L and ₹8L has been consumed by PRs/POs, the user can reduce the CXO value to ₹8L (minimum) or increase it if the budget item permits.
+CXO Type — Old/New
+CXO has a "Type" field with options Old and New. If the CXO is of type "Old" (meaning it was already created and approved in NSE's ERP system), the entire approval workflow is bypassed — the CXO goes directly to submitted status. This prevents duplicate approvals for procurement requests that were already approved outside Aerchain.
+CXO Clone
+Users can clone an existing CXO to create a new one with pre-filled data. Useful for creating similar procurement requests.
+CXO Recall
+After submitting a CXO for approval, the creator can recall it, make edits, and resubmit. Recall moves the CXO to Draft status with mandatory remarks. The user can then edit and resubmit from the Draft status.
+CXO Edit (Draft/Rejected)
+CXOs in Draft or Rejected status can be edited by the creator. On rejected status, the CXO remains active (budget still blocked), and the user can make corrections and resubmit.
+CXO Value in Words
+CXO value is displayed in words (e.g., "Fifty Lakhs Twenty-Five Thousand") on the CXO PDF document. The PDF font size was increased per customer feedback.
+CXO PDF Document
+A system-generated PDF is available under the "More" dropdown. The PDF includes all header details, item details, dimension values, CXO value in numbers and words, attachment names, approver list and approval status, and the Purchase Business Case/Justification section.
+Random Approver Assignment for CXO Committee
+When CXOs require CXO Committee approval (e.g., 2 CXOs for values between ₹5L–₹50L), the system uses random assignment to distribute CXO approvals across committee members. The primary problem this solved was that 90% of transactions were being approved by a single CXO committee member because users were selecting their preferred approver manually. Random assignment removes manual intervention and ensures balanced distribution.
+Lock Mandatory Approvers
+In the "All CXOs" approval stage (high-value transactions requiring all CXO committee members), users cannot manually deselect CXO approvers. The system locks the approver selection. Similarly, for the "2 CXO minimum" stage, the system enforces a minimum of 2 selections.
+CXO Transaction Display on Downstream Modules
+The CXO code is displayed on the PR and PO view pages. Buyers and approvers on downstream transactions need to see what CXO the procurement is against, what is being procured, and what the approved values are. This provides traceability from PO back to the originating CXO.
+Multi-line Text Fields for Justifications
+CXO has several justification/description fields (e.g., Purchase Business Case) where users write multi-line procurement justifications. A multi-line field type was introduced, resembling the line-item description field UI. This applies to Create, Edit, Amend, and View pages.
+CXO Error Messaging
+When a CXO submission fails due to missing mandatory fields, the system highlights the specific field(s) that are missing or invalid, rather than showing a generic error.
+3.5 CXO Approval Workflow Configuration
+NSE's CXO approval workflow is configured per entity based on their DFP. Workflow stages typically include:
+1. Vertical Checker/Approver (optional, department-specific reviewers)
+2. HOD Approval (Head of Department — department-wise)
+3. CXO Committee — 2 CXOs or All CXOs depending on value threshold and expense nature
+Configuration is done via the workflow DIY module by the admin. Each entity can have its own workflow configuration.
+3.6 CXO Listing Page
+The CXO listing page shows CXOs filtered by the user's department access. Users from the same department can view and raise Intakes using CXOs created by other users in their department. Multiple listing views/tabs are available (e.g., My Pending Approvals, All CXOs, Draft, etc.).
+3.7 CXO Emails & Notifications
+• Approval request emails are triggered to approvers when a CXO is submitted.
+• Pending Action Summary email is sent once daily, consolidating all pending approvals for a user across all modules.
+• Approval email includes a "View" button (not Approve/Reject) so approvers review the full CXO before taking action.
+3.8 CXO in Old vs New Architecture
+Aspect
+Old Architecture (NSEIL Phase 1)
+New Architecture
+CXO Exists?
+No — procurement started from Intake
+Yes — mandatory starting point
+Budget Blocking
+N/A
+CXO blocks budget on approval
+Parent Check
+Intake consumed from budget item directly
+CXO is the only module that consumes from budget item
+Downstream Link
+N/A
+All PR/PRC/PO/Invoice must link to a CXO
+
+4. Non-PO Invoice Flow
+4.1 Overview
+The Non-PO Invoice flow is the most direct procurement pathway in NSE's new architecture. It allows users to create invoices directly against a CXO without going through the sourcing cycle (no Intake, no RFX, no PO). This is used for direct payments — recurring expenses, utility bills, statutory payments, professional fees, and other cases where competitive sourcing is not required.
+4.2 User Flow
+Step 1 — Create Direct Invoice: User navigates to the Invoice listing page and initiates a direct invoice creation (Non-PO type).
+Step 2 — Select CXO: Mandatory CXO selection at the invoice header level. Only CXOs in "Submitted" (approved) status with available budget value are shown for selection.
+Step 3 — Select Budget: Single budget item (BRF) selection at header level. The BRF validation is an intersection of the user's dimension combination plus the budget that is selected in the CXO — both must be satisfied.
+Step 4 — Fill Invoice Details: User fills in invoice details including supplier, invoice number, invoice date, invoice amount, dimension fields, and any additional fields per the template.
+Step 5 — Budget Consumption: On submission, the system validates that the invoice amount does not exceed the CXO's available value (parent check). Budget consumption is present only for Non-PO invoices. Other invoice types (PO invoices, advances) do not have budget consumption — they only carry forward value from the parent.
+Step 6 — Approval Workflow: The invoice goes through the configured approval workflow.
+Step 7 — Integration: Once fully approved, the invoice is synced to Oracle EBS for accounting and further processing such as Payments.
+4.3 Key Features
+CXO Access for All Department Users
+Initially, the system had a rigid check where only the CXO creator could select their own CXOs during Non-PO invoice creation. This was removed. Any user who is performing similar procurement activities can use any available CXO to create Non-PO invoices.
+Even if a user from a different department selects another department's CXO, the budget will not populate because the BRF validation requires both the dimension combination and the CXO budget to match. The system does not enforce a hard department-level block on CXO selection — the validation naturally prevents misuse.
+CXO Display on Invoice
+The CXO number is displayed at the invoice review stage for Non-PO invoices, providing traceability for reviewers and approvers.
+4.4 Configuration
+• Separate Non-PO invoice template configured per entity.
+• The parent budget consumption app (CXO) is defined on the template.
+• Non-PO invoices follow a separate approval workflow configuration from PO-based invoices.
+4.5 Non-PO Invoice vs PO-based Invoice
+Aspect
+Non-PO Invoice
+PO-based Invoice
+Source
+CXO directly
+PO (via Intake → Sourcing → PO chain)
+Budget Consumption
+Yes — consumes from CXO
+No — value carry-forward from PO
+CXO Linkage
+At invoice header
+Inherited through PO → PR → CXO chain
+Budget Selection
+Header-level, user selects from CXO
+Inherited from PO
+GRN Required
+No
+Yes (configurable)
+Three-way Match
+Not applicable
+PO ↔ GRN ↔ Invoice
+Use Case
+Direct payments, utilities, statutory
+Goods/services with sourcing
+4.6 Advances & Credit Notes (Non-PO)
+Non-PO Advances: Advance invoices can be created through the Non-PO flow. Non-PO advances are standalone — they are not linked to a CXO. They are created from the Advance listing page. Advances have their own integration with EBS.
+Credit Notes: Credit notes can be created via the Non-PO flow. Dimensions carry forward from the parent invoice. Credit note integration with EBS is handled separately.
+Neither advances nor credit notes have budget consumption.
+
+5. Intake
+5.1 Overview
+Intake is the procurement request module. In the Standard Sourcing flow, Intake is where end users specify what they need to procure. The Intake is then processed by a buyer who converts it to an RFX for competitive sourcing.
+5.2 Old Architecture (NSEIL Phase 1)
+In the old architecture, Intake was the starting point of all procurement. It served as both the budget approval mechanism and the procurement specification — a combined CXO + Intake form. This form was large and time-consuming, capturing budget approval details (why are you procuring, type of procurement, which vendors will you probably be choosing) alongside item details and procurement specifications.
+Budget consumption happened at the Intake level directly from the budget item. The consumption chain was: Budget Item → Intake → PR → PRC → PO.
+5.3 New Architecture (All Entities + NSEIL Migration)
+In the new architecture, Intake is a streamlined procurement request:
+• Budget consumption removed from Intake. Budget is blocked at CXO level and consumed at PR/PRC/PO level.
+• Mandatory CXO linkage at header level. Every Intake must be linked to an approved CXO.
+• Single budget item (BRF) selection at header level based on the selected CXO.
+• No value validations on Intake creation in the new architecture — no budget check, no CXO value check.
+• Simplified form — just header details, item table, notes, and attachments. A user with clarity should take less than 60 seconds to create 5 items.
+• In the new architecture, Intake always routes to the RFX/sourcing path. The Direct PR template has been made inactive and moved to CXO (Non-PO Invoice flow).
+5.4 Intake Creation Flow (New Architecture)
+Step 1 — User creates Intake: User creates an Intake with mandatory CXO selection at header level, single budget item selection, and item details from the Item Master (actual products — free-text entry is not allowed).
+Step 2 — Dimension fields: Department and Function are at the header level. All other dimensions (GL Account, Profit Center, Cost Center, SEBI Categorization, Sub Segment, Project Category, Project Name, Nature of Expense) are at the item level.
+Step 3 — Expense Nature (for Approvals): A separate dimension at the header level used for approval workflow routing. This is distinct from "Nature of Expense" which is used for budget tracking. Expense Nature captures Capex, Opex, or Both — and drives which approval path the Intake follows.
+Step 4 — Delivery address, attachments and other details are added.
+Step 5 — Approval workflow: Lighter than old architecture since CXO already handles budget approval and CXO Committee routing.
+Step 6 — Buyer Assignment: All Intakes route to Manoj by default. Manoj distributes to the commercial/buyer pool. Multiple buyers can be assigned at the header level (no item-level buyer assignment). Individual buyers handle their assigned Intake items per their procurement flows.
+Step 7 — Buyer processes Intake: In the new architecture, the buyer always converts to RFX (sourcing route).
+5.5 Key Features
+Non-Stock Item Validation
+NSE cannot create items from transactions. When a user attempts to type a free-text item name, the system shows an error: "You don't have access to add this product. Please contact your system admin." NSE's MDM team manages the item master separately. Only items that exist in the product master can be selected on Intakes.
+UOM Auto-population & Lock
+When a user selects an item, the system auto-populates the UOM (Unit of Measurement) from the item master. The UOM field is locked and cannot be changed. This ensures consistency from Intake through PO.
+Intake Recall
+After submitting an Intake for approval, the creator can recall it, make edits, and resubmit.
+Intake Clone
+Users can clone a any Intake to create a new one with pre-filled data.
+Intake Bulk Upload
+Users can upload line items in bulk via Excel instead of adding items one by one.
+Intake PDF Document
+A system-generated PDF is available under the "More" dropdown. The PDF includes header details, item table, dimension values, business objective section, attachment names, approver list, and transaction value in words with comma separation (e.g., ₹12,39,24,990.00).
+Multi-line Text Fields
+Rich text sections like "Purchase Business Case" and "Notes for Commercial" support multi-line text with copy-paste of tables and formatted content.
+Mark as Processed
+For Intakes that do not require downstream processing in Aerchain (e.g., non-procurement spends with CXO-level approvals only, which do not have budget consumption), the buyer can mark the Intake as "Processed" with remarks. This action is irreversible and is the final status for Intake.
+Buyer Accept/Reject
+When an Intake lands in the buyer's bucket, the buyer has Accept and Reject buttons. Reject sends it back to the requestor for corrections without full re-approval.
+Purchaser Re-assignment
+Re-assignment of purchaser is available even after the Intake has been accepted by a buyer.
+Purchaser Assignment Enhancements
+• Multiple purchaser assignment at header level
+• Reject at purchaser step (buyer can reject back to requestor)
+• Re-assignment logic (even after acceptance)
+• Random/round-robin option available in the system but not enabled for NSE currently for Intake Purchaser selection. (only used for CXO approvals)
+Intake Audit Logs
+Audit logs track changes and actions on each Intake transaction.
+Backward Linkage / Traceability
+PO → PR → Intake backward linkage is enabled. Users can trace from a PO back to its originating Intake. The Intake code is displayed as a hyperlink on the Award view page and PO view page.
+5.6 Intake Listing Page
+The Intake listing page provides the following views: All Intakes | My Pending Approval | Draft | Pending Acceptance | Pending Processing.
+Department-wise filtering is applied. Purchaser assignment display shows the users who accepted/approved the Intake. Search on Intake code and subject is available.
+5.7 Intake Emails & Notifications
+• Approval request emails triggered to approvers on submission.
+• Email links redirect to the specific Intake (not just the dashboard).
+• PO copy email sent to buyer and Intake creator in CC when PO is released.
+• Daily pending action summary email includes pending Intake approvals.
+• Invoice received but GRN pending to be created.
+
+6. RFX & Sourcing
+6.1 Overview
+RFX (Request for Quotation) is the competitive sourcing module. Once a buyer accepts an Intake, the buyer converts it to an RFX to invite suppliers to bid on the procurement. The RFX module manages the competitive bidding lifecycle: creating the event, inviting suppliers, collecting quotations, and analysing responses.
+With respect to sourcing to PR creation, there is no difference in the product flow between old and new architecture. The only difference is that dimensions and budget fields are at the header level in the new architecture versus item level in the old. Everything else is the same.
+6.2 RFX Creation & Processing Flow
+Step 1 — Buyer converts Intake to RFX: From the Intake view page, the buyer clicks "Process" and selects "Convert to RFX." The system creates an RFX pre-populated with the Intake's item details (items, quantities, descriptions, delivery details).
+Step 2 — RFX configuration: The buyer adds/modifies RFX-level details including terms, conditions, questionnaires or technical requirements. Suppliers are selected and invited (must be registered in Aerchain). Commercial and Technical Bid End Dates are set.
+Step 3 — RFX released to suppliers: Suppliers receive email notifications and log into the Supplier Portal (SAPP) to view the RFX and submit quotations. Exchange rates are displayed during the quotation process as an FYI — the system uses the rate at the time of award creation for calculations.
+Step 4 — Reverse English Auction (optional): If the buyer is not satisfied with the RFX quotations, they can create a Reverse English Auction linked to the RFX. Suppliers bid in real-time. Once the auction ends, the buyer clicks "Update back to RFX" — the auction quotations are updated back into the RFX. The buyer then proceeds with Award processing from the RFX.
+Note: NSE only uses RFQ and Auctions. There are no standalone auctions — every auction is converted from an RFX.
+Partial Intake Conversion
+An Intake can have multiple line items. Individual line items or subsets can be converted to separate RFXs, allowing different items to go through different sourcing events or be handled by different buyers.
+RFX Excel for Buyer
+When an RFX is released, the buyer & supplier receives an email with an RFX Excel file. The system allows configuration of which fields appear in the Excel document and which fields are visible to the supplier — this is the same as the buyer/supplier field visibility configuration.
+Buyer/Supplier Field Visibility
+NSE has specific requirements around field visibility. Certain fields (e.g., internal attachments, GL codes, budget details) are not visible to the supplier. Field-level buyer/supplier visibility is configured in the RFX template.
+6.3 RFX Listing Page
+RFX has a listing page under the Sourcing module with sourcing tabs (Quote Request, Award). Department-wise filtering is applied with standard search and filter capabilities.
+
+7. Award
+7.1 Overview
+Award is the decision-making step after RFX analysis. Once the buyer has analysed supplier bids, they create an Award to formally select the winning supplier(s) and pricing. The Award goes through its own approval workflow before conversion to PR.
+7.2 Award Flow
+Step 1 — Award Creation: From the RFX, the buyer creates an Award. The Award captures awarded supplier(s) (single or multiple vendors for different line items), awarded pricing per line item, justification section, custom fields (CXO value, Initial Quote, Final Quote, Savings), and delivery location per line item.
+Step 2 — Award Approval Workflow: Award goes through configured approval workflow (HOD, CXO committee depending on value).
+Step 3 — Auto-conversion to PR : Once the Award is approved, the system auto-creates Purchase Requisitions within approximately 10 minutes. One PR per awarded supplier. If multiple suppliers are awarded, multiple PRs are generated.
+Step 4 — Failure cases: Auto-creation can fail due to Budget Exceeded (awarded value exceeds CXO available budget) or mandatory field missing (required fields not populated during Award). In both cases, the buyer must intervene.
+Supplier Split Logic
+Award → PR: Split by supplier. 3 awarded suppliers = 3 PRs. Delivery location does not affect the split at this stage.
+7.3 Key Features
+Award Listing Page
+Separate Award listing page under the Sourcing module. Department access control is inherited from the parent RFX. The Award listing does not have a CXO column — only the Intake code is visible on the Award view page.
+Savings & Justification Fields
+The Award overview includes: CXO Value, Total Awarded Value, Savings (CXO Value - Total), Initial Quote, Final Quote, Savings against Initial Quote. The Justification field type was updated from regular text to rich text for multi-line support.
+Award Screen — Field Cleanup
+Fields that are part of Evaluation features (which NSE does not use) are hidden from the Award approval screen: Soft Savings, Award to Non-L1, and Technical Evaluation. This is controlled via a customer-level feature flag with a compact single-row award summary layout.
+Award Cancellation
+When a PR is cancelled, the linked Award is auto-cancelled. The RFX items become available again for re-conversion.
+Intake Code Hyperlink
+The Intake code is displayed as a clickable hyperlink on the Award view page, enabling easy traceability back to the originating Intake.
+8. Purchase Requisition (PR)
+8.1 Overview
+Purchase Requisition (PR) is the formal internal authorisation to purchase. PRs are auto-created from the Award.
+PR is the first module after CXO where budget consumption resumes in the new architecture. In the new architecture, PR consumes from CXO (its parent). 
+In the old architecture, PR consumes from Intake, and if Intake does not have sufficient value, the system falls back to the budget item directly.
+8.2 PR Creation & Processing Flow
+Step 1 — Auto-creation from Award (new architecture): One PR per awarded supplier. Pre-populated with item details, pricing, supplier, CXO linkage (inherited from chain), Intake and Award codes, budget item at header level, delivery address and billing address at item level, and dimension fields.
+Step 2 — Buyer edits PR (new architecture only): The buyer reviews the auto-generated PR and adds bill-of-materials details, External Notes & Attachments (visible to supplier on PO), and Internal Notes. In the old architecture, BOM changes are made directly at the PO level since PR → PRC → PO is manual.
+Step 3 — PR system fields: For auto-conversion to work in the New Architecture, the following system fields must be populated: Payment Term, Inward Required (Yes/No), Inward Matching Criteria (Qty/Value). These are set at the PR level and flow through to PO.
+Step 4 — Budget consumption: On PR submission, the system validates against the parent. In the new architecture, the system checks CXO available value (strict parent check). In the old architecture, the system checks Intake, and if insufficient, falls back to the budget item.
+Step 5 — Approval Workflow.
+Step 6 — Auto-conversion to PRC (new architecture only): Once PR is approved, it auto-converts to PRC. In the old architecture, this is manual conversion.
+Auto-convert Failure Handling
+When PR → PRC or PRC → PO auto-conversion fails, the system sends email notifications to the buyer with the failure reason. The failure reason is also logged in the Activity Timeline on the transaction.
+PR Amendment
+A parent transaction cannot be amended if a child transaction already exists. If PRC/PO has been auto-created, the PR cannot be amended. The buyer must manually process the downstream chain. The same applies to PO cancellation in the new architecture — PRC and PO must be processed manually if PR is amended.
+8.3 Key Features
+External Notes & Attachments
+External Notes and Attachments fields are available on PR, PRC, and PO. "External" means visible to the supplier on the PO PDF. "Internal" notes remain hidden to the supplier.
+CXO Code Display
+The CXO code is displayed on the PR view page. Only the code — approved values or consumed values are not shown.
+PR Cancellation & Budget Reversal
+When a PR is cancelled, budget consumption is released back to the parent (CXO in new architecture, Intake in old architecture). The linked Award is auto-cancelled, and in case of conversion from direct, Intake items become available for re-conversion.
+8.4 Old vs New Architecture
+Aspect
+Old Architecture
+New Architecture
+Budget Item (BRF)
+Item level
+Header level
+Billing Address
+Item level
+Item level
+Delivery Address
+Item level
+Item level
+Dimensions
+Item level
+Header level
+Budget Parent
+Intake (fallback to budget item)
+CXO (strict parent check)
+PR → PRC Conversion
+Manual
+Auto-conversion
+Buyer Edits BOM
+No — done at PO level
+Yes — at PR level
+
+9. Requisition Conversion (PRC)
+9.1 Overview
+PRC (Purchase Requisition Conversion, also called Sourcing Conversion) is the intermediate step between PR and PO. PRC exists for a single purpose: grouping logic. PRC groups by supplier, billing address, delivery address, and company. One PR with 2 different delivery locations = 2 PRCs = 2 POs.
+Importantly, PRC does not group dimensions or budget fields. If dimensions are at item level (old architecture), they remain at item level in PRC. If at header level (new architecture), they remain at header level.
+9.2 PRC Flow
+New architecture: Auto-created from approved PR. Old architecture: Manual conversion.
+PRC consumes budget from PR (parent check). There is no draft state in PRC.
+New architecture: Auto-converts to PO. Old architecture: Manual conversion to PO.
+Under neither flow is there any action or modification happening at the PRC level specifically. PRC exists purely for the grouping logic.
+9.3 Key Features
+PRC Listing Page
+PRC listing page is under Sourcing Conversion. Department access control is inherited from the parent Requisition (same like Award inherits from RFX).
+PRC Budget Rollback
+Manual budget rollback is available on PRC. The reverted budget flows back to PR.
+PRC Cancellation
+When PRC is cancelled, budget consumption is reversed back to the PR.
+
+10. Purchase Order (PO)
+10.1 Overview
+The Purchase Order is the formal commitment to the supplier — the legal document authorising the purchase. New architecture: POs are auto-generated from PRC. Old architecture: POs are manually created from PRC. PO consumes budget from PRC (parent check).
+10.2 PO Flow
+Step 1 — Creation: Auto (new) or manual (old) from PRC. Pre-populated with all details from the chain.
+Step 2 — Budget consumption from PRC (parent check).
+Step 3 — PO Approval Workflow. Once all approvals complete, PO moves to "Submitted" status.
+Step 4 — PO Release to Supplier: Supplier receives PO via email (PO PDF attached) and the PO is visible on the Supplier Portal. Supplier acknowledges the PO on the portal.
+Step 5 — PO Copy Email: On release, the Intake creator receives a copy of the PO email in CC.
+10.3 PO Document (PDF)
+The PO PDF includes entity-specific header, logo, and footer (all 10 entities have their own PO templates), item table with product name, description, quantity, UOM, unit price, total, delivery address, terms and conditions, External Notes, and signature block.
+10.4 Key Features
+PO Edit & Amend
+Buyers can edit a PO (before release) or amend a PO (after release). PO is the primary amendment target — it is the most commonly amended transaction. Amendment has consumption-level checks based on how much GRN has been received. Amendment creates a new version, triggers re-approval, and the supplier receives the updated PO.
+PO Edit for Rejected Conversions
+When a PO is auto-created from PRC and then rejected by an approver, the buyer can now edit it. The system checks the source of the PO and handles field-level validations and restrictions accordingly — conversion-specific fields remain disabled while editable fields are unlocked for corrections.
+PO Cancellation & Budget Reversal
+When a PO is cancelled, budget consumption is reversed back through the chain (PO → PRC → PR → CXO).
+PO Short-close
+PO short-close is available for both quantity-based and value-based POs, at both header and item level. It is buyer-initiated. On short-close, the system auto-reverts the unused budget back to the budget item. This auto-rollback on PO short-close is custom-built for NSE.
+PO closure
+PO auto-closes as "Completed" once the PO is entirely invoiced and GRN'd and all the active invoices are either Accounted or Cancelled.
+PO Description Editable
+The PO description (captured from the Intake subject) can be changed by the buyer during PO amend.
+Inward Value on PO
+Total GRN/inward value is displayed on the PO screen. Buyers can see how much inward has been done against the PO, which is essential when deciding whether to amend PO value.
+Invoice Status on PO Transaction Tab
+The PO's Transaction tab shows detailed invoice status (Pending Review, Pending Approval, Dispute, etc.) instead of just "Pending."
+PO Listing Page
+PO listing page with department-wise filtering, multiple tabs (All, My Pending Approvals), and standard search/filter capabilities.
+
+11. GRN (Goods Receipt Note)
+11.1 Overview
+GRN is the goods receipt confirmation step. When the supplier delivers goods against a PO, the user creates a GRN from the Purchase Order View page to confirm receipt. GRN is a prerequisite for PO-based invoice processing when Inward Required is set to "Yes" on the PO.
+11.2 GRN Flow
+Step 1 — User creates GRN from the PO View page. Pre-populated with PO item details. User enters received quantity per line item, receipt date, and any remarks.
+Step 2 — Partial/Full Receipt: Users can create partial GRNs. Multiple GRNs can be created against a single PO until full quantity is received.
+Step 3 — GRN Approval (if configured): NSE has GRN approvals configured.
+Step 4 — GRN Completion: Once approved, the received quantity is available for invoice matching.
+11.3 Inward Matching Criteria
+The PO defines how invoice matching works against GRN — whether completion/tracking is based on quantity or value. This parameter works across PO, Invoice, and GRN and is set at the PR level (system field for the new architecture) flowing through to PO. A single PO will have only one matching flow (quantity-based or value-based).
+GRN Custom Table Enforcement
+A custom table is configured on the GRN template to support NSE's inventory tracking requirements. The table structure (columns and field types) is defined by the admin team at the template level.
+When a GRN is created, users are required to fill at least one row, with all mandatory fields defined as per template. This data is used by NSE for inventory tracking against specific items received. A report is also available for these entries. 
+From Aerchain's perspective, this is just a simple table with rows & columns data — no additional features, validations, or integrations will be built around it.
+11.4 GRN Listing Page
+GRN listing page with department-wise filtering and standard search/filter capabilities.
+
+12. PO-based Invoice
+12.1 Overview
+PO-based invoices are created against an existing Purchase Order. PO invoices do not have budget consumption — they only carry forward value from the parent PO.
+There are two ways a PO invoice gets created:
+1. Supplier creates it from the Supplier Portal (SAPP)
+2. Buyer/user creates it internally from the PO
+12.2 PO Invoice Flow
+Step 1 — Invoice Creation: If supplier-created, the supplier logs into SAPP, selects the PO, fills in invoice details, and submits. This triggers the mandatory Supplier Review workflow step, configured to be routed to the Payment SPOC mapped against that supplier in the vendor master. If buyer/user-created internally, the Supplier Review step is not triggered.
+Step 2 — Three-way Match Validation: If Inward Required = Yes on the PO, the system validates invoice quantity/value against GRN received quantity/value (depending on matching criteria).
+Step 3 — Approval Workflow: Multi-stage approval — Supplier Review (Payment SPOC, only for supplier-created), Invoice Validator/Checker, Vertical Approver, HOD, Finance review.
+Step 4 — Invoice Accounted: Flow is Invoice Create → Review + Approvals → Sync to EBS (ERP) → Accounted. 
+Failure cases: Rejected (on WF or review), Disputed (mismatches), Sync failed (integration issues).
+12.3 Key Features
+Payment SPOC
+Each supplier in the vendor master has a mapped Payment SPOC (Single Point of Contact) from NSE's finance team. This is a dataset with actual users mapped for access controls and filtering. The Payment SPOC is responsible for reviewing invoices from their assigned suppliers. Standard workflow emails are sent (review, rejection, cancellation) — no custom emails.
+Invoice Rejection Remarks Visible to Supplier
+Rejection remarks are displayed to the supplier on the SAPP Invoice view page. The approval rejection pop-up text reads "Reject Remarks (Visible to Vendors)" so internal users know the remarks will be seen by the supplier.
+Invoice via Email (AI-powered) — Built, Not Enabled
+An Invoice via Email feature was built for PO-based invoices: supplier sends invoice PDF to a configured email address, the system uses AI extraction to read the PDF, matches against existing POs, and auto-creates a draft invoice. However, this feature is not enabled for NSE because NSE's compliance does not allow opening an email inbox to external systems, and Microsoft Outlook does not provide an alternative access method for Aerchain to read the inbox.
+Invoice Date Validation (Configurable)
+The system has a configurable validation for invoice date relative to PO date. NSE initially requested a 45-day restriction (no invoice creation if invoice date is older than 45 days). This was later removed at NSE's request. The configuration is available for re-enablement if needed.
+
+GST & SEZ Calculation
+The system determines the GST type for each transaction based on the following logic:
+Standard GST Determination:
+	•	Same state (supplier state code = customer billing address state code): CGST + SGST applies
+	•	Different states (supplier state code ≠ customer billing address state code): IGST applies
+	•	Union Territory: UTGST applies instead of SGST when the billing address is in a Union Territory
+SEZ Override:
+Special Economic Zones in India are treated as foreign territory for GST purposes. Any supply to or from an SEZ is treated as an inter-state transaction regardless of actual state codes, and IGST applies.
+This is implemented through a two-level flag mechanism. A customer-level "SEZ Applicable" flag is available on the customer entity (enabled for NSE). When enabled, an "SEZ Location" flag becomes available on customer billing addresses and supplier records. Before executing the standard GST determination, the system checks: if the customer is SEZ applicable AND either the supplier is SEZ or the customer billing address is SEZ, the GST type resolves to IGST — overriding the standard state-code logic. If neither is SEZ, the standard GST determination applies unchanged.
+This is a completed feature, live across all NSE entities.
+Invoice Cancel
+On cancellation, value carry-forward from PO is reversed (PO's available value for invoicing is restored), and the supplier is notified. Users will be able to create another invoice for the pending amount.
+Invoice Workbench
+A consolidated workbench view showing pending review, pending approval, disputed and recently processed invoices.
+Invoice Price Change Restriction
+• Quantity-based POs: Invoice line item price cannot be more or less than the PO item price. The price is locked to the PO price.
+• Value-based POs: Invoice line item price cannot exceed the PO item value with respect to cumulative invoice prices. The total invoiced value cannot exceed the PO line value.
+Applies on both CAPP and SAPP invoice creation.
+Invoice PDF Document
+A system-generated Invoice PDF with approval workflow details is being built. This is required for audits and compliance — a transaction document with invoice details created on the SaaS platform.
+MSME Tag on Invoice Pages
+MSME Yes/No tag is displayed on the Invoice Listing page and Invoice Workbench, right after Supplier Name. Sortable and filterable — enabling the finance team to prioritise MSME vendor payment processing as per regulatory obligations.
+12.4 Invoice Template-level Defaults
+Three fields are defaulted at the template level during invoice creation:
+• Invoice Type: Auto-defaults based on the template selected (PO Invoice, Non-PO Invoice, Credit Note, etc.).
+• Operating Unit: Customer code as per ERP (e.g., NSEIL OU, NCL, etc.).
+• Liability Account: Defaulted on the template level.
+12.5 Invoice Payment Status
+The invoice status remains at "Accounted" after approval and sync. A separate secondary status field — paymentStatus — tracks payment progress: Pending, Partial, or Paid. These are two independent status fields. The payment status updates only when EBS sends inbound payment data.
+
+13. Payments
+13.1 Overview
+Payments are processed in Oracle EBS, not in Aerchain. Aerchain's role is to sync the approved invoice data to EBS via integration. Once EBS processes the payment, the payment details are synced back to Aerchain.
+13.2 Payment Flow
+1. Invoice reaches "Accounted" status in Aerchain.
+2. Integration syncs invoice data to Oracle EBS.
+3. EBS processes the payment per their payment cycle.
+4. Payment data is sent inbound from EBS to Aerchain (single payload, same structure for all types).
+5. Invoice paymentStatus updates to Paid or Partial in Aerchain.
+Aerchain does not have payable creation logic — the system receives the invoice and accepts inbound payment values as-is without reconciliation against payable amounts.
+
+14. Advances
+14.1 Overview
+Advances (Prepayment Invoices) are upfront payments made to suppliers before goods/services are delivered. Advances are a separate module in the product — not a tab inside Invoices. Each customer opts into it; it is not enabled by default. Advances have their own listing, template configuration, and integration with Oracle EBS.
+14.2 Types
+• PO-based Advances: Raised against a supplier and one specific Purchase Order. Created from the PO View page. Can only be used against invoices raised on that same PO. The advance amount, plus every other non-cancelled advance on the same PO, cannot exceed the PO's total value.
+• Non-PO Advances: Raised against the supplier only, not tied to a PO. Created from the Advance listing page. Can later be used against any invoice from that supplier — PO-based or Non-PO. No value ceiling other than the amount requested. These are standalone and are not linked to a CXO.
+14.3 Advance Lifecycle
+An advance moves through three broad phases: getting approved, getting funded, and getting used. Cancellation and rejection are exits along the way, not phases of their own.
+Phase 1 — Approval:
+Requested: Just created, workflow not yet engaged.
+Pending Review / Approval / Acknowledgement: Sitting with whoever the configured workflow puts it in front of next.
+Phase 2 — Funding:
+Accounted: Cleared the workflow — a recognised, payable obligation. Synced to EBS via integration.
+Partially Paid → Paid: A payment run has actually paid out some or all of the advance amount. Payment status updates when EBS sends inbound payment data.
+Phase 3 — Utilisation:
+Partially Utilised → Utilised: Some or all of the paid amount has been applied against invoice(s), reducing what's owed on them.
+Exit statuses:
+Rejected: At any approval stage.
+Cancelled: By the requester while still in Requested / Pending / Accounted status. Once an advance has been paid or utilised, it can no longer be cancelled. Cancellation requires mandatory remarks.
+14.4 Advance Settlement (Applying to Invoices)
+This is where an advance actually reduces what's owed on an invoice. It is a payment-side action, not a matching step.
+• PO-based invoices: Advances are auto-mapped based on the PO. A manual "Settle Advances" button is also available on the frontend for manual mapping/adjustment.
+• Non-PO invoices: Manual mapping — user maps outstanding advances against the Non-PO invoice.
+Key rules:
+• An advance can only offset an invoice from the same supplier (and for PO Advances, the same PO).
+• An advance must be in Paid or Partially Utilised status before it can be applied — money that hasn't actually gone out cannot be used.
+• Advance and invoice currencies must match — no cross-currency offsetting.
+• Split both ways: one advance can be spread across several invoices, and one invoice can draw from several advances, as long as neither side is over-allocated.
+• Leftover stays put: whatever isn't used remains on the advance (Partially Utilised), ready for the next eligible invoice.
+If a payment that funded an advance is itself cancelled, the advance's status is recalculated back down (e.g., Paid → Accounted) — the closest thing to a "refund," since cancellation of the advance itself is never allowed after payment.
+14.5 Budget Consumption
+Advances do not have budget consumption. Only Non-PO invoices have budget consumption among the invoice-type modules. 
+Advances are not linked to a CXO — neither PO-based nor Non-PO advances have CXO mapping.
+14.6 Supplier Portal Visibility
+• Customer app: Dedicated Advances module — create, track status, cancel, comment.
+• Supplier portal: Suppliers can request an advance from SAPP (routed into the customer’s workflow), and can see which advances were used against a given invoice. No approve/edit/cancel rights.
+• On an invoice: A running view of which advances funded it and how much of each was drawn on.
+14.7 Integration
+On final approval/accounting, advance data is synced to Oracle EBS. Advances and invoices use the same API endpoint — the system differentiates based on template ID internally. Payment confirmation syncs back inbound from EBS to Aerchain.
+
+15. Credit Notes
+15.1 Overview
+Credit Notes are issued when there is a deduction, return, or adjustment against a previously invoiced amount. Credit notes are a separate invoice template type.
+15.2 Credit Note Flow
+Step 1 — User creates a credit note referencing the original invoice.
+Step 2 — Dimension fields (Department, Function, GL, Profit Center, Cost Center, etc.) auto-populate from the parent invoice.
+Step 3 — Approval Workflow.
+Step 4 — Integration with EBS for accounting adjustment.
+15.3 Credit Note for Accounted Invoices
+Credit note creation is enabled for invoices in "Accounted" status. Previously, credit notes could only be created against invoices in pre-accounting statuses. Now, if an invoice has already been accounted for and sent to EBS, a credit note can still be created in Aerchain and synced.
+15.4 Budget Consumption
+Credit notes do not have budget consumption.
+
+16. Supplier / Vendor Management
+16.1 Overview
+The Supplier module manages vendor master data and the supplier onboarding lifecycle. NSE's vendor management has two sides: CAPP (Customer/Buyer side) where NSE's MDM team manages vendor records, and SAPP (Supplier Portal) where suppliers complete onboarding, submit quotations, acknowledge POs, create invoices, and track payments.
+16.2 Vendor Master
+Vendors are created and onboarded on Aerchain only. During go-live, one-time data setup was done from NSE's existing vendor data.
+Key vendor master fields: Supplier Name, Alternate Supplier Name (mandatory), Supplier Code, Site Code, PAN, GST, Bank Account details, MSME status, Payment SPOC mapping, RPT (Related Party Transaction) Relationship, NDA Data, Code of Conduct and Vendor Application Letter.
+16.3 Vendor Onboarding Flow
+Step 1 — Supplier created in Aerchain by the End User or MDM team.
+Step 2 — Supplier Create Approvals
+Step 3 — SignUp & Onboarding email sent to supplier with link to SAPP portal. Suppliers can save the form as draft and return later.
+Step 4 — Supplier completes onboarding form and submits.
+Step 5 — KYC Validation: PAN validation, GST validation, MSME validation, and Bank Account Penny Drop (validates IFSC number, account holder name, and account number). Enabled across all entities.
+Step 6 — If all validations pass, the system triggers the registration approval workflow.
+Step 7 — KYC Bypass: If validations fail (server downtime, unsupported bank formats), options include: Trigger registration process, Re-submit to KYC validations, Bypass KYC and proceed for registration.
+Step 8 — MDM Review & Approval.
+Step 9 — Registration: Supplier is registered in Aerchain and data is synced to EBS via outbound integration.
+16.4 Key Features
+Vendor Duplicate Check & Create Approvals
+In-platform vendor creation with role-based access (Supplier Create vs Supplier Onboarding). Duplicate detection checks supplier name and email ID. If a potential duplicate is found, the user is warned. New vendor creation goes through an approval workflow (MDM review).
+GST & PAN on Supplier Listing
+GST and PAN added as system columns on the supplier listing page with search and filter support.
+Vendor Block/Unblock
+Vendors can be deactivated (blocked) in Aerchain. Blocked vendors cannot be used in any transaction involving the vendor (ex: PO, Invoice, RFX). Block/Unblock has outbound integration with EBS (separate endpoints for block and unblock). A separate role permission for Block/Unblock is available for finer access control.
+NDA Expiry Notifications
+The system sends expiry notification emails when vendor documents (NDA, MSME certificate) are nearing expiry.
+Multiple Bank Accounts per Vendor
+Vendors can have multiple bank accounts with KYC validation for each. Bank account selection is available at the Invoice level.
+Vendor Onboarding Reminder Emails
+Automated reminders: Day 0 initial email, then up to 3 follow-up reminders.
+Vendor Field Validations
+Proper validations on Phone Number, POC Phone Number, Pincode — character limits, format checks, no special characters — to prevent integration failures.
+SAPP Entity Filter
+For multi-entity suppliers, SAPP listing shows Entity Name column with filter to identify which entity a PO/invoice belongs to.
+16.5 Supplier Portal (SAPP)
+SAPP is primarily used for: submission of quotations (RFQ & Auctions), acknowledging purchase orders, creating and submitting invoices, and checking payments and delivery status.
+
+17. Workflows & Approvals
+17.1 Workflow Architecture
+NSE uses configurable approval workflows across all transaction modules. A workflow is a series of approval sequences (stages) triggered one after another. Each entity can have its own workflow configuration, set up via the DIY workflow builder by admins.
+Stage-level Configuration
+Each workflow stage has trigger parameters — rules based on value thresholds, department, expense nature, function, or other parameters. If the parameters are met at transaction creation/update runtime, the stage gets triggered.
+Stage-level settings include: minimum number of approvals required from the approver pool, random selection of users (enabled for CXO committee), and whether the stage is mandatory or optional.
+"Any 1 of N" and "All of N" are minimum approval count properties configured on a stage — not types of stages. NSE names their stages descriptively (e.g., "Any 1 CXO", "All CXOs", "2 CXOs").
+Header-level (Workflow-level) Settings
+• Prevent Repeat Users: Ensures the same user cannot approve at multiple stages.
+• Always Mandatory: Stage will always trigger regardless of parameter matching.
+17.2 Key Workflow Features
+Recall
+Available across all modules (CXO, Intake, Award, PR, PO, Invoice, GRN). Under Pending Approval or active workflow status, the creator can recall the transaction. 
+On recall, all active workflow steps are made inactive. Transactions without a parent (CXO, Intake) move to Draft status, while transactions with a parent (PR, PO, Invoice) move to Rejected status. Mandatory remarks are required, and an event is logged in the activity timeline. On resubmission, a new approval flow will be calculated and triggered.
+The user can then edit and resubmit the transactions and a new Approval flow will be calculated and triggered.
+Bulk Reassignment
+When an user exits the company, the Admin can bulk-reassign all their pending transactions to another user. Supported across CXO, Intake, RFX, Awards, PR, PO, Invoice, and GRN. This feature is available at Org Settings.
+Workflow Delegation
+When a user goes on leave, the Admin sets a delegation period (start → end date) for a specific user from Org Settings. During this period, all approvals that would route to the absent user are automatically redirected to the designated delegate. When the delegation period ends, routing reverts to normal. Works across all modules.
+Random Approver Assignment
+Configured for NSE's CXO Committee to prevent workload imbalance. Feature available for all approval sequences but currently not enabled for other modules.
+Lock Mandatory Approvers
+For "All CXOs" stages, users cannot deselect mandatory approvers. For "2 CXO minimum" stages, the system enforces minimum 2 selections.
+View Button in Approval Emails
+Approval emails have a "View" button instead of direct Approve/Reject. Users are redirected to the transaction view page to check the transaction before taking action.
+17.3 Workflow Audit Logs
+Audit logs for workflow configuration changes are available at the Org Settings level. The UI shows all changes made across all workflows — what changed, who changed it, when. Excel download is available for a specific date range. This is being expanded to cover all Org Settings changes in V3: datasets (dimensions & masters), templates (V3 & V4).
+17.4 Email Notifications
+Standard email triggers across all modules:
+• Approval Request: Sent to approver when a transaction is submitted.
+• Approval Completion: Sent to creator when transaction is fully approved.
+• Rejection: Sent to creator with rejection remarks.
+• Pending Action Summary: Sent once daily, consolidating all pending approvals across modules.
+All email links redirect to the specific transaction, not the dashboard.
+
+18. General Features & Platform Configuration
+18.1 Department-wise Access & Compliance
+NSE has a strict compliance requirement: transactions, budget items, reports, and any data in the application must not be visible across departments. This is driven by internal data governance and SEBI compliance requirements.
+Implementation (Technical): On the Apps table, each app entry has a config column containing headerDimensionFRKeyMappings. Whatever dimension fields are configured here are used to check user-dimension mapping at runtime. For NSE, the “Department” is configured across all entities and modules.
+For Award, Auction and PRC, these modules inherit the filter from their parent apps — Award uses RFX's config, PRC uses Requisition's config, Auction references data from RFQ.
+18.2 Listing Pages
+Two types of listing pages:
+1. Landing Screen (User Dashboard): Two view types — "My Transactions" (transactions created by the user across all modules) and "My Pending Approval" (pending approvals across all modules). No Department level access control here as it is All Modules Data and only transactions where the user is owner or approver is displayed hence the Department filter is auto-covered through these definitions.
+2. Individual Module Listing Pages: Shows "All Transactions," "My Pending Approval," and module-specific tabs. Department access control is applied at this level.
+18.3 Mobile App
+NSE uses the Aerchain mobile app primarily for approvals. The User Dashboard shows pending approvals with filter by Transaction Type (Intake, Award, Requisition, Invoice, Purchase Order, Quote Request, CXO, GRN, Auction Request) and by Status.
+Each approval card shows Title, Date, Created By, Status tag, and Transaction Code with Type label. 
+Entity switching is available for multi-entity approvers.
+18.4 Amendment Rules
+• A parent transaction cannot be amended if a child transaction already exists.
+• CXO Amend: Value can be increased (if the budget item has room) or decreased (not below consumed value).
+• PO Amendment: Primary amendment target. Has consumption-level checks based on GRN received. Creates a new version, triggers amend-approvals.
+• Budget and dimension fields cannot be changed once a transaction is created. They are disabled in all child transactions. If a user selected the wrong dimensions on Intake, they must delete the row and add a new one — fields are frozen at the page level on save, even if the budget was not yet selected.
+18.5 V4 to V3 Data Flow
+Several fields that exist as datasets in V4 apps (CXO, RFX) need to flow into system fields in V3 modules (PR, PO, Invoice). These include: Delivery Address, Billing Address, Company, UOM, and Payment Term.
+On the Apps table, each app entry has a “systemDimension” property. These fields must be defined as systemDimension entries for the system to identify them as dataset-to-system-master mappings. The actual value resolution happens via reference matching — the dataset response in V4 is matched to the corresponding system field master in V3 using the reference value.
+Critical Configuration Note
+The dataset master (V4) and system field master (V3) must have consistent entries for the same reference value. The system matches purely on reference — it does not compare display names.
+Example: If the Delivery Address dataset master has an entry "Chennai" with reference da005, and the Delivery Address system field master has an entry "Bombay" with reference da005, then when an Award (V4) converts to a Requisition (V3), the delivery address will resolve to "Bombay" because the system matches on reference da005, not on the display name. This scenario occurred in production. Both masters must be kept in sync — same reference must map to the same value in both the dataset and the system field master. If there is no available reference matching for V4 to V3 then no record will be selected in Requisition.
+18.6 Activity Timeline
+Activity Timeline is available across all transaction modules. Users can add comments, tag other users via @mention, and attach supporting documents. Tagged users receive notifications and can see both the comment and the attachment.
+18.7 Product Master Management
+NSE's product/item master is managed by the MDM team.
+• Non-Stock Item Validation: NSE users cannot create items from transactions. Only items from the product master can be selected.
+• Product Master Bulk Update: Available from Org Settings via Excel upload.
+• Product Master Audit Logs: All changes (create, edit, bulk update) are logged on individual master data level.
+18.8 Number Formatting
+All transaction PDFs (CXO, Intake, PR, PO, GRN) display amounts with Indian comma formatting (e.g., ₹12,39,24,990.00). The "Amount in Words" feature uses the same formatting.
+
+19. Integration
+19.1 Overview
+NSE integrates Aerchain with Oracle EBS for supplier registration, invoice accounting, advance processing, credit notes, and payment receipt. All integrations are outbound from Aerchain to EBS, except Payments which are inbound from EBS. Budget does not have any integration — budgets are created directly on Aerchain via bulk upload.
+Integration is live for all entities.
+19.2 Integration Summary
+Integration
+Direction
+Notes
+Supplier Onboarding — Create
+Outbound
+New vendor creation pushed to EBS
+Supplier Onboarding — Amend/Update
+Outbound
+Vendor updates pushed to EBS
+Supplier Block
+Outbound
+Separate endpoint for blocking vendor site
+Supplier Unblock
+Outbound
+Separate endpoint for unblocking vendor site
+Invoice — PO-based
+Outbound
+Invoice Accounting outbound
+Invoice — Non-PO
+Outbound
+Same endpoint, differentiated by template ID
+Advances — PO-based
+Outbound
+Same endpoint as invoices, differentiated by transaction type
+Advances — Non-PO
+Outbound
+Same endpoint, differentiated by transaction type
+Credit Note
+Outbound
+Same endpoint, differentiated by template ID
+Payments
+Inbound
+EBS pushes payment data to Aerchain
+19.3 Technical Notes for CS Reference
+• Advances and invoices use the same API endpoint. The system differentiates based on transaction type internally.
+• Payment inbound: Aerchain accepts payment values as-is without reconciliation. Payment status updates on the invoice's paymentStatus field.
+• Integration acknowledgement: EBS sends response for each outbound push (success/failure with error details). The response is parsed using configured response mappers.
+• NSEIL (cID 1) has both old and new architecture templates configured. Other entities have only new architecture templates.
+User Integration
+User Integration supports three operations: Create (new user provisioning), Update (user detail changes), and Active/Inactive (user deactivation and reactivation). User data is synced from the customer's ERP/HR system to Aerchain.
+This is built as a system-level functionality applicable to all customers.
+User Integration is in implementation & UAT phase – goLive pending.
+
+20. Reports
+20.1 Overview
+Reports are built in two places:
+• Third Party Analytics: External dashboards for visual/analytical reports. Admin-level access only — no user-department filtering.
+• In-house Custom Reports: Built within Aerchain's Reports module. Filtered based on user-department access. The report filter logic works based on the configuration setup in individual module listing pages.
+Reports are being grouped by module in the Reports listing (previously all under "Others").
+Link for Reports Data: NSE Reports
+
+
+21. Common Queries & Troubleshooting (FAQ)
+Q1: BRF not populating when creating CXO/Intake/Invoice
+Check user dimension access mapping. Verify that the dimension combination selected by the user matches at least one active budget item. The system requires both the user's dimension access and the budget item's dimension combination to align.
+
+Q2: Budget Exceeded error but user says budget is available
+Check the parent-child chain. In the new architecture, check CXO available value — the system checks against the immediate parent, not the total budget item value. Verify that no other active transactions have consumed the CXO's available value.
+
+Q3: User wants to release blocked budget from CXO
+Manual rollback only. Navigate to CXO → More dropdown → Revert Pending Budget. The system never auto-reverses. Item-level and partial amount rollback is supported.
+
+Q4: Budget not released after CXO/Intake rejection
+By design. Rejected transactions are still considered active. Only cancellation releases the budget. The user can edit and resubmit the rejected transaction.
+
+Q5: CXO template not loading for a specific entity
+Check if the CXO app and template are configured for that entity's customer ID in Org Settings.
+
+Q6: CXO went to submitted without approvals
+Check the CXO Type field. If it is set to "Old," the workflow is bypassed by design — this means the CXO was already approved in NSE's ERP system/ offline approvals.
+
+Q7: User cannot see CXOs from their department
+Verify the user's dimension mapping for the Department.
+
+Q8: Buyer cannot see Intakes in Pending Buyer tab
+Check purchaser assignment. Intakes must be assigned to the specific buyer by Manoj. Unassigned Intakes will not appear in a buyer's pending bucket.
+
+Q9: User getting error 'You don't have access to add this product'
+Non-stock item validation. NSE users cannot create items from transactions. The MDM team must add the product to the Product Master first.
+
+Q10: Old NSEIL Intake cannot be edited/amended
+Expected behaviour. After the June 26, 2026 migration, budget consumption is off on Intake. Old Intakes with existing budget consumption cannot be modified — editing would cause system errors. These transactions must be processed forward as-is.
+
+Q11: Award fields greyed out (Analysis/Savings)
+Check if the entity's RFX/Award template has these fields enabled. This was an issue with the NDAL entity during initial setup.
+
+Q12: PR not auto-created after Award approval
+Check: (1) Budget Exceeded — does CXO have available value? (2) Mandatory fields missing? (3) Check activity timeline on Award for failure reason and email notification. Allow approximately 10 minutes for auto-creation.
+
+Q13: PR to PRC/PO auto-conversion not happening
+Auto-conversion is only in the new architecture. Check PR system fields: Payment Term, Inward Required, Inward Matching Criteria must be populated. Check activity timeline for failure reason and email notification sent to buyer.
+
+Q14: User cannot amend Intake/PR
+By design. A parent transaction cannot be amended if a child transaction already exists. PO is the primary amendment target.
+
+Q15: PO showing incorrect template/fields
+Check entity-specific PO template configuration. All 10 entities have separate PO templates with their own field configurations, logos, and footers.
+
+Q16: Invoice stuck in workflow / not moving to next stage
+Check workflow status on the transaction. Verify all required approvers have acted. Check if recall was triggered. Check if the transaction is in a valid state for the next stage to trigger.
+
+Q17: Supplier cannot see rejection reason on SAPP
+Rejection remarks are visible on SAPP. Verify that the rejection was done with remarks (mandatory field). Check that the reject pop-up text includes visible vendor remarks.
+
+Q18: Invoice accounted but payment status still Pending
+Invoice status stays "Accounted." Payment status is a separate field (paymentStatus). It updates only when EBS sends inbound payment data. Check with the finance team if payment has been processed in EBS and if payment inbound integration was successful.
+
+Q19: Invoice created by supplier — who reviews first?
+Supplier-created invoices trigger the mandatory Supplier Review workflow step, which is routed to the Payment SPOC mapped against that supplier in the vendor master.
+
+Q20: Supplier stuck in Verification Failed
+KYC validation failure. Options: Trigger registration process (re-run KYC) / Re-submit to KYC (retry specific validations) / Bypass KYC and register (admin action).
+
+Q21: Supplier onboarding email not received
+Check the spam folder. Verify reminder schedule is active.
+
+Q22: Vendor blocked — user cannot create PO
+By design. Blocked vendors cannot be used in PO, CXO, Intake, or GRN. The vendor must be unblocked first. Block/Unblock is under vendor management with separate role permissions.
+
+Q23: Delivery address / billing address is incorrect on PR/PO
+Check dataset master (V4) and system field master (V3) consistency. Reference values must match between both masters. The system matches on reference, not display name. Example: If V4 dataset has "Chennai" with reference da005 but V3 system master has "Bombay" with reference da005, the PR/PO will show "Bombay."
+
+Q24: User can see transactions from other departments
+Check headerDimensionFRKeyMappings on the module's app config in the Apps table. Verify the user's dimension mapping for the Department. 
+For Award & Auctions, check the parent RFX config. For PRC, check the parent Requisition config. 
+
+Q25: Email links redirecting to wrong entity
+Check entity URL configuration. Multi-entity users must ensure they are on the correct entity URL before accessing the transaction.
+
+
+22. Glossary
+Term
+Definition
+BRF
+Budget Request Form — NSE's terminology for Budget Item
+CXO
+Custom V4 application for budget blocking and approval — NSE's Budget Approval Note
+SAPP
+Supplier Application Portal — the supplier-facing portal
+CAPP
+Customer Application Portal — the buyer/NSE-facing portal
+PRC
+Purchase Requisition Conversion / Sourcing Conversion — intermediate step between PR and PO for grouping logic
+DFP
+Delegation of Financial Power — NSE's internal approval authority matrix (Workflow Matrix)
+SEBI
+Securities and Exchange Board of India — the regulatory body for securities markets
+GRN
+Goods Receipt Note — confirmation of goods received against a PO
+MDM
+Master Data Management — the team responsible for maintaining product and vendor masters
+MSME
+Micro, Small and Medium Enterprises — vendors with MSME certification have regulatory priority for payment processing
+EBS
+Oracle E-Business Suite — NSE's ERP system
+UAT
+User Acceptance Testing — pre-production testing environment
+UOM
+Unit of Measurement
+DA
+Delivery Address
+BA
+Billing Address
+RPT
+Related Party Transaction
+NDA
+Non-Disclosure Agreement
+SPOC
+Single Point of Contact
+DIY
+Do-It-Yourself — refers to the self-service workflow and templates builder
+IGST
+Integrated Goods and Services Tax
+SEZ
+Special Economic Zone
+KYC
+Third-party validation service for PAN, GST, MSME, and bank account verification
+V3
+Aerchain platform version 3 — modules like PR, PRC, PO, Invoice, GRN
+V4
+Aerchain platform version 4 — apps like CXO, RFX, Intake
+
+23. Contracts Flow (Planned)
+The Contracts Flow (CXO → Intake → Catalogue/Contract → PR → PO) is not live for NSE. Rate Contract was planned under this flow. This section will be updated once the customer goes live with it.
