@@ -544,6 +544,7 @@ export const NSEFoundation_Locators = {
     auditPickerCell:        (ymd) => `td[title="${ymd}"]:not(.ant-picker-cell-disabled)`,
     auditPickerPrevMonth:   '.ant-picker-header-prev-btn',
     auditPickerNextMonth:   '.ant-picker-header-next-btn',
+    auditPickerHeaderView:  '.ant-picker-header-view',   // month/year title — changes on page turn
     auditExportBtn:         'button:has(img[alt="export icon"])',
     // Hover target when the button is disabled (Ant's disabled-tooltip wrapper)
     auditExportDisabledWrap:'span.ant-tooltip-disabled-compatible-wrapper:has(img[alt="export icon"])',

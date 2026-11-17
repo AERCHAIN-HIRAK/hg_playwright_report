@@ -69,7 +69,7 @@ test.describe('NSE Tracks & Hotfixes › Audit Logs (Org Settings)', () => {
     }
 
     test('Export audit logs for last 90 days downloads Excel with data @Tracks @AuditLogs', async ({ page }, testInfo) => {
-        test.setTimeout(240000);
+        test.setTimeout(480000); // 8 min — each step may wait up to 60s on a slow network
         const a = await openAuditLogs(page);
 
         const today = new Date();
@@ -81,7 +81,7 @@ test.describe('NSE Tracks & Hotfixes › Audit Logs (Org Settings)', () => {
     });
 
     test('Export over 3 months (4 months) is blocked with tooltip @Tracks @AuditLogs', async ({ page }) => {
-        test.setTimeout(240000);
+        test.setTimeout(480000); // 8 min — each step may wait up to 60s on a slow network
         const a = await openAuditLogs(page);
 
         const today = new Date();

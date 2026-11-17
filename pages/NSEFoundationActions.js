@@ -7,6 +7,9 @@ import ExcelJS from 'exceljs';
 import fs from 'fs';
 import path from 'path';
 
+// Audit Logs (Org Settings) steps wait up to 60s each — slow-network tolerance.
+const AUDIT_WAIT = 60000;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // NSEFoundationActions
 // Covers: Login → CXO create → (Direct PO → GRN → Invoice → Workflow)
@@ -6890,12 +6893,14 @@ export class NSEFoundationActions {
     async clickOrgSettings() {
         const context = this.page.context();
         this.dashboardPage = this.page; // remember the v4 dashboard tab
+        const gear = this.page.locator(L.orgSettingsGearBtn).first();
+        await gear.waitFor({ state: 'visible', timeout: 60000 });
         const [adminPage] = await Promise.all([
-            context.waitForEvent('page', { timeout: 20000 }),
-            this.page.locator(L.orgSettingsGearBtn).first().click(),
+            context.waitForEvent('page', { timeout: 60000 }),
+            gear.click({ timeout: 60000 }),
         ]);
-        await adminPage.waitForLoadState('domcontentloaded');
-        await adminPage.waitForLoadState('networkidle').catch(() => {});
+        await adminPage.waitForLoadState('domcontentloaded', { timeout: 60000 });
+        await adminPage.waitForLoadState('networkidle', { timeout: 60000 }).catch(() => {});
         this.page = adminPage; // subsequent steps run on the admin tab
         console.log('[ADMIN] Opened Org Settings (new tab)');
     }
@@ -7020,19 +7025,19 @@ export class NSEFoundationActions {
     /** Expand the "Others" accordion in the admin sidebar. */
     async clickOthers() {
         const heading = this.page.locator(`xpath=${L.adminOthersHeading}`).first();
-        await heading.waitFor({ state: 'visible', timeout: 15000 });
-        await heading.click();
+        await heading.waitFor({ state: 'visible', timeout: AUDIT_WAIT });
+        await heading.click({ timeout: AUDIT_WAIT });
         await this.page.locator(`xpath=${L.adminAuditLogsLink}`).first()
-            .waitFor({ state: 'visible', timeout: 10000 });
+            .waitFor({ state: 'visible', timeout: AUDIT_WAIT });
         console.log('[ADMIN] Expanded Others');
     }
 
     async clickAuditLogs() {
-        await this.page.locator(`xpath=${L.adminAuditLogsLink}`).first().click();
-        await this.page.waitForURL(/\/audit-logs/, { timeout: 30000 });
+        await this.page.locator(`xpath=${L.adminAuditLogsLink}`).first().click({ timeout: AUDIT_WAIT });
+        await this.page.waitForURL(/\/audit-logs/, { timeout: AUDIT_WAIT });
         await this.page.locator(L.auditDateRangeInputs).first()
-            .waitFor({ state: 'visible', timeout: 30000 });
-        await this.page.waitForLoadState('networkidle').catch(() => {});
+            .waitFor({ state: 'visible', timeout: AUDIT_WAIT });
+        await this.page.waitForLoadState('networkidle', { timeout: AUDIT_WAIT }).catch(() => {});
         console.log('[AUDIT] Opened Audit Logs');
     }
 
@@ -7043,16 +7048,21 @@ export class NSEFoundationActions {
     }
 
     /** Click a day in the open range-picker dropdown, paging months in
-     *  `direction` ('prev' | 'next') until the cell is rendered. */
+     *  `direction` ('prev' | 'next') until the cell is rendered. After each page
+     *  turn it waits for the month header to change, so a slow redraw can't make
+     *  the loop skip past the target month. */
     async _pickAuditDay(ymd, direction) {
         const dd = this.page.locator(L.auditPickerDropdown);
         const navBtn = direction === 'prev'
             ? dd.locator(L.auditPickerPrevMonth).first()
             : dd.locator(L.auditPickerNextMonth).last();
+        const header = dd.locator(L.auditPickerHeaderView).first();
         for (let i = 0; i < 24; i++) {
             const cell = dd.locator(L.auditPickerCell(ymd));
-            if (await cell.count()) { await cell.first().click(); return; }
-            await navBtn.click();
+            if (await cell.count()) { await cell.first().click({ timeout: AUDIT_WAIT }); return; }
+            const before = await header.innerText({ timeout: AUDIT_WAIT });
+            await navBtn.click({ timeout: AUDIT_WAIT });
+            await expect(header).not.toHaveText(before, { timeout: AUDIT_WAIT });
         }
         throw new Error(`[AUDIT] Date ${ymd} not found in the range picker`);
     }
@@ -7062,13 +7072,13 @@ export class NSEFoundationActions {
     async setAuditDateRange(from, to) {
         const [fromYmd, toYmd] = [this._ymd(from), this._ymd(to)];
         const inputs = this.page.locator(L.auditDateRangeInputs);
-        await inputs.first().click();
-        await this.page.locator(L.auditPickerDropdown).waitFor({ state: 'visible', timeout: 10000 });
+        await inputs.first().click({ timeout: AUDIT_WAIT });
+        await this.page.locator(L.auditPickerDropdown).waitFor({ state: 'visible', timeout: AUDIT_WAIT });
         await this._pickAuditDay(fromYmd, 'prev');
         await this._pickAuditDay(toYmd, 'next');
-        await expect(inputs.nth(0)).toHaveValue(fromYmd, { timeout: 10000 });
-        await expect(inputs.nth(1)).toHaveValue(toYmd, { timeout: 10000 });
-        await this.page.waitForLoadState('networkidle').catch(() => {});
+        await expect(inputs.nth(0)).toHaveValue(fromYmd, { timeout: AUDIT_WAIT });
+        await expect(inputs.nth(1)).toHaveValue(toYmd, { timeout: AUDIT_WAIT });
+        await this.page.waitForLoadState('networkidle', { timeout: AUDIT_WAIT }).catch(() => {});
         console.log(`[AUDIT] Date range set: ${fromYmd} → ${toYmd}`);
     }
 
@@ -7076,10 +7086,10 @@ export class NSEFoundationActions {
      *  has a header row plus at least one data row. Returns the data row count. */
     async exportAuditLogsAndVerifyExcel(testInfo) {
         const btn = this.page.locator(L.auditExportBtn).first();
-        await expect(btn).toBeEnabled({ timeout: 10000 });
+        await expect(btn).toBeEnabled({ timeout: AUDIT_WAIT });
         const [download] = await Promise.all([
-            this.page.waitForEvent('download', { timeout: 60000 }),
-            btn.click(),
+            this.page.waitForEvent('download', { timeout: AUDIT_WAIT }),
+            btn.click({ timeout: AUDIT_WAIT }),
         ]);
         const name = download.suggestedFilename();
         expect(name, 'export should be an .xlsx file').toMatch(/\.xlsx$/i);
@@ -7102,15 +7112,17 @@ export class NSEFoundationActions {
     /** Over-limit range: export is disabled, hovering it shows the 3-month
      *  tooltip, and clicking it does not download anything. */
     async verifyAuditExportBlockedOverLimit() {
-        await expect(this.page.locator(L.auditExportBtn).first()).toBeDisabled({ timeout: 10000 });
-        await this.page.locator(L.auditExportDisabledWrap).first().hover();
+        await expect(this.page.locator(L.auditExportBtn).first()).toBeDisabled({ timeout: AUDIT_WAIT });
+        await this.page.locator(L.auditExportDisabledWrap).first().hover({ timeout: AUDIT_WAIT });
         await expect(this.page.locator(L.auditVisibleTooltip)
-            .filter({ hasText: L.auditExportLimitTooltip }).first()).toBeVisible({ timeout: 10000 });
+            .filter({ hasText: L.auditExportLimitTooltip }).first()).toBeVisible({ timeout: AUDIT_WAIT });
         console.log(`[AUDIT] Tooltip shown: "${L.auditExportLimitTooltip}"`);
 
+        // Short window on purpose: this proves NO download happens, so waiting
+        // the full 60s would only slow the test down.
         const downloaded = await Promise.all([
             this.page.waitForEvent('download', { timeout: 8000 }),
-            this.page.locator(L.auditExportBtn).first().click({ force: true }),
+            this.page.locator(L.auditExportBtn).first().click({ force: true, timeout: AUDIT_WAIT }),
         ]).then(() => true, () => false);
         expect(downloaded, 'no file should download for a range over 3 months').toBe(false);
     }
