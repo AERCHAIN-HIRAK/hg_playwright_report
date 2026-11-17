@@ -94,6 +94,50 @@ test.describe('NSE Tracks & Hotfixes › Audit Logs (Org Settings)', () => {
 
 });
 
+// ── Tracks: Budgets › Transfer Budget (internal) ────────────────────────────
+// Dedicated budget "Automation Purpose - Transfer 1" (item 1 / item 2, 1,000,000
+// each). Move 200000 item 1 → item 2, then back, checking the Activity Timeline
+// after each transfer and the item totals at the end. A previous run that died
+// mid-way is rebalanced first so it can't fail every later run.
+test.describe('NSE Tracks & Hotfixes › Budget Transfer', () => {
+
+    const BUDGET = 'Automation Purpose - Transfer 1';
+    const I1 = 'item 1', I2 = 'item 2', AMT = 200000, START = 1000000;
+
+    test('Internal transfer between budget items and back @Tracks @BudgetTransfer', async ({ page }) => {
+        test.setTimeout(600000); // 10 min — every step may wait up to 60s
+        const a = await loginAndOpenApp(page);
+
+        await a.openBudgetsModule();
+        await a.openBudgetByName(BUDGET);
+        await a.rebalanceBudgetItems(I1, I2);
+
+        const before = await a.readBudgetItemTotals();
+        expect(before[I1], 'item 1 starting total').toBe(START);
+        expect(before[I2], 'item 2 starting total').toBe(START);
+        const fwd0 = await a.countTransferTimelineEntries(I1, I2);
+        const back0 = await a.countTransferTimelineEntries(I2, I1);
+
+        // ── Transfer 1: item 1 → item 2 ─────────────────────────────────────
+        await a.internalBudgetTransfer(I1, I2, AMT);
+        await a.reloadBudget();
+        expect(await a.countTransferTimelineEntries(I1, I2), 'timeline logs item 1 → item 2').toBe(fwd0 + 1);
+        const mid = await a.readBudgetItemTotals();
+        expect(mid[I1]).toBe(START - AMT);
+        expect(mid[I2]).toBe(START + AMT);
+
+        // ── Transfer 2: item 2 → item 1 ─────────────────────────────────────
+        await a.internalBudgetTransfer(I2, I1, AMT);
+        await a.reloadBudget();
+        expect(await a.countTransferTimelineEntries(I2, I1), 'timeline logs item 2 → item 1').toBe(back0 + 1);
+
+        const after = await a.readBudgetItemTotals();
+        expect(after[I1], 'item 1 total after both transfers').toBe(START);
+        expect(after[I2], 'item 2 total after both transfers').toBe(START);
+    });
+
+});
+
 // ── Hotfixes (regression) ─────────────────────────────────────────────────────
 test.describe('NSE Tracks & Hotfixes › Hotfixes', () => {
 

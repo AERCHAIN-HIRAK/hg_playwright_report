@@ -550,6 +550,22 @@ export const NSEFoundation_Locators = {
     auditExportDisabledWrap:'span.ant-tooltip-disabled-compatible-wrapper:has(img[alt="export icon"])',
     auditVisibleTooltip:    '.ant-tooltip:not(.ant-tooltip-hidden)',
     auditExportLimitTooltip:'Cannot export data over 3 months',
+
+    // ── Budgets › Transfer Budget (V3 Ant app, /budgets/{id}) ────────────────
+    // "Find Modules" is an Ant Select (placeholder is a span, not an input attr).
+    v3ModulesFindSelect:    '.ant-select:has(.ant-select-selection-placeholder:text-is("Find Modules"))',
+    v3ModulesFindOption:    (label) => `.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option[title="${label}"]`,
+    budgetListSearch:       'input[placeholder="Search with Code/Name"]',
+    budgetMoreBtn:          'button.ant-dropdown-trigger:has-text("More")',
+    budgetOpenMenu:         '.ant-dropdown:not(.ant-dropdown-hidden)',
+    budgetTransferMenuItem: 'Transfer Budget',
+    budgetTransferModal:    '.ant-modal:has(.ant-modal-title:text-is("Transfer Budget"))',
+    budgetTransferInternal: 'input.ant-radio-input[value="internal"]',
+    // One .ant-card per source item; the bold FROM name is an exact-text div.
+    budgetTransferCard:     '.ant-card',
+    budgetTransferSubmit:   'button:has-text("Submit Transfer")',
+    budgetTimelineIcon:     'span.anticon-clock-circle',
+    budgetTimelineDrawer:   '.ant-drawer-open:has-text("Activity Timeline")',
     // ── Non-PO ("CXO") Invoice — §4 of the NSE Customer Flow Document ─────────
     // CAPTURED LIVE 2026-08-19. This flow leaves V4 (nse-capp-v4-uat) for the V3
     // Ant Design app (nse-capp-uat), so the shell selectors below are Ant while

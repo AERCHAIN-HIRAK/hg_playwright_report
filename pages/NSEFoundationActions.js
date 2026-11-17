@@ -7128,6 +7128,135 @@ export class NSEFoundationActions {
     }
 
     // ═════════════════════════════════════════════════════════════════════════
+    // BUDGET TRANSFER (internal) — Budgets › {budget} › More › Transfer Budget
+    // Every step allows AUDIT_WAIT (60s) for slow networks.
+    // ═════════════════════════════════════════════════════════════════════════
+
+    /** V4 → V3 Home → Modules panel → find "budget" → Budgets listing. */
+    async openBudgetsModule() {
+        if (!/nse-capp-uat\.aerchain\.io/.test(this.page.url())) await this.clickV3Home();
+        await this.openModulesPanel();
+        await this.page.locator(L.v3ModulesFindSelect).first().click({ timeout: AUDIT_WAIT });
+        await this.page.keyboard.type('budget');
+        const opt = this.page.locator(L.v3ModulesFindOption('Budgets')).first();
+        await opt.waitFor({ state: 'visible', timeout: AUDIT_WAIT });
+        await opt.click();
+        await expect(this.page).toHaveURL(/\/budgets(\?|$)/, { timeout: AUDIT_WAIT });
+        await this.page.locator(L.budgetListSearch).waitFor({ state: 'visible', timeout: AUDIT_WAIT });
+    }
+
+    /** Search the listing by name and open the budget's detail page. */
+    async openBudgetByName(name) {
+        const search = this.page.locator(L.budgetListSearch);
+        await search.fill(name, { timeout: AUDIT_WAIT });
+        await search.press('Enter');
+        const row = this.page.locator('tbody tr').filter({ hasText: name }).first();
+        await row.waitFor({ state: 'visible', timeout: AUDIT_WAIT });
+        await row.locator('td').nth(1).click({ timeout: AUDIT_WAIT });
+        await this.page.waitForURL(/\/budgets\/\d+/, { timeout: AUDIT_WAIT });
+        await this._waitForBudgetItems();
+        console.log(`[BUDGET] opened "${name}" → ${this.page.url()}`);
+    }
+
+    async _waitForBudgetItems() {
+        await this.page.locator('a[href^="/budget-items/"]').first()
+            .waitFor({ state: 'visible', timeout: AUDIT_WAIT });
+        await this.page.waitForLoadState('networkidle', { timeout: AUDIT_WAIT }).catch(() => {});
+    }
+
+    /** { 'item 1': 1000000, ... } from the BUDGET ITEMS AG Grid. Name sits in the
+     *  pinned-left columns and Actual Budget in the centre ones — two separate
+     *  row containers — so pair them by the rows' row-index. */
+    async readBudgetItemTotals() {
+        const totals = await this.page.evaluate(() => {
+            const byIdx = sel => Object.fromEntries([...document.querySelectorAll(`${sel} .ag-row`)]
+                .map(r => [r.getAttribute('row-index'), r]));
+            const left = byIdx('.ag-pinned-left-cols-container');
+            const centre = byIdx('.ag-center-cols-container');
+            const out = {};
+            for (const [i, row] of Object.entries(left)) {
+                const name = row.querySelector('a[href^="/budget-items/"]')?.innerText.trim();
+                const cell = centre[i]?.querySelector('.ag-cell'); // first centre column = Actual Budget
+                if (!name || !cell) return { error: `row ${i}: name=${name} amountCell=${!!cell}` };
+                out[name] = Number(cell.innerText.replace(/[^\d.]/g, ''));
+            }
+            return Object.keys(out).length ? out : { error: 'no budget item rows' };
+        });
+        expect(totals.error, 'budget items grid could not be read').toBeUndefined();
+        console.log(`[BUDGET] item totals ${JSON.stringify(totals)}`);
+        return totals;
+    }
+
+    /** Reload the detail page so totals reflect the latest transfer. */
+    async reloadBudget() {
+        await this.page.reload({ waitUntil: 'domcontentloaded', timeout: AUDIT_WAIT });
+        await this._waitForBudgetItems();
+    }
+
+    /** Open the Activity Timeline drawer, count "Moved … from {from} … to {to}"
+     *  entries, close it. Counting (not just finding) matters: earlier runs leave
+     *  identical entries behind. */
+    async countTransferTimelineEntries(fromItem, toItem) {
+        await this.page.locator(L.budgetTimelineIcon).first().click({ timeout: AUDIT_WAIT });
+        const drawer = this.page.locator(L.budgetTimelineDrawer).last();
+        await drawer.waitFor({ state: 'visible', timeout: AUDIT_WAIT });
+        await drawer.getByText(/Budget (created|approved)/).first()
+            .waitFor({ state: 'visible', timeout: AUDIT_WAIT });
+        const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp(`Budget Transfer: Moved [\\d.,]+ from ${esc(fromItem)} \\(\\d+\\) to ${esc(toItem)} \\(\\d+\\)`, 'g');
+        const text = await drawer.innerText();
+        const count = (text.match(re) || []).length;
+        await this.page.keyboard.press('Escape');
+        await drawer.waitFor({ state: 'hidden', timeout: AUDIT_WAIT }).catch(async () => {
+            await drawer.locator('.ant-drawer-close').click().catch(() => {});
+        });
+        console.log(`[BUDGET] timeline "${fromItem} → ${toItem}" entries: ${count}`);
+        return count;
+    }
+
+    /** More › Transfer Budget › Internal; in {fromItem}'s split pick TO={toItem},
+     *  type the amount, Submit Transfer. */
+    async internalBudgetTransfer(fromItem, toItem, amount) {
+        await this.page.locator(L.budgetMoreBtn).first().click({ timeout: AUDIT_WAIT });
+        await this.page.locator(L.budgetOpenMenu).last()
+            .getByText(L.budgetTransferMenuItem, { exact: true }).click({ timeout: AUDIT_WAIT });
+        const modal = this.page.locator(L.budgetTransferModal).last();
+        await modal.waitFor({ state: 'visible', timeout: AUDIT_WAIT });
+        await modal.locator(L.budgetTransferInternal).check({ timeout: AUDIT_WAIT });
+
+        const card = modal.locator(L.budgetTransferCard).filter({
+            has: this.page.locator('div').getByText(fromItem, { exact: true }),
+        }).first();
+        await card.waitFor({ state: 'visible', timeout: AUDIT_WAIT });
+        const select = card.locator('select');
+        const value = await select.locator('option').evaluateAll((opts, to) => {
+            const o = opts.find(op => op.textContent.trim().startsWith(`${to} (`));
+            return o ? o.value : null;
+        }, toItem);
+        expect(value, `"${fromItem}" split has no TO option for "${toItem}"`).toBeTruthy();
+        await select.selectOption(value);
+        await card.locator('input[type="number"]').fill(String(amount), { timeout: AUDIT_WAIT });
+
+        const submit = modal.locator(L.budgetTransferSubmit);
+        await expect(submit).toBeEnabled({ timeout: AUDIT_WAIT });
+        await submit.click();
+        await modal.waitFor({ state: 'hidden', timeout: AUDIT_WAIT });
+        console.log(`[BUDGET] transferred ${amount} ${fromItem} → ${toItem}`);
+    }
+
+    /** Self-heal: if a previous run died mid-way, move the difference back so
+     *  both items are equal again before the test starts. */
+    async rebalanceBudgetItems(itemA, itemB) {
+        const t = await this.readBudgetItemTotals();
+        if (t[itemA] === t[itemB]) return;
+        const target = (t[itemA] + t[itemB]) / 2;
+        const [from, to] = t[itemA] > t[itemB] ? [itemA, itemB] : [itemB, itemA];
+        console.log(`[BUDGET] rebalancing leftover state: ${t[from] - target} ${from} → ${to}`);
+        await this.internalBudgetTransfer(from, to, t[from] - target);
+        await this.reloadBudget();
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
     // REJECT → EDIT → RESUBMIT helpers (testSuiteallmodulesrejectedit)
     //
     // Shared pattern across modules: a document is Rejected during its approval
