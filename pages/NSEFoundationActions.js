@@ -3,6 +3,7 @@ import { waitForEditorFocus, serverToday } from './waitHelpers';
 import { NSEFoundation_Locators as L } from './NSEFoundationLocators';
 import { intakeCreate_Locators as IL } from './allLocators';
 import { PDFParse } from 'pdf-parse';
+import ExcelJS from 'exceljs';
 import fs from 'fs';
 import path from 'path';
 
@@ -7010,6 +7011,108 @@ export class NSEFoundationActions {
         await this.page.locator('tbody tr td').first()
             .waitFor({ state: 'visible', timeout: 30000 }).catch(() => {});
         console.log('[ADMIN] User dashboard displayed');
+    }
+
+    // ── Org Settings › Others › Audit logs (Tracks — export) ───────────────────
+    // Runs on the admin tab opened by clickOrgSettings(). "Audit logs" navigates
+    // that same tab to the v3 /audit-logs page.
+
+    /** Expand the "Others" accordion in the admin sidebar. */
+    async clickOthers() {
+        const heading = this.page.locator(`xpath=${L.adminOthersHeading}`).first();
+        await heading.waitFor({ state: 'visible', timeout: 15000 });
+        await heading.click();
+        await this.page.locator(`xpath=${L.adminAuditLogsLink}`).first()
+            .waitFor({ state: 'visible', timeout: 10000 });
+        console.log('[ADMIN] Expanded Others');
+    }
+
+    async clickAuditLogs() {
+        await this.page.locator(`xpath=${L.adminAuditLogsLink}`).first().click();
+        await this.page.waitForURL(/\/audit-logs/, { timeout: 30000 });
+        await this.page.locator(L.auditDateRangeInputs).first()
+            .waitFor({ state: 'visible', timeout: 30000 });
+        await this.page.waitForLoadState('networkidle').catch(() => {});
+        console.log('[AUDIT] Opened Audit Logs');
+    }
+
+    /** Local-date YYYY-MM-DD (matches the picker's td[title]). */
+    _ymd(d) {
+        const z = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+    }
+
+    /** Click a day in the open range-picker dropdown, paging months in
+     *  `direction` ('prev' | 'next') until the cell is rendered. */
+    async _pickAuditDay(ymd, direction) {
+        const dd = this.page.locator(L.auditPickerDropdown);
+        const navBtn = direction === 'prev'
+            ? dd.locator(L.auditPickerPrevMonth).first()
+            : dd.locator(L.auditPickerNextMonth).last();
+        for (let i = 0; i < 24; i++) {
+            const cell = dd.locator(L.auditPickerCell(ymd));
+            if (await cell.count()) { await cell.first().click(); return; }
+            await navBtn.click();
+        }
+        throw new Error(`[AUDIT] Date ${ymd} not found in the range picker`);
+    }
+
+    /** Set the Audit Logs date range to (from → to). The inputs are readonly,
+     *  so both dates are picked from the calendar. */
+    async setAuditDateRange(from, to) {
+        const [fromYmd, toYmd] = [this._ymd(from), this._ymd(to)];
+        const inputs = this.page.locator(L.auditDateRangeInputs);
+        await inputs.first().click();
+        await this.page.locator(L.auditPickerDropdown).waitFor({ state: 'visible', timeout: 10000 });
+        await this._pickAuditDay(fromYmd, 'prev');
+        await this._pickAuditDay(toYmd, 'next');
+        await expect(inputs.nth(0)).toHaveValue(fromYmd, { timeout: 10000 });
+        await expect(inputs.nth(1)).toHaveValue(toYmd, { timeout: 10000 });
+        await this.page.waitForLoadState('networkidle').catch(() => {});
+        console.log(`[AUDIT] Date range set: ${fromYmd} → ${toYmd}`);
+    }
+
+    /** Click "Export Data to Excel", save the download and assert the workbook
+     *  has a header row plus at least one data row. Returns the data row count. */
+    async exportAuditLogsAndVerifyExcel(testInfo) {
+        const btn = this.page.locator(L.auditExportBtn).first();
+        await expect(btn).toBeEnabled({ timeout: 10000 });
+        const [download] = await Promise.all([
+            this.page.waitForEvent('download', { timeout: 60000 }),
+            btn.click(),
+        ]);
+        const name = download.suggestedFilename();
+        expect(name, 'export should be an .xlsx file').toMatch(/\.xlsx$/i);
+        const file = testInfo.outputPath(name);
+        await download.saveAs(file);
+        console.log(`[AUDIT] Downloaded ${name}`);
+
+        const wb = new ExcelJS.Workbook();
+        await wb.xlsx.readFile(file);
+        const ws = wb.worksheets[0];
+        expect(ws, 'workbook should contain a sheet').toBeTruthy();
+        const header = ws.getRow(1).values.filter(v => v != null).map(String);
+        expect(header).toEqual(expect.arrayContaining(['Date', 'Updated By', 'Module']));
+        const dataRows = ws.actualRowCount - 1;
+        expect(dataRows, 'exported audit log should contain data rows').toBeGreaterThan(0);
+        console.log(`[AUDIT] Excel has ${dataRows} data row(s); header: ${header.join(', ')}`);
+        return dataRows;
+    }
+
+    /** Over-limit range: export is disabled, hovering it shows the 3-month
+     *  tooltip, and clicking it does not download anything. */
+    async verifyAuditExportBlockedOverLimit() {
+        await expect(this.page.locator(L.auditExportBtn).first()).toBeDisabled({ timeout: 10000 });
+        await this.page.locator(L.auditExportDisabledWrap).first().hover();
+        await expect(this.page.locator(L.auditVisibleTooltip)
+            .filter({ hasText: L.auditExportLimitTooltip }).first()).toBeVisible({ timeout: 10000 });
+        console.log(`[AUDIT] Tooltip shown: "${L.auditExportLimitTooltip}"`);
+
+        const downloaded = await Promise.all([
+            this.page.waitForEvent('download', { timeout: 8000 }),
+            this.page.locator(L.auditExportBtn).first().click({ force: true }),
+        ]).then(() => true, () => false);
+        expect(downloaded, 'no file should download for a range over 3 months').toBe(false);
     }
 
     // ═════════════════════════════════════════════════════════════════════════

@@ -54,6 +54,46 @@ test.describe('NSE Tracks & Hotfixes › Tracks', () => {
 
 });
 
+// ── Tracks: Org Settings › Others › Audit logs ───────────────────────────────
+// Every action in NSE is recorded in the org-level Audit Logs. Export to Excel
+// is allowed for a range of at most 90 days ("3 months"); anything longer
+// disables the export icon with a "Cannot export data over 3 months" tooltip.
+test.describe('NSE Tracks & Hotfixes › Audit Logs (Org Settings)', () => {
+
+    async function openAuditLogs(page) {
+        const a = await loginAndOpenApp(page);
+        await a.clickOrgSettings();   // opens the admin tab
+        await a.clickOthers();
+        await a.clickAuditLogs();     // admin tab navigates to /audit-logs
+        return a;
+    }
+
+    test('Export audit logs for last 90 days downloads Excel with data @Tracks @AuditLogs', async ({ page }, testInfo) => {
+        test.setTimeout(240000);
+        const a = await openAuditLogs(page);
+
+        const today = new Date();
+        const from = new Date(today);
+        from.setDate(from.getDate() - 90);
+        await a.setAuditDateRange(from, today);
+
+        await a.exportAuditLogsAndVerifyExcel(testInfo);
+    });
+
+    test('Export over 3 months (4 months) is blocked with tooltip @Tracks @AuditLogs', async ({ page }) => {
+        test.setTimeout(240000);
+        const a = await openAuditLogs(page);
+
+        const today = new Date();
+        const from = new Date(today);
+        from.setMonth(from.getMonth() - 4);
+        await a.setAuditDateRange(from, today);
+
+        await a.verifyAuditExportBlockedOverLimit();
+    });
+
+});
+
 // ── Hotfixes (regression) ─────────────────────────────────────────────────────
 test.describe('NSE Tracks & Hotfixes › Hotfixes', () => {
 

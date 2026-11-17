@@ -527,6 +527,28 @@ export const NSEFoundation_Locators = {
     updateBtn:           '//div[contains(@class,"MuiPaper-root")]//button[normalize-space(.)="Update"]',
     // Success toast after Update
     userUpdatedToast:    'User updated successfully',
+
+    // ── Org Settings › Others › Audit logs (Tracks — export) ───────────────────
+    // VERIFIED live (2026-11-17). "Others" is an accordion in the admin sidebar;
+    // its "Audit logs" link navigates the admin tab to the v3 app
+    // (https://nse-capp-uat.aerchain.io/audit-logs). The page has an Ant Design
+    // RangePicker whose inputs are READONLY — dates must be picked from the
+    // calendar (each day cell is td[title="YYYY-MM-DD"]). Export is allowed for
+    // ranges of at most 90 days; 91+ days disables the export button and Ant
+    // wraps it in a span that carries the tooltip.
+    adminOthersHeading:     '//button[.//p[normalize-space(.)="Others"] or normalize-space(.)="Others"]',
+    adminAuditLogsLink:     '//a[normalize-space(.)="Audit logs"]',
+    auditLogsHeading:       '//*[normalize-space(text())="Audit Logs"]',
+    auditDateRangeInputs:   '.ant-picker-range input',
+    auditPickerDropdown:    '.ant-picker-dropdown:not(.ant-picker-dropdown-hidden)',
+    auditPickerCell:        (ymd) => `td[title="${ymd}"]:not(.ant-picker-cell-disabled)`,
+    auditPickerPrevMonth:   '.ant-picker-header-prev-btn',
+    auditPickerNextMonth:   '.ant-picker-header-next-btn',
+    auditExportBtn:         'button:has(img[alt="export icon"])',
+    // Hover target when the button is disabled (Ant's disabled-tooltip wrapper)
+    auditExportDisabledWrap:'span.ant-tooltip-disabled-compatible-wrapper:has(img[alt="export icon"])',
+    auditVisibleTooltip:    '.ant-tooltip:not(.ant-tooltip-hidden)',
+    auditExportLimitTooltip:'Cannot export data over 3 months',
     // ── Non-PO ("CXO") Invoice — §4 of the NSE Customer Flow Document ─────────
     // CAPTURED LIVE 2026-08-19. This flow leaves V4 (nse-capp-v4-uat) for the V3
     // Ant Design app (nse-capp-uat), so the shell selectors below are Ant while
