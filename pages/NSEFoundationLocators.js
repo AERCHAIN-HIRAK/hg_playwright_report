@@ -553,7 +553,9 @@ export const NSEFoundation_Locators = {
 
     // ── Budgets › Transfer Budget (V3 Ant app, /budgets/{id}) ────────────────
     // "Find Modules" is an Ant Select (placeholder is a span, not an input attr).
-    v3ModulesFindSelect:    '.ant-select:has(.ant-select-selection-placeholder:text-is("Find Modules"))',
+    // Anchored on the panel's "All Modules" heading — the placeholder text is gone
+    // once a module has been picked, and "Invoices" alone also appears on pages.
+    v3ModulesFindSelect:    'xpath=//*[normalize-space(text())="All Modules"]/following::div[contains(@class,"ant-select ")][1]',
     v3ModulesFindOption:    (label) => `.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option[title="${label}"]`,
     budgetListSearch:       'input[placeholder="Search with Code/Name"]',
     budgetMoreBtn:          'button.ant-dropdown-trigger:has-text("More")',
@@ -561,6 +563,10 @@ export const NSEFoundation_Locators = {
     budgetTransferMenuItem: 'Transfer Budget',
     budgetTransferModal:    '.ant-modal:has(.ant-modal-title:text-is("Transfer Budget"))',
     budgetTransferInternal: 'input.ant-radio-input[value="internal"]',
+    budgetTransferExternal: 'input.ant-radio-input[value="external"]',
+    // External only: searchable Ant Select listing other budgets by "CODE - Name (₹…)".
+    budgetTransferTarget:   '.ant-select:has(.ant-select-selection-search-input)',
+    budgetTransferTargetOpt:'.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option',
     // One .ant-card per source item; the bold FROM name is an exact-text div.
     budgetTransferCard:     '.ant-card',
     budgetTransferSubmit:   'button:has-text("Submit Transfer")',

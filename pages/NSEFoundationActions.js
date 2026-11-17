@@ -7135,8 +7135,17 @@ export class NSEFoundationActions {
     /** V4 → V3 Home → Modules panel → find "budget" → Budgets listing. */
     async openBudgetsModule() {
         if (!/nse-capp-uat\.aerchain\.io/.test(this.page.url())) await this.clickV3Home();
-        await this.openModulesPanel();
-        await this.page.locator(L.v3ModulesFindSelect).first().click({ timeout: AUDIT_WAIT });
+        // Own toggle loop: openModulesPanel() treats any visible "Invoices" as an
+        // open panel, but budget detail pages have an "Invoices" card.
+        const find = this.page.locator(L.v3ModulesFindSelect).first();
+        const toggle = this.page.locator(L.v3ModulesToggle).first();
+        await toggle.waitFor({ state: 'visible', timeout: AUDIT_WAIT });
+        for (let attempt = 1; attempt <= 4; attempt++) {
+            if (await find.isVisible()) break;
+            await toggle.click({ timeout: AUDIT_WAIT }).catch(() => {});
+            if (await find.waitFor({ state: 'visible', timeout: 15000 }).then(() => true, () => false)) break;
+        }
+        await find.click({ timeout: AUDIT_WAIT });
         await this.page.keyboard.type('budget');
         const opt = this.page.locator(L.v3ModulesFindOption('Budgets')).first();
         await opt.waitFor({ state: 'visible', timeout: AUDIT_WAIT });
@@ -7193,46 +7202,95 @@ export class NSEFoundationActions {
         await this._waitForBudgetItems();
     }
 
-    /** Open the Activity Timeline drawer, count "Moved … from {from} … to {to}"
-     *  entries, close it. Counting (not just finding) matters: earlier runs leave
-     *  identical entries behind. */
-    async countTransferTimelineEntries(fromItem, toItem) {
+    /** Open the Activity Timeline drawer, count entries matching `re`, close it.
+     *  Counting (not just finding) matters: earlier runs leave identical entries. */
+    async countTimelineEntries(re, label) {
         await this.page.locator(L.budgetTimelineIcon).first().click({ timeout: AUDIT_WAIT });
         const drawer = this.page.locator(L.budgetTimelineDrawer).last();
         await drawer.waitFor({ state: 'visible', timeout: AUDIT_WAIT });
         await drawer.getByText(/Budget (created|approved)/).first()
             .waitFor({ state: 'visible', timeout: AUDIT_WAIT });
-        const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const re = new RegExp(`Budget Transfer: Moved [\\d.,]+ from ${esc(fromItem)} \\(\\d+\\) to ${esc(toItem)} \\(\\d+\\)`, 'g');
-        const text = await drawer.innerText();
-        const count = (text.match(re) || []).length;
+        // Entries render after the drawer opens (a baseline once read 0, then 3
+        // moments later). Only count once the text has stopped changing.
+        let text = await drawer.innerText();
+        for (let i = 0; i < 20; i++) {
+            await this.page.waitForTimeout(1500);
+            const again = await drawer.innerText();
+            if (again === text) break;
+            text = again;
+        }
+        const count = (text.match(new RegExp(re.source, 'g')) || []).length;
         await this.page.keyboard.press('Escape');
         await drawer.waitFor({ state: 'hidden', timeout: AUDIT_WAIT }).catch(async () => {
             await drawer.locator('.ant-drawer-close').click().catch(() => {});
         });
-        console.log(`[BUDGET] timeline "${fromItem} → ${toItem}" entries: ${count}`);
+        console.log(`[BUDGET] timeline "${label}" entries: ${count}`);
         return count;
     }
 
     /** Slow network: the new entry can lag the transfer, so reopen the timeline
-     *  until the "{from} → {to}" count reaches `expected` (up to 60s). */
-    async waitForTransferTimelineEntries(fromItem, toItem, expected) {
-        await expect.poll(() => this.countTransferTimelineEntries(fromItem, toItem), {
-            message: `Activity Timeline should log "${fromItem} → ${toItem}" (${expected} entries)`,
+     *  until the count reaches `expected` (up to 60s). */
+    async waitForTimelineEntries(re, label, expected) {
+        await expect.poll(() => this.countTimelineEntries(re, label), {
+            message: `Activity Timeline should log "${label}" (${expected} entries)`,
             timeout: AUDIT_WAIT,
             intervals: [2000, 5000],
         }).toBeGreaterThanOrEqual(expected);
     }
 
+    // Timeline wording, read live 2026-11-17:
+    //   internal  "Budget Transfer: Moved 200000.00 from item 1 (803) to item 2 (804) within OPX-…"
+    //   sender    "Budget Transfer: Transferred 200000.00 from item 1 (803) to item 1 (805) of <target code>"
+    //   receiver  "Budget Transfer: Received 200000.00 from item 1 (803) of <source code> to item 1 (805)"
+    static _esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+    static internalTransferRe(fromItem, toItem) {
+        const e = NSEFoundationActions._esc;
+        return new RegExp(`Budget Transfer: Moved [\\d.,]+ from ${e(fromItem)} \\(\\d+\\) to ${e(toItem)} \\(\\d+\\)`);
+    }
+    static sentTransferRe(fromItem, toItem, targetCode) {
+        const e = NSEFoundationActions._esc;
+        return new RegExp(`Budget Transfer: Transferred [\\d.,]+ from ${e(fromItem)} \\(\\d+\\) to ${e(toItem)} \\(\\d+\\) of ${e(targetCode)}`);
+    }
+    static receivedTransferRe(fromItem, toItem, sourceCode) {
+        const e = NSEFoundationActions._esc;
+        return new RegExp(`Budget Transfer: Received [\\d.,]+ from ${e(fromItem)} \\(\\d+\\) of ${e(sourceCode)} to ${e(toItem)} \\(\\d+\\)`);
+    }
+
+    async countTransferTimelineEntries(fromItem, toItem) {
+        return this.countTimelineEntries(NSEFoundationActions.internalTransferRe(fromItem, toItem), `${fromItem} → ${toItem}`);
+    }
+
+    async waitForTransferTimelineEntries(fromItem, toItem, expected) {
+        await this.waitForTimelineEntries(NSEFoundationActions.internalTransferRe(fromItem, toItem), `${fromItem} → ${toItem}`, expected);
+    }
+
     /** More › Transfer Budget › Internal; in {fromItem}'s split pick TO={toItem},
      *  type the amount, Submit Transfer. */
     async internalBudgetTransfer(fromItem, toItem, amount) {
+        await this._budgetTransfer({ fromItem, toItem, amount });
+    }
+
+    /** More › Transfer Budget › External › target budget; in {fromItem}'s split
+     *  pick TO={toItem} (an item of the TARGET budget), amount, Submit Transfer. */
+    async externalBudgetTransfer(targetBudget, fromItem, toItem, amount) {
+        await this._budgetTransfer({ targetBudget, fromItem, toItem, amount });
+    }
+
+    async _budgetTransfer({ targetBudget, fromItem, toItem, amount }) {
         await this.page.locator(L.budgetMoreBtn).first().click({ timeout: AUDIT_WAIT });
         await this.page.locator(L.budgetOpenMenu).last()
             .getByText(L.budgetTransferMenuItem, { exact: true }).click({ timeout: AUDIT_WAIT });
         const modal = this.page.locator(L.budgetTransferModal).last();
         await modal.waitFor({ state: 'visible', timeout: AUDIT_WAIT });
-        await modal.locator(L.budgetTransferInternal).check({ timeout: AUDIT_WAIT });
+        if (!targetBudget) {
+            await modal.locator(L.budgetTransferInternal).check({ timeout: AUDIT_WAIT });
+        } else {
+            await modal.locator(L.budgetTransferExternal).check({ timeout: AUDIT_WAIT });
+            await modal.locator(L.budgetTransferTarget).first().click({ timeout: AUDIT_WAIT });
+            const opt = this.page.locator(L.budgetTransferTargetOpt).filter({ hasText: ` - ${targetBudget} (` }).first();
+            await opt.waitFor({ state: 'visible', timeout: AUDIT_WAIT });
+            await opt.click();
+        }
 
         const card = modal.locator(L.budgetTransferCard).filter({
             has: this.page.locator('div').getByText(fromItem, { exact: true }),
@@ -7251,7 +7309,28 @@ export class NSEFoundationActions {
         await expect(submit).toBeEnabled({ timeout: AUDIT_WAIT });
         await submit.click();
         await modal.waitFor({ state: 'hidden', timeout: AUDIT_WAIT });
-        console.log(`[BUDGET] transferred ${amount} ${fromItem} → ${toItem}`);
+        console.log(`[BUDGET] transferred ${amount} ${fromItem} → ${targetBudget ? `${targetBudget} / ` : ''}${toItem}`);
+    }
+
+    /** Self-heal for the external test: `item` should be equal in both budgets.
+     *  If an earlier run died between the two transfers, move the surplus back.
+     *  Leaves the page on budgetA. */
+    async rebalanceItemAcrossBudgets(budgetA, budgetB, item) {
+        await this.openBudgetsModule(); await this.openBudgetByName(budgetB);
+        const b = (await this.readBudgetItemTotals())[item];
+        await this.openBudgetsModule(); await this.openBudgetByName(budgetA);
+        const a = (await this.readBudgetItemTotals())[item];
+        if (a === b) return;
+        const diff = Math.abs(a - b) / 2;
+        console.log(`[BUDGET] rebalancing leftover state: ${diff} of ${item} → ${a > b ? budgetB : budgetA}`);
+        if (a > b) {
+            await this.externalBudgetTransfer(budgetB, item, item, diff);
+            await this.reloadBudget();
+        } else {
+            await this.openBudgetsModule(); await this.openBudgetByName(budgetB);
+            await this.externalBudgetTransfer(budgetA, item, item, diff);
+            await this.openBudgetsModule(); await this.openBudgetByName(budgetA);
+        }
     }
 
     /** Self-heal: if a previous run died mid-way, move the difference back so

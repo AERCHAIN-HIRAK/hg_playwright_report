@@ -136,6 +136,49 @@ test.describe('NSE Tracks & Hotfixes › Budget Transfer', () => {
         expect(after[I2], 'item 2 total after both transfers').toBe(START);
     });
 
+    // External: Transfer 1 item 1 → Transfer 2 item 1, then back. Each side logs
+    // its own wording — the sender "Transferred … of <target code>", the receiver
+    // "Received … of <source code>" — so each budget's check is direction-specific.
+    test('External transfer between two budgets and back @Tracks @BudgetTransfer @External', async ({ page }) => {
+        test.setTimeout(900000); // 15 min — two budgets, every step may wait up to 60s
+        const T1 = 'Automation Purpose - Transfer 1', T1_CODE = 'OPX-FNSE-26-21';
+        const T2 = 'Automation Purpose - Transfer 2', T2_CODE = 'OPX-FNSE-26-22';
+        const A = NSEFoundationActions;
+        const t1Sent = A.sentTransferRe(I1, I1, T2_CODE), t1Recv = A.receivedTransferRe(I1, I1, T2_CODE);
+        const t2Sent = A.sentTransferRe(I1, I1, T1_CODE), t2Recv = A.receivedTransferRe(I1, I1, T1_CODE);
+        const a = await loginAndOpenApp(page);
+
+        await a.rebalanceItemAcrossBudgets(T1, T2, I1); // ends on T1
+        expect((await a.readBudgetItemTotals())[I1], 'Transfer 1 item 1 starting total').toBe(START);
+        const t1Sent0 = await a.countTimelineEntries(t1Sent, 'T1 sent to T2');
+        const t1Recv0 = await a.countTimelineEntries(t1Recv, 'T1 received from T2');
+
+        await a.openBudgetsModule(); await a.openBudgetByName(T2);
+        expect((await a.readBudgetItemTotals())[I1], 'Transfer 2 item 1 starting total').toBe(START);
+        const t2Sent0 = await a.countTimelineEntries(t2Sent, 'T2 sent to T1');
+        const t2Recv0 = await a.countTimelineEntries(t2Recv, 'T2 received from T1');
+
+        // ── Transfer 1 → Transfer 2 ─────────────────────────────────────────
+        await a.openBudgetsModule(); await a.openBudgetByName(T1);
+        await a.externalBudgetTransfer(T2, I1, I1, AMT);
+        await a.reloadBudget();
+        await a.waitForTimelineEntries(t1Sent, 'T1 sent to T2', t1Sent0 + 1);
+        expect((await a.readBudgetItemTotals())[I1], 'Transfer 1 item 1 after sending').toBe(START - AMT);
+
+        await a.openBudgetsModule(); await a.openBudgetByName(T2);
+        await a.waitForTimelineEntries(t2Recv, 'T2 received from T1', t2Recv0 + 1);
+        expect((await a.readBudgetItemTotals())[I1], 'Transfer 2 item 1 after receiving').toBe(START + AMT);
+
+        // ── Transfer 2 → Transfer 1 ─────────────────────────────────────────
+        await a.externalBudgetTransfer(T1, I1, I1, AMT);
+        await a.reloadBudget();
+        await a.waitForTimelineEntries(t2Sent, 'T2 sent to T1', t2Sent0 + 1);
+        expect((await a.readBudgetItemTotals())[I1], 'Transfer 2 item 1 after sending back').toBe(START);
+
+        await a.openBudgetsModule(); await a.openBudgetByName(T1);
+        await a.waitForTimelineEntries(t1Recv, 'T1 received from T2', t1Recv0 + 1);
+        expect((await a.readBudgetItemTotals())[I1], 'Transfer 1 item 1 after receiving back').toBe(START);
+    });
 });
 
 // ── Hotfixes (regression) ─────────────────────────────────────────────────────
