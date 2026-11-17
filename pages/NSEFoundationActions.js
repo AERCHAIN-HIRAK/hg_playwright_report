@@ -7214,6 +7214,16 @@ export class NSEFoundationActions {
         return count;
     }
 
+    /** Slow network: the new entry can lag the transfer, so reopen the timeline
+     *  until the "{from} → {to}" count reaches `expected` (up to 60s). */
+    async waitForTransferTimelineEntries(fromItem, toItem, expected) {
+        await expect.poll(() => this.countTransferTimelineEntries(fromItem, toItem), {
+            message: `Activity Timeline should log "${fromItem} → ${toItem}" (${expected} entries)`,
+            timeout: AUDIT_WAIT,
+            intervals: [2000, 5000],
+        }).toBeGreaterThanOrEqual(expected);
+    }
+
     /** More › Transfer Budget › Internal; in {fromItem}'s split pick TO={toItem},
      *  type the amount, Submit Transfer. */
     async internalBudgetTransfer(fromItem, toItem, amount) {
@@ -7234,7 +7244,7 @@ export class NSEFoundationActions {
             return o ? o.value : null;
         }, toItem);
         expect(value, `"${fromItem}" split has no TO option for "${toItem}"`).toBeTruthy();
-        await select.selectOption(value);
+        await select.selectOption(value, { timeout: AUDIT_WAIT });
         await card.locator('input[type="number"]').fill(String(amount), { timeout: AUDIT_WAIT });
 
         const submit = modal.locator(L.budgetTransferSubmit);

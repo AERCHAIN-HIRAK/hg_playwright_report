@@ -121,7 +121,7 @@ test.describe('NSE Tracks & Hotfixes › Budget Transfer', () => {
         // ── Transfer 1: item 1 → item 2 ─────────────────────────────────────
         await a.internalBudgetTransfer(I1, I2, AMT);
         await a.reloadBudget();
-        expect(await a.countTransferTimelineEntries(I1, I2), 'timeline logs item 1 → item 2').toBe(fwd0 + 1);
+        await a.waitForTransferTimelineEntries(I1, I2, fwd0 + 1);
         const mid = await a.readBudgetItemTotals();
         expect(mid[I1]).toBe(START - AMT);
         expect(mid[I2]).toBe(START + AMT);
@@ -129,7 +129,7 @@ test.describe('NSE Tracks & Hotfixes › Budget Transfer', () => {
         // ── Transfer 2: item 2 → item 1 ─────────────────────────────────────
         await a.internalBudgetTransfer(I2, I1, AMT);
         await a.reloadBudget();
-        expect(await a.countTransferTimelineEntries(I2, I1), 'timeline logs item 2 → item 1').toBe(back0 + 1);
+        await a.waitForTransferTimelineEntries(I2, I1, back0 + 1);
 
         const after = await a.readBudgetItemTotals();
         expect(after[I1], 'item 1 total after both transfers').toBe(START);
