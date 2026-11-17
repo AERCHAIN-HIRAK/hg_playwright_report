@@ -7211,7 +7211,9 @@ export class NSEFoundationActions {
         await drawer.getByText(/Budget (created|approved)/).first()
             .waitFor({ state: 'visible', timeout: AUDIT_WAIT });
         // Entries render after the drawer opens (a baseline once read 0, then 3
-        // moments later). Only count once the text has stopped changing.
+        // moments later). Let the timeline request finish (slow network: up to
+        // 60s), then only count once the text has stopped changing.
+        await this.page.waitForLoadState('networkidle', { timeout: AUDIT_WAIT }).catch(() => {});
         let text = await drawer.innerText();
         for (let i = 0; i < 20; i++) {
             await this.page.waitForTimeout(1500);
