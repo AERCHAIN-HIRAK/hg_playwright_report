@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { NSEFoundationActions } from '../pages/NSEFoundationActions';
 import data from '../pages/NSEFoundationData.json';
+import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NSE Tracks & Hotfixes — combined suite:
@@ -178,6 +179,70 @@ test.describe('NSE Tracks & Hotfixes › Budget Transfer', () => {
         await a.openBudgetsModule(); await a.openBudgetByName(T1);
         await a.waitForTimelineEntries(t1Recv, 'T1 received from T2', t1Recv0 + 1);
         expect((await a.readBudgetItemTotals())[I1], 'Transfer 1 item 1 after receiving back').toBe(START);
+    });
+});
+
+// ── Tracks: Advance on a non-PO CXO, adjusted on the CXO invoice ─────────────
+// Non-PO CXO of V = 200000 → Advance for 250000 is blocked by budget → Advance
+// for V/2 → Review → Accounted → + Payment 100000 → Paid → CXO invoice for V
+// with that advance selected → view page shows Paid 100000 / Balance 100000.
+test.describe('NSE Tracks & Hotfixes › Advance against non-PO CXO', () => {
+
+    const V = data.nonPoInvoice.cxoValue;   // 200000
+    const OVER = 250000, ADVANCE = V / 2, PAID = 100000;
+    const nonPoData = { ...data, cxo: { ...data.cxo, transactionFlowType: 'Non-PO Based' } };
+
+    // createAndReleaseCxo rewrites savedCxo with a Non-PO CXO the chain suites
+    // must not inherit — snapshot and restore.
+    let dataSnapshot = null;
+    test.beforeAll(() => { dataSnapshot = snapshotFixtures(); });
+    test.afterAll(() => { restoreFixtures(dataSnapshot, { tag: 'TracksAdvance' }); });
+
+    test('Advance over CXO value is blocked, then advance → payment → invoice adjusts it @Tracks @Advance @Budget', async ({ page }) => {
+        test.setTimeout(1500000); // 25 min — CXO approvals, advance, payment, invoice
+        const a = await loginAndOpenApp(page);
+
+        // ── Non-PO CXO, released ────────────────────────────────────────────
+        await a.clickCxoTab();
+        await a.assertCxoListingPage();
+        await a.clickCreateCxo();
+        await a.assertCxoCreatePage();
+        await a.createAndReleaseCxo(nonPoData);
+        const cxoCode = a.getSavedCxoCode();
+
+        // ── Advance: over the CXO value is refused ──────────────────────────
+        await a.openAdvanceCreateDrawer();
+        await a.fillAdvanceHeader(data, cxoCode, OVER);
+        await a.addAdvanceLineItem(data, { qty: 1, price: OVER });
+        await a.assertAdvanceBudgetExceeded();
+
+        // ── Advance for half the CXO value → Review → Accounted ─────────────
+        await a.setAdvanceAmount(ADVANCE, { line: true });
+        const advance = await a.submitAdvanceAndOpen(cxoCode);
+        await a.reviewAdvance();
+        await a.assertAdvanceStatus(advance.id, 'Accounted');
+
+        // ── Payment → Paid ──────────────────────────────────────────────────
+        await a.payAdvance(PAID);
+        await a.assertAdvanceStatus(advance.id, 'Paid');
+
+        // ── CXO invoice for the full value, adjusted against the advance ────
+        await a.openNonPoInvoiceCreatePage({ direct: true });
+        await a.uploadNonPoInvoiceDocument(data);
+        await a.selectNonPoTemplate(data);
+        await a.expandNonPoSections();
+        await a.selectNonPoCxo(cxoCode);
+        await a.fillNonPoBudgetCombination(data);
+        await a.selectNonPoBrf(data);
+        await a.fillNonPoInvoiceDetails(data);
+        await a.addNonPoLineItem(data, { qty: '1', price: String(V) });
+        // Only after the line: before it, Save refuses with "Advances used amount
+        // can not exceed Invoice Amount".
+        await a.selectInvoiceAdvance(advance.code);
+        await a.submitInvoice();
+
+        expect(await a.readNonPoTotal('Paid Amount'), 'Paid Amount on the invoice').toBe(PAID);
+        expect(await a.readNonPoTotal('Balance'), 'Balance on the invoice').toBe(V - PAID);
     });
 });
 

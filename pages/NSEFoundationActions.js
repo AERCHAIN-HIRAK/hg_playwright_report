@@ -8536,7 +8536,8 @@ export class NSEFoundationActions {
         const labels = [...new Set((await this.page.locator('button').allTextContents())
             .map(t => t.trim()).filter(t => t && t.length < 40))];
         console.log('[NONPO] Extraction Failed dialog — buttons: ' + JSON.stringify(labels));
-        for (const pattern of [/manual|proceed|continue|without|skip/i, /retry|again|re-?upload/i]) {
+        // Retry first (user instruction 2026-11-19); fall back to continuing manually.
+        for (const pattern of [/retry|again|re-?upload/i, /manual|proceed|continue|without|skip/i]) {
             const btn = this.page.locator('button').filter({ hasText: pattern }).first();
             if (await btn.waitFor({ state: 'visible', timeout: 4000 }).then(() => true, () => false)) {
                 const label = ((await btn.textContent()) || '').trim();
@@ -8728,14 +8729,15 @@ export class NSEFoundationActions {
      *  intersection of the user's dimension access and the CXO's budget (§4 Step 3),
      *  so a mismatched combination yields an empty list. Values mirror the CXO line
      *  item so the same BRF resolves. */
-    async fillNonPoBudgetCombination(data) {
+    async fillNonPoBudgetCombination(data, { natureLabel = 'Nature of Expense (budget level)' } = {}) {
         const li = data.lineItem;
         await this._selectAcById('Department', data.cxo.department);
         await this._selectAcById('Function', data.cxo.function);
         await this._selectAcById('Expense Nature (for approval triggers)', data.cxo.expenseNature);
         await this._selectAcById('Project Name', li.projectName);
         await this._selectAcById('Vertical', li.vertical);
-        await this._selectAcById('Nature of Expense (budget level)', li.natureOfExpense);
+        // The Advance form spells it "(Budget level)" — ids are exact, so callers pass it.
+        await this._selectAcById(natureLabel, li.natureOfExpense);
         await this._selectAcById('GL Account', li.glAccount);
         await this._selectAcById('Profit Center', li.profitCenter);
         await this._selectAcById('Cost Center', li.costCenter);
@@ -9079,6 +9081,196 @@ export class NSEFoundationActions {
 
     async assertNonPoGrandTotal(expected) {
         expect(await this.readNonPoTotal('Grand Total')).toBeCloseTo(Number(expected), 2);
+    }
+
+    // ── Advances (v3 /advances): create → review → Accounted → payment → Paid ──
+    //
+    // Walked by hand on UAT 2026-11-19 (Advance-FNSE-26-73 on CXO-FNSE-26-1092):
+    //   • Create drawer: selecting the CXO fills nothing — every field is set here.
+    //   • Over the CXO value, Submit opens the Workflow Summary with "Budget Amount
+    //     is exceeded. Please Contact Budget User." and its Submit DISABLED.
+    //   • Within it → "Advances Submitted successfully", status Pending-review.
+    //     Review opens /advances/<id>/edit; its Submit → "Advances Updated
+    //     successfully" and the advance is Accounted (no approvals, no ack).
+    //   • "+ Payment" → "Converting to Payment" drawer → "PAYMENT Submitted
+    //     successfully" → Paid.
+
+    async openAdvanceCreateDrawer() {
+        await this.page.goto(L.advanceListUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.locator(`xpath=${L.advanceCreateBtn}`).first().click({ timeout: 60000 });
+        await this.page.locator(`xpath=${L.advanceDrawer}`).filter({ visible: true }).first()
+            .waitFor({ state: 'visible', timeout: 30000 });
+        await this.page.waitForTimeout(2000);
+        console.log('[ADV] Create Advance drawer open');
+    }
+
+    /** Header of the Create Advance drawer. `amount` goes into the header Amount;
+     *  the line item carries the same value (addAdvanceLineItem). */
+    async fillAdvanceHeader(data, cxoCode, amount) {
+        await this._selectFromAc(L.nonPoCxoLabel, cxoCode);
+        // Company / Tax numbers derive from the supplier, so it goes first.
+        await this._selectAcById('Supplier', data.sourcing.supplierSearch, { exact: false });
+        await this.page.waitForTimeout(2000);
+        await this.setAdvanceAmount(amount);
+        await this._pickReactDate(this.page.locator(L.advanceRequestDate).first(), serverToday());
+        await this._selectIfEmptyAndEnabled('Billing Address');
+        await this.fillNonPoBudgetCombination(data, { natureLabel: 'Nature of Expense (Budget level)' });
+        // BRF resolves from the combination on its own; pick only if it did not.
+        await this._selectIfEmptyAndEnabled('BRF - Description');
+        await this._selectIfEmptyAndEnabled('DeliveryAddress');
+        await this._selectIfEmptyAndEnabled('Payment Spoc');
+        await this._selectIfEmptyAndEnabled('Payment Terms');
+        console.log(`[ADV] header filled for ${cxoCode}, amount ${amount}`);
+    }
+
+    /** Row 0 cell of the grid under `root`, scrolled into the DOM. The drawer
+     *  grid is ~300px wide and AG-grid only renders columns in view, so a cell
+     *  off to the right does not exist until the grid is scrolled sideways. */
+    async _revealGridCell(colId, root = '') {
+        const cell = this.page.locator(
+            `xpath=${root}//div[@role='grid']//div[contains(@class,'ag-row')][@row-index='0']//div[@col-id='${colId}']`).first();
+        const hScroll = this.page.locator(
+            `xpath=${root}//div[@role='grid']//div[contains(@class,'ag-body-horizontal-scroll-viewport')]`).first();
+        for (const left of [null, 0, 300, 600, 900, 1200, 5000]) {
+            if (left !== null) await hScroll.evaluate((el, x) => { el.scrollLeft = x; }, left).catch(() => {});
+            await this.page.waitForTimeout(400);
+            if (await cell.count()) return cell;
+        }
+        throw new Error(`[ADV] grid column "${colId}" never rendered under ${root || 'page'}`);
+    }
+
+    /** Type into a (possibly off-screen) grid cell and check it committed. */
+    async _setRevealedGridCell(colId, value, root = '') {
+        const cell = await this._revealGridCell(colId, root);
+        await cell.dblclick();
+        await waitForEditorFocus(this.page);
+        await this.page.keyboard.press('ControlOrMeta+a');
+        await this.page.keyboard.type(String(value), { delay: 40 });
+        await this.page.keyboard.press('Enter');
+        await expect(cell, `grid cell ${colId} did not take ${value}`)
+            .toHaveText(new RegExp(`^\\s*${String(value)}(\\.0+)?\\s*$`), { timeout: 10000 });
+    }
+
+    /** Line item on the advance: the intake item, qty, price. */
+    async addAdvanceLineItem(data, { qty, price }) {
+        const root = L.advanceDrawer;
+        await this.page.locator(`xpath=${root}//button[contains(@class,"add-item-button")]`).first().click();
+        await this.page.waitForTimeout(1500);
+        await this._revealGridCell('line_items_product', root);
+        await this._setGridProduct(data.intake.itemName, data.intake.itemNameOption);
+        await this._setRevealedGridCell('line_items_quantity', qty, root);
+        await this._setRevealedGridCell('line_items_product_price', price, root);
+        console.log(`[ADV] line item ${data.intake.itemNameOption} × ${qty} @ ${price}`);
+    }
+
+    /** Header Amount and the line price move together. */
+    async setAdvanceAmount(amount, { line = false } = {}) {
+        await this.page.locator(L.advanceAmountInput).filter({ visible: true }).first().fill(String(amount));
+        if (line) await this._setRevealedGridCell('line_items_product_price', amount, L.advanceDrawer);
+    }
+
+    async _clickVisibleSubmit() {
+        await this.page.locator(`xpath=${L.visibleSubmitBtn}`).filter({ visible: true }).first().click();
+    }
+
+    _workflowSummaryDialog() {
+        return this.page.locator('xpath=//*[@role="dialog"][.//*[normalize-space()="Workflow Summary"]]')
+            .filter({ visible: true }).first();
+    }
+
+    /** Over the CXO value: the Workflow Summary must carry the budget message with
+     *  its Submit disabled. Discards, leaving the drawer open for a correction. */
+    async assertAdvanceBudgetExceeded() {
+        await this._clickVisibleSubmit();
+        const dialog = this._workflowSummaryDialog();
+        await dialog.waitFor({ state: 'visible', timeout: 30000 });
+        await expect(dialog.getByText(L.advanceBudgetExceeded).first()).toBeVisible({ timeout: 15000 });
+        await expect(dialog.locator('xpath=.//button[normalize-space(.)="Submit"]')).toBeDisabled();
+        console.log(`[ADV] blocked: "${L.advanceBudgetExceeded}" (Workflow Summary Submit disabled)`);
+        await dialog.locator('xpath=.//button[normalize-space(.)="Discard"]').click();
+        await dialog.waitFor({ state: 'hidden', timeout: 15000 });
+    }
+
+    /** Submit the drawer through the Workflow Summary and open the new advance.
+     *  The create call returns nothing usable in the UI, so take the listing's
+     *  newest row and prove it is ours by its CXO. Returns { id, code }. */
+    async submitAdvanceAndOpen(cxoCode) {
+        await this._clickVisibleSubmit();
+        await this._confirmInvoiceWorkflowSummary('ADV');
+        await expect(this.page.getByText('Advances Submitted successfully').first()).toBeVisible({ timeout: 30000 });
+
+        // The listing re-renders after the toast; reading row 1 straight away
+        // returned the PREVIOUS advance's code (run of 2026-11-19). Reload, then
+        // take the code from the opened advance itself, not from the row.
+        await this.page.goto(L.advanceListUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        const link = this.page.locator(`xpath=${L.advanceFirstRowLink}`).first();
+        await link.waitFor({ state: 'visible', timeout: 60000 });
+        await link.click();
+        await this.page.waitForURL(/\/advances\/\d+$/, { timeout: 60000 });
+        await expect(this.page.getByText(cxoCode, { exact: true }).first()).toBeVisible({ timeout: 60000 });
+        const id = this.page.url().match(/\/advances\/(\d+)/)[1];
+        const code = (await this.page.getByText(/^Advance-[A-Z]+-\d+-\d+$/).first().innerText()).trim();
+        console.log(`[ADV] created ${code} (id ${id}) on ${cxoCode}`);
+        return { id, code };
+    }
+
+    async assertAdvanceStatus(id, status) {
+        await expect(async () => {
+            await this.page.goto(`${L.advanceListUrl}/${id}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await expect(this.page.locator(`xpath=${L.advanceStatus(status)}`).first()).toBeVisible({ timeout: 15000 });
+        }).toPass({ timeout: 120000 });
+        console.log(`[ADV] advance ${id} is ${status}`);
+    }
+
+    /** Review → edit form → Submit. Moves Pending-review → Accounted. */
+    async reviewAdvance() {
+        await this.page.locator(`xpath=${L.invoiceReviewBtn}`).first().click({ timeout: 60000 });
+        await this.page.waitForURL(/\/advances\/\d+\/edit/, { timeout: 60000 });
+        await this.page.waitForTimeout(3000);
+        await this._clickVisibleSubmit();
+        // No Workflow Summary on this build; confirm it if one appears.
+        if (await this._workflowSummaryDialog().waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
+            await this._confirmInvoiceWorkflowSummary('ADV');
+        }
+        await expect(this.page.getByText('Advances Updated successfully').first()).toBeVisible({ timeout: 30000 });
+        console.log('[ADV] review submitted');
+    }
+
+    /** "+ Payment" → Converting to Payment. Paid amount goes in the header AND on
+     *  the advance's line (col line_items_paid_amount). */
+    async payAdvance(amount) {
+        await this.page.locator(`xpath=${L.advancePaymentBtn}`).first().click({ timeout: 60000 });
+        const drawer = this.page.locator(`xpath=${L.advanceDrawer}`).filter({ visible: true }).first();
+        await drawer.waitFor({ state: 'visible', timeout: 30000 });
+        await this.page.waitForTimeout(2000);
+        await this.page.locator(L.advancePaidAmountInput).filter({ visible: true }).first().fill(String(amount));
+        await this.page.locator(L.advanceUtrInput).filter({ visible: true }).first().fill(`UTR${Date.now()}`);
+        await this._pickReactDate(this.page.locator(L.advancePaymentDate).first(), serverToday());
+        await this._setRevealedGridCell('line_items_paid_amount', amount, L.advanceDrawer);
+        await drawer.locator(`xpath=.${L.visibleSubmitBtn}`).filter({ visible: true }).first().click();
+        await expect(this.page.getByText('PAYMENT Submitted successfully').first()).toBeVisible({ timeout: 30000 });
+        console.log(`[ADV] payment of ${amount} submitted`);
+    }
+
+    /** Invoice › General Details › Advance: tick `code` in the Select Advances
+     *  dialog and Save. Only works once a line item exists — before that, Save is
+     *  refused with "Advances used amount can not exceed Invoice Amount". */
+    async selectInvoiceAdvance(code) {
+        const field = this.page.locator(`xpath=${L.invoiceAdvanceField}`).first();
+        await field.scrollIntoViewIfNeeded();
+        await field.click({ force: true }); // the visible box is the form control, not the input
+        const dialog = this.page.locator(`xpath=${L.invoiceAdvanceDialog}`).first();
+        await dialog.waitFor({ state: 'visible', timeout: 30000 });
+        const box = dialog.locator(`xpath=${L.invoiceAdvanceCheckbox(code)}`).first();
+        await box.waitFor({ state: 'attached', timeout: 20000 });
+        if (!(await box.isChecked())) await box.click();
+        await this.page.waitForTimeout(1000);
+        console.log(`[ADV] Select Advances → ${(await dialog.innerText()).replace(/\s*\n\s*/g, ' | ')}`);
+        await dialog.locator('xpath=.//button[normalize-space()="Save"]').click();
+        await dialog.waitFor({ state: 'hidden', timeout: 15000 });
+        const shown = await this.page.locator(L.invoiceAdvanceInput).first().inputValue();
+        expect(shown, 'Advance field did not take the selection').toMatch(/1 advance selected/);
+        console.log(`[ADV] invoice Advance → "${shown}"`);
     }
 
     // ── Tax split on the invoice detail page (scenario 113, SEZ) ─────────────

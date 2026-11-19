@@ -680,6 +680,36 @@ export const NSEFoundation_Locators = {
     nonPoMandatoryHelperText: `//*[contains(normalize-space(.),"is Mandatory")]`,
     nonPoNoRowsToast:         `//*[contains(normalize-space(.),"Atleast one row is required")]`,
 
+    // ── Advances (v3, /advances) — create, review, payment (captured 2026-11-19) ──
+    // Create and "+ Payment" both open a right-hand MUI drawer built on the same
+    // form framework as the non-PO invoice: control ids equal their labels, so the
+    // nonPo* field helpers work inside it. The line grid is squeezed to ~300px, so
+    // AG-grid only renders the columns in view — see _revealGridCell().
+    advanceListUrl:        'https://nse-capp-uat.aerchain.io/advances',
+    advanceCreateBtn:      `//button[contains(normalize-space(.),"Create Advances")]`,
+    advanceDrawer:         `//div[contains(@class,"MuiDrawer-paper")]`,
+    advanceAmountInput:    'input[id="Amount"]',
+    advanceRequestDate:    'input[placeholder="Enter Request Date"]',
+    advanceFirstRowLink:   `//tbody/tr[1]/td[1]//a`,
+    // The drawer's own Submit. The page also carries hidden "Submit" buttons from
+    // the rich-text editor, so always take the VISIBLE one.
+    visibleSubmitBtn:      `//button[normalize-space(.)="Submit"]`,
+    advanceBudgetExceeded: 'Budget Amount is exceeded. Please Contact Budget User.',
+    advancePaymentBtn:     `//button[normalize-space(.)="+ Payment"]`,
+    advancePaidAmountInput:'input[id="Paid Amount"]',
+    advanceUtrInput:       'input[id^="UTR-"]',
+    advancePaymentDate:    'input[placeholder="Enter Payment Date"]',
+    // Status chip next to the advance code on the view page.
+    advanceStatus: (status) => `//*[normalize-space(text())="${status}"]`,
+
+    // Invoice › General Details › "Advance" — a read-only field that opens the
+    // "Select Advances" dialog (one checkbox + amount per advance, Cancel / Save).
+    invoiceAdvanceField:   `//input[@placeholder="Select Advances"]/ancestor::div[contains(@class,"MuiFormControl-root")][1]`,
+    invoiceAdvanceInput:   'input[placeholder="Select Advances"]',
+    invoiceAdvanceDialog:  `//*[@role="dialog"][.//*[normalize-space()="Select Advances"]]`,
+    invoiceAdvanceCheckbox: (code) =>
+        `.//*[contains(normalize-space(.),"${code}")]/ancestor-or-self::*[.//input[@type="checkbox"]][1]//input[@type="checkbox"]`,
+
     // Budget ceiling breach (§2.4 hard parent check). PROVISIONAL — text not yet
     // observed live; matched loosely so the real wording still trips it.
     budgetExceededError:     `//*[contains(translate(normalize-space(.),"BUDGETEXCD","budgetexcd"),"budget exceed")]`,
