@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { waitForEditorFocus, serverToday } from './waitHelpers';
+import { waitForEditorFocus, serverToday, waitForInvoiceExtraction } from './waitHelpers';
 import { NSEFoundation_Locators as L } from './NSEFoundationLocators';
 import { intakeCreate_Locators as IL } from './allLocators';
 import { PDFParse } from 'pdf-parse';
@@ -6317,7 +6317,9 @@ export class NSEFoundationActions {
         const filePath = path.resolve(data.invoice.documentPath);
         await input.setInputFiles(filePath);
         console.log(`[INV] Uploaded invoice document: ${filePath}`);
-        await this.page.waitForTimeout(2000);
+        // PO invoices may arrive with the template preset, so the form is ready
+        // when Invoice Number shows (what fillInvoiceDetails waits for next).
+        await waitForInvoiceExtraction(this.page, { tag: 'INV', ready: this.page.locator(`xpath=${L.invoiceNumberInput}`).first() });
     }
 
     // Bump the stored invoice number by 1 (e.g. INV-AUTO-001 → INV-AUTO-002) and
@@ -8495,60 +8497,9 @@ export class NSEFoundationActions {
      *  file-scoped default. */
     async uploadNonPoInvoiceDocument(data) {
         const filePath = path.resolve(data.invoice.documentPath);
-        const templateInput = this.page.locator(L.nonPoTemplateInput).first();
-        for (let attempt = 1; attempt <= 3; attempt++) {
-            // Only attach while the dropzone still exists. When extraction fails the
-            // dialog REPLACES it, so the old unconditional re-attach threw
-            // "setInputFiles: Timeout 20000ms" waiting for an input that had gone —
-            // masking the real cause (2026-08-25).
-            const fileInput = this.page.locator(L.invoiceUploadInput).first();
-            if (await fileInput.count().then(c => c > 0).catch(() => false)) {
-                await fileInput.setInputFiles(filePath);
-                console.log(`[NONPO] attached ${filePath} (attempt ${attempt})`);
-            } else {
-                console.log(`[NONPO] dropzone gone (attempt ${attempt}) — not re-attaching`);
-            }
-            const rendered = await templateInput.waitFor({ state: 'visible', timeout: 120000 })
-                .then(() => true).catch(() => false);
-            if (rendered) {
-                await this.page.waitForTimeout(2000);
-                console.log('[NONPO] form rendered (Templates picker present)');
-                return;
-            }
-            if (!(await this._handleExtractionFailed())) {
-                const seen = (await this.page.locator('body').innerText().catch(() => '')).slice(0, 200);
-                console.log(`[NONPO] form did not render on attempt ${attempt}. Page shows: ${JSON.stringify(seen)}`);
-            }
-            await this.page.waitForTimeout(3000);
-        }
-        throw new Error('[NONPO] Invoice document uploaded but the form never rendered (no Templates picker)');
-    }
-
-    /** The V3 upload intermittently answers with "Extraction Failed — Document
-     *  extraction was unsuccessful. Please choose how to proceed" instead of the
-     *  extracted form. Re-uploading is impossible (the dropzone is gone), so the
-     *  only way on is the dialog's own action. Logs the buttons it finds, so an
-     *  unexpected variant is self-diagnosing next time.
-     *  Returns true when such a dialog was found and actioned. */
-    async _handleExtractionFailed() {
-        const body = await this.page.locator('body').innerText().catch(() => '');
-        if (!/Extraction Failed/i.test(body)) return false;
-        const labels = [...new Set((await this.page.locator('button').allTextContents())
-            .map(t => t.trim()).filter(t => t && t.length < 40))];
-        console.log('[NONPO] Extraction Failed dialog — buttons: ' + JSON.stringify(labels));
-        // Retry first (user instruction 2026-11-19); fall back to continuing manually.
-        for (const pattern of [/retry|again|re-?upload/i, /manual|proceed|continue|without|skip/i]) {
-            const btn = this.page.locator('button').filter({ hasText: pattern }).first();
-            if (await btn.waitFor({ state: 'visible', timeout: 4000 }).then(() => true, () => false)) {
-                const label = ((await btn.textContent()) || '').trim();
-                await btn.click().catch(() => {});
-                console.log(`[NONPO] Extraction Failed → clicked "${label}"`);
-                await this.page.waitForTimeout(3000);
-                return true;
-            }
-        }
-        console.log('[NONPO] Extraction Failed dialog offered no recognised way forward');
-        return false;
+        await this.page.locator(L.invoiceUploadInput).first().setInputFiles(filePath);
+        console.log(`[NONPO] attached ${filePath}`);
+        await waitForInvoiceExtraction(this.page, { tag: 'NONPO', ready: this.page.locator(L.nonPoTemplateInput).first() });
     }
 
     /** Choose the CXO invoice template. Options seen: "RC Invoice",
@@ -9185,7 +9136,7 @@ export class NSEFoundationActions {
         const dialog = this._workflowSummaryDialog();
         await dialog.waitFor({ state: 'visible', timeout: 30000 });
         await expect(dialog.getByText(L.advanceBudgetExceeded).first()).toBeVisible({ timeout: 15000 });
-        await expect(dialog.locator('xpath=.//button[normalize-space(.)="Submit"]')).toBeDisabled();
+        await expect(dialog.locator('xpath=.//button[normalize-space(.)="Submit"]')).toBeDisabled({ timeout: 60000 });
         console.log(`[ADV] blocked: "${L.advanceBudgetExceeded}" (Workflow Summary Submit disabled)`);
         await dialog.locator('xpath=.//button[normalize-space(.)="Discard"]').click();
         await dialog.waitFor({ state: 'hidden', timeout: 15000 });

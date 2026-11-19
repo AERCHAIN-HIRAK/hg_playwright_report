@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { serverToday } from './waitHelpers';
+import { serverToday, waitForInvoiceExtraction } from './waitHelpers';
 import { SupplierPortal_Locators as S } from './SupplierPortalLocators';
 import fs from 'fs';
 import path from 'path';
@@ -463,6 +463,8 @@ export class SupplierPortalActions {
         await this.page.locator(S.invoiceUploadInput).first()
             .setInputFiles(path.resolve(data.invoice.documentPath));
         await this.page.waitForTimeout(3000); // let the document upload register
+        // Form is already open here; just answer an "Extraction Failed" with Retry.
+        await waitForInvoiceExtraction(this.page, { tag: 'SAPP Invoice' });
         console.log(`[SAPP Invoice] Filled form (Invoice Number=${invoiceNumber}, date=today, Period/Extra=No, document uploaded)`);
 
         if (beforeSubmit) {

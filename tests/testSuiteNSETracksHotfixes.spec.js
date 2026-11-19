@@ -192,6 +192,10 @@ test.describe('NSE Tracks & Hotfixes › Advance against non-PO CXO', () => {
     const OVER = 250000, ADVANCE = V / 2, PAID = 100000;
     const nonPoData = { ...data, cxo: { ...data.cxo, transactionFlowType: 'Non-PO Based' } };
 
+    // Slow-network tolerance, as for the other Tracks: the repo-wide 5s action /
+    // 15s navigation limits are too tight for the V3 Advances + Invoice pages.
+    test.use({ actionTimeout: 60000, navigationTimeout: 60000 });
+
     // createAndReleaseCxo rewrites savedCxo with a Non-PO CXO the chain suites
     // must not inherit — snapshot and restore.
     let dataSnapshot = null;
