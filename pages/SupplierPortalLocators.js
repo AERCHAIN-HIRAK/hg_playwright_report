@@ -123,4 +123,16 @@ export const SupplierPortal_Locators = {
     reassignAdminOption:   `//li[@role='option'][normalize-space(.)='NSEF Support Admin']`,
     reassignReasonField:   `//div[@role='dialog']//textarea`,
     reassignSubmitBtn:     `//div[@role='dialog']//button[normalize-space(.)='Reassign']`,
+
+    // ── Shell: All Modules panel + Payments export (captured 2026-11-19) ─────
+    // "Modules" in the header opens an "All Modules" dialog whose "Find Modules"
+    // search is an Ant select; its options render in a body-level dropdown.
+    modulesToggle:        `//*[normalize-space(text())='Modules']`,
+    findModulesInput:     'input.ant-select-selection-search-input',
+    findModulesOption:    '.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option',
+    // Top-right icon buttons carry only an <img alt>; Export downloads
+    // "Payments-Report.xlsx" with a "Your file is being downloaded..." toast.
+    exportIconBtn:        'button:has(img[alt="Export"])',
+    listingHeaderCells:   'thead th',
+    listingFirstRowCells: 'tbody tr:first-child td',
 };

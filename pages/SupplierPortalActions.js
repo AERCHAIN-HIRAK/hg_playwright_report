@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { serverToday, waitForInvoiceExtraction } from './waitHelpers';
 import { SupplierPortal_Locators as S } from './SupplierPortalLocators';
 import fs from 'fs';
+import ExcelJS from 'exceljs';
 import path from 'path';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -51,7 +52,7 @@ export class SupplierPortalActions {
     async navigateToSappLogin() {
         const cfg = this.getSupplierConfig();
         await this.page.goto(`${cfg.authUrl}?`);
-        await this.page.waitForSelector(S.loginEmailField, { timeout: 20000 });
+        await this.page.waitForSelector(S.loginEmailField, { timeout: 60000 });
     }
 
     async fillLoginAndSubmit() {
@@ -59,7 +60,9 @@ export class SupplierPortalActions {
         await this.page.locator(S.loginEmailField).fill(cfg.login.email);
         await this.page.locator(S.loginPasswordField).fill(cfg.login.password);
         await this.page.locator(`xpath=${S.loginSubmitBtn}`).click();
-        await this.page.waitForURL(/nse-sapp-uat\.aerchain\.io/, { timeout: 120000 });
+        // Match the HOST: the failing auth URL carries "nse-sapp-uat.aerchain.io"
+        // inside its ?refUrl= query, so a plain URL regex passed while still on login.
+        await this.page.waitForURL(u => /^nse-sapp(-v4)?-uat\.aerchain\.io$/.test(u.hostname), { timeout: 120000 });
     }
 
     async assertLoggedIn() {
@@ -83,12 +86,29 @@ export class SupplierPortalActions {
      * @param {string} url absolute SAPP url (shell or v4)
      */
     async openSappPage(url) {
-        await this.page.goto(url);
+        await this.page.goto(url, { timeout: 90000 });
         await this.page.waitForLoadState('domcontentloaded');
+        // Wait for EITHER outcome: the login form (session missing/expired) or the
+        // SAPP app itself. A fixed 5s look for the form missed a slow redirect to
+        // the auth page, so the test carried on unauthenticated (2026-11-19).
         const emailField = this.page.locator(S.loginEmailField);
-        if (await emailField.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
-            await this.fillLoginAndSubmit();
-            await this.page.goto(url);
+        // "In the app" must hold for 3 checks running, so a SAPP page that is about
+        // to redirect to the auth host is not mistaken for a live session.
+        let needsLogin = false, inApp = 0;
+        for (let waited = 0; waited < 60000 && inApp < 3; waited += 1000) {
+            if (await emailField.isVisible().catch(() => false)) { needsLogin = true; break; }
+            const host = new URL(this.page.url()).hostname;
+            const rendered = await this.page.locator('body').innerText()
+                .then(t => t.trim().length > 50).catch(() => false);
+            inApp = /^nse-sapp(-v4)?-uat\.aerchain\.io$/.test(host) && rendered ? inApp + 1 : 0;
+            await this.page.waitForTimeout(1000);
+        }
+        if (needsLogin) {
+            // The redirect lands on .../sapp/login?refUrl=https://nse-sapp-uat...,
+            // and logging in THERE fails. Drop the refUrl: log in on the bare
+            // auth URL (navigateToSappLogin), then go back to the requested page.
+            await this.login();
+            await this.page.goto(url, { timeout: 90000 });
             await this.page.waitForLoadState('domcontentloaded');
         }
         await this.page.waitForLoadState('networkidle').catch(() => {});
@@ -1007,4 +1027,55 @@ export class SupplierPortalActions {
         await this.page.waitForTimeout(2500);
         return true;
     }
+
+    // ── Shell modules + Payments export (Tracks, 2026-11-19) ───────────────────
+
+    /** Shell home → Modules → Find Modules "<name>" → open it. */
+    async openSappModule(name, { timeout = 60000 } = {}) {
+        await this.openSappPage(this.getSupplierConfig().shellUrl);
+        await this.page.locator(`xpath=${S.modulesToggle}`).first().click({ timeout });
+        const search = this.page.locator(S.findModulesInput).filter({ visible: true }).first();
+        await search.click({ timeout });
+        await search.fill(name);
+        await this.page.locator(S.findModulesOption).filter({ hasText: new RegExp(`^\\s*${name}\\s*$`) })
+            .first().click({ timeout });
+        await this.page.locator(S.listingFirstRowCells).first().waitFor({ state: 'visible', timeout });
+        console.log(`[SAPP] ${name} → ${this.page.url()}`);
+    }
+
+    /** First listing row as { column header: cell text }. */
+    async readFirstListingRow() {
+        const headers = (await this.page.locator(S.listingHeaderCells).allInnerTexts()).map(t => t.trim());
+        const cells = (await this.page.locator(S.listingFirstRowCells).allInnerTexts()).map(t => t.trim());
+        const row = Object.fromEntries(headers.map((h, i) => [h, cells[i] ?? '']));
+        console.log(`[SAPP] first listing row → ${JSON.stringify(row)}`);
+        return row;
+    }
+
+    /** Click the top-right Export icon, save the .xlsx, return its first sheet as
+     *  { file, header: string[], rows: object[] } keyed by header. */
+    async exportListingToExcel(testInfo, { timeout = 60000 } = {}) {
+        const [download] = await Promise.all([
+            this.page.waitForEvent('download', { timeout }),
+            this.page.locator(S.exportIconBtn).first().click({ timeout }),
+        ]);
+        const name = download.suggestedFilename();
+        expect(name, 'export should be an .xlsx file').toMatch(/\.xlsx$/i);
+        const file = testInfo.outputPath(name);
+        await download.saveAs(file);
+
+        const wb = new ExcelJS.Workbook();
+        await wb.xlsx.readFile(file);
+        const ws = wb.worksheets[0];
+        const header = ws.getRow(1).values.slice(1).map(v => String(v ?? '').trim());
+        const rows = [];
+        ws.eachRow((r, i) => {
+            if (i === 1) return;
+            const v = r.values.slice(1);
+            rows.push(Object.fromEntries(header.map((h, k) => [h, v[k]])));
+        });
+        console.log(`[SAPP] ${name}: ${rows.length} data row(s); columns: ${header.join(', ')}`);
+        return { file, header, rows };
+    }
+
 }

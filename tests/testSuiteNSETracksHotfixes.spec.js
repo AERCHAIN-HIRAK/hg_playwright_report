@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { NSEFoundationActions } from '../pages/NSEFoundationActions';
+import { SupplierPortalActions } from '../pages/SupplierPortalActions';
 import data from '../pages/NSEFoundationData.json';
 import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
 
@@ -247,6 +248,44 @@ test.describe('NSE Tracks & Hotfixes › Advance against non-PO CXO', () => {
 
         expect(await a.readNonPoTotal('Paid Amount'), 'Paid Amount on the invoice').toBe(PAID);
         expect(await a.readNonPoTotal('Balance'), 'Balance on the invoice').toBe(V - PAID);
+    });
+});
+
+// ── Tracks: Supplier Portal › Payments › Export ──────────────────────────────
+// HG Automation SUPP exports its Payments listing. The export is invoice-level
+// ("Payments-Report.xlsx": Invoice Code, UTR / Transaction Reference, Paid
+// Amount, …) and carries no Payment-FNSE codes, so the listing's first row is
+// matched to the Excel by UTR, and its Paid Amount must agree.
+test.describe('NSE Tracks & Hotfixes › SAPP Payments export', () => {
+
+    test.use({ actionTimeout: 60000, navigationTimeout: 60000 });
+
+    const COLUMNS = [
+        'Invoice Code', 'Invoice ID', 'Invoice Reference', 'Supplier Name',
+        'UTR / Transaction Reference', 'Invoice Date', 'Invoice Created Date',
+        'Invoice Accounted Date', 'Invoice Payment Status', 'Invoice Subtotal',
+        'Total Invoice Amount', 'Payment Amount', 'Paid Amount', 'Actual Payment Date',
+        'Payment Mode', 'Payment Type', 'Payment Remarks', 'Payment Currency',
+    ];
+
+    test('Payments export downloads an Excel with the listed payments @Tracks @SAPP @Export', async ({ page }, testInfo) => {
+        test.setTimeout(300000); // 5 min — SAPP login + export on a slow link
+        await page.setViewportSize({ width: 1800, height: 900 });
+        const s = new SupplierPortalActions(page);
+
+        await s.openSappModule('Payments');
+        const first = await s.readFirstListingRow();
+
+        const { header, rows } = await s.exportListingToExcel(testInfo);
+        expect(header, 'export columns').toEqual(COLUMNS);
+        expect(rows.length, 'export should contain data rows').toBeGreaterThan(0);
+
+        const hit = rows.find(r => String(r['UTR / Transaction Reference'] ?? '').trim() === first.UTR);
+        expect(hit, `listing's first UTR ${first.UTR} should be in the export`).toBeTruthy();
+        expect(Number(hit['Paid Amount']), 'Paid Amount in the export')
+            .toBe(Number(first['Paid Amount'].replace(/[^\d.]/g, '')));
+        expect(hit['Supplier Name']).toBe('HG Automation SUPP');
+        console.log(`[SAPP] ${first.Code} / ${first.UTR} → ${hit['Invoice Code']} paid ${hit['Paid Amount']}`);
     });
 });
 
