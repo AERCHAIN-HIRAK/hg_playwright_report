@@ -9224,6 +9224,31 @@ export class NSEFoundationActions {
         console.log(`[ADV] invoice Advance → "${shown}"`);
     }
 
+    /** Submit a CXO invoice with NO advance selected while one is available: the
+     *  app stops with a popup saying an advance is available for selection.
+     *  Click "Make Changes" and prove we are back on the unsaved create form. */
+    async submitInvoiceExpectingAdvancePrompt() {
+        const submit = this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first();
+        await submit.scrollIntoViewIfNeeded().catch(() => {});
+        await submit.click();
+        console.log('[ADV] Clicked Submit with no advance selected');
+
+        const makeChanges = this.page.getByRole('button', { name: /make changes/i }).filter({ visible: true }).first();
+        await makeChanges.waitFor({ state: 'visible', timeout: 60000 });
+        const dialog = this.page.locator('[role="dialog"], .MuiDialog-root, [role="alertdialog"]')
+            .filter({ has: makeChanges }).last();
+        const text = (await dialog.innerText().catch(() => '')).replace(/\s*\n\s*/g, ' | ');
+        console.log(`[ADV] advance popup → ${text}`);
+        expect(text, 'popup should say an advance is available').toMatch(/advance/i);
+
+        await makeChanges.click();
+        await makeChanges.waitFor({ state: 'hidden', timeout: 15000 });
+        await this.page.waitForTimeout(1500);
+        expect(this.page.url(), 'Make Changes should keep us on the create form')
+            .not.toMatch(/\/invoices\/\d+(?:$|\/(?!edit))/);
+        console.log('[ADV] Make Changes → back on the invoice form');
+    }
+
     // ── Tax split on the invoice detail page (scenario 113, SEZ) ─────────────
     //
     // Below the line items sits a summary AG grid (probed 2026-09-25 on /invoices/1225):

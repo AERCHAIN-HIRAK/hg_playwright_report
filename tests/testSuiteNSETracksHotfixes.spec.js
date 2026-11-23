@@ -243,6 +243,9 @@ test.describe('NSE Tracks & Hotfixes › Advance against non-PO CXO', () => {
         await a.addNonPoLineItem(data, { qty: '1', price: String(V) });
         // Only after the line: before it, Save refuses with "Advances used amount
         // can not exceed Invoice Amount".
+        // Submitting without picking the advance is stopped by an "advance
+        // available for selection" popup → Make Changes returns to the form.
+        await a.submitInvoiceExpectingAdvancePrompt();
         await a.selectInvoiceAdvance(advance.code);
         await a.submitInvoice();
 
