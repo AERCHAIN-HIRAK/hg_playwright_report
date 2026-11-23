@@ -446,6 +446,12 @@ export async function buildFromCompletedPrToPayment(a, data = defaultData) {
 
 /** PO (already saved + GRN inwarded) → Invoice → acknowledge → Payment. */
 export async function buildInvoiceToPayment(a, data = defaultData) {
+    await buildInvoiceToPendingSync(a, data);
+    return await buildAckToPayment(a, data);
+}
+
+/** PO (already saved + GRN inwarded) → Invoice, approved to Pending Sync / Sync Failed. */
+export async function buildInvoiceToPendingSync(a, data = defaultData) {
     // PO → Create → Invoice → match the GRN → submit → approve → Pending Sync.
     await a.openSavedPurchaseOrder(data);
     await a.clickPoCreateInvoice();
@@ -462,8 +468,6 @@ export async function buildInvoiceToPayment(a, data = defaultData) {
     // the real proof.
     await a.approveInvoiceUntilPendingSync('Approved by automation', { acceptSyncFailed: true });
     await a.assertInvoiceReadyForAck();
-
-    return await buildAckToPayment(a, data);
 }
 
 /**

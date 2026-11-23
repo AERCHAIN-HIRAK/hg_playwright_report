@@ -3,7 +3,8 @@ import { NSEFoundationActions } from '../pages/NSEFoundationActions';
 import { SupplierPortalActions } from '../pages/SupplierPortalActions';
 import data from '../pages/NSEFoundationData.json';
 import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
-import { buildRfxToForeclose, buildToPoViaCapp } from '../pages/chainBuilders';
+import { buildRfxToForeclose, buildToPoViaCapp, buildToGrnViaCapp, buildInvoiceToPendingSync } from '../pages/chainBuilders';
+import { serverToday } from '../pages/waitHelpers';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NSE Tracks & Hotfixes — combined suite:
@@ -373,6 +374,52 @@ test.describe('NSE Tracks & Hotfixes › PO advance auto-mapping', () => {
         await a.assertGrnInwarded();
 
         // ON HOLD — PO invoice with the advances auto-mapped (bug raised).
+    });
+});
+
+// ── Tracks: TDS through the inbound payment API ──────────────────────────────
+// CXO → … → PO invoice, acknowledged to Accounted, then paid by the integration
+// inbound API (/payment/create) as the ERP would: gross paid x with TDS y.
+// The invoice must then show Invoice Amount unchanged, TDS Deducted = y and
+// Paid Amount = x - y.
+test.describe('NSE Tracks & Hotfixes › TDS via inbound payment API', () => {
+
+    const TDS = 50000;
+
+    test.use({ actionTimeout: 60000, navigationTimeout: 60000 });
+
+    let dataSnapshot = null;
+    test.beforeAll(() => { dataSnapshot = snapshotFixtures(); });
+    test.afterAll(() => { restoreFixtures(dataSnapshot, { tag: 'TracksTdsPayment' }); });
+
+    test('Inbound payment with TDS shows TDS Deducted and net Paid Amount on the invoice @Tracks @Payment @TDS', async ({ page }) => {
+        test.setTimeout(3600000); // 60 min — full chain to an Accounted invoice
+        const a = await loginAndOpenApp(page);
+
+        // ── CXO → … → GRN → Invoice, approved to Pending Sync ───────────────
+        await buildToGrnViaCapp(a, data);
+        await buildInvoiceToPendingSync(a, data);
+
+        // ── Ack API → Accounted ─────────────────────────────────────────────
+        await a.acknowledgeInvoice(data);
+        await a.openSavedInvoice(data);
+        await a.assertInvoiceAccounted();
+        const invoiceCode = a.getSavedInvoiceCode();
+        const invoiceAmount = await a.readInvoiceAmount();
+
+        // ── Inbound payment API: paid x = invoice amount, TDS y ─────────────
+        const paid = invoiceAmount;
+        const utr = 'UTR' + Date.now() + Math.floor(Math.random() * 1000);
+        await a.createInvoicePaymentViaApi(data, {
+            invoiceCode, paidAmount: paid, tdsAmount: TDS, utr, paymentDate: serverToday(),
+        });
+
+        // ── Refresh the invoice and check the figures ───────────────────────
+        const figs = await a.waitForInvoicePaymentFigures();
+        console.log(`[TDS] ${invoiceCode}: paid ${paid}, TDS ${TDS} → expect TDS Deducted ${TDS}, Paid Amount ${paid - TDS}`);
+        expect(figs['Invoice Amount'].value, 'Invoice Amount should be unchanged by the payment').toBe(invoiceAmount);
+        expect(figs['TDS Deducted'].value, 'TDS Deducted should equal the TDS sent').toBe(TDS);
+        expect(figs['Paid Amount'].value, 'Paid Amount should be paid minus TDS').toBe(paid - TDS);
     });
 });
 

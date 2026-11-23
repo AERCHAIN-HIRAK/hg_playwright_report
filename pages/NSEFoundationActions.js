@@ -6889,6 +6889,125 @@ export class NSEFoundationActions {
             + '— paying 0 would silently create a meaningless payment');
     }
 
+    // ── Invoice payment through the integration inbound API ─────────────────────
+
+    /**
+     * POST a payment for an Accounted invoice to the inbound payment API
+     * (/payment/create), the way the ERP does. `paidAmount` is the gross amount
+     * (line_items_paid_amount) and `tdsAmount` the TDS withheld (tdsAdj); the app
+     * should show TDS Deducted = tdsAmount and Paid Amount = paidAmount - tdsAmount.
+     *
+     * Single attempt on purpose: this CREATES a payment, so a retry after a
+     * timeout whose request did land would book the payment twice.
+     */
+    async createInvoicePaymentViaApi(data, { invoiceCode, paidAmount, tdsAmount, utr, paymentDate }) {
+        const apiKey = process.env.NSEF_INVOICE_ACK_KEY || data.invoice.ackApiKey;
+        const url = data.invoice.paymentApiUrl;
+        if (!apiKey) throw new Error('Inbound API key missing (NSEF_INVOICE_ACK_KEY env or invoice.ackApiKey)');
+        if (!url) throw new Error('invoice.paymentApiUrl missing in NSEFoundationData.json');
+        if (!invoiceCode) throw new Error('invoice code missing — run the invoice flow first');
+
+        // API date format is MM-DD-YYYY; paymentDate comes in as YYYY-MM-DD.
+        const [y, m, d] = paymentDate.split('-');
+        const payload = {
+            transactionData: {
+                items: [{
+                    line_items_invoice: invoiceCode,
+                    invoiceType: 'PO/Invoice',
+                    line_items_paid_amount: paidAmount,
+                    tdsAdj: tdsAmount,
+                    advAdj: 0,
+                    line_items_actual_amount: String(paidAmount),
+                    line_items_due_amount: 0,
+                    line_items_transaction_number: utr,
+                }],
+                source: 'Oracle',
+                remarks: 'Automation Purpose',
+                currency: 'INR',
+                reference: null,
+                templateId: String(data.invoice.paymentTemplateId ?? 444),
+                general_details_paid_amount: paidAmount,
+                general_details_utr: utr,
+                general_details_payment_date: `${m}-${d}-${y}`,
+                general_details_payment_mode: 'other',
+                aggregate_section_total_amount: String(paidAmount),
+            },
+        };
+        console.log(`[PAY-API] POST ${url} → ${JSON.stringify(payload)}`);
+        const resp = await this.page.request.post(url, {
+            headers: {
+                'accept': 'application/json',
+                'content-type': 'application/json; charset=UTF-8',
+                'x-api-key': apiKey,
+            },
+            data: payload,
+            timeout: 60000,
+        });
+        const body = await resp.text().catch(() => '');
+        console.log(`[PAY-API] Response ${resp.status()}: ${body.slice(0, 500)}`);
+        expect(resp.ok(), `Payment API returned ${resp.status()}: ${body}`).toBeTruthy();
+        // A 2xx is not enough: these APIs answer 200 with success:0/false on a
+        // business rejection.
+        let json = null;
+        try { json = JSON.parse(body); } catch { /* non-JSON body */ }
+        if (json && (json.success === false || json.success === 0)) {
+            throw new Error(`[PAY-API] payment rejected: ${body.slice(0, 500)}`);
+        }
+        return json;
+    }
+
+    /**
+     * Read money figures off the invoice header by label, e.g. Invoice Amount,
+     * TDS Deducted, Paid Amount. Returns { label: { text, value } } where value
+     * is the parsed number (₹ 1,50,000.00 → 150000) or NaN if unreadable.
+     */
+    async readInvoiceFigures(labels) {
+        const raw = await this.page.evaluate((labels) => {
+            const txt = e => (e.textContent || '').replace(/\s+/g, ' ').trim();
+            const norm = s => s.replace(/:\s*$/, '').toLowerCase();
+            const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+            const leaves = [...document.querySelectorAll('body *')].filter(e => !e.children.length && vis(e));
+            const out = {};
+            for (const label of labels) {
+                const i = leaves.findIndex(e => norm(txt(e)) === label.toLowerCase());
+                if (i < 0) { out[label] = null; continue; }
+                const val = leaves.slice(i + 1, i + 6).find(e => /\d/.test(txt(e)));
+                out[label] = val ? txt(val) : '';
+            }
+            return out;
+        }, labels);
+        const res = {};
+        for (const label of labels) {
+            const text = raw[label];
+            res[label] = { text, value: text == null ? NaN : parseFloat(text.replace(/[^\d.\-]/g, '')) };
+        }
+        console.log(`[INV] figures → ${JSON.stringify(raw)}`);
+        return res;
+    }
+
+    /**
+     * Reload the invoice until the payment shows (TDS Deducted and Paid Amount
+     * both non-zero), then return the figures. The inbound payment is applied
+     * asynchronously, so the first view after the POST can still show zeros.
+     */
+    async waitForInvoicePaymentFigures(timeoutMs = 180000) {
+        const labels = ['Invoice Amount', 'TDS Deducted', 'Paid Amount'];
+        const deadline = Date.now() + timeoutMs;
+        let figs;
+        for (let i = 1; ; i++) {
+            await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+            await this.page.locator(`xpath=${L.invoiceAmountValue}`).first()
+                .waitFor({ state: 'visible', timeout: 30000 }).catch(() => {});
+            await this.page.waitForTimeout(3000);
+            figs = await this.readInvoiceFigures(labels);
+            if (figs['TDS Deducted'].value > 0 && figs['Paid Amount'].value > 0) return figs;
+            if (Date.now() > deadline) break;
+            console.log(`[INV] payment not reflected yet — reloading (${i})...`);
+            await this.page.waitForTimeout(10000);
+        }
+        return figs;
+    }
+
     /** Open the "Converting to Payment" drawer via the + Payment button. */
     async clickAddPayment() {
         await this.page.locator(`xpath=${L.invoiceAddPaymentBtn}`).first().click();
