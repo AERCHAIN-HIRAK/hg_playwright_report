@@ -9169,6 +9169,126 @@ export class NSEFoundationActions {
         console.log(`[ADV] line item ${data.intake.itemNameOption} × ${qty} @ ${price}`);
     }
 
+    // ── PO advance (Create ▾ → Request Advance on the PO page) ────────────────
+
+    getSavedPurchaseOrder() {
+        return JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8')).savedPurchaseOrder;
+    }
+
+    /** PO page › Create ▾ › Request Advance → the advance drawer, pre-tied to the PO. */
+    async clickPoRequestAdvance() {
+        const createBtn = this.page.locator(`xpath=${L.poCreateBtn}`).first();
+        await createBtn.waitFor({ state: 'visible', timeout: 60000 });
+        await createBtn.click();
+        await this.page.waitForTimeout(800);
+        const opt = this.page.getByRole('menuitem', { name: /request advance/i }).first();
+        await opt.waitFor({ state: 'visible', timeout: 15000 });
+        await opt.click();
+        await this.page.locator(`xpath=${L.advanceDrawer}`).filter({ visible: true }).first()
+            .waitFor({ state: 'visible', timeout: 60000 });
+        await this.page.waitForTimeout(3000);
+        console.log(`[ADV] PO Create → Request Advance → drawer open (${this.page.url()})`);
+    }
+
+    /** Header of a PO advance: Amount, Request Date today, then the three pickers. */
+    async fillPoAdvanceHeader(amount) {
+        await this.setAdvanceAmount(amount);
+        await this._pickReactDate(this.page.locator(L.advanceRequestDate).first(), serverToday());
+        await this._selectIfEmptyAndEnabled('DeliveryAddress');
+        await this._selectIfEmptyAndEnabled('Payment Spoc');
+        await this._selectIfEmptyAndEnabled('Payment Terms');
+        console.log(`[ADV] PO advance header: amount ${amount}, request date ${serverToday()}`);
+    }
+
+    /** Every rendered row-0 cell of the drawer grid as {colId: text}, scrolling the
+     *  grid sideways because AG-grid only mounts the columns in view. */
+    async _drawerGridRow0() {
+        const root = L.advanceDrawer;
+        const hScroll = this.page.locator(
+            `xpath=${root}//div[@role='grid']//div[contains(@class,'ag-body-horizontal-scroll-viewport')]`)
+            .filter({ visible: true }).first();
+        const out = {};
+        for (const left of [0, 300, 600, 900, 1200, 1500, 5000]) {
+            await hScroll.evaluate((el, x) => { el.scrollLeft = x; }, left).catch(() => {});
+            await this.page.waitForTimeout(400);
+            const cells = await this.page.locator(
+                `xpath=${root}//div[@role='grid']//div[contains(@class,'ag-row')][@row-index='0']//div[@col-id]`)
+                .filter({ visible: true }).evaluateAll(els => els.map(e => [e.getAttribute('col-id'), (e.innerText || '').trim()]));
+            for (const [k, v] of cells) out[k] = v;
+        }
+        return out;
+    }
+
+    /** Line price 2000 → `price`; the line Amount beside it must recompute to `expectedAmount`. */
+    async setPoAdvanceLinePrice(price, expectedAmount) {
+        console.log(`[ADV] line before: ${JSON.stringify(await this._drawerGridRow0())}`);
+        await this._setRevealedGridCell('line_items_product_price', price, L.advanceDrawer);
+        await this.page.waitForTimeout(1500);
+        const row = await this._drawerGridRow0();
+        console.log(`[ADV] line after price ${price}: ${JSON.stringify(row)}`);
+        const key = Object.keys(row).find(k => /amount/i.test(k) && !/paid|price|tax/i.test(k));
+        expect(key, `no line Amount column among ${Object.keys(row)}`).toBeTruthy();
+        expect(Number(row[key].replace(/[^\d.]/g, '')), `line ${key} after price ${price}`).toBe(expectedAmount);
+        console.log(`[ADV] line ${key} = ${row[key]}`);
+    }
+
+    /** Submit the drawer through the Workflow Summary. */
+    async submitPoAdvance() {
+        await this._clickVisibleSubmit();
+        await this._confirmInvoiceWorkflowSummary('ADV');
+        await expect(this.page.getByText('Advances Submitted successfully').first()).toBeVisible({ timeout: 30000 });
+        console.log('[ADV] PO advance submitted');
+    }
+
+    /** All Modules › Advances, open the advance carrying `poCode`: the top row
+     *  when it is ours, otherwise whichever row shows the PO code. Skips codes in
+     *  `exclude` (an earlier advance on the same PO). Returns { id, code }. */
+    async openAdvanceForPo(poCode, exclude = []) {
+        // All Modules › Advances, as a user does; the URL is the fallback when the
+        // panel's entry does not navigate.
+        await this.openModulesPanel().catch(e => console.log(`[ADV] modules panel: ${e.message}`));
+        const entries = this.page.locator('xpath=//*[normalize-space(text())="Advances"]');
+        let onList = false;
+        for (let i = 0; i < await entries.count() && !onList; i++) {
+            await entries.nth(i).click({ timeout: 10000 }).catch(() => {});
+            onList = await this.page.waitForURL(/\/advances(\?|$)/, { timeout: 10000 }).then(() => true, () => false);
+        }
+        if (!onList) {
+            console.log('[ADV] Advances entry did not navigate — opening the listing URL');
+            await this.page.goto(L.advanceListUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        }
+        const rows = this.page.locator('xpath=//tbody/tr');
+        await rows.first().waitFor({ state: 'visible', timeout: 60000 });
+        await this.page.waitForTimeout(2000);
+        const texts = await rows.evaluateAll(trs => trs.map(t => (t.innerText || '').replace(/\s+/g, ' ')));
+        const idx = texts.findIndex(t => t.includes(poCode) && !exclude.some(c => t.includes(c)));
+        console.log(`[ADV] listing row 1: "${texts[0]?.slice(0, 160)}" → our PO ${poCode} at row ${idx + 1}`);
+        expect(idx, `no advance row for ${poCode} on the listing's first page`).toBeGreaterThanOrEqual(0);
+        await rows.nth(idx).locator('xpath=./td[1]//a').first().click();
+        await this.page.waitForURL(/\/advances\/\d+$/, { timeout: 60000 });
+        await expect(this.page.getByText(poCode, { exact: true }).first()).toBeVisible({ timeout: 60000 });
+        const id = this.page.url().match(/\/advances\/(\d+)/)[1];
+        const code = (await this.page.getByText(/^Advance-[A-Z]+-\d+-\d+$/).first().innerText()).trim();
+        console.log(`[ADV] opened ${code} (id ${id}) on ${poCode}`);
+        return { id, code };
+    }
+
+    /** Advance view page › click the PO code → the PO page (same or new tab). */
+    async openPoFromAdvance(poCode) {
+        const link = this.page.getByText(poCode, { exact: true }).first();
+        const popup = this.page.context().waitForEvent('page', { timeout: 8000 }).catch(() => null);
+        await link.click();
+        const newPage = await popup;
+        if (newPage) {
+            await newPage.waitForLoadState('domcontentloaded');
+            await newPage.setViewportSize({ width: 1800, height: 900 });
+            this.page = newPage;
+        }
+        await this.page.waitForURL(/\/purchase-orders\/\d+/, { timeout: 60000 });
+        await this.page.waitForTimeout(3000);
+        console.log(`[ADV] ${poCode} opened from the advance → ${this.page.url()}`);
+    }
+
     /** Header Amount and the line price move together. */
     async setAdvanceAmount(amount, { line = false } = {}) {
         await this.page.locator(L.advanceAmountInput).filter({ visible: true }).first().fill(String(amount));

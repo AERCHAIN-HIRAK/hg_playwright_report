@@ -3,7 +3,7 @@ import { NSEFoundationActions } from '../pages/NSEFoundationActions';
 import { SupplierPortalActions } from '../pages/SupplierPortalActions';
 import data from '../pages/NSEFoundationData.json';
 import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
-import { buildRfxToForeclose } from '../pages/chainBuilders';
+import { buildRfxToForeclose, buildToPoViaCapp } from '../pages/chainBuilders';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NSE Tracks & Hotfixes — combined suite:
@@ -313,6 +313,66 @@ test.describe('NSE Tracks & Hotfixes › Award notes carry-forward', () => {
         // ── PO: notes NOT carried ───────────────────────────────────────────
         await a.openPoFromConversionViewInNewTab();
         expect(await a.pageHasNotes(NOTES, 'PO'), 'award notes must NOT reach the PO').toBe(false);
+    });
+});
+
+// ── Tracks: PO advance → PO invoice auto-mapping ─────────────────────────────
+// PO (100 × 2000 = 200000) → two advances of 100000 from the PO page (line price
+// 2000 → 1000), each Reviewed and Paid → GRN. The PO invoice with the advance
+// auto-mapped is ON HOLD: the auto-mapping is broken and raised for a fix.
+test.describe('NSE Tracks & Hotfixes › PO advance auto-mapping', () => {
+
+    const ADVANCE = 100000, LINE_PRICE = 1000;
+
+    test.use({ actionTimeout: 60000, navigationTimeout: 60000 });
+
+    let dataSnapshot = null;
+    test.beforeAll(() => { dataSnapshot = snapshotFixtures(); });
+    test.afterAll(() => { restoreFixtures(dataSnapshot, { tag: 'TracksPoAdvance' }); });
+
+    test('Two paid PO advances consume the PO, then GRN @Tracks @Advance @PO', async ({ page }) => {
+        test.setTimeout(3600000); // 60 min — full chain, two advances, GRN
+        const a = await loginAndOpenApp(page);
+
+        // ── CXO → PO, approved ──────────────────────────────────────────────
+        await buildToPoViaCapp(a, data);
+        const po = a.getSavedPurchaseOrder();
+        console.log(`[PO-ADV] PO ${po.code} → ${po.url}`);
+
+        const advances = [];
+        for (let n = 1; n <= 2; n++) {
+            // ── PO › Create › Request Advance ───────────────────────────────
+            if (n === 1) await a.openSavedPurchaseOrder(data);
+            await a.clickPoRequestAdvance();
+            await a.fillPoAdvanceHeader(ADVANCE);
+            await a.setPoAdvanceLinePrice(LINE_PRICE, ADVANCE);
+            await a.submitPoAdvance();
+
+            // ── Advances listing → our PO's advance → Review → Pay ──────────
+            const adv = await a.openAdvanceForPo(po.code, advances.map(x => x.code));
+            await a.reviewAdvance();
+            await a.assertAdvanceStatus(adv.id, 'Accounted');
+            await a.payAdvance(ADVANCE);
+            await a.assertAdvanceStatus(adv.id, 'Paid');
+            advances.push(adv);
+            console.log(`[PO-ADV] advance ${n}: ${adv.code} Paid ${ADVANCE}`);
+
+            // ── back to the PO through the advance's PO code ────────────────
+            await a.openPoFromAdvance(po.code);
+        }
+
+        // ── GRN from CAPP, approved ─────────────────────────────────────────
+        await a.clickPoCreateGrn();
+        await a.submitSelectPoItemsPopup();
+        await a.fillGrnGeneralDetails(data);
+        await a.fillGrnDocumentDetails(data);
+        await a.assertGrnReceivedMatchesPoQty();
+        await a.submitGrn();
+        await a.saveGrnCode();
+        await a.approveGrnUntilInwarded('Approved by automation');
+        await a.assertGrnInwarded();
+
+        // ON HOLD — PO invoice with the advances auto-mapped (bug raised).
     });
 });
 
