@@ -4504,6 +4504,61 @@ export class NSEFoundationActions {
         return info;
     }
 
+    /** New Award page › Notes (the box at the very bottom, below the grid and
+     *  attachments). Resolved by its "Notes" label, not by position, then
+     *  verified to hold the text. */
+    async fillAwardNotes(text) {
+        await this.scrollAwardPageToBottom();
+        const info = await this.page.evaluate(() => {
+            const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+            const own = e => [...e.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('')
+                .replace(/[*:]/g, '').trim();
+            const labels = [...document.querySelectorAll('body *')].filter(e => vis(e) && /^notes$/i.test(own(e)));
+            for (const lab of labels.reverse()) {           // bottom-most "Notes" first
+                let box = lab;
+                for (let up = 0; up < 6 && box; up++, box = box.parentElement) {
+                    const ed = [...box.querySelectorAll('[contenteditable="true"], textarea')].find(vis);
+                    if (ed) { ed.setAttribute('data-qa-award-notes', '1'); return { ok: true, tag: ed.tagName }; }
+                }
+            }
+            return { ok: false, labels: labels.length,
+                near: [...document.querySelectorAll('body *')].map(own).filter(t => /note/i.test(t)).slice(0, 15) };
+        });
+        if (!info.ok) throw new Error(`[Award] Notes editor not found: ${JSON.stringify(info)}`);
+
+        const ed = this.page.locator('[data-qa-award-notes="1"]').first();
+        await ed.scrollIntoViewIfNeeded();
+        await ed.click();
+        await this.page.keyboard.insertText(text);
+        await this.page.waitForTimeout(1000);
+        const got = info.tag === 'TEXTAREA' ? await ed.inputValue() : await ed.innerText();
+        expect(got, 'award Notes did not take the text').toContain(text);
+        console.log(`[Award] Notes filled (${info.tag}): "${text}"`);
+    }
+
+    /** Does the current page carry `text`? Checks the whole DOM (textContent, so
+     *  collapsed-but-mounted sections count) plus input/textarea values, and logs
+     *  what sits next to the page's "Notes" label for the record. */
+    async pageHasNotes(text, tag) {
+        await this.page.waitForLoadState('networkidle', { timeout: 60000 }).catch(() => {});
+        await this.page.waitForTimeout(3000);
+        const r = await this.page.evaluate((want) => {
+            const own = e => [...e.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('')
+                .replace(/[*:]/g, '').trim();
+            const values = [...document.querySelectorAll('input, textarea')].map(e => e.value || '').join(' ');
+            const has = (document.body.textContent || '').includes(want) || values.includes(want);
+            const notes = [];
+            for (const lab of [...document.querySelectorAll('body *')].filter(e => /^notes$/i.test(own(e)))) {
+                let box = lab.parentElement;
+                for (let up = 0; up < 4 && box && (box.innerText || '').trim().length <= 6; up++) box = box.parentElement;
+                notes.push(((box && box.innerText) || '').replace(/\s+/g, ' ').trim().slice(0, 160));
+            }
+            return { has, notes };
+        }, text);
+        console.log(`[${tag}] ${this.page.url()} → notes text present: ${r.has}; Notes field(s): ${JSON.stringify(r.notes)}`);
+        return r.has;
+    }
+
     async findAwardRowByLabel(label) {
         const row = await this.page.evaluate((wanted) => {
             for (const td of document.querySelectorAll('td[id$="_product"]')) {
