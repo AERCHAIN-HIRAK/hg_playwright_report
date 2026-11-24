@@ -49,6 +49,14 @@ import path from 'path';
 // candidate qualifies it falls back to the full chain build, so the test stays
 // runnable either way.
 //
+// ── MERGED WITH S126(b) / S127 (2026-11-24) ─────────────────────────────────
+// testSuiteInvoiceReviewValidation built its own SAPP chain just to reach a
+// Pending-Review SAPP invoice and run two review-edit checks on it. This flow
+// already makes exactly that invoice, so the checks now run here, SERIALLY:
+//   1  S144/S143  SAPP create: buyer reference refused, fresh one creates invoice
+//   2  S127       review edit: 255-char Subject refused (form then discarded)
+//   3  S126/S143  review re-entry: buyer reference refused on the edit
+//
 // S143_PO_CODE + S143_PO_ID pin a specific PO and skip discovery;
 // S143_FRESH_CHAIN=1 forces the chain build.
 //
@@ -172,12 +180,17 @@ async function findReusablePo(page, shellUrl, max = 8) {
 
 let dataSnapshot = null;
 
-test.describe('Invoice — duplicate reference across the supplier and buyer portals', () => {
+test.describe.serial('Invoice — duplicate reference across portals + review-stage validations (S143/S144 + S126/S127, one chain)', () => {
+
+    // Shared across the serial steps. The invoice itself is handed over through
+    // savedInvoice in the fixture file (restored in afterAll).
+    const duplicate = process.env.S143_DUPLICATE || 'INV-AUTO-20800';
+    let originalSubject = null;
 
     test.beforeAll(() => { dataSnapshot = snapshotFixtures(); });
-    test.afterAll(() => { restoreFixtures(dataSnapshot, { tag: 'S143' }); });
+    test.afterAll(() => { restoreFixtures(dataSnapshot, { tag: 'S143+S126' }); });
 
-    test('a buyer-created reference is refused on the SAPP create form and again at CAPP review '
+    test('a buyer-created reference is refused on the SAPP create form, then a fresh one creates the invoice '
         + '@Invoice @Validation @Supplier @S143 @S144',
         async ({ page }) => {
             // The fast path is ~20 min; a full chain build is ~50.
@@ -188,7 +201,6 @@ test.describe('Invoice — duplicate reference across the supplier and buyer por
             await page.setViewportSize({ width: 1800, height: 900 });
             await a.openApp(data);
 
-            const duplicate = process.env.S143_DUPLICATE || 'INV-AUTO-20800';
             console.log(`[S143] duplicate (buyer-created) reference = "${duplicate}"`);
 
             // ── (1) PRECONDITION ────────────────────────────────────────────────
@@ -277,16 +289,86 @@ test.describe('Invoice — duplicate reference across the supplier and buyer por
             const built = JSON.parse(fs.readFileSync(DATA_PATH, 'utf-8'));
             console.log(`[S143] SAPP invoice created → ${built.savedInvoice?.code} `
                 + `(id ${built.savedInvoice?.id}) — expected Pending Review in CAPP`);
+        });
 
-            // ── (3) CAPP review edit: the SAME duplicate, now on an EDIT ─────────
+    // ── Scenario 127 (was testSuiteInvoiceReviewValidation, merged 2026-11-24) ─
+    //   "the subject character limit is validated when an Invoice is edited and
+    //    submitted with more than 240 characters"
+    // THE LIMIT IS 250, NOT 240 (QA, 2026-09-08), so 255 characters are sent — 5
+    // over the real cap, rather than 241 which is UNDER it. Runs BEFORE the
+    // duplicate check and is then discarded by re-entering review, so the duplicate
+    // check is not polluted by a second, unrelated validation still on screen.
+    test('at CAPP review: an over-long Subject is refused @Invoice @Validation @Review @S127',
+        async ({ page }) => {
+            test.setTimeout(1200000); // 20 min
+
+            const a = new NSEFoundationActions(page);
+            const s = new SupplierPortalActions(page);
+            await page.setViewportSize({ width: 1800, height: 900 });
+            await a.openApp(data);
+
             await a.openSavedInvoice(data);
-            // Review on the CAPP tab `a` just opened - `s` is still on the SAPP tab
-            // after the chain, where there is no More/Review (rerun 2026-10-06).
             s.page = a.page;
-            const onEdit = await s.openPendingReviewEditPage('S143');
+            const onEdit = await s.openPendingReviewEditPage('S127');
             expect(onEdit,
                 'the review edit page never opened — the SAPP invoice did not reach Pending Review, '
-                + 'so the edit half of 143 has no surface to test').toBeTruthy();
+                + 'so the review-stage checks have no surface to test').toBeTruthy();
+
+            originalSubject = await a.readInvoiceSubject();
+            const overLong = 'HG Automation subject limit check '.padEnd(255, 'X').slice(0, 255);
+            expect(overLong.length, 'the probe string must exceed the 250-char cap').toBe(255);
+            await a.fillInvoiceSubject(overLong);
+
+            const subj = await a.submitInvoiceExpectingSubjectLimitRejection();
+            expect(subj.enforced,
+                `a ${subj.heldChars}-character Subject was NOT validated against the 250-char limit, even `
+                + `after Proceed and the Workflow Summary submit. Last dialog: `
+                + `${JSON.stringify(subj.dialogText ?? '')}; error-shaped text: `
+                + `${JSON.stringify(subj.errish ?? [])}; url: ${subj.url ?? ''}`)
+                .toBeTruthy();
+            // If the over-long Subject had been accepted the invoice would have left
+            // Pending Review, and the duplicate check below would fail for a reason
+            // that has nothing to do with duplicate references.
+            expect(subj.consumed,
+                'the over-long Subject was accepted and the invoice submitted out of Pending Review — '
+                + 'the precondition for the duplicate check is gone')
+                .toBeFalsy();
+            console.log(`[S127] subject-limit validation shown${subj.inline ? ' (inline)' : ''}: `
+                + JSON.stringify(subj.messages));
+        });
+
+    // ── Scenarios 126(b) + 143 (edit side) ───────────────────────────────────
+    //   126  duplicate reference validated when an existing invoice is edited
+    //   143  …when a Supplier Portal invoice is edited at review
+    // One check satisfies both: the SAPP invoice, at CAPP review, gets the pinned
+    // buyer-created reference. S126 used to pin INV-AUTO-20787 on its own chain;
+    // both pins are buyer-created Accounted invoices, so S143's is used.
+    test('at CAPP review: the buyer-created reference is refused on the edit '
+        + '@Invoice @Validation @Review @Supplier @S126 @S143',
+        async ({ page }) => {
+            test.setTimeout(1200000); // 20 min
+
+            const a = new NSEFoundationActions(page);
+            const s = new SupplierPortalActions(page);
+            await page.setViewportSize({ width: 1800, height: 900 });
+            await a.openApp(data);
+
+            // RE-ENTER review rather than continuing the S127 page: after its refused
+            // submit the Workflow Summary popup stays open and the form behind it is
+            // inert (S126b, 2026-09-08). A fresh entry discards the 255-char value.
+            await a.openSavedInvoice(data);
+            s.page = a.page;
+            // matchGrn:false — on a RE-entry, Item Matching re-clicks the already
+            // selected GRN, which DESELECTS it, and an unmatched invoice is then
+            // refused for its own reason with no duplicate message (2026-09-21).
+            const reEntered = await s.openPendingReviewEditPage('S126+S143', { matchGrn: false });
+            expect(reEntered, 'could not re-enter the review edit page').toBeTruthy();
+            if (originalSubject != null) {
+                expect(await a.readInvoiceSubject(),
+                    're-entering review did not restore the original Subject, so the duplicate check '
+                    + 'would run on a still-invalid form')
+                    .toBe(originalSubject);
+            }
 
             await a.fillInvoiceNumberExactly(duplicate);
             const second = await a.submitInvoiceExpectingDuplicateRejection({
@@ -300,10 +382,11 @@ test.describe('Invoice — duplicate reference across the supplier and buyer por
                 'the duplicate was refused SILENTLY at CAPP review — no validation message was shown. '
                 + `Error-shaped text: ${JSON.stringify(second.errish ?? [])}`)
                 .toBeFalsy();
+            // Naming the collided invoice proves the app matched the RIGHT invoice.
             expect(second.messages.join(' '),
                 `the review validation names no existing invoice: ${JSON.stringify(second.messages)}`)
                 .toMatch(/Invoice-[A-Z]+-\d+-\d+/);
 
-            console.log(`[S143] review-edit refused the duplicate: ${JSON.stringify(second.messages)}`);
+            console.log(`[S126+S143] review-edit refused the duplicate: ${JSON.stringify(second.messages)}`);
         });
 });

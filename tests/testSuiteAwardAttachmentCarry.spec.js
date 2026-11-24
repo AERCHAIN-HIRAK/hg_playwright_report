@@ -36,6 +36,14 @@ import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
 // files on the PR" could not be tied back to the field each came from. Each
 // field gets a uniquely named copy and the PR/PRC assertions demand those exact
 // names, so a carry-forward that drops or merges a field fails.
+//
+// ── MERGED WITH THE TRACKS "AWARD NOTES" CHECK (2026-11-24) ─────────────────
+// The Tracks suite had its own chain for: Notes typed at the bottom of the New
+// Award page reach the auto PR (before and after edit-submit) and the PRC, but
+// NOT the PO. Same award form, same PR → PRC path, so it now rides on this
+// chain. Still TWO tests, SERIAL: the attachments test fills the notes on the
+// award (and records what the DRAFT PR showed); the notes test then checks the
+// submitted PR, the PRC and the PO on the same records.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Award field -> PR field, per QA (2026-09-11). Only Justification is renamed;
@@ -86,12 +94,16 @@ async function missingAttachments(pg, uploads) {
 
 let dataSnapshot = null;
 
-test.describe('Award attachments → PR → PRC', () => {
+test.describe.serial('Award attachments + notes → PR → PRC (S59 + Tracks notes, one chain)', () => {
+
+    // Handed from the attachments test to the notes test (same worker, serial).
+    const NOTES = `Award notes by automation ${Date.now()}`;
+    let notesOnDraftPr = null;
 
     test.use({ actionTimeout: 20000, navigationTimeout: 60000 });
 
     test.beforeAll(() => { dataSnapshot = snapshotFixtures(); });
-    test.afterAll(() => { restoreFixtures(dataSnapshot, { tag: 'S59' }); });
+    test.afterAll(() => { restoreFixtures(dataSnapshot, { tag: 'S59+Notes' }); });
 
     // Un-held 2026-10-05 (QA): the hold was the PR submit being blocked by
     // "Budget Amount is exceeded" because the run REUSED a stored CXO whose
@@ -128,6 +140,9 @@ test.describe('Award attachments → PR → PRC', () => {
             .toBe(4);
 
         for (const u of uploads) await a.uploadAwardAttachment(u.field, u.file);
+        // Notes sit at the bottom of the same award page — filled here for the
+        // Tracks notes test that follows.
+        await a.fillAwardNotes(NOTES);
         // All four bytes are now actually in S3 (each upload awaited its PUT).
         // Give the form a moment to settle before committing the award.
         await page.waitForTimeout(4000);
@@ -164,6 +179,9 @@ test.describe('Award attachments → PR → PRC', () => {
             'the award itself kept none of the uploaded files, so this run cannot judge '
             + 'carry-forward — the upload is what needs fixing, not the app')
             .toBe(true);
+
+        // Recorded for the notes test; asserted there.
+        notesOnDraftPr = await a.pageHasNotes(NOTES, 'PR');
 
         // ── The PR while still DRAFT — informational only ───────────────────
         // Recorded, not asserted: carry-forward may legitimately land at submit.
@@ -202,7 +220,11 @@ test.describe('Award attachments → PR → PRC', () => {
         // ── Carry-forward: the PRC ──────────────────────────────────────────
         // The submitted PR auto-processes into the PRC; the Conversions section
         // only exists once it has (same wait as buildToPoViaCapp).
+        // Wait for Completed (not just Processed): the notes check ends on the
+        // auto PO, which only exists once the PR is Completed. "Processed" is
+        // transient, hence the two-step wait (same as buildToPoViaCapp).
         await a.waitForPrStatus(['Processed', 'Completed']);
+        await a.waitForPrStatus('Completed');
         await a.openSavedRequisition(data);
         await a.clickPrTransactionsTab();
         await a.expandPrConversionsSection();
@@ -218,4 +240,30 @@ test.describe('Award attachments → PR → PRC', () => {
         console.log(`[S59] all ${Object.keys(AWARD_TO_PR).length} award attachments carried RFX ${rfxCode} -> PR -> PRC`);
     });
 
+    // ── Tracks: Award Notes carry to the auto PR and PRC, not to the PO ──────
+    // Moved here 2026-11-24 from testSuiteNSETracksHotfixes. The notes were typed
+    // on the award in the test above; this checks the same PR → PRC → PO.
+    test('Award notes reach the PR and PRC but not the PO @Tracks @Award @Notes', async ({ page }) => {
+        test.setTimeout(900_000); // 15 min — no chain, just the three views
+        const a = new NSEFoundationActions(page);
+        await page.setViewportSize({ width: 1800, height: 950 });
+        await a.openApp(data);
+
+        expect(notesOnDraftPr, 'award notes on the auto PR (draft, before edit-submit)').toBe(true);
+
+        // ── PR (submitted): notes still there ───────────────────────────────
+        await a.openSavedRequisition(data);
+        expect(await a.pageHasNotes(NOTES, 'PR'), 'award notes still on the PR after submit').toBe(true);
+
+        // ── PRC: notes carried ──────────────────────────────────────────────
+        await a.clickPrTransactionsTab();
+        await a.expandPrConversionsSection();
+        await a.openPrcFromConversions();
+        expect(await a.pageHasNotes(NOTES, 'PRC'), 'award notes on the PRC').toBe(true);
+
+        // ── PO: notes NOT carried ───────────────────────────────────────────
+        // openPoFromConversionViewInNewTab switches a.page to the PO tab.
+        await a.openPoFromConversionViewInNewTab();
+        expect(await a.pageHasNotes(NOTES, 'PO'), 'award notes must NOT reach the PO').toBe(false);
+    });
 });

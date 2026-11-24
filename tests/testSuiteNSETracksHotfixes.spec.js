@@ -3,7 +3,7 @@ import { NSEFoundationActions } from '../pages/NSEFoundationActions';
 import { SupplierPortalActions } from '../pages/SupplierPortalActions';
 import data from '../pages/NSEFoundationData.json';
 import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
-import { buildRfxToForeclose, buildToPoViaCapp, buildToGrnViaCapp, buildInvoiceToPendingSync } from '../pages/chainBuilders';
+import { buildToPoViaCapp, buildToGrnViaCapp, buildInvoiceToPendingSync } from '../pages/chainBuilders';
 import { serverToday } from '../pages/waitHelpers';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -257,65 +257,9 @@ test.describe('NSE Tracks & Hotfixes › Advance against non-PO CXO', () => {
 });
 
 // ── Tracks: Award Notes carry to the auto PR and PRC, not to the PO ──────────
-// RFX → foreclose → Award (Notes filled at the bottom of the New Award page) →
-// auto PR shows the notes (before and after PR edit-submit) → PRC shows them →
-// the auto PO does NOT.
-test.describe('NSE Tracks & Hotfixes › Award notes carry-forward', () => {
-
-    test.use({ actionTimeout: 60000, navigationTimeout: 60000 });
-
-    // The chain rewrites saved CXO/Intake/RFX/PR codes — snapshot and restore.
-    let dataSnapshot = null;
-    test.beforeAll(() => { dataSnapshot = snapshotFixtures(); });
-    test.afterAll(() => { restoreFixtures(dataSnapshot, { tag: 'TracksAwardNotes' }); });
-
-    test('Award notes reach the PR and PRC but not the PO @Tracks @Award @Notes', async ({ page }) => {
-        test.setTimeout(3600000); // 60 min — full RFX → PO chain
-        const a = await loginAndOpenApp(page);
-        const NOTES = `Award notes by automation ${Date.now()}`;
-
-        // ── RFX → foreclose → Award with Notes → auto PR ────────────────────
-        await buildRfxToForeclose(a, data);
-        await a.clickAnalysisTab();
-        await a.clickAwardButton();
-        await a.fillAllocatedQuantity();
-        await a.fillAwardNotes(NOTES);
-        await a.clickAwardButton();
-        await a.submitWorkflowSummary();
-        await a.completeAwardApprovals('Approved by automation');
-        await a.clickAwardBackArrow();
-        await a.waitForRequisitionCode();
-        await a.openRequisitionAndSaveCode();
-
-        // ── PR: notes carried from the award ────────────────────────────────
-        await a.openSavedRequisition(data);
-        expect(await a.pageHasNotes(NOTES, 'PR'), 'award notes on the auto PR').toBe(true);
-
-        await a.clickPrEdit();
-        await a.fillPrEffectiveFromDate();
-        await a.fillPrEffectiveToDate(data);
-        await a.selectPrPurchaseType(data);
-        await a.selectPrInwardRequiredYes();
-        await a.selectPrInwardMatchingQuantity();
-        await a.submitPr();
-        await a.assertPrSubmitted();
-        await a.saveRequisitionCode();
-        await a.waitForPrStatus(['Processed', 'Completed']);
-        await a.waitForPrStatus('Completed');
-        await a.openSavedRequisition(data);
-        expect(await a.pageHasNotes(NOTES, 'PR'), 'award notes still on the PR after submit').toBe(true);
-
-        // ── PRC: notes carried ──────────────────────────────────────────────
-        await a.clickPrTransactionsTab();
-        await a.expandPrConversionsSection();
-        await a.openPrcFromConversions();
-        expect(await a.pageHasNotes(NOTES, 'PRC'), 'award notes on the PRC').toBe(true);
-
-        // ── PO: notes NOT carried ───────────────────────────────────────────
-        await a.openPoFromConversionViewInNewTab();
-        expect(await a.pageHasNotes(NOTES, 'PO'), 'award notes must NOT reach the PO').toBe(false);
-    });
-});
+// MOVED 2026-11-24 into testSuiteAwardAttachmentCarry.spec.js (S59), which
+// already builds RFX → award → PR → PRC on the same award form. Still tagged
+// @Tracks @Notes there, so `--grep @Notes` finds it.
 
 // ── Tracks: PO advance → PO invoice auto-mapping ─────────────────────────────
 // PO (100 × 2000 = 200000) → two advances of 100000 from the PO page (line price
