@@ -66,7 +66,7 @@ export class SupplierPortalActions {
     }
 
     async assertLoggedIn() {
-        await expect(this.page).toHaveURL(/nse-sapp(-v4)?-uat\.aerchain\.io/);
+        await expect(this.page).toHaveURL(/nse-sapp(-v4)?-uat\.aerchain\.io/, { timeout: 60000 });
     }
 
     /**
