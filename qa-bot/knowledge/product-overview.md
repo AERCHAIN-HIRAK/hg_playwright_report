@@ -44,7 +44,7 @@ Workflows & Approvals · Reports · Dashboard · Activity Timeline · Listings
 ## Where the existing test knowledge is
 | What | File |
 |---|---|
-| Automated scenarios with steps + results | `NSE - Automated Scenarios - Steps and Results.csv` |
+| Automated tests with steps + expected results | `NSE-Test-Catalogue.html` (DATA array; one entry per test) |
 | Scenarios still pending automation | `NSE - Pending Automation Scenarios - Sheet1.csv` |
 | Older suite scenarios (P001…) | `NSE - Pre-existing Suite Scenarios.csv` |
 | Spec files | `tests/testSuite*.spec.js` |
