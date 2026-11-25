@@ -4,6 +4,8 @@ import { buildToPoViaCapp } from '../pages/chainBuilders';
 import data from '../pages/NSEFoundationData.json';
 import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
 
+const V3 = 'https://nse-capp-uat.aerchain.io';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Lowered PO qty returns to the PRC for the next PO — sheet scenario 12
 //
@@ -26,6 +28,19 @@ import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
 //     "blue" can only be observed AFTER the reject-edit frees quantity.
 //
 // The RC section is Rate Contract: a normal PRC renders "Rate Contract No RC".
+//
+// ── ONE CHAIN, THREE SERIAL STEPS (merged 2026-11-24) ───────────────────────
+// S131-PO, S12 and S65 each built a PO in Pending Approval. They now share one:
+//
+//   1  S131-PO  the approver REJECTS the PO → it leaves "Pending My Approval"
+//   2  S12      that rejected PO is edited down to 50 → the PRC converts the
+//               freed 50 into a NEW PO
+//   3  S65      the new PO (Pending Approval, as conversions land — seen on
+//               PO-NSEFN-26-592, 2026-11-24) is RECALLED with a reason → Rejected
+//
+// Each scenario keeps its own action: S131 and S12 both start from an approver
+// reject, and S65 recalls a PO that is genuinely Pending Approval (asserted
+// before the recall). SERIAL: a failed step skips the rest; a retry rebuilds.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LOWER_QTY = '50';   // the PO is built at qty 100
@@ -44,45 +59,68 @@ const readPoCodes = (pg) => pg.evaluate(() => {
 
 let dataSnapshot = null;
 
-test.describe('PO reject-edit — lowered qty returns to the PRC', () => {
+test.describe.serial('PO reject → reject-edit → recall on one chain (S131-PO + S12 + S65)', () => {
 
     test.use({ actionTimeout: 20000, navigationTimeout: 60000 });
 
     test.beforeAll(() => { dataSnapshot = snapshotFixtures(); });
-    test.afterAll(() => { restoreFixtures(dataSnapshot, { tag: 'S12' }); });
+    test.afterAll(() => { restoreFixtures(dataSnapshot, { tag: 'S131+S12+S65' }); });
 
-    test('the quantity freed by a PO reject-edit can be converted to a new PO '
-        + '@PO @PRC @RejectEdit @S12 @Slow', async ({ page }) => {
-        test.setTimeout(3_600_000); // 60 min
+    // Handed between the serial steps (same worker, same order).
+    let origPo = null;    // { url, code } — the auto-created PO, rejected in step 1
+    let newPo = null;     // { url, code } — the PO converted from the PRC in step 2
 
+    const newActions = async (page) => {
         const a = new NSEFoundationActions(page);
         await page.setViewportSize({ width: 1800, height: 950 });
         await a.openApp(data);
+        return a;
+    };
 
-        // ── CXO → … → PO, left in PENDING APPROVAL so it can be rejected ────
-        //
-        // This chain builds its OWN CXO (skipCxo defaults to false). Reusing the
-        // stored one - right for scenario 17, which never submits a PR - does not
-        // work here: CXO budget is consumed AT PR SUBMIT, so repeated full chains
-        // drain it. Once drained, submitPr stalls on a Workflow dialog whose
-        // Submit is disabled behind "Budget Amount is exceeded. Please Contact
-        // Budget User." and a mandatory empty "Budget Amend Request" - which is
-        // exactly how run 1 died here, and how scenario 59 is currently blocked.
-        await buildToPoViaCapp(a, data, { approvePo: false });
-        // buildToPoViaCapp ends by opening the PO in a NEW TAB, and the actions
-        // object switches to it (this.page = newPage). The `page` fixture still
-        // points at the PR tab, so every interaction from here uses a.page -
-        // otherwise the conversion steps below silently drive the wrong tab.
-        console.log(`[S12] PO built and left pending approval @ ${a.page.url()}`);
-        // Remember the ORIGINAL PO so the new one can be told apart from it later -
-        // the conversion's PO page and the original share most of their text.
-        const origPoUrl = a.page.url();
-        const origPoCode = (await readPoCodes(a.page))[0] ?? null;
-        await a.takeScreenshot('s12_po_pending');
+    // ── Scenario 131 (PO) ─────────────────────────────────────────────────────
+    // "rejecting … updates its status correctly across all applicable pages" —
+    // QA (2026-09-08): after the reject, the listing's pending-approval view must
+    // no longer show it. The v3 PO view is "Pending My Approval" (word order),
+    // ONE page of 20 rows with no pager, newest first — so a still-queued PO
+    // created moments ago would sit at the top. The CXO and Invoice halves of
+    // S131 stay in testSuiteRejectedNotPending.
+    test('a rejected PO is not in Pending My Approval @Reject @Listing @S131 @PO',
+        async ({ page }) => {
+            test.setTimeout(2700000); // 45 min — the chain is most of it
+            const a = await newActions(page);
 
-        // ── Reject it during approvals ──────────────────────────────────────
-        await a.rejectCappDoc('Rejected by automation — scenario 12', 'PO');
-        await a.takeScreenshot('s12_po_rejected');
+            // approvePo:false leaves the PO in Pending Approval, i.e. actually in
+            // the queue — rejecting an already-approved PO would prove nothing.
+            await buildToPoViaCapp(a, data, { approvePo: false });
+            // buildToPoViaCapp ends by opening the PO in a NEW TAB and the actions
+            // object switches to it, so read everything off a.page.
+            origPo = { url: a.page.url(), code: (await readPoCodes(a.page))[0] ?? null };
+            expect(origPo.code, 'could not read the built PO code').toBeTruthy();
+            console.log(`[S131-PO] built ${origPo.code} in Pending Approval @ ${origPo.url}`);
+
+            await a.rejectCappDoc('Rejected by automation — scenarios 131 / 12', 'S131-PO');
+            await a.takeScreenshot('s12_po_rejected');
+
+            await a.openPendingApprovalView(`${V3}/purchase-orders`, 'Pending My Approval', 'S131-PO');
+            const codes = await a.listingCodesAcrossPages(15, 'S131-PO');
+            console.log(`[S131-PO] looking for ${origPo.code} in "Pending My Approval" — ${codes.length} row(s) scanned`);
+            expect(codes, `${origPo.code} was rejected but is STILL listed in "Pending My Approval"`)
+                .not.toContain(origPo.code);
+        });
+
+    // ── Scenario 12 ───────────────────────────────────────────────────────────
+
+    test('the quantity freed by a PO reject-edit can be converted to a new PO '
+        + '@PO @PRC @RejectEdit @S12 @Slow', async ({ page }) => {
+        test.setTimeout(1800000); // 30 min — edit, PRC conversion, new PO
+        const a = await newActions(page);
+
+        // The PO rejected by the approver in the S131 step.
+        expect(origPo?.url, 'the S131-PO step left no rejected PO').toBeTruthy();
+        await a.page.goto(origPo.url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await a.page.waitForTimeout(10000);
+        const origPoUrl = origPo.url;
+        const origPoCode = origPo.code;
 
         // ── Edit → lower the qty → submit ───────────────────────────────────
         await a.editPoLowerQtyAndSubmit(LOWER_QTY);
@@ -133,6 +171,35 @@ test.describe('PO reject-edit — lowered qty returns to the PRC', () => {
         console.log(`[S12] new PO:      ${newPoCode} @ ${a.page.url()}`);
         expect(newPoCode, 'the new PO page shows no PO code').toBeTruthy();
         console.log('[S12] the qty freed by the PO reject-edit was converted into a new PO');
+        newPo = { url: a.page.url(), code: newPoCode };
+    });
+
+    // ── Scenario 65 ───────────────────────────────────────────────────────────
+    //   "Verify that a PO can be recalled successfully and its status is updated
+    //    accordingly to draft"
+    // THE SHEET'S "DRAFT" IS WRONG. QA, 2026-09-08: Recall opens a popup with a
+    // MANDATORY REASON, and after submitting it the PO goes to REJECTED. Rejected
+    // is asserted and Draft tolerated, so it still passes if the app is changed to
+    // match the sheet — but never on nothing happening. Recall is status-gated:
+    // only a Pending Approval PO offers it (PO-NSEFN-26-213 vs -220, 2026-09-08).
+    test('a Pending-Approval PO offers Recall; recalling it with a reason rejects the PO '
+        + '@PO @Recall @S65', async ({ page }) => {
+        test.setTimeout(900000); // 15 min
+        const a = await newActions(page);
+
+        expect(newPo?.url, 'the S12 step left no converted PO to recall').toBeTruthy();
+        await a.page.goto(newPo.url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await a.page.waitForTimeout(13000);
+        console.log(`[S65] target PO ${newPo.code} (converted from the PRC in S12)`);
+
+        const before = await a.readPoStatus();
+        expect(before, 'the PO converted from the PRC should be Pending Approval, which is the only '
+            + `status that offers Recall — it reads "${before}"`)
+            .toMatch(/pending[-\s]?approval/i);
+        const after = await a.recallPoWithReason('Recalled by automation');
+        console.log(`[S65] ${newPo.code}: ${before} → ${after}`);
+        expect(after, `the recalled PO settled on "${after}" — expected Rejected (per QA) or Draft `
+            + '(per the sheet wording)').toMatch(/rejected|draft/i);
     });
 
 });

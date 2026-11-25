@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { NSEFoundationActions } from '../pages/NSEFoundationActions';
-import { buildToPoViaCapp, buildToGrnViaCapp } from '../pages/chainBuilders';
+import { buildToGrnViaCapp } from '../pages/chainBuilders';
 import data from '../pages/NSEFoundationData.json';
 import { snapshotFixtures, restoreFixtures } from '../pages/fixtureGuard';
 import fs from 'fs';
@@ -95,26 +95,8 @@ test.describe('Rejected transactions leave the pending-approval queue', () => {
         });
 
     // ── PO ────────────────────────────────────────────────────────────────────
-    test('a rejected PO is not in Pending My Approval @Reject @Listing @S131 @PO',
-        async ({ page }) => {
-            test.setTimeout(2400000);
-            const a = new NSEFoundationActions(page);
-            await page.setViewportSize({ width: 1800, height: 900 });
-            await a.openApp(data);
-
-            // approvePo:false leaves the PO in Pending Approval, i.e. actually in
-            // the queue — rejecting an already-approved PO would prove nothing.
-            await buildToPoViaCapp(a, data, { approvePo: false });
-            const code = fresh().savedPurchaseOrder?.code;
-            console.log(`[S131-PO] built ${code} in Pending Approval`);
-
-            await a.openSavedPurchaseOrder(data);
-            await a.rejectCappDoc('Rejected by automation', 'S131-PO');
-
-            await assertGoneFromPendingApproval(a, {
-                url: `${V3}/purchase-orders`, label: 'Pending My Approval', code, tag: 'S131-PO',
-            });
-        });
+    // Moved 2026-11-24 to testSuitePoRejectEditPrc.spec.js, where it is step 1 of
+    // a serial group sharing one chain with S12 and S65.
 
     // ── Invoice ───────────────────────────────────────────────────────────────
     test('a rejected Invoice is not in My Pending Approval @Reject @Listing @S131 @Invoice',
