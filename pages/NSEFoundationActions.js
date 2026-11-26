@@ -7054,7 +7054,10 @@ export class NSEFoundationActions {
     async getPaymentActualAmount() {
         const cell = this.page.locator(L.paymentActualAmountCell).first();
         await cell.waitFor({ state: 'visible', timeout: 120000 });
-        return parseFloat(((await cell.textContent()) ?? '').replace(/[₹,\s]/g, ''));
+        // The cell renders before the grid fills it — wait for a number, not just visibility.
+        const read = async () => parseFloat(((await cell.textContent()) ?? '').replace(/[₹,\s]/g, ''));
+        await expect.poll(read, { timeout: 120000 }).not.toBeNaN();
+        return read();
     }
 
     async submitPayment() {
