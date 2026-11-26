@@ -92,3 +92,70 @@ export async function waitForInvoiceExtraction(page, {
     const seen = (await page.locator('body').innerText().catch(() => '')).slice(0, 200);
     throw new Error(`[${tag}] invoice document uploaded but the form never became ready after ${retries} retries. Page shows: ${JSON.stringify(seen)}`);
 }
+
+// ── Network-quiet wait ───────────────────────────────────────────────────────
+// Replaces fixed sleeps whose real job was "let the app finish talking to the
+// server" (after a Submit, an Approve, a reload, a new tab). A fixed 2-3s is
+// too long on a fast network and too short on a slow one; this waits until the
+// page has had no XHR/fetch in flight for `quietMs`, however long that takes,
+// up to `maxMs`.
+//
+// Contract, so a slow network can never turn this into a failure:
+//   · it NEVER throws — on `maxMs` it logs and lets the caller carry on, which
+//     is exactly what the old fixed sleep did;
+//   · the quiet clock starts when it is called, so it always waits at least
+//     `quietMs` even if nothing has started yet;
+//   · requests open for over 30s (long-polls, streams) count as background,
+//     not as "the app is still busy".
+// Requests are tracked per browser CONTEXT, so tabs opened later are covered.
+const _netByPage = new WeakMap();
+const _trackedContexts = new WeakSet();
+
+function _netState(page) {
+    let s = _netByPage.get(page);
+    if (!s) { s = new Map(); _netByPage.set(page, s); }
+    return s;
+}
+
+export function trackNetwork(context) {
+    if (!context || _trackedContexts.has(context)) return;
+    _trackedContexts.add(context);
+    const pageOf = r => { try { return r.frame().page(); } catch { return null; } };
+    // intake-canvas-update is the intake page's background autosave: it fires
+    // repeatedly and stays open 20-30s, so counting it would make every wait on
+    // an intake page sit out its full limit (seen 2026-11-26).
+    const IGNORED = /\/intake-canvas-update\b/;
+    const isApi = r => (r.resourceType() === 'xhr' || r.resourceType() === 'fetch')
+        && !IGNORED.test(r.url());
+    context.on('request', r => {
+        if (!isApi(r)) return;
+        const p = pageOf(r);
+        if (p) _netState(p).set(r, Date.now());
+    });
+    const done = r => { const p = pageOf(r); if (p) _netState(p).delete(r); };
+    context.on('requestfinished', done);
+    context.on('requestfailed', done);
+}
+
+export async function waitForNetworkQuiet(page, { quietMs = 1000, maxMs = 120000, tag = '' } = {}) {
+    trackNetwork(page.context());
+    const inflight = _netState(page);
+    const start = Date.now();
+    let quietSince = start;
+    while (Date.now() - start < maxMs) {
+        if (page.isClosed()) return false;
+        const now = Date.now();
+        let busy = false;
+        for (const t of inflight.values()) if (now - t < 30000) { busy = true; break; }
+        if (busy) quietSince = now;
+        else if (now - quietSince >= quietMs) {
+            if (process.env.WAIT_PROFILE_DIR) console.log(`[NET] ${tag} quiet after ${now - start}ms`);
+            return true;
+        }
+        await new Promise(r => setTimeout(r, 100));
+    }
+    const open = [...inflight.entries()].filter(([, t]) => Date.now() - t < 30000)
+        .map(([r, t]) => `${r.method()} ${r.url().replace(/\?.*/, "")} (${Math.round((Date.now() - t) / 1000)}s)`);
+    console.log(`[NET] ${tag} still busy after ${maxMs / 1000}s — continuing. Open: ${open.join(", ") || "none"}`);
+    return false;
+}

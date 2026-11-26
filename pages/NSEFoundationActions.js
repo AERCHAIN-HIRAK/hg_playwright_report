@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { waitForEditorFocus, serverToday, waitForInvoiceExtraction } from './waitHelpers';
+import { waitForEditorFocus, serverToday, waitForInvoiceExtraction, trackNetwork, waitForNetworkQuiet } from './waitHelpers';
 import { NSEFoundation_Locators as L } from './NSEFoundationLocators';
 import { intakeCreate_Locators as IL } from './allLocators';
 import { PDFParse } from 'pdf-parse';
@@ -25,6 +25,15 @@ export class NSEFoundationActions {
         // savedInvoice and the invoice-number counter) passes its own copy.
         this.dataPath = dataPath;
         fs.mkdirSync('screenshots', { recursive: true });
+        // Start counting XHR/fetch traffic now, so _quiet() sees requests that a
+        // click fires before the wait is even called.
+        try { trackNetwork(page.context()); } catch { /* not a real Page (unit use) */ }
+    }
+
+    /** Wait until the page stops talking to the server (see waitHelpers.js).
+     *  Never throws; replaces fixed sleeps after Submit / Approve / reload. */
+    async _quiet(tag = '', page = this.page) {
+        return waitForNetworkQuiet(page, { tag });
     }
 
     /** Absolute path of the fixture file this instance reads and writes. */
@@ -677,9 +686,10 @@ export class NSEFoundationActions {
     }
 
     async assertBrfAutoPopulated(data) {
-        // BRF auto-populates when Vertical = "Legal". Give it 3s then check.
-        await this.page.waitForTimeout(3000);
+        // BRF auto-populates when Vertical = "Legal". Was a fixed 3s; now waits
+        // (up to 10s) for the value itself, then checks exactly as before.
         const cell = this.page.locator(L.itemBrfCell);
+        await expect(cell).toContainText(data.expectedBrfValue, { timeout: 10000 }).catch(() => {});
         await cell.scrollIntoViewIfNeeded();
         const cellText = await cell.textContent();
         if (cellText?.includes(data.expectedBrfValue)) {
@@ -860,10 +870,12 @@ export class NSEFoundationActions {
         if (await commentsField.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
             await commentsField.fill(comments);
             await this.page.locator(`xpath=${L.approveBtnConfirm}`).click();
+            // was a fixed 2s: let the approve request land before reloading
+            await commentsField.waitFor({ state: 'hidden', timeout: 30000 }).catch(() => {});
         }
-        await this.page.waitForTimeout(2000);
+        await this._quiet('approve');
         await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
-        await this.page.waitForTimeout(2000);
+        await this._quiet('approve: reload');
     }
 
     /** Wait for the Approve button, reloading up to `maxReloads` times if stale.
@@ -894,7 +906,7 @@ export class NSEFoundationActions {
             if (attempt < maxReloads) {
                 console.log(`[${tag}] Approve button not visible for ${perAttemptMs / 1000}s — reloading (${attempt + 1}/${maxReloads})...`);
                 await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
-                await this.page.waitForTimeout(2500);
+                await this._quiet(`${tag}: approve-button reload`);
             }
         }
         return false;
@@ -933,7 +945,10 @@ export class NSEFoundationActions {
                 return false;
             }
             await opt.click();
-            await this.page.waitForTimeout(1500);
+            // was a fixed 1.5s: the dialog loads its approver list
+            await this.page.locator('[role="dialog"]').first()
+                .waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+            await this._quiet(`${tag}: reassign dialog`);
             return true;
         };
 
@@ -1002,9 +1017,11 @@ export class NSEFoundationActions {
         await reasonField.fill(reason);
         await this.page.locator(`xpath=${L.reassignSubmitBtn}`).first().click();
         console.log(`[${tag}] Workflow approver reassigned to NSEF Support Admin`);
-        await this.page.waitForTimeout(2500);
+        // was fixed 2.5s + 2s: let the reassign land, then let the reloaded page load
+        await reasonField.waitFor({ state: 'hidden', timeout: 30000 }).catch(() => {});
+        await this._quiet(`${tag}: reassign`);
         await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
-        await this.page.waitForTimeout(2000);
+        await this._quiet(`${tag}: reassign reload`);
         return true;
     }
 
@@ -2354,7 +2371,7 @@ export class NSEFoundationActions {
         const maxIter = 15;
         let noActionStreak = 0;
         for (let i = 0; i < maxIter; i++) {
-            await this.page.waitForTimeout(2000);
+            await this._quiet('intake approval');
 
             // Check Released/Active
             const released = await this.page.locator(`xpath=${L.cxoReleasedStatus}`)
@@ -2374,7 +2391,9 @@ export class NSEFoundationActions {
                 await cf.waitFor({ state: 'visible', timeout: 60000 });
                 await cf.fill(comments);
                 await this.page.locator(IL.intakeAppSubmit).click();
-                await this.page.waitForTimeout(1500);
+                // was a fixed 1.5s: let the approve land before reloading
+                await cf.waitFor({ state: 'hidden', timeout: 30000 }).catch(() => {});
+                await this._quiet('intake approve');
                 await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
                 continue;
             }
@@ -3693,7 +3712,9 @@ export class NSEFoundationActions {
         await confirmBtn.waitFor({ state: 'visible', timeout: 60000 });
         await confirmBtn.click();
         console.log('[Sourcing] Confirmed Process Request popup');
-        await this.page.waitForTimeout(3000);
+        // was a fixed 3s: popup closes, then the RFX save finishes
+        await confirmBtn.waitFor({ state: 'hidden', timeout: 30000 }).catch(() => {});
+        await this._quiet('sourcing submit');
     }
 
     async _isSourcingPendingApproval(timeout = 3000) {
@@ -3804,7 +3825,7 @@ export class NSEFoundationActions {
         await searchInput.waitFor({ state: 'visible', timeout: 60000 });
         await searchInput.fill(code);
         await searchInput.press('Enter');
-        await this.page.waitForTimeout(2000);
+        await this._quiet('RFX search'); // was a fixed 2s: let the search results land
 
         // Click the matching row
         const row = this.page.locator(`xpath=${L.quoteRequestRowByCode(code)}`).first();
@@ -4122,7 +4143,9 @@ export class NSEFoundationActions {
         await submit.waitFor({ state: 'visible', timeout: 60000 });
         await submit.click();
         console.log('[Award] Foreclose submitted');
-        await this.page.waitForTimeout(3000);
+        // was a fixed 3s: dialog closes, then the foreclose finishes
+        await submit.waitFor({ state: 'hidden', timeout: 30000 }).catch(() => {});
+        await this._quiet('foreclose');
     }
 
     // ── RFX — Award flow ──────────────────────────────────────────────────────
@@ -4155,7 +4178,7 @@ export class NSEFoundationActions {
         await btn.waitFor({ state: 'visible', timeout: 60000 });
         await btn.click();
         console.log('[Award] Clicked Award');
-        await this.page.waitForTimeout(2000);
+        await this._quiet('award form'); // was a fixed 2s: the award form loads its quantities
     }
 
     async fillAllocatedQuantity() {
@@ -5234,7 +5257,9 @@ export class NSEFoundationActions {
         await btn.waitFor({ state: 'visible', timeout: 60000 });
         await btn.click();
         console.log('[Award] Workflow Summary submitted');
-        await this.page.waitForTimeout(3000);
+        // was a fixed 3s: popup closes, then the submit finishes
+        await btn.waitFor({ state: 'hidden', timeout: 30000 }).catch(() => {});
+        await this._quiet('workflow summary');
     }
 
     // Opens Workflow Stages, reads the OVERALL workflow badge (not per-stage
@@ -5259,7 +5284,7 @@ export class NSEFoundationActions {
                 continue;
             }
             await stagesBtn.click();
-            await this.page.waitForTimeout(1500);
+            await this._quiet(`${tag}: workflow stages`); // was a fixed 1.5s: popup loads its data
 
             const badge = this.page.locator(`xpath=${L.workflowOverallStatusBadge}`).first();
             const hasData = await badge.waitFor({ state: 'visible', timeout: 8000 })
@@ -5275,9 +5300,10 @@ export class NSEFoundationActions {
             const statusText = (await badge.textContent() ?? '').trim();
             const completed = /completed/i.test(statusText);
 
-            // Close the popup by clicking outside it
+            // Close the popup by clicking outside it. Was a fixed 1s; now returns
+            // as soon as the popup is gone, never later than the old 1s.
             await this.page.mouse.click(5, 500);
-            await this.page.waitForTimeout(1000);
+            await badge.waitFor({ state: 'hidden', timeout: 1000 }).catch(() => {});
 
             console.log(`[${tag}] Workflow Stages → overall status: "${statusText}" → ${completed ? 'Completed' : 'NOT completed'}`);
             return completed;
@@ -5541,7 +5567,7 @@ export class NSEFoundationActions {
             link.click(),
         ]);
         await newPage.waitForLoadState('domcontentloaded');
-        await newPage.waitForTimeout(3000);
+        await this._quiet('PR tab', newPage); // was a fixed 3s: the PR page loads its code
         const url = newPage.url();
         console.log(`[Award] Requisition "${linkText}" opened in new tab → ${url}`);
 
@@ -5595,7 +5621,7 @@ export class NSEFoundationActions {
         }
 
         await this.page.waitForURL(/\/requisitions\/\d+/, { timeout: 60000 });
-        await this.page.waitForTimeout(3000);
+        await this._quiet('PR page'); // was a fixed 3s
         console.log(`[PR] On requisition page: ${this.page.url()}`);
     }
 
@@ -5705,7 +5731,7 @@ export class NSEFoundationActions {
         } else {
             console.log('[PR] Approvers popup did not appear');
         }
-        await this.page.waitForTimeout(4000);
+        await this._quiet('PR submit'); // was a fixed 4s
     }
 
     async assertPrSubmitted() {
@@ -5867,7 +5893,7 @@ export class NSEFoundationActions {
         await newPage.waitForLoadState('domcontentloaded');
         // Keep the new tab the same size as the main one (user requirement)
         await newPage.setViewportSize({ width: 1800, height: 900 });
-        await newPage.waitForTimeout(3000);
+        await this._quiet('PO tab', newPage); // was a fixed 3s
 
         this.prPage = this.page;   // keep a handle to the PR tab
         this.page = newPage;       // operate on the PO tab from here on
@@ -10892,7 +10918,13 @@ export class NSEFoundationActions {
         // entirely (2026-09-08).
         await this.page.waitForSelector('tbody tr, .MuiTab-root, [data-slot="tabs-trigger"]',
             { timeout: 90000 }).catch(() => {});
-        await this.page.waitForTimeout(10000);
+        // Was a fixed 10s. Now: wait for the view's own label to render, then for
+        // the listing's first load to finish — clicking the view while that load
+        // is still in flight could let it overwrite the filtered list.
+        await this.page.getByRole('tab', { name: label, exact: true })
+            .or(this.page.locator(`xpath=//*[normalize-space(text())="${label}"]`))
+            .first().waitFor({ state: 'visible', timeout: 60000 }).catch(() => {});
+        await this._quiet(`${tag}: listing`);
 
         const byRole = this.page.getByRole('tab', { name: label, exact: true }).first();
         if (await byRole.count().catch(() => 0) && await byRole.isVisible().catch(() => false)) {

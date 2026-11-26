@@ -28,29 +28,34 @@ export default defineConfig({
   // PW_RETRIES=0 turns it off for local debugging.
   retries: Number(process.env.PW_RETRIES ?? 1),
 
-  // Whole-test budget. A test still gets up to 30s overall, but no single
-  // locator interaction below is allowed to stall the run.
-  timeout: 30000,
+  // Whole-test budget. Generous on purpose: on a slow network a single page
+  // can take 1-2 min, and chain tests run several pages. A test that sets its
+  // own test.setTimeout() keeps that value. A truly stuck test still fails here
+  // so the run finishes and reports.
+  timeout: 30 * 60 * 1000,
 
-  // Auto-retrying assertions (expect(locator).toBeVisible(), etc.) give up
-  // after 5s instead of waiting the full test timeout.
+  // Auto-retrying assertions (expect(locator).toBeVisible(), etc.) keep
+  // retrying for up to 2 min, so a slow page is not reported as a failure.
+  // (Was 5s - too tight on a slow connection, 2026-11-26.)
   expect: {
-    timeout: 5000,
+    timeout: 120000,
   },
 
   use: {
     headless: false,
-    // If a locator can't be acted on (not found / not actionable) within 5s,
+    // If a locator can't be acted on (not found / not actionable) within 2 min,
     // the action throws → the test is marked failed → artifacts below are
-    // captured. This stops the "error page shown but browser hangs open" case.
-    actionTimeout: 5000,
+    // captured. 2 min tolerates a slow network yet still stops the "error page
+    // shown but browser hangs open" case. (Was 5s until 2026-11-26.)
+    actionTimeout: 120000,
     // Navigation gets a far bigger budget than a locator action. 5s was too tight
     // for this app's listing/base pages under a headed run: the whole-suite run on
     // 2026-08-25 lost two tests purely to `page.goto` expiring on
     // /intakes and on the base URL, before either test's real assertions ran.
     // `waitUntil: 'load'` waits for every subresource, so this must tolerate a
     // slow page, not just a slow server.
-    navigationTimeout: 15000,
+    // Raised 15s → 2 min on 2026-11-26: pages can take 40s-2min on a slow network.
+    navigationTimeout: 120000,
     screenshot: 'only-on-failure',
     // PW_LIGHT=1 turns off video and trace capture. Both buffer for the WHOLE
     // test, and on a long headed run that is enough to get the process killed:
