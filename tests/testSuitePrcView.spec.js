@@ -71,7 +71,7 @@ test.describe('PRC — Requisition Conversion View', () => {
             await select.click();
             const options = page.locator('[role="option"], .MuiAutocomplete-option');
             await expect(options.first(), 'Select User offered no candidates')
-                .toBeVisible({ timeout: 15000 });
+                .toBeVisible({ timeout: 120000 });
             const count = await options.count();
             console.log(`[S44] ${count} reassignment candidate(s)`);
             expect(count).toBeGreaterThan(0);

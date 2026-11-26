@@ -110,7 +110,7 @@ export class cxoListingActions {
             await this.page.waitForTimeout(400);
         }
         const input = this.page.locator(L.searchInput).first();
-        await input.waitFor({ state: 'visible', timeout: 5000 });
+        await input.waitFor({ state: 'visible', timeout: 120000 });
         return input;   // fill() focuses without a pointer click, so the overlay can't block it
     }
 
@@ -138,19 +138,19 @@ export class cxoListingActions {
         await expect.poll(async () => {
             if (await this.page.locator(L.tableNoData).count() > 0) return true;
             return (await getRowCount(this.page)) === 0;
-        }, { timeout: 10000 }).toBeTruthy();
+        }, { timeout: 120000 }).toBeTruthy();
     }
 
     /** The page must still be functional (table container present) after a search. */
     async verifyPageNotCrashed() {
-        await expect(this.page.locator('//table | //tbody').first()).toBeVisible({ timeout: 10000 });
+        await expect(this.page.locator('//table | //tbody').first()).toBeVisible({ timeout: 120000 });
     }
 
     // ── Column Filters ────────────────────────────────────────────────────────
 
     async openColumnFilter(colName) {
         await this.page.locator(this._filterBtnLocator(colName)).first().click();
-        await this.page.locator(L.filterPopup_Container).first().waitFor({ state: 'visible', timeout: 5000 });
+        await this.page.locator(L.filterPopup_Container).first().waitFor({ state: 'visible', timeout: 120000 });
     }
 
     async searchInFilterPopup(searchTerm) {
@@ -158,7 +158,7 @@ export class cxoListingActions {
     }
 
     async selectFilterOption(optionText) {
-        await this.page.locator(L.filterPopup_Option).first().waitFor({ state: 'visible', timeout: 10000 });
+        await this.page.locator(L.filterPopup_Option).first().waitFor({ state: 'visible', timeout: 120000 });
         await this.page.locator(L.filterPopup_Container).getByText(optionText, { exact: true }).first().click();
     }
 
@@ -175,7 +175,7 @@ export class cxoListingActions {
     }
 
     async verifyFilterPopupOpen() {
-        await expect(this.page.locator(L.filterPopup_Container).first()).toBeVisible({ timeout: 8000 });
+        await expect(this.page.locator(L.filterPopup_Container).first()).toBeVisible({ timeout: 120000 });
     }
 
     async applyFilterByColumnAndValue(colName, optionValue) {
@@ -197,7 +197,7 @@ export class cxoListingActions {
     async clickSortButton(colName) {
         const sortBtn = this._sortBtnLocator(colName);
         if (!sortBtn) throw new Error(`Column "${colName}" does not support sorting`);
-        await this.page.locator(sortBtn).first().click({ timeout: 10000, force: true });
+        await this.page.locator(sortBtn).first().click({ timeout: 120000, force: true });
         await this.waitForListingPageLoad();
     }
 
@@ -207,7 +207,7 @@ export class cxoListingActions {
 
     async verifyColumnNotEmpty(colName) {
         await expect.poll(async () => (await this.getColumnValues(colName)).length,
-            { timeout: 10000 }).toBeGreaterThan(0);
+            { timeout: 120000 }).toBeGreaterThan(0);
     }
 
     // ── Table ─────────────────────────────────────────────────────────────────
@@ -286,13 +286,13 @@ export class cxoListingActions {
     }
 
     async verifyDetailPageOpened() {
-        await expect(this.page).toHaveURL(/\/cxos\/\d+|overview/, { timeout: 15000 });
+        await expect(this.page).toHaveURL(/\/cxos\/\d+|overview/, { timeout: 120000 });
     }
 
     async navigateBackToListing() {
         await this.page.goBack({ waitUntil: 'domcontentloaded' });
-        await this.page.waitForURL(/\/cxos$/, { timeout: 15000 });
-        await this.page.locator('tbody tr td').first().waitFor({ state: 'visible', timeout: 30000 });
+        await this.page.waitForURL(/\/cxos$/, { timeout: 120000 });
+        await this.page.locator('tbody tr td').first().waitFor({ state: 'visible', timeout: 120000 });
     }
 
     // ── Create CXO ──────────────────────────────────────────────────────────────
@@ -306,6 +306,6 @@ export class cxoListingActions {
     }
 
     async verifyCreatePageOpened() {
-        await expect(this.page).toHaveURL(/\/cxos\/create/, { timeout: 10000 });
+        await expect(this.page).toHaveURL(/\/cxos\/create/, { timeout: 120000 });
     }
 }

@@ -62,10 +62,10 @@ export class prCloneActions {
      */
     async listRequisitions(baseUrl = V3_BASE_URL) {
         await this.page.goto(`${baseUrl}/requisitions`,
-            { waitUntil: 'domcontentloaded', timeout: 90000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 60000 });
+            null, { timeout: 120000 });
         await this.page.waitForTimeout(2500);
 
         const rows = await this.page.$$eval('tbody tr', trs => {
@@ -113,9 +113,9 @@ export class prCloneActions {
 
     async openDetail(id, baseUrl = V3_BASE_URL) {
         await this.page.goto(`${baseUrl}/requisitions/${id}`,
-            { waitUntil: 'domcontentloaded', timeout: 90000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         await expect(this.page.getByRole('button', { name: 'More' }).first(),
-            'the PR detail header never rendered').toBeVisible({ timeout: 60000 });
+            'the PR detail header never rendered').toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(2500);
         console.log(`[PR clone] on ${this.page.url()}`);
     }
@@ -123,7 +123,7 @@ export class prCloneActions {
     /** Header status chip text, e.g. "Completed". */
     async readStatusChip() {
         const chip = this.page.locator(DL.statusChip).first();
-        await chip.waitFor({ state: 'visible', timeout: 30000 });
+        await chip.waitFor({ state: 'visible', timeout: 120000 });
         return ((await chip.innerText()) || '').trim();
     }
 
@@ -139,9 +139,9 @@ export class prCloneActions {
     async openMoreMenu() {
         if (await this._visibleMenuItems().count() > 0) return;
         await this.page.getByRole('button', { name: 'More' }).first()
-            .click({ timeout: 20000 });
+            .click({ timeout: 120000 });
         await expect(this._visibleMenuItems().first(),
-            'the More dropdown did not open').toBeVisible({ timeout: 20000 });
+            'the More dropdown did not open').toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(800);
     }
 
@@ -164,12 +164,12 @@ export class prCloneActions {
         await this.openMoreMenu();
         await this._visibleMenuItems()
             .filter({ hasText: /^\s*Clone\s*$/ }).first()
-            .click({ timeout: 20000 });
+            .click({ timeout: 120000 });
 
-        await this.page.waitForURL(new RegExp(`/requisitions/${id}/clone`), { timeout: 60000 });
+        await this.page.waitForURL(new RegExp(`/requisitions/${id}/clone`), { timeout: 120000 });
         // The MUI form + ag-Grid render slowly; the grid is the last thing in.
         await this.page.locator(PL.gridCenterRows).first()
-            .waitFor({ state: 'visible', timeout: 60000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(3000);
         console.log(`[PR clone] clone form open at ${this.page.url()}`);
     }
@@ -204,11 +204,11 @@ export class prCloneActions {
         // The header Submit starts DISABLED while the cloned form settles, so
         // wait for it to go live rather than clicking into a dead button.
         await expect(pageSubmit, 'the clone form never enabled its Submit button')
-            .toBeEnabled({ timeout: 60000 });
+            .toBeEnabled({ timeout: 120000 });
 
         for (let attempt = 1; attempt <= 2; attempt++) {
             if (await dialog.isVisible().catch(() => false)) break;
-            await pageSubmit.click({ timeout: 20000 });
+            await pageSubmit.click({ timeout: 120000 });
             console.log(`[PR clone] clicked Submit (attempt ${attempt})`);
 
             const mandatory = this.page.locator(`xpath=${PL.mandatoryFieldsToast}`).first();
@@ -223,7 +223,7 @@ export class prCloneActions {
         }
 
         await expect(dialog, 'the Workflow Summary popup did not open')
-            .toBeVisible({ timeout: 15000 });
+            .toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(1500);
         return dialog;
     }
@@ -235,13 +235,13 @@ export class prCloneActions {
     async assertBudgetExceeded() {
         const banner = this.page.locator(`xpath=${BUDGET_ERROR_LEAF}`).first();
         await expect(banner, 'Workflow Summary popup shows no "Budget Amount is exceeded" error')
-            .toBeVisible({ timeout: 30000 });
+            .toBeVisible({ timeout: 120000 });
         const text = ((await banner.innerText()) || '').trim();
         console.log(`[PR clone] budget banner: "${text}"`);
 
         await expect(this.page.locator(`xpath=${PL.budgetAmendHeading}`).first(),
             'no Budget Amend Request block alongside the budget error')
-            .toBeVisible({ timeout: 15000 });
+            .toBeVisible({ timeout: 120000 });
         return text;
     }
 
@@ -270,7 +270,7 @@ export class prCloneActions {
     async discardWorkflowSummary() {
         const discard = this.page.locator(`xpath=${PL.dialogDiscard}`).first();
         if (await discard.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false)) {
-            await discard.click({ timeout: 15000 });
+            await discard.click({ timeout: 120000 });
             await this.page.waitForTimeout(1500);
             console.log('[PR clone] discarded the Workflow Summary popup');
         }

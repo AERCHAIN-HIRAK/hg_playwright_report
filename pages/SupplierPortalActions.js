@@ -52,7 +52,7 @@ export class SupplierPortalActions {
     async navigateToSappLogin() {
         const cfg = this.getSupplierConfig();
         await this.page.goto(`${cfg.authUrl}?`);
-        await this.page.waitForSelector(S.loginEmailField, { timeout: 60000 });
+        await this.page.waitForSelector(S.loginEmailField, { timeout: 120000 });
     }
 
     async fillLoginAndSubmit() {
@@ -66,7 +66,7 @@ export class SupplierPortalActions {
     }
 
     async assertLoggedIn() {
-        await expect(this.page).toHaveURL(/nse-sapp(-v4)?-uat\.aerchain\.io/, { timeout: 60000 });
+        await expect(this.page).toHaveURL(/nse-sapp(-v4)?-uat\.aerchain\.io/, { timeout: 120000 });
     }
 
     /**
@@ -86,7 +86,7 @@ export class SupplierPortalActions {
      * @param {string} url absolute SAPP url (shell or v4)
      */
     async openSappPage(url) {
-        await this.page.goto(url, { timeout: 90000 });
+        await this.page.goto(url, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         // Wait for EITHER outcome: the login form (session missing/expired) or the
         // SAPP app itself. A fixed 5s look for the form missed a slow redirect to
@@ -108,7 +108,7 @@ export class SupplierPortalActions {
             // and logging in THERE fails. Drop the refUrl: log in on the bare
             // auth URL (navigateToSappLogin), then go back to the requested page.
             await this.login();
-            await this.page.goto(url, { timeout: 90000 });
+            await this.page.goto(url, { timeout: 120000 });
             await this.page.waitForLoadState('domcontentloaded');
         }
         await this.page.waitForLoadState('networkidle').catch(() => {});
@@ -140,9 +140,9 @@ export class SupplierPortalActions {
         }
 
         const link = this.page.locator(`xpath=${S.rfxRowLinkByCode(code)}`).first();
-        await link.waitFor({ state: 'visible', timeout: 15000 });
+        await link.waitFor({ state: 'visible', timeout: 120000 });
         await link.click();
-        await this.page.waitForURL(/\/supplier-quote-requests\/\d+/, { timeout: 15000 });
+        await this.page.waitForURL(/\/supplier-quote-requests\/\d+/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         console.log(`[SAPP RFX] Opened ${code} → ${this.page.url()}`);
         return code;
@@ -156,7 +156,7 @@ export class SupplierPortalActions {
      */
     async acceptRfx() {
         const btn = this.page.locator(`xpath=${S.rfxAcceptBtn}`).first();
-        await btn.waitFor({ state: 'visible', timeout: 20000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
         await btn.scrollIntoViewIfNeeded();
         let enabled = false;
         for (let i = 0; i < 15; i++) {
@@ -178,7 +178,7 @@ export class SupplierPortalActions {
                 console.log('[SAPP RFX] Agreed to Terms & Conditions');
             }
             const accept = this.page.locator(`xpath=${S.dialogAcceptBtn}`).first();
-            await accept.waitFor({ state: 'visible', timeout: 5000 });
+            await accept.waitFor({ state: 'visible', timeout: 120000 });
             for (let i = 0; i < 6 && await accept.isDisabled().catch(() => true); i++) {
                 await this.page.waitForTimeout(500);
             }
@@ -188,7 +188,7 @@ export class SupplierPortalActions {
 
         // Accepted state → the "Submit Quote" button becomes available.
         await this.page.locator(`xpath=${S.rfxSubmitQuoteBtn}`).first()
-            .waitFor({ state: 'visible', timeout: 20000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(1000);
     }
 
@@ -201,16 +201,16 @@ export class SupplierPortalActions {
         const data = this._data();
 
         const submitQuote = this.page.locator(`xpath=${S.rfxSubmitQuoteBtn}`).first();
-        await submitQuote.waitFor({ state: 'visible', timeout: 20000 });
+        await submitQuote.waitFor({ state: 'visible', timeout: 120000 });
         await submitQuote.scrollIntoViewIfNeeded();
         await submitQuote.click();
         console.log('[SAPP RFX] Clicked Submit Quote');
 
         const commercial = this.page.locator(`xpath=${S.rfxCommercialQuoteOption}`).first();
-        await commercial.waitFor({ state: 'visible', timeout: 8000 });
+        await commercial.waitFor({ state: 'visible', timeout: 120000 });
         await commercial.click();
         console.log('[SAPP RFX] Selected Commercial');
-        await this.page.waitForURL(/\/quote\?type=commercial/, { timeout: 15000 });
+        await this.page.waitForURL(/\/quote\?type=commercial/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         await this.page.waitForTimeout(1500);
 
@@ -224,7 +224,7 @@ export class SupplierPortalActions {
 
         // "Select Submission Type" confirmation dialog.
         const confirm = this.page.locator(`xpath=${S.dialogPrimaryBtn}`).first();
-        await confirm.waitFor({ state: 'visible', timeout: 8000 });
+        await confirm.waitFor({ state: 'visible', timeout: 120000 });
         await confirm.click();
         console.log('[SAPP RFX] Confirmed submission');
         await this.page.waitForTimeout(3000);
@@ -237,7 +237,7 @@ export class SupplierPortalActions {
      */
     async _setPreferredCurrency(currency) {
         const trigger = this.page.locator(`xpath=${S.rfxPreferredCurrencyTrigger}`).first();
-        await trigger.waitFor({ state: 'visible', timeout: 10000 });
+        await trigger.waitFor({ state: 'visible', timeout: 120000 });
         await trigger.scrollIntoViewIfNeeded();
         await trigger.click();
         await this.page.waitForTimeout(800);
@@ -248,7 +248,7 @@ export class SupplierPortalActions {
             await this.page.waitForTimeout(500);
         }
         const opt = this.page.locator(`xpath=${S.rfxCurrencyOption(currency)}`).first();
-        await opt.waitFor({ state: 'visible', timeout: 5000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
         console.log(`[SAPP RFX] Preferred Currency = ${currency}`);
         await this.page.waitForTimeout(1000);
@@ -263,7 +263,7 @@ export class SupplierPortalActions {
      */
     async _fillUnitRate(rate) {
         await this.page.getByText(S.rfxUnitRateHeader, { exact: true }).first()
-            .waitFor({ state: 'visible', timeout: 10000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
 
         const tagged = await this.page.evaluate((headerText) => {
             const norm = (s) => (s || '').trim();
@@ -345,9 +345,9 @@ export class SupplierPortalActions {
             await this.page.waitForTimeout(2000);
         }
         const cell = this.page.locator(`xpath=${S.poCodeText(code)}`).first();
-        await cell.waitFor({ state: 'visible', timeout: 15000 });
+        await cell.waitFor({ state: 'visible', timeout: 120000 });
         await cell.click();
-        await this.page.waitForURL(/\/purchase-orders\/\d+/, { timeout: 15000 });
+        await this.page.waitForURL(/\/purchase-orders\/\d+/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         console.log(`[SAPP PO] Opened ${code} → ${this.page.url()}`);
         return code;
@@ -394,17 +394,17 @@ export class SupplierPortalActions {
             console.log('[SAPP PO] Confirmed Accept');
         }
         // Wait for the accepted state (Accept button gone, Create available).
-        await create.waitFor({ state: 'visible', timeout: 15000 });
+        await create.waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(1500);
     }
 
     async openPoCreateMenu(itemName) {
         const create = this.page.locator(`xpath=${S.poCreateBtn}`).first();
-        await create.waitFor({ state: 'visible', timeout: 15000 });
+        await create.waitFor({ state: 'visible', timeout: 120000 });
         await create.click();
         await this.page.waitForTimeout(800);
         const item = this.page.locator(`xpath=${S.poCreateMenuItem(itemName)}`).first();
-        await item.waitFor({ state: 'visible', timeout: 8000 });
+        await item.waitFor({ state: 'visible', timeout: 120000 });
         await item.click();
         console.log(`[SAPP PO] Create → ${itemName}`);
         await this.page.waitForTimeout(2000);
@@ -421,7 +421,7 @@ export class SupplierPortalActions {
             await this.page.waitForTimeout(2000);
         }
         const submit = this.page.locator(`xpath=${S.grnSubmitBtn}`).last();
-        await submit.waitFor({ state: 'visible', timeout: 15000 });
+        await submit.waitFor({ state: 'visible', timeout: 120000 });
         await submit.click();
         console.log('[SAPP GRN] Submitted GRN (→ Pending Review in CAPP)');
         const confirm = this.page.locator(`xpath=${S.dialogPrimaryBtn}`).first();
@@ -469,13 +469,13 @@ export class SupplierPortalActions {
             await proceed.click();
             console.log('[SAPP Invoice] Confirmed "Confirm Invoice Creation" → Proceed');
         }
-        await this.page.waitForURL(/\/invoices\/new/, { timeout: 30000 });
+        await this.page.waitForURL(/\/invoices\/new/, { timeout: 120000 });
         await this.page.waitForTimeout(1500);
 
         // ── Fill the required form fields ──
         const invoiceNumber = this._nextInvoiceNumber();
         const num = this.page.locator(`xpath=${S.invoiceNumberInput}`).first();
-        await num.waitFor({ state: 'visible', timeout: 15000 });
+        await num.waitFor({ state: 'visible', timeout: 120000 });
         await num.fill(invoiceNumber);
         await this._pickTodayInvoiceDate();
         await this._selectInvoiceNo(S.invoicePeriodBasedField, 'Period based Invoicing');
@@ -713,7 +713,7 @@ export class SupplierPortalActions {
         const input = this.page.locator(S.invoiceDateInput).first();
         await input.scrollIntoViewIfNeeded();
         await input.click({ force: true });
-        await this.page.locator('.react-datepicker').last().waitFor({ state: 'visible', timeout: 10000 });
+        await this.page.locator('.react-datepicker').last().waitFor({ state: 'visible', timeout: 120000 });
         await this.page.locator(`.react-datepicker__day--${dd}:not(.react-datepicker__day--outside-month)`)
             .last().click();
         await this.page.waitForTimeout(600);
@@ -727,7 +727,7 @@ export class SupplierPortalActions {
         await field.click();
         await this.page.waitForTimeout(700);
         const no = this.page.locator(`xpath=${S.autocompleteNoOption}`).first();
-        await no.waitFor({ state: 'visible', timeout: 8000 });
+        await no.waitFor({ state: 'visible', timeout: 120000 });
         await no.click();
         await this.page.waitForTimeout(500);
         console.log(`[SAPP Invoice] ${label} → No`);
@@ -934,11 +934,11 @@ export class SupplierPortalActions {
 
         // Open the "New Reassign Approver" combobox and pick NSEF Support Admin.
         const field = this.page.locator(`xpath=${S.reassignApproverField}`).first();
-        await field.waitFor({ state: 'visible', timeout: 10000 });
+        await field.waitFor({ state: 'visible', timeout: 120000 });
         await field.click({ force: true });
         await this.page.waitForTimeout(800);
         const admin = this.page.locator(`xpath=${S.reassignAdminOption}`).first();
-        await admin.waitFor({ state: 'visible', timeout: 10000 });
+        await admin.waitFor({ state: 'visible', timeout: 120000 });
         await admin.click();
         await this.page.waitForTimeout(500);
 

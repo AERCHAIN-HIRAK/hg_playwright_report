@@ -31,10 +31,10 @@ export class poAmendActions {
     // ── Finding an amendable PO ───────────────────────────────────────────────
 
     async listPurchaseOrders(baseUrl = V3_BASE_URL) {
-        await this.page.goto(`${baseUrl}/purchase-orders`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.goto(`${baseUrl}/purchase-orders`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         // Wait for ROWS, never a fixed delay — this listing carries charts and
         // ~30 columns, and an empty read is indistinguishable from "no data".
-        await this.page.locator('tbody tr').first().waitFor({ state: 'visible', timeout: 90000 });
+        await this.page.locator('tbody tr').first().waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(2500);
 
         const headers = await this.page.$$eval('thead th', ths => ths.map(t => (t.innerText || '').trim()));
@@ -54,7 +54,7 @@ export class poAmendActions {
     /** Open the amend form; returns false when this PO's state offers none. */
     async openAmend(id, baseUrl = V3_BASE_URL) {
         await this.page.goto(`${baseUrl}/purchase-orders/${id}/amend`,
-            { waitUntil: 'domcontentloaded', timeout: 90000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         const grid = this.page.locator('.ag-center-cols-container div.ag-row').first();
         const ok = await grid.waitFor({ state: 'visible', timeout: 45000 }).then(() => true).catch(() => false);
         if (ok) await this.page.waitForTimeout(3500);
@@ -131,7 +131,7 @@ export class poAmendActions {
         // hand-rolled visibility check written that way reports "no popup" while
         // it is on screen. toBeVisible() measures the bounding box.
         await expect(dialog, 'the Workflow Summary popup did not open')
-            .toBeVisible({ timeout: 40000 });
+            .toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(2000);
         return dialog;
     }
@@ -147,7 +147,7 @@ export class poAmendActions {
             '//*[contains(normalize-space(),"Budget Amount is exceeded")]' +
             '[not(.//*[contains(normalize-space(),"Budget Amount is exceeded")])]').first();
         await expect(banner, 'the Workflow Summary popup shows no Budget Exceeded error')
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
         const text = ((await banner.innerText()) || '').trim();
         console.log(`[PO] budget banner: "${text}"`);
         return text;

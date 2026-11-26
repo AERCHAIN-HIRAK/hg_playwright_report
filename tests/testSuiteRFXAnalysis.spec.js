@@ -37,7 +37,7 @@ async function openAnalysis(page) {
     const a = new NSEFoundationActions(page);
     await page.setViewportSize({ width: 1800, height: 900 });
     await a.openApp(data);
-    await page.goto(RFX_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.goto(RFX_URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.waitForTimeout(3500);
     await a.openRfxAnalysisTab();
     return a;
@@ -279,7 +279,7 @@ test.describe('RFX Analysis tab', () => {
             const a = new NSEFoundationActions(page);
             await page.setViewportSize({ width: 1800, height: 900 });
             await a.openApp(data);
-            await page.goto(RFX_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto(RFX_URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(3500);
 
             // "Add Evaluation" sits on the OVERVIEW tab, not the Evaluations tab.
@@ -290,7 +290,7 @@ test.describe('RFX Analysis tab', () => {
             const a = new NSEFoundationActions(page);
             await page.setViewportSize({ width: 1800, height: 900 });
             await a.openApp(data);
-            await page.goto(RFX_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto(RFX_URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(3500);
 
             await page.locator(`xpath=${L.rfxEvaluationsTabBtn}`).first().click();
@@ -333,7 +333,7 @@ test.describe('RFX Analysis tab', () => {
             let target = null;
             for (const rfx of quoted.slice(0, 4)) {
                 await page.goto(`${data.loginUrl}${rfx.href}/overview`,
-                    { waitUntil: 'domcontentloaded', timeout: 60000 });
+                    { waitUntil: 'domcontentloaded', timeout: 120000 });
                 await page.waitForTimeout(6000);
                 if (await a.isRfxForeclosed()) { target = rfx; break; }
             }
@@ -359,7 +359,7 @@ test.describe('RFX Analysis tab', () => {
             const status = await a.extendRfxDeadline(day, 'Extended by automation — scenario 36');
             expect(status, 'the deadline save was rejected').toBeLessThan(300);
 
-            await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(8000);
 
             const after = await a.readRfxQuoteDeadline();

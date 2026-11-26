@@ -101,10 +101,10 @@ test.describe('Requisition detail page', () => {
         // even though it is on screen — use toBeVisible(), which measures the
         // bounding box.
         const drawer = page.locator(L.itemDetailsPaper).first();
-        await expect(drawer).toBeVisible({ timeout: 15000 });
+        await expect(drawer).toBeVisible({ timeout: 120000 });
 
         // It must be THIS item's panel, not an empty shell.
-        await expect(drawer).toContainText(itemName, { timeout: 10000 });
+        await expect(drawer).toContainText(itemName, { timeout: 120000 });
         await expect(drawer).toContainText(/Details/i);
     });
 

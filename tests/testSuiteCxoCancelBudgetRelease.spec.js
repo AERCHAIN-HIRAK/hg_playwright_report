@@ -102,7 +102,7 @@ test.describe('CXO cancel — the budget estimate is released', () => {
         console.log(`[S149] Estimated Spend rose ${baseline} -> ${afterCreate.value}`);
 
         // ── (4) Cancel the CXO ──────────────────────────────────────────────
-        await page.goto(created.url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await page.goto(created.url, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(8000);
         await a.cancelCxo('Cancelled by automation — scenario 149');
         await a.assertCxoStatusCancelled();

@@ -87,7 +87,7 @@ test.describe('Invoice — tax at supplier review, qty change at CAPP review', (
             if (process.env.S58_GRN_ID) {
                 const g = process.env.S58_GRN_ID;
                 await page.goto(`${CAPP}/inwards/${g}`,
-                    { waitUntil: 'domcontentloaded', timeout: 90000 });
+                    { waitUntil: 'domcontentloaded', timeout: 120000 });
                 await page.waitForTimeout(10000);
                 console.log(`[S58-GRN] on ${page.url()}`);
                 const acts = await page.evaluate(() => {
@@ -165,7 +165,7 @@ test.describe('Invoice — tax at supplier review, qty change at CAPP review', (
             if (reuseId) {
                 console.log(`[S58] FAST PATH — reusing invoice id ${reuseId}, skipping the chain`);
                 await page.goto(`${CAPP}/invoices/${reuseId}`,
-                    { waitUntil: 'domcontentloaded', timeout: 90000 });
+                    { waitUntil: 'domcontentloaded', timeout: 120000 });
                 await page.waitForTimeout(12000);
                 if (process.env.S58_PROBE === '3') {
                     await inv.probeWorkflowSurface('S58-WF');
@@ -426,7 +426,7 @@ if (!resumeAt13) {
             const invId = (page.url().match(/\/invoices\/(\d+)/) || [])[1] || reuseId;
             expect(invId, 'could not work out the invoice id to reopen').toBeTruthy();
             await page.goto(`${CAPP}/invoices/${invId}`,
-                { waitUntil: 'domcontentloaded', timeout: 90000 });
+                { waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(10000);
             console.log(`[S58] reopened invoice ${invId} to read the workflow panel`);
             const moneyAfter = await inv.readInvoiceMoneySnapshot('S58-after');

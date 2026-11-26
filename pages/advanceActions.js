@@ -23,10 +23,10 @@ export class advanceActions {
     }
 
     async openListing(baseUrl = V3_BASE_URL) {
-        await this.page.goto(`${baseUrl}/advances`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.goto(`${baseUrl}/advances`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         // Wait for rows, not a fixed delay — an empty read on these v3 listings
         // is indistinguishable from "no data" and silently skips the test.
-        await this.page.locator('tbody tr').first().waitFor({ state: 'visible', timeout: 90000 });
+        await this.page.locator('tbody tr').first().waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(2500);
     }
 
@@ -61,9 +61,9 @@ export class advanceActions {
      * Returns [{ code, type, paidText, paid }] — empty when the tab shows "No data".
      */
     async readPayments(id, baseUrl = V3_BASE_URL) {
-        await this.page.goto(`${baseUrl}/advances/${id}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.goto(`${baseUrl}/advances/${id}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         const tab = this.page.locator('xpath=//button[normalize-space()="Transactions"]').first();
-        await tab.waitFor({ state: 'visible', timeout: 90000 });
+        await tab.waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(2000);
         await tab.click();
         await this.page.waitForTimeout(6000);

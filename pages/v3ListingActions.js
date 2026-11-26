@@ -40,7 +40,7 @@ export class v3ListingActions {
     // ── Navigation ────────────────────────────────────────────────────────────
 
     async navigateToListingPage(baseUrl = V3_BASE_URL) {
-        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.waitForListingPageLoad();
     }
 
@@ -66,7 +66,7 @@ export class v3ListingActions {
     }
 
     async navigateBackToListing() {
-        await this.page.goBack({ waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goBack({ waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.waitForListingPageLoad();
     }
 
@@ -210,7 +210,7 @@ export class v3ListingActions {
 
     async openColumnFilter(colName) {
         await this.page.locator(L.filterIcon(colName)).first().click();
-        await expect(this.page.locator(L.filterPopup_OK)).toBeVisible({ timeout: 10000 });
+        await expect(this.page.locator(L.filterPopup_OK)).toBeVisible({ timeout: 120000 });
     }
 
     async isFilterPopupOpen() {

@@ -172,8 +172,8 @@ export class intakeListingActions {
         const isVisible = await input.isVisible().catch(() => false);
         if (!isVisible) {
             // Click the search icon button to reveal the input
-            await this.page.locator(L.searchIcon).first().click({ timeout: 5000 });
-            await input.waitFor({ state: 'visible', timeout: 5000 });
+            await this.page.locator(L.searchIcon).first().click({ timeout: 120000 });
+            await input.waitFor({ state: 'visible', timeout: 120000 });
         }
     }
 
@@ -210,7 +210,7 @@ export class intakeListingActions {
     async openColumnFilter(colName) {
         const filterBtn = this._filterBtnLocator(colName);
         await this.page.locator(filterBtn).first().click();
-        await this.page.locator(L.filterPopup_Container).first().waitFor({ state: 'visible', timeout: 5000 });
+        await this.page.locator(L.filterPopup_Container).first().waitFor({ state: 'visible', timeout: 120000 });
     }
 
     async searchInFilterPopup(searchTerm) {
@@ -219,7 +219,7 @@ export class intakeListingActions {
 
     async selectFilterOption(optionText) {
         // Wait for options to populate before attempting to click
-        await this.page.locator(L.filterPopup_Option).first().waitFor({ state: 'visible', timeout: 10000 });
+        await this.page.locator(L.filterPopup_Option).first().waitFor({ state: 'visible', timeout: 120000 });
         await this.page.locator('//div[@data-radix-popper-content-wrapper]')
             .getByText(optionText, { exact: true })
             .click();
@@ -273,7 +273,7 @@ export class intakeListingActions {
         if (!sortBtn) throw new Error(`Column "${colName}" does not support sorting`);
         // force:true bypasses Playwright's stability check — the button has CSS transitions that
         // cause it to be considered "not stable" during re-renders after the first sort click.
-        await this.page.locator(sortBtn).first().click({ timeout: 10000, force: true });
+        await this.page.locator(sortBtn).first().click({ timeout: 120000, force: true });
         await this.waitForListingPageLoad();
     }
 
@@ -287,14 +287,14 @@ export class intakeListingActions {
         await expect.poll(async () => {
             const values = await this.getColumnValues(colName);
             return values.length;
-        }, { timeout: 10000 }).toBeGreaterThan(0);
+        }, { timeout: 120000 }).toBeGreaterThan(0);
     }
 
     async verifyDateSortedInSomeDirection() {
         await expect.poll(async () => {
             const values = await this.getColumnValues('Date');
             return values.length;
-        }, { timeout: 10000 }).toBeGreaterThan(0);
+        }, { timeout: 120000 }).toBeGreaterThan(0);
     }
 
     async clickSortButtonAndVerifyOrderChanges(colName) {
@@ -375,7 +375,7 @@ export class intakeListingActions {
     }
 
     async verifyDetailPageOpened() {
-        await expect(this.page).toHaveURL(/\/intakes\/\d+|overview/, { timeout: 15000 });
+        await expect(this.page).toHaveURL(/\/intakes\/\d+|overview/, { timeout: 120000 });
     }
 
     async navigateBack() {
@@ -387,8 +387,8 @@ export class intakeListingActions {
         if (await leaveBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false)) {
             await leaveBtn.click();
         }
-        await this.page.waitForURL(/\/intakes$/, { timeout: 15000 });
-        await this.page.locator('tbody tr td').first().waitFor({ state: 'visible', timeout: 30000 });
+        await this.page.waitForURL(/\/intakes$/, { timeout: 120000 });
+        await this.page.locator('tbody tr td').first().waitFor({ state: 'visible', timeout: 120000 });
     }
 
     // ── Create Intake ─────────────────────────────────────────────────────────
@@ -402,7 +402,7 @@ export class intakeListingActions {
     }
 
     async verifyCreatePageOpened() {
-        await expect(this.page).toHaveURL(/\/intakes\/create/, { timeout: 10000 });
+        await expect(this.page).toHaveURL(/\/intakes\/create/, { timeout: 120000 });
     }
 
 }

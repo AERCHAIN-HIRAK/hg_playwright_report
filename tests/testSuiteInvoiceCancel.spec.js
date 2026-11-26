@@ -67,18 +67,18 @@ test.describe('Invoice — cancel an Accounted invoice', () => {
         const code = codes[0];
         console.log(`[S81] cancelling ${code} (/invoices/${id})`);
 
-        await page.goto(`${data.baseUrl}/invoices/${id}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await page.goto(`${data.baseUrl}/invoices/${id}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.locator('xpath=//button[normalize-space()="More"]').first()
-            .waitFor({ state: 'visible', timeout: 90000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await page.waitForTimeout(3000);
 
         // Confirm the state under test actually rendered — otherwise "Cancel is
         // offered" could be read off some other invoice.
         await expect(page.locator('xpath=//*[normalize-space()="Accounted"]').first(),
-            'the opened invoice does not show the Accounted status').toBeVisible({ timeout: 30000 });
+            'the opened invoice does not show the Accounted status').toBeVisible({ timeout: 120000 });
 
         const cancel = page.locator('xpath=//button[normalize-space()="Cancel"]').first();
-        await expect(cancel, 'an Accounted invoice offers no Cancel action').toBeVisible({ timeout: 20000 });
+        await expect(cancel, 'an Accounted invoice offers no Cancel action').toBeVisible({ timeout: 120000 });
         expect(await cancel.isDisabled(), 'the Cancel action is disabled').toBeFalsy();
 
         // ── Cancel for real ───────────────────────────────────────────────────

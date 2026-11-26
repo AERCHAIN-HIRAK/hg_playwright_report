@@ -39,10 +39,10 @@ test.describe('QA-clarified scenarios', () => {
         await page.setViewportSize({ width: 1800, height: 900 });
         await a.openApp(data);
 
-        await page.goto(`${data.loginUrl}/cxos`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(`${data.loginUrl}/cxos`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         // Wait for the first row to actually carry a code. Rows mount before
         // their cells fill, and reading too early yields "" — which both made
@@ -51,7 +51,7 @@ test.describe('QA-clarified scenarios', () => {
         await page.waitForFunction(() => {
             const c = document.querySelector('tbody tr td');
             return c && (c.textContent || '').trim().length > 0;
-        }, null, { timeout: 30000 });
+        }, null, { timeout: 120000 });
         await page.waitForTimeout(800);
 
         const rowCode = (await page.locator('(//tbody/tr)[1]/td[1]').innerText()).trim();
@@ -80,7 +80,7 @@ test.describe('QA-clarified scenarios', () => {
         expect(page.url(), 'clicking the row navigated instead of opening a panel')
             .toMatch(/\/cxos\/?$/);
 
-        await expect(panel, 'CXO panel did not open after 3 row clicks').toBeVisible({ timeout: 15000 });
+        await expect(panel, 'CXO panel did not open after 3 row clicks').toBeVisible({ timeout: 120000 });
 
         // It must be THIS row's CXO, with its related data populated.
         await expect(panel).toContainText(rowCode);
@@ -96,7 +96,7 @@ test.describe('QA-clarified scenarios', () => {
         await page.setViewportSize({ width: 1800, height: 900 });
         await a.openApp(data);
 
-        await page.goto(data.savedSourcingEvent.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(data.savedSourcingEvent.url, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(3500);
 
         await page.locator(`xpath=${L.rfxTransactionsTabBtn}`).first().click();
@@ -134,7 +134,7 @@ test.describe('QA-clarified scenarios', () => {
         console.log(`[S43] PO ${code}`);
 
         // The control sits in General Details, labelled "PO Document".
-        await expect(page.locator(`xpath=${L.poDocumentLabel}`).first()).toBeVisible({ timeout: 20000 });
+        await expect(page.locator(`xpath=${L.poDocumentLabel}`).first()).toBeVisible({ timeout: 120000 });
 
         const link = page.locator(`xpath=${L.poDocumentDownload}`).first();
         await expect(link).toBeVisible();

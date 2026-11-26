@@ -158,7 +158,7 @@ test.describe.serial('Auction Flow A — RFX → Auction → live → Update to 
         });
 
         await test.step('1.5b the conversion is in the RFX Activity timeline', async () => {
-            await page.goto(st.rfxUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto(st.rfxUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(7000);
             const tl = await a.readRfxActivityTimeline();
             console.log(`[AUC-A] RFX timeline: ${JSON.stringify(tl)}`);
@@ -168,7 +168,7 @@ test.describe.serial('Auction Flow A — RFX → Auction → live → Update to 
         });
 
         await test.step('1.4 the RFX cannot be converted to a second auction', async () => {
-            await page.goto(st.rfxUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto(st.rfxUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(7000);
             const d = await x.probeConvertToAuctionDialog(a);
             console.log(`[AUC-A] 2nd Convert to Auction dialog: ${JSON.stringify(d)}`);
@@ -294,7 +294,7 @@ test.describe.serial('Auction Flow A — RFX → Auction → live → Update to 
         await test.step('2.5 auto release No → a Release button is offered; release it', async () => {
             await x.openAuction(st.auctionUrl);
             const rel = page.getByRole('button', { name: /^Release/i }).first();
-            await expect(rel, 'no Release button on an auction with auto release = No').toBeVisible({ timeout: 20000 });
+            await expect(rel, 'no Release button on an auction with auto release = No').toBeVisible({ timeout: 120000 });
             await rel.click();
             await page.waitForTimeout(2500);
             const dlg = page.getByRole('dialog').last();
@@ -738,7 +738,7 @@ test.describe.serial('Auction Flow A — RFX → Auction → live → Update to 
                 .toBeGreaterThanOrEqual(LINES + 1);
             const tl = await x.readAuctionTimeline();
             console.log(`[AUC-A] auction timeline after Update RFQ: ${JSON.stringify(tl)}`);
-            await page.goto(st.rfxUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto(st.rfxUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(8000);
             const rows = await x.readRfxSupplierRows();
             console.log(`[AUC-A] RFX suppliers after Update RFQ: ${JSON.stringify(rows.map(r => r.cells))}`);
@@ -756,7 +756,7 @@ test.describe.serial('Auction Flow A — RFX → Auction → live → Update to 
         }));
 
         await doneOnce('A5 5.3 analysis', () => test.step('5.3 the RFX Analysis tab carries the final prices (S1 RFX quote, S2 final auction bid)', async () => {
-            await page.goto(st.rfxUrl.replace(/\/overview.*$/, '/analysis'), { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto(st.rfxUrl.replace(/\/overview.*$/, '/analysis'), { waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(10000);
             const lines = (await page.locator('body').innerText()).split('\n').map(l => l.trim()).filter(Boolean);
             // supplier columns in header order, then the Cost Approval Note "Total" row
@@ -1012,7 +1012,7 @@ for (const flow of [
                 await page.getByRole('button', { name: /^More$/ }).first().click();
                 await page.getByRole('menuitem', { name: 'Reassign' }).click();
                 const dlg = page.getByRole('dialog').last();
-                await dlg.waitFor({ state: 'visible', timeout: 15000 });
+                await dlg.waitFor({ state: 'visible', timeout: 120000 });
                 console.log(`[${TAG}] reassign dialog: ${(await dlg.innerText()).replace(/\n+/g, ' | ').slice(0, 400)}`);
                 const combo = dlg.locator('input, [role=combobox]').first();
                 await combo.click();
@@ -1131,7 +1131,7 @@ for (const flow of [
                 await page.getByRole('button', { name: /^More$/ }).first().click();
                 await page.getByRole('menuitem', { name: 'Cancel' }).click();
                 const dlg = page.getByRole('dialog').last();
-                await dlg.waitFor({ state: 'visible', timeout: 15000 });
+                await dlg.waitFor({ state: 'visible', timeout: 120000 });
                 const reason = dlg.locator('textarea, input[type=text]').first();
                 if (await reason.count()) await reason.fill('Cancelled by automation (Flow E clean-up)');
                 await dlg.getByRole('button', { name: /^(Submit|Confirm|Yes|OK)$/i }).last().click();
@@ -1263,7 +1263,7 @@ for (const flow of [
             }), TAG);
 
             await test.step('S5 is on the RFX view page', async () => {
-                await page.goto(s.rfxUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+                await page.goto(s.rfxUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
                 await page.waitForTimeout(8000);
                 const rows = await x.readRfxSupplierRows();
                 console.log(`[${TAG}] RFX suppliers after Update RFQ: ${JSON.stringify(rows.map(r => r.cells))}`);

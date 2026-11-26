@@ -117,7 +117,7 @@ const num = (v) => parseFloat(String(v ?? '').replace(/,/g, '')) || 0;
  * Returns { code, id } or null, in which case the caller builds a fresh chain.
  */
 async function findReusablePo(page, shellUrl, max = 8) {
-    await page.goto(`${shellUrl}/purchase-orders`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await page.goto(`${shellUrl}/purchase-orders`, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.waitForTimeout(12000);
     const codes = await page.evaluate(() => {
         const out = [];
@@ -171,7 +171,7 @@ async function findReusablePo(page, shellUrl, max = 8) {
                 if (hit) return hit;
             }
         }
-        await page.goto(`${shellUrl}/purchase-orders`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await page.goto(`${shellUrl}/purchase-orders`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(8000);
     }
     console.log('[S143] discovery — no clean-slate PO found');

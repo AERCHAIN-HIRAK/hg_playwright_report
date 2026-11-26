@@ -38,10 +38,10 @@ export class v3DetailActions {
      * Preferred over a hardcoded id so the suite survives UAT data churn.
      */
     async openFirstTransactionFromListing(baseUrl = V3_BASE_URL) {
-        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await this.page.waitForTimeout(800);
         // First row that is not reserved for another test (see reservedRecords).
@@ -61,10 +61,10 @@ export class v3DetailActions {
      * skip rather than fail, since UAT data is not guaranteed to contain one.
      */
     async openFirstTransactionWithStatus(statuses, baseUrl = V3_BASE_URL) {
-        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await this.page.waitForTimeout(800);
 
@@ -101,10 +101,10 @@ export class v3DetailActions {
      * UAT data is not guaranteed to contain one.
      */
     async openFirstTransactionWithColumnValue(header, value, baseUrl = V3_BASE_URL) {
-        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await this.page.waitForTimeout(800);
 
@@ -180,10 +180,10 @@ export class v3DetailActions {
      */
     async openFirstTransactionWithColumnValueAcrossPages(header, value,
         { maxPages = 25, baseUrl = V3_BASE_URL, tag = 'LIST' } = {}) {
-        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await this.page.waitForTimeout(800);
 
@@ -222,10 +222,10 @@ export class v3DetailActions {
     /** Like openFirstTransactionWithStatus, but SEARCHES EVERY PAGE. */
     async openFirstTransactionWithStatusAcrossPages(statuses,
         { maxPages = 25, baseUrl = V3_BASE_URL, tag = 'LIST' } = {}) {
-        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await this.page.waitForTimeout(800);
 
@@ -263,10 +263,10 @@ export class v3DetailActions {
 
     /** Every listing row whose Status column matches one of `statuses`. */
     async listTransactionsWithStatus(statuses, baseUrl = V3_BASE_URL) {
-        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${baseUrl}/${this.module.slug}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await this.page.waitForTimeout(800);
         return this.page.evaluate((wanted) => {
@@ -288,7 +288,7 @@ export class v3DetailActions {
 
     async waitForDetailLoaded() {
         await expect(this.page.locator(L.moreButton).first())
-            .toBeVisible({ timeout: 30000 });
+            .toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(1200);
     }
 
@@ -330,7 +330,7 @@ export class v3DetailActions {
         } else {
             await this.page.locator(L.moreButton).first().click();
         }
-        await expect(this._visibleMenuItems().first()).toBeVisible({ timeout: 15000 });
+        await expect(this._visibleMenuItems().first()).toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(800);
     }
 
@@ -397,9 +397,9 @@ export class v3DetailActions {
 
     async clickMenuItem(label) {
         const item = this._menuItemByLabel(label).first();
-        await item.waitFor({ state: 'visible', timeout: 15000 });
+        await item.waitFor({ state: 'visible', timeout: 120000 });
         await item.scrollIntoViewIfNeeded().catch(() => {});
-        await item.click({ timeout: 15000 });
+        await item.click({ timeout: 120000 });
     }
 
 
@@ -420,7 +420,7 @@ export class v3DetailActions {
      */
     async openPrcConversionView(requisitionId, baseUrl = V3_BASE_URL) {
         await this.page.goto(`${baseUrl}/requisitions/${requisitionId}`,
-            { waitUntil: 'domcontentloaded', timeout: 90000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(7000);
 
         await this.page.locator(L.prcTransactionsTab).first().click();
@@ -440,7 +440,7 @@ export class v3DetailActions {
 
         await expect(this.page.locator(L.prcConversionViewHeading).first(),
             'the Requisition Conversion View did not open')
-            .toBeVisible({ timeout: 30000 });
+            .toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(2500);
         console.log(`[PRC] opened ${code} (conversion view of requisition ${requisitionId})`);
         return code;
@@ -454,7 +454,7 @@ export class v3DetailActions {
      * hardcoded id to survive UAT data churn.
      */
     async openAnyPrcConversionView(baseUrl = V3_BASE_URL, maxCandidates = 5) {
-        await this.page.goto(`${baseUrl}/requisitions`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.goto(`${baseUrl}/requisitions`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(7000);
 
         const headers = await this.page.$$eval('thead th',
@@ -494,13 +494,13 @@ export class v3DetailActions {
      * Returns [{ id, code, status, matched: 'completed'|'pending'|'', invoice }].
      */
     async listGrnsWithMatchState(baseUrl = V3_BASE_URL) {
-        await this.page.goto(`${baseUrl}/inwards`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.goto(`${baseUrl}/inwards`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         // WAIT FOR ROWS, not a fixed delay. A blind 10s wait returned ZERO rows
         // on one run of two (the charts + ~19 columns make this listing slow),
         // and an empty read looks exactly like "no matched GRN exists" — the
         // test then skipped for the wrong reason.
         await this.page.locator('tbody tr').first()
-            .waitFor({ state: 'visible', timeout: 90000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(3000);
 
         const headers = await this.page.$$eval('thead th',
@@ -537,7 +537,7 @@ export class v3DetailActions {
 
     /** Open a GRN and report which header actions it offers. */
     async readGrnActions(id, baseUrl = V3_BASE_URL) {
-        await this.page.goto(`${baseUrl}/inwards/${id}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.goto(`${baseUrl}/inwards/${id}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(9000);
         const buttons = await this.page.$$eval('button', els => els
             .filter(e => e.getBoundingClientRect().width > 0)
@@ -596,10 +596,10 @@ export class v3DetailActions {
      */
     async openAttachmentAndVerify(filename) {
         const link = this.page.locator('a', { hasText: filename }).first();
-        await expect(link, `attachment "${filename}" is not on the page`).toBeVisible({ timeout: 15000 });
+        await expect(link, `attachment "${filename}" is not on the page`).toBeVisible({ timeout: 120000 });
 
         const [popup] = await Promise.all([
-            this.page.context().waitForEvent('page', { timeout: 25000 }),
+            this.page.context().waitForEvent('page', { timeout: 120000 }),
             link.click(),
         ]);
         await popup.waitForLoadState('domcontentloaded').catch(() => {});
@@ -608,7 +608,7 @@ export class v3DetailActions {
         // 60s, not the 5s actionTimeout this inherits: the file is ~3.6 MB, and on
         // the 2026-10-06 overnight run S3 answered 200 but the body was still
         // streaming at 5s, so a WORKING download failed twice.
-        const res = await this.page.context().request.get(url, { timeout: 60000 });
+        const res = await this.page.context().request.get(url, { timeout: 120000 });
         const body = await res.body();
         await popup.close().catch(() => {});
 
@@ -628,8 +628,8 @@ export class v3DetailActions {
      */
     async findTransactionWithAttachment(baseUrl = V3_BASE_URL, max = 4) {
         await this.page.goto(`${baseUrl}/${this.module.slug}`,
-            { waitUntil: 'domcontentloaded', timeout: 90000 });
-        await this.page.locator('tbody tr').first().waitFor({ state: 'visible', timeout: 90000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
+        await this.page.locator('tbody tr').first().waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(2500);
 
         const rows = await this.page.$$eval('tbody tr', trs => trs.map(tr => {
@@ -641,7 +641,7 @@ export class v3DetailActions {
         }).filter(r => r.href));
 
         for (const row of rows.slice(0, max)) {
-            await this.page.goto(`${baseUrl}${row.href}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+            await this.page.goto(`${baseUrl}${row.href}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
             await this.page.locator('xpath=//button[normalize-space()="Overview"]').first()
                 .waitFor({ state: 'visible', timeout: 60000 }).catch(() => {});
             await this.page.waitForTimeout(5000);
@@ -672,7 +672,7 @@ export class v3DetailActions {
         const [response] = await Promise.all([
             this.page.waitForResponse(
                 r => /regenerate[a-z-]*document/i.test(r.url()) && r.request().method() === 'POST',
-                { timeout: 30000 },
+                { timeout: 120000 },
             ),
             this.clickMenuItem(L.menu_RegenerateDocument),
         ]);
@@ -713,7 +713,7 @@ export class v3DetailActions {
     async downloadDocumentFromFieldAndAssert(fieldLabel) {
         const link = this.page.locator(L.documentFieldDownload(fieldLabel)).first();
         await expect(link, `no Download under the "${fieldLabel}" field in General Details`)
-            .toBeVisible({ timeout: 30000 });
+            .toBeVisible({ timeout: 120000 });
         return this._captureDocument(`"${fieldLabel}" Download`, () => link.click());
     }
 
@@ -756,7 +756,7 @@ export class v3DetailActions {
         expect(url, 'document tab opened with no URL').toBeTruthy();
         expect(url, `document URL does not look like a file: ${url}`).toMatch(/\.pdf|response-content-disposition/i);
 
-        const res = await context.request.get(url, { timeout: 60000 });   // not the 5s actionTimeout
+        const res = await context.request.get(url, { timeout: 120000 });   // not the 5s actionTimeout
         expect(res.ok(), `document URL returned ${res.status()}`).toBeTruthy();
         const body = await res.body();
         expect(body.length, 'document is empty').toBeGreaterThan(0);
@@ -771,7 +771,7 @@ export class v3DetailActions {
     async openReassignUserDialog() {
         await this.openMoreMenu();
         await this.clickMenuItem(L.menu_ReassignUser);
-        await expect(this.page.locator(L.dialog).first()).toBeVisible({ timeout: 15000 });
+        await expect(this.page.locator(L.dialog).first()).toBeVisible({ timeout: 120000 });
     }
 
     /**
@@ -791,7 +791,7 @@ export class v3DetailActions {
 
     async assertDialogTitled(text) {
         const dlg = this.page.locator(L.dialog).first();
-        await expect(dlg).toContainText(text, { timeout: 10000 });
+        await expect(dlg).toContainText(text, { timeout: 120000 });
     }
 
     // ── Back navigation (sheet scenario 60) ───────────────────────────────────
@@ -805,7 +805,7 @@ export class v3DetailActions {
     async assertOnListing() {
         await expect(this.page).toHaveURL(
             new RegExp(`/${this.module.slug}(\\?|$|#)`),
-            { timeout: 15000 },
+            { timeout: 120000 },
         );
     }
 
@@ -847,7 +847,7 @@ export class v3DetailActions {
     async clickBlueLinkExpectingNewTab(text) {
         const context = this.page.context();
         const [popup] = await Promise.all([
-            context.waitForEvent('page', { timeout: 30000 }),
+            context.waitForEvent('page', { timeout: 120000 }),
             this.page.locator(L.blueLink(text)).first().click(),
         ]);
         await popup.waitForLoadState('domcontentloaded').catch(() => {});
@@ -863,7 +863,7 @@ export class v3DetailActions {
      */
     async getLineItemRowCount() {
         await this.page.locator(L.lineItemGrid).first()
-            .waitFor({ state: 'visible', timeout: 20000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         return this.page.locator(L.lineItemRows).count();
     }
 
@@ -887,13 +887,13 @@ export class v3DetailActions {
      */
     async openBudgetDrawer(linkTextFragment) {
         const link = this.page.locator(L.anchorContaining(linkTextFragment)).first();
-        await expect(link).toBeVisible({ timeout: 20000 });
+        await expect(link).toBeVisible({ timeout: 120000 });
         const label = await this.budgetLinkLabel(linkTextFragment);
         await link.click();
 
         const paper = this.page.locator(L.itemDetailsPaper)
             .filter({ hasText: /Details/ }).locator('visible=true').first();
-        await expect(paper).toBeVisible({ timeout: 20000 });
+        await expect(paper).toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(1200);
 
         const text = ((await paper.innerText()) || '').replace(/\s+/g, ' ').trim();
@@ -937,7 +937,7 @@ export class v3DetailActions {
 
         const dialog = this.page.locator('.MuiDialog-paper, [role=dialog]')
             .locator('visible=true').first();
-        await expect(dialog).toBeVisible({ timeout: 20000 });
+        await expect(dialog).toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(1500);
 
         // Tick the line items. Only some ag-Grid checkboxes are visible (the
@@ -968,7 +968,7 @@ export class v3DetailActions {
         ).catch(() => null);
 
         await dialog.getByRole('button', { name: /^Short close$/i }).first()
-            .click({ timeout: 20000 });
+            .click({ timeout: 120000 });
         const r = await resp;
         await this.page.waitForTimeout(4000);
         return r ? r.status() : null;

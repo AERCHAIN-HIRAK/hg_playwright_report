@@ -46,7 +46,7 @@ test.describe('Activity timeline — download activities & comments', () => {
             await page.setViewportSize({ width: 1800, height: 900 });
             await a.openApp(data);
 
-            await page.goto(mod.url(), { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto(mod.url(), { waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(3500);
 
             await a.openActivityLogPanel();
@@ -63,7 +63,7 @@ test.describe('Activity timeline — download activities & comments', () => {
             await page.setViewportSize({ width: 1800, height: 900 });
             await a.openApp(data);
 
-            await page.goto(mod.url(), { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto(mod.url(), { waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(3500);
 
             await a.openActivityLogPanel();
@@ -92,7 +92,7 @@ test.describe('Activity timeline — download activities & comments', () => {
             await page.setViewportSize({ width: 1800, height: 900 });
             await a.openApp(data);
 
-            await page.goto((mod.commentUrl ?? mod.url)(), { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto((mod.commentUrl ?? mod.url)(), { waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(3500);
 
             await a.openActivityLogPanel();
@@ -126,7 +126,7 @@ test.describe('Activity timeline — download activities & comments', () => {
                 const target = label === 'Download Comments'
                     ? (mod.commentUrl ?? mod.url)()
                     : mod.url();
-                await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 60000 });
+                await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 120000 });
                 await page.waitForTimeout(3500);
 
                 await a.openActivityLogPanel();

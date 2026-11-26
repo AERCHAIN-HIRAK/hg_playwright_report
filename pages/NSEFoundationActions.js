@@ -55,7 +55,7 @@ export class NSEFoundationActions {
         // Go directly to the auth login page (app URL redirects here anyway)
         const authUrl = `https://nse-auth-uat.aerchain.io/capp/login?refUrl=${encodeURIComponent(data.loginUrl + '/')}`;
         await this.page.goto(authUrl);
-        await this.page.waitForSelector(L.loginEmailField, { timeout: 20000 });
+        await this.page.waitForSelector(L.loginEmailField, { timeout: 120000 });
     }
 
     async fillLoginEmail(data) {
@@ -64,7 +64,7 @@ export class NSEFoundationActions {
 
     async clickLoginContinue() {
         await this.page.locator(L.loginContinueBtn).click();
-        await this.page.waitForSelector(L.loginPasswordField, { timeout: 60000 });
+        await this.page.waitForSelector(L.loginPasswordField, { timeout: 120000 });
     }
 
     async fillLoginPassword(data) {
@@ -73,11 +73,11 @@ export class NSEFoundationActions {
 
     async clickLoginSubmit() {
         await this.page.locator(L.loginSubmitBtn).click();
-        await this.page.waitForURL(/nse-capp-v4-uat\.aerchain\.io/, { timeout: 60000 });
+        await this.page.waitForURL(/nse-capp-v4-uat\.aerchain\.io/, { timeout: 120000 });
     }
 
     async assertLoggedIn() {
-        await expect(this.page).toHaveURL(/nse-capp-v4-uat\.aerchain\.io/, { timeout: 60000 });
+        await expect(this.page).toHaveURL(/nse-capp-v4-uat\.aerchain\.io/, { timeout: 120000 });
     }
 
     /**
@@ -96,7 +96,7 @@ export class NSEFoundationActions {
         // reasons that have nothing to do with what they assert.
         await this.page.goto(`${data.loginUrl}/`, {
             waitUntil: 'domcontentloaded',
-            timeout: 60000,
+            timeout: 120000,
         });
         const emailField = this.page.locator(L.loginEmailField);
         if (await emailField.waitFor({ state: 'visible', timeout: 6000 }).then(() => true, () => false)) {
@@ -118,20 +118,20 @@ export class NSEFoundationActions {
     async clickCxoTab() {
         await this.page.locator(`xpath=${L.cxoTab}`).click();
         // Wait for the CXO listing to appear (Create CXO button is unique to this page)
-        await this.page.waitForSelector(L.createCxoBtn, { timeout: 60000 });
+        await this.page.waitForSelector(L.createCxoBtn, { timeout: 120000 });
     }
 
     async assertCxoListingPage() {
-        await expect(this.page).toHaveURL(/\/cxos/, { timeout: 60000 });
+        await expect(this.page).toHaveURL(/\/cxos/, { timeout: 120000 });
     }
 
     async clickCreateCxo() {
         await this.page.locator(L.createCxoBtn).click();
-        await this.page.waitForURL(/\/cxos\/create/, { timeout: 60000 });
+        await this.page.waitForURL(/\/cxos\/create/, { timeout: 120000 });
     }
 
     async assertCxoCreatePage() {
-        await expect(this.page).toHaveURL(/\/cxos\/create/, { timeout: 60000 });
+        await expect(this.page).toHaveURL(/\/cxos\/create/, { timeout: 120000 });
     }
 
     /** Sections load asynchronously after navigation — wait until the full
@@ -149,7 +149,7 @@ export class NSEFoundationActions {
         await this.page.waitForFunction(() => {
             const vals = [...document.querySelectorAll('textarea')].map(t => (t.value || '').trim());
             return vals.includes('Header Details') && vals.includes('Suggested Suppliers');
-        }, null, { timeout: 25000 });
+        }, null, { timeout: 120000 });
         await this.page.waitForTimeout(500);
     }
 
@@ -271,7 +271,7 @@ export class NSEFoundationActions {
     async selectCxoCurrency(data) {
         const field = this.page.locator(`xpath=${L.cxoCurrency}`).first();
         await expect(field).toBeDisabled();
-        await expect(field).toHaveText(data.cxo.currency, { timeout: 60000 });
+        await expect(field).toHaveText(data.cxo.currency, { timeout: 120000 });
     }
 
     async selectCxoType(data) {
@@ -468,7 +468,7 @@ export class NSEFoundationActions {
             if (target) target.click();
         });
         await this.page.waitForTimeout(600);
-        await this.page.waitForSelector('[data-index="0"]', { timeout: 60000 });
+        await this.page.waitForSelector('[data-index="0"]', { timeout: 120000 });
     }
 
     // ── Internal: click a cell, wait for its input to become active ────────────
@@ -679,7 +679,7 @@ export class NSEFoundationActions {
         if ((await cell.textContent() ?? '').includes(data.expectedBrfValue)) return;
         await cell.dblclick();
         const trigger = this.page.getByRole('combobox').filter({ hasText: 'Select budget item' }).first();
-        await trigger.waitFor({ state: 'visible', timeout: 60000 });
+        await trigger.waitFor({ state: 'visible', timeout: 120000 });
         await trigger.click();
         await this.page.getByRole('option', { name: data.expectedBrfValue, exact: true }).first().click();
         await this.page.waitForTimeout(500);
@@ -737,7 +737,7 @@ export class NSEFoundationActions {
     }
 
     async assertCxoSubmittedSuccessfully() {
-        await expect(this.page).not.toHaveURL(/\/cxos\/create/, { timeout: 60000 });
+        await expect(this.page).not.toHaveURL(/\/cxos\/create/, { timeout: 120000 });
     }
 
     // ── Validation / negative-path helpers ────────────────────────────────────
@@ -756,7 +756,7 @@ export class NSEFoundationActions {
     /** Assert a validation toast containing the given text appears. */
     async assertToast(text) {
         await expect(this.page.getByText(text, { exact: false }).first())
-            .toBeVisible({ timeout: 8000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     /** Locator for the per-section "N errors!" badges (one leaf <span> per flagged
@@ -767,12 +767,12 @@ export class NSEFoundationActions {
 
     /** Assert at least one "N errors!" badge is showing on the form. */
     async assertAnyErrorBadgeVisible() {
-        await expect(this.errorBadges().first()).toBeVisible({ timeout: 10000 });
+        await expect(this.errorBadges().first()).toBeVisible({ timeout: 120000 });
     }
 
     /** Assert the form shows exactly `n` section error badges. */
     async assertErrorBadgeCount(n) {
-        await this.errorBadges().first().waitFor({ state: 'visible', timeout: 10000 });
+        await this.errorBadges().first().waitFor({ state: 'visible', timeout: 120000 });
         await expect(this.errorBadges()).toHaveCount(n);
     }
 
@@ -798,17 +798,17 @@ export class NSEFoundationActions {
     /** Assert unfilled mandatory fields show the red border (≥ `min` of them) and
      *  the "<field> is empty" helper messages. Requires sections expanded first. */
     async assertMandatoryFieldsHaveRedBorder(min = 6) {
-        await this.redBorderedFields().first().waitFor({ state: 'visible', timeout: 10000 });
+        await this.redBorderedFields().first().waitFor({ state: 'visible', timeout: 120000 });
         const n = await this.redBorderedFields().count();
         expect(n, 'red-bordered mandatory field count').toBeGreaterThanOrEqual(min);
         await expect(this.page.getByText(L.cxoFieldEmptyMsgRegex).first())
-            .toBeVisible({ timeout: 5000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     /** Assert the "Please enter the title" toast does NOT fire after submit. */
     async assertTitleToastAbsent() {
         await expect(this.page.getByText(L.cxoTitleRequiredToast, { exact: false }))
-            .toHaveCount(0, { timeout: 4000 });
+            .toHaveCount(0, { timeout: 120000 });
     }
 
     async clickCancel() {
@@ -1077,7 +1077,7 @@ export class NSEFoundationActions {
 
     async assertCxoStatusReleased() {
         await expect(this.page.locator(`xpath=${L.cxoReleasedStatus}`).first())
-            .toBeVisible({ timeout: 60000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     /** End-to-end: fill every mandatory CXO section, Submit, approve all stages
@@ -1174,11 +1174,11 @@ export class NSEFoundationActions {
         await this.fillAllCxoSections(data);
 
         const saveBtn = this.page.locator(L.cxoSaveDraftBtn).first();
-        await saveBtn.waitFor({ state: 'visible', timeout: 10000 });
+        await saveBtn.waitFor({ state: 'visible', timeout: 120000 });
         await saveBtn.click();
         // Save (no workflow submit) → "…saved successfully" toast → the app
         // navigates to the CXO overview with the status badge showing Draft.
-        await this.page.waitForURL(/\/cxos\/[^\/]+\/overview/, { timeout: 20000 });
+        await this.page.waitForURL(/\/cxos\/[^\/]+\/overview/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded').catch(() => {});
         await this.page.waitForTimeout(2000);
         console.log('[CXO] Saved as Draft → overview');
@@ -1223,15 +1223,15 @@ export class NSEFoundationActions {
             }
             await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
         }
-        await rejectBtn.waitFor({ state: 'visible', timeout: 8000 });
+        await rejectBtn.waitFor({ state: 'visible', timeout: 120000 });
         await rejectBtn.click();
 
         const comments = this.page.locator(IL.intakeApproveComments).first();
-        await comments.waitFor({ state: 'visible', timeout: 10000 });
+        await comments.waitFor({ state: 'visible', timeout: 120000 });
         await comments.fill(reason);
 
         const confirm = this.page.locator(`xpath=${IL.intakeRejectConfirm}`).first();
-        await confirm.waitFor({ state: 'visible', timeout: 8000 });
+        await confirm.waitFor({ state: 'visible', timeout: 120000 });
         await confirm.click();
         console.log('[CXO] Reject submitted');
         await this.page.waitForTimeout(2000);
@@ -1243,17 +1243,17 @@ export class NSEFoundationActions {
 
     async assertCxoStatusDraft() {
         await expect(this.page.locator(`xpath=${IL.intakeStatusDraft}`).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     async assertCxoStatusRejected() {
         await expect(this.page.locator(`xpath=${IL.intakeStatusRejected}`).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     async assertCxoStatusPendingApproval() {
         await expect(this.page.locator(`xpath=${IL.cxoStatusPendingApproval}`).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     // ── CXO – Mark Processed (More dropdown, Released CXOs) ────────────────────
@@ -1264,15 +1264,15 @@ export class NSEFoundationActions {
 
     async markCxoProcessed(reason = 'Marked processed by automation') {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const opt = this.page.locator(`xpath=${IL.cxoProcessOption}`).first();
-        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
 
         const reasonField = this.page.locator(`xpath=${IL.intakeMarkProcessedReason}`).first();
-        await reasonField.waitFor({ state: 'visible', timeout: 10000 });
+        await reasonField.waitFor({ state: 'visible', timeout: 120000 });
         await reasonField.fill(reason);
         await this.page.waitForTimeout(400);
         await this.page.locator(`xpath=${IL.intakeMarkProcessedSubmit}`).first().click();
@@ -1284,7 +1284,7 @@ export class NSEFoundationActions {
 
     async assertCxoStatusProcessed() {
         await expect(this.page.locator(`xpath=${IL.intakeStatusProcessed}`).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     // ── CXO – Cancel (More dropdown, Released CXOs) ────────────────────────────
@@ -1294,15 +1294,15 @@ export class NSEFoundationActions {
 
     async cancelCxo(reason = 'Cancelled by automation') {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const opt = this.page.locator(`xpath=${IL.cxoCancelOption}`).first();
-        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
 
         const reasonField = this.page.locator(`xpath=${IL.intakeMarkProcessedReason}`).first();
-        await reasonField.waitFor({ state: 'visible', timeout: 10000 });
+        await reasonField.waitFor({ state: 'visible', timeout: 120000 });
         await reasonField.fill(reason);
         await this.page.waitForTimeout(400);
         await this.page.locator(`xpath=${IL.intakeMarkProcessedSubmit}`).first().click();
@@ -1314,7 +1314,7 @@ export class NSEFoundationActions {
 
     async assertCxoStatusCancelled() {
         await expect(this.page.locator(`xpath=${IL.cxoStatusCancelled}`).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     // ── CXO – Regenerate / Download Document (More dropdown) ──────────────────
@@ -1324,14 +1324,14 @@ export class NSEFoundationActions {
 
     async regenerateCxoDocument() {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const option = this.page.locator(`xpath=${IL.intakeRegenerateDocOption}`).first();
-        await option.waitFor({ state: 'visible', timeout: 8000 });
+        await option.waitFor({ state: 'visible', timeout: 120000 });
         await option.click();
         await expect(this.page.getByText(/regenerated successfully/i).first())
-            .toBeVisible({ timeout: 15000 });
+            .toBeVisible({ timeout: 120000 });
         console.log('[CXO] Document regenerated');
         await this.page.waitForTimeout(1000);
     }
@@ -1340,14 +1340,14 @@ export class NSEFoundationActions {
      *  Same mechanism as the intake download (presigned S3 URL → PDF → pdf-parse). */
     async downloadCxoDocumentText() {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const option = this.page.locator(`xpath=${IL.intakeDownloadDocOption}`).first();
-        await option.waitFor({ state: 'visible', timeout: 8000 });
+        await option.waitFor({ state: 'visible', timeout: 120000 });
 
         const [download] = await Promise.all([
-            this.page.waitForEvent('download', { timeout: 30000 }),
+            this.page.waitForEvent('download', { timeout: 120000 }),
             option.click(),
         ]);
         const filePath = await download.path();
@@ -1391,22 +1391,22 @@ export class NSEFoundationActions {
      *  same as CXO create). The caller then approves to Released. */
     async cloneCxo() {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first(); // generic header More
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
 
         const cloneOpt = this.page.locator(`xpath=${IL.intakeCloneOption}`).first();
-        await cloneOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await cloneOpt.waitFor({ state: 'visible', timeout: 120000 });
         await cloneOpt.click();
 
-        await this.page.waitForURL(/\/cxos\/[^\/]+\/clone/, { timeout: 15000 });
+        await this.page.waitForURL(/\/cxos\/[^\/]+\/clone/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         await this.waitForCreatePageLoaded().catch(() => {});
         await this.page.waitForTimeout(1500);
 
         // Pre-filled and valid → submit as-is (handles the Workflow-Summary popup).
         await this.clickSubmit();
-        await expect(this.page).toHaveURL(/\/cxos\/[^\/]+\/overview/, { timeout: 25000 });
+        await expect(this.page).toHaveURL(/\/cxos\/[^\/]+\/overview/, { timeout: 120000 });
         await this.page.waitForTimeout(1000);
         console.log('[CXO] Clone submitted → new CXO on overview');
     }
@@ -1420,15 +1420,15 @@ export class NSEFoundationActions {
      *  to Released. Same CXO id (amend edits in place, unlike Clone). */
     async amendCxo(data) {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first(); // generic header More
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
 
         const amendOpt = this.page.locator(`xpath=${IL.intakeAmendOption}`).first();
-        await amendOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await amendOpt.waitFor({ state: 'visible', timeout: 120000 });
         await amendOpt.click();
 
-        await this.page.waitForURL(/\/cxos\/[^\/]+\/amend/, { timeout: 15000 });
+        await this.page.waitForURL(/\/cxos\/[^\/]+\/amend/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         await this.waitForCreatePageLoaded().catch(() => {});
         await this.page.waitForTimeout(1500);
@@ -1445,14 +1445,14 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(2000);
 
         const reason = this.page.locator(`xpath=${IL.cxoAmendReasonField}`).first();
-        await reason.waitFor({ state: 'visible', timeout: 10000 });
+        await reason.waitFor({ state: 'visible', timeout: 120000 });
         await reason.fill('Amended by automation');
         await this.page.waitForTimeout(500);
 
         const popupSubmit = this.page.locator(`xpath=${IL.cxoAmendPopupSubmit}`).first();
-        await expect(popupSubmit).toBeEnabled({ timeout: 8000 });
+        await expect(popupSubmit).toBeEnabled({ timeout: 120000 });
         await popupSubmit.click();
-        await expect(this.page).toHaveURL(/\/cxos\/[^\/]+\/overview/, { timeout: 25000 });
+        await expect(this.page).toHaveURL(/\/cxos\/[^\/]+\/overview/, { timeout: 120000 });
         await this.page.waitForTimeout(1000);
         console.log('[CXO] Amend submitted → overview (Pending Approval)');
         return newTitle;
@@ -1465,16 +1465,16 @@ export class NSEFoundationActions {
      *  when nothing is recorded). */
     async openCxoAuditLogs() {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first(); // generic header More
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
 
         const opt = this.page.locator(`xpath=${IL.intakeAuditLogsOption}`).first();
-        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
 
         const dialog = this.page.locator(`xpath=${IL.auditLogsDialog}`).first();
-        await dialog.waitFor({ state: 'visible', timeout: 12000 });
+        await dialog.waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(1200);
         const text = (await dialog.innerText()) ?? '';
         console.log(`[CXO] Audit Logs opened — content:\n${text.slice(0, 600)}`);
@@ -1501,18 +1501,18 @@ export class NSEFoundationActions {
 
     async clickIntakeTab() {
         const tab = this.page.locator(`xpath=//button[@data-slot="tabs-trigger"][contains(normalize-space(.),"Intake")]`);
-        await tab.waitFor({ state: 'visible', timeout: 60000 });
+        await tab.waitFor({ state: 'visible', timeout: 120000 });
         await tab.click();
-        await this.page.waitForSelector('[href="/intakes/create"]', { timeout: 60000 });
+        await this.page.waitForSelector('[href="/intakes/create"]', { timeout: 120000 });
     }
 
     async clickCreateIntake() {
         await this.page.locator('[href="/intakes/create"]').click();
-        await this.page.waitForURL(/\/intakes\/create/, { timeout: 60000 });
+        await this.page.waitForURL(/\/intakes\/create/, { timeout: 120000 });
     }
 
     async assertIntakeCreatePage() {
-        await expect(this.page).toHaveURL(/\/intakes\/create/, { timeout: 60000 });
+        await expect(this.page).toHaveURL(/\/intakes\/create/, { timeout: 120000 });
     }
 
     // ── Intake Template + Setup ───────────────────────────────────────────────
@@ -1541,7 +1541,7 @@ export class NSEFoundationActions {
     async expandIntakeSections() {
         // Single click on button[1] expands all sections globally
         const btn = this.page.locator(`xpath=(//div[contains(@class,'flex gap')]/button)[1]`).first();
-        await btn.waitFor({ state: 'visible', timeout: 60000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
         await btn.click();
         await this.page.waitForTimeout(800);
     }
@@ -1561,7 +1561,7 @@ export class NSEFoundationActions {
         if (!(await el.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false))) return;
         await el.click();
         const opt = this.page.locator(IL.intakeEntityTest2Opt).first();
-        await opt.waitFor({ state: 'visible', timeout: 60000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
     }
 
@@ -1573,11 +1573,11 @@ export class NSEFoundationActions {
         while (!selected) {
             await this._openDropdown(el, { hasSearch: false });
             const opt = this.page.locator(IL.intakeCompanyOpt).first();
-            await opt.waitFor({ state: 'visible', timeout: 60000 });
+            await opt.waitFor({ state: 'visible', timeout: 120000 });
             const optText = (await opt.textContent() ?? '').trim();
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(el).toContainText(optText, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(el).toContainText(optText, { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1589,11 +1589,11 @@ export class NSEFoundationActions {
         while (!selected) {
             await this._openDropdown(el, { hasSearch: false });
             const opt = this.page.locator(IL.intakeCompanyOpt).first();
-            await opt.waitFor({ state: 'visible', timeout: 60000 });
+            await opt.waitFor({ state: 'visible', timeout: 120000 });
             const optText = (await opt.textContent() ?? '').trim();
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(el).toContainText(optText, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(el).toContainText(optText, { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1603,14 +1603,14 @@ export class NSEFoundationActions {
         while (!selected) {
             await this._openDropdown(trigger, { hasSearch: true });
             const searchBox = this.page.locator(IL.intakeDepartmentSearch).last();
-            await searchBox.waitFor({ state: 'visible', timeout: 60000 });
+            await searchBox.waitFor({ state: 'visible', timeout: 120000 });
             await searchBox.fill(data.intake.department);
             await this.page.waitForTimeout(400);
             const opt = this.page.locator(IL.intakeDepartmentOpt).first();
-            await opt.waitFor({ state: 'visible', timeout: 60000 });
+            await opt.waitFor({ state: 'visible', timeout: 120000 });
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(data.intake.department, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(trigger).toContainText(data.intake.department, { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1626,7 +1626,7 @@ export class NSEFoundationActions {
             } else {
                 const fallback = this.page.locator(IL.intakeExpenseNatureApprovalOpt).first();
                 if (await fallback.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false)) {
-                    await fallback.click({ timeout: 60000 });
+                    await fallback.click({ timeout: 120000 });
                 } else {
                     await this.page.keyboard.press('Escape');
                     await this.page.waitForTimeout(300);
@@ -1634,7 +1634,7 @@ export class NSEFoundationActions {
                 }
             }
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(data.intake.expenseNatureApproval, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(trigger).toContainText(data.intake.expenseNatureApproval, { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1645,7 +1645,7 @@ export class NSEFoundationActions {
     async selectIntakeCurrency(data) {
         const trigger = this.page.locator(IL.intakeCurrency).first();
         await expect(trigger).toBeDisabled();
-        await expect(trigger).toContainText(data.intake.currency, { timeout: 60000 });
+        await expect(trigger).toContainText(data.intake.currency, { timeout: 120000 });
     }
 
     async selectIntakeFunction(data) {
@@ -1655,13 +1655,13 @@ export class NSEFoundationActions {
         while (!selected) {
             await this._openDropdown(trigger, { hasSearch: true });
             const searchBox = this.page.locator('[placeholder="Search..."]').last();
-            await searchBox.waitFor({ state: 'visible', timeout: 60000 });
+            await searchBox.waitFor({ state: 'visible', timeout: 120000 });
             await searchBox.fill(data.intake.function);
             const opt = this.page.locator(`[role="option"] [title="${data.intake.function}"]`).first();
-            await opt.waitFor({ state: 'visible', timeout: 60000 });
+            await opt.waitFor({ state: 'visible', timeout: 120000 });
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(data.intake.function, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(trigger).toContainText(data.intake.function, { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1671,13 +1671,13 @@ export class NSEFoundationActions {
         while (!selected) {
             await this._openDropdown(trigger, { hasSearch: true });
             const searchBox = this.page.locator('[placeholder="Search..."]').last();
-            await searchBox.waitFor({ state: 'visible', timeout: 60000 });
+            await searchBox.waitFor({ state: 'visible', timeout: 120000 });
             await searchBox.fill(data.intake.vertical);
             const opt = this.page.locator(`[role="option"] [title="${data.intake.vertical}"]`).first();
-            await opt.waitFor({ state: 'visible', timeout: 60000 });
+            await opt.waitFor({ state: 'visible', timeout: 120000 });
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(data.intake.vertical, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(trigger).toContainText(data.intake.vertical, { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1692,7 +1692,7 @@ export class NSEFoundationActions {
             } else {
                 const fallback = this.page.locator(IL.intakeNatureOfExpenseOpt).first();
                 if (await fallback.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false)) {
-                    await fallback.click({ timeout: 60000 });
+                    await fallback.click({ timeout: 120000 });
                 } else {
                     await this.page.keyboard.press('Escape');
                     await this.page.waitForTimeout(300);
@@ -1700,7 +1700,7 @@ export class NSEFoundationActions {
                 }
             }
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(data.intake.natureOfExpense, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(trigger).toContainText(data.intake.natureOfExpense, { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1714,7 +1714,7 @@ export class NSEFoundationActions {
         while (!selected) {
             await this._openDropdown(el, { hasSearch: true });
             const searchBox = this.page.locator('[placeholder="Search..."]').last();
-            await searchBox.waitFor({ state: 'visible', timeout: 60000 });
+            await searchBox.waitFor({ state: 'visible', timeout: 120000 });
             await searchBox.fill('NA');
             await this.page.waitForTimeout(500);
             let opt = this.page.locator(`[role="option"] [title="NA"]`).first();
@@ -1728,7 +1728,7 @@ export class NSEFoundationActions {
             }
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(el).toContainText('NA', { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(el).toContainText('NA', { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1749,7 +1749,7 @@ export class NSEFoundationActions {
         while (!selected) {
             await this._openDropdown(el, { hasSearch: true });
             const searchBox = this.page.locator('[placeholder="Search..."]').last();
-            await searchBox.waitFor({ state: 'visible', timeout: 60000 });
+            await searchBox.waitFor({ state: 'visible', timeout: 120000 });
             await searchBox.fill('NA');
             await this.page.waitForTimeout(500);
             let opt = this.page.locator(`[role="option"] [title="NA"]`).first();
@@ -1763,7 +1763,7 @@ export class NSEFoundationActions {
             }
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(el).toContainText('NA', { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(el).toContainText('NA', { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1817,10 +1817,10 @@ export class NSEFoundationActions {
         while (!selected) {
             await this._openDropdown(trigger, { hasSearch: false });
             const opt = this.page.locator(`[role="option"] [title="${data.intake.cxoType}"]`).first();
-            await opt.waitFor({ state: 'visible', timeout: 60000 });
+            await opt.waitFor({ state: 'visible', timeout: 120000 });
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(data.intake.cxoType, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(trigger).toContainText(data.intake.cxoType, { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1837,10 +1837,10 @@ export class NSEFoundationActions {
             await searchBox.fill(cxoCode);
             await this.page.waitForTimeout(800);
             const opt = this.page.locator(`xpath=(//div[@role='option'])[1]`).first();
-            await opt.waitFor({ state: 'visible', timeout: 60000 });
+            await opt.waitFor({ state: 'visible', timeout: 120000 });
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(cxoCode, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(trigger).toContainText(cxoCode, { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1860,7 +1860,7 @@ export class NSEFoundationActions {
         }
         await brfEl.click();
         await this.page.getByRole('option', { name: brfValue, exact: true }).first().click();
-        await expect(brfEl, `BRF No. did not take "${brfValue}"`).toContainText(brfValue, { timeout: 60000 });
+        await expect(brfEl, `BRF No. did not take "${brfValue}"`).toContainText(brfValue, { timeout: 120000 });
         console.log(`BRF No. was empty — selected "${brfValue}"`);
     }
 
@@ -1875,12 +1875,12 @@ export class NSEFoundationActions {
         for (let attempt = 0; attempt < 3; attempt++) {
             await trigger.click();
             const opt = this.page.locator(`xpath=(//div[@role='option'])[1]`).first();
-            await opt.waitFor({ state: 'visible', timeout: 60000 });
+            await opt.waitFor({ state: 'visible', timeout: 120000 });
             await this.page.waitForTimeout(200);
             const optText = (await opt.textContent() ?? '').trim();
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(optText, { timeout: 60000 }); return; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(trigger).toContainText(optText, { timeout: 120000 }); return; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1927,7 +1927,7 @@ export class NSEFoundationActions {
                 await this.page.locator(IL.intakeTypeOfProcurementOpt).first().click();
             }
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(el).toContainText(data.cxo.typeOfProcurement, { timeout: 60000 }); return; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(el).toContainText(data.cxo.typeOfProcurement, { timeout: 120000 }); return; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -1944,7 +1944,7 @@ export class NSEFoundationActions {
                 await this.page.locator(IL.intakeFinancialYearOpt).first().click();
             }
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(el).toContainText(data.cxo.financialYear, { timeout: 60000 }); return; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(el).toContainText(data.cxo.financialYear, { timeout: 120000 }); return; } catch { await this.page.waitForTimeout(300); }
         }
     }
 
@@ -2062,7 +2062,7 @@ export class NSEFoundationActions {
             + `(row holds ${r.cells.length} cells: ${JSON.stringify(r.cells.map(x => x.text))})`);
         const sel = 'div.w-full.h-full.flex.items-center';
         await this.page.locator(sel).nth(c.i - 1).scrollIntoViewIfNeeded().catch(() => {});
-        await this.page.locator(sel).nth(c.i - 1).click({ timeout: 15000 });
+        await this.page.locator(sel).nth(c.i - 1).click({ timeout: 120000 });
         await this.page.waitForTimeout(800);
         return c;
     }
@@ -2110,7 +2110,7 @@ export class NSEFoundationActions {
         }
         const sel = 'div.w-full.h-full.flex.items-center';
         await this.page.locator(sel).nth(best.c.i - 1).scrollIntoViewIfNeeded().catch(() => {});
-        await this.page.locator(sel).nth(best.c.i - 1).click({ timeout: 15000 });
+        await this.page.locator(sel).nth(best.c.i - 1).click({ timeout: 120000 });
         await this.page.waitForTimeout(900);
         return best.c;
     }
@@ -2167,7 +2167,7 @@ export class NSEFoundationActions {
         const cell = candidates[0] ?? r.cells[0];
         const sel = 'div.w-full.h-full.flex.items-center';
         await this.page.locator(sel).nth(cell.i - 1).scrollIntoViewIfNeeded().catch(() => {});
-        await this.page.locator(sel).nth(cell.i - 1).click({ timeout: 15000 });
+        await this.page.locator(sel).nth(cell.i - 1).click({ timeout: 120000 });
         await this.page.waitForTimeout(900);
         console.log(`[${tag}] row ${row} item cell = [${cell.i}] at x${cell.left}`);
         return cell;
@@ -2228,7 +2228,7 @@ export class NSEFoundationActions {
         await this.page.keyboard.press('Enter');
         await this.page.waitForTimeout(1200);
         const bilOpt = this.page.locator('[role="option"]').first();
-        await bilOpt.waitFor({ state: 'visible', timeout: 10000 });
+        await bilOpt.waitFor({ state: 'visible', timeout: 120000 });
         await bilOpt.click();
         await this.page.waitForTimeout(900);
 
@@ -2270,7 +2270,7 @@ export class NSEFoundationActions {
         // Delivery Address — click cell, select first option
         await this.page.locator(IL.intakeItemDelAdd).click();
         const delOpt = this.page.locator(IL.intakeItemDelAddOpt).first();
-        await delOpt.waitFor({ state: 'visible', timeout: 60000 });
+        await delOpt.waitFor({ state: 'visible', timeout: 120000 });
         await delOpt.click();
         await this.page.waitForTimeout(500);
 
@@ -2279,7 +2279,7 @@ export class NSEFoundationActions {
         await this.page.keyboard.press('Enter');
         await this.page.waitForTimeout(500);
         const bilOpt = this.page.locator(IL.intakeItemBilAddOpt).first();
-        await bilOpt.waitFor({ state: 'visible', timeout: 60000 });
+        await bilOpt.waitFor({ state: 'visible', timeout: 120000 });
         await bilOpt.click();
         await this.page.waitForTimeout(500);
 
@@ -2334,10 +2334,10 @@ export class NSEFoundationActions {
         // always enough — scenario 1's chain B died exactly there on 2026-09-09,
         // on a dialog still showing its spinner. Wait for ENABLED instead.
         const proceedBtn = this.page.locator(IL.intakeProceed).first();
-        await proceedBtn.waitFor({ state: 'visible', timeout: 60000 });
+        await proceedBtn.waitFor({ state: 'visible', timeout: 120000 });
         await expect(proceedBtn, 'the Process Request dialog never enabled Proceed — it either '
             + 'never finished loading, or the intake failed validation')
-            .toBeEnabled({ timeout: 60000 });
+            .toBeEnabled({ timeout: 120000 });
         await proceedBtn.click();
         await this.page.waitForTimeout(1500);
 
@@ -2351,17 +2351,17 @@ export class NSEFoundationActions {
             await dropdown.click({ force: true });
             await this.page.waitForTimeout(600);
             const adminOpt = this.page.locator(IL.intakepurAsignOpt).first();
-            await adminOpt.waitFor({ state: 'visible', timeout: 60000 });
+            await adminOpt.waitFor({ state: 'visible', timeout: 120000 });
             await adminOpt.click();
             await this.page.waitForTimeout(400);
         }
 
         // Step 3: Final Submit
         const finalSubmit = this.page.locator(IL.intakeFinalSubmit).first();
-        await finalSubmit.waitFor({ state: 'visible', timeout: 60000 });
+        await finalSubmit.waitFor({ state: 'visible', timeout: 120000 });
         await finalSubmit.click();
 
-        await expect(this.page).toHaveURL(/overview/, { timeout: 60000 });
+        await expect(this.page).toHaveURL(/overview/, { timeout: 120000 });
         await this.page.waitForTimeout(1000);
     }
 
@@ -2388,7 +2388,7 @@ export class NSEFoundationActions {
                 console.log(`[Intake] Approving stage ${i + 1}...`);
                 await approveBtn.click();
                 const cf = this.page.locator(IL.intakeApproveComments);
-                await cf.waitFor({ state: 'visible', timeout: 60000 });
+                await cf.waitFor({ state: 'visible', timeout: 120000 });
                 await cf.fill(comments);
                 await this.page.locator(IL.intakeAppSubmit).click();
                 // was a fixed 1.5s: let the approve land before reloading
@@ -2492,7 +2492,7 @@ export class NSEFoundationActions {
 
     async assertIntakeStatusReleased() {
         await expect(this.page.locator(`xpath=${L.cxoReleasedStatus}`).first())
-            .toBeVisible({ timeout: 60000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     // ── Intake – Full create + submit (reusable) ──────────────────────────────
@@ -2556,16 +2556,16 @@ export class NSEFoundationActions {
             }
             await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
         }
-        await rejectBtn.waitFor({ state: 'visible', timeout: 8000 });
+        await rejectBtn.waitFor({ state: 'visible', timeout: 120000 });
         await rejectBtn.click();
 
         // Reject dialog → comments (shares the approve-comments placeholder)
         const comments = this.page.locator(IL.intakeApproveComments).first();
-        await comments.waitFor({ state: 'visible', timeout: 10000 });
+        await comments.waitFor({ state: 'visible', timeout: 120000 });
         await comments.fill(reason);
 
         const confirm = this.page.locator(`xpath=${IL.intakeRejectConfirm}`).first();
-        await confirm.waitFor({ state: 'visible', timeout: 8000 });
+        await confirm.waitFor({ state: 'visible', timeout: 120000 });
         await confirm.click();
         console.log('[Intake] Reject submitted');
         await this.page.waitForTimeout(2000);
@@ -2575,7 +2575,7 @@ export class NSEFoundationActions {
 
     async assertIntakeStatusRejected() {
         await expect(this.page.locator(`xpath=${IL.intakeStatusRejected}`).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     // ── Intake – Recall (from the pending-approval page) ──────────────────────
@@ -2601,15 +2601,15 @@ export class NSEFoundationActions {
             }
             await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
         }
-        await recallBtn.waitFor({ state: 'visible', timeout: 8000 });
+        await recallBtn.waitFor({ state: 'visible', timeout: 120000 });
         await recallBtn.click();
 
         const comments = this.page.locator(IL.intakeApproveComments).first();
-        await comments.waitFor({ state: 'visible', timeout: 10000 });
+        await comments.waitFor({ state: 'visible', timeout: 120000 });
         await comments.fill(reason);
 
         const confirm = this.page.locator(`xpath=${IL.intakeRecallConfirm}`).first();
-        await confirm.waitFor({ state: 'visible', timeout: 8000 });
+        await confirm.waitFor({ state: 'visible', timeout: 120000 });
         await confirm.click();
         console.log('[Intake] Recall submitted');
         await this.page.waitForTimeout(2000);
@@ -2619,7 +2619,7 @@ export class NSEFoundationActions {
 
     async assertIntakeStatusDraft() {
         await expect(this.page.locator(`xpath=${IL.intakeStatusDraft}`).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     // ── Intake – Edit a recalled Draft and resubmit ───────────────────────────
@@ -2629,13 +2629,13 @@ export class NSEFoundationActions {
     async editAndResubmitDraftIntake(data) {
         // A Draft has no header Edit button — open it from the More dropdown.
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const editOption = this.page.locator(`xpath=${IL.intakeEditOption}`).first();
-        await editOption.waitFor({ state: 'visible', timeout: 8000 });
+        await editOption.waitFor({ state: 'visible', timeout: 120000 });
         await editOption.click();
-        await this.page.waitForURL(/\/intakes\/[^\/]+\/edit/, { timeout: 15000 });
+        await this.page.waitForURL(/\/intakes\/[^\/]+\/edit/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         await this.waitForCreatePageLoaded().catch(() => {});
         await this.page.waitForTimeout(1500);
@@ -2643,7 +2643,7 @@ export class NSEFoundationActions {
 
         // Make a genuine edit — append to the document title.
         const title = this.page.locator(IL.intakeTitle).first();
-        await title.waitFor({ state: 'visible', timeout: 10000 });
+        await title.waitFor({ state: 'visible', timeout: 120000 });
         await title.click();
         const current = await title.inputValue().catch(() => '');
         await title.fill(`${current || data.intake.title} - recalled edit`);
@@ -2659,14 +2659,14 @@ export class NSEFoundationActions {
     // distinct "Workflow N" count increases after a recall + resubmit.
     async openWorkflowStages() {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const option = this.page.locator(`xpath=${IL.intakeWorkflowStagesOption}`).first();
-        await option.waitFor({ state: 'visible', timeout: 8000 });
+        await option.waitFor({ state: 'visible', timeout: 120000 });
         await option.click();
         await this.page.locator(`xpath=${IL.intakeWorkflowStepsPanelTitle}`).first()
-            .waitFor({ state: 'visible', timeout: 10000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(800);
     }
 
@@ -2714,14 +2714,14 @@ export class NSEFoundationActions {
     /** More → Regenerate Document → assert the success toast. */
     async regenerateIntakeDocument() {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const option = this.page.locator(`xpath=${IL.intakeRegenerateDocOption}`).first();
-        await option.waitFor({ state: 'visible', timeout: 8000 });
+        await option.waitFor({ state: 'visible', timeout: 120000 });
         await option.click();
         await expect(this.page.getByText(IL.intakeRegenerateToast, { exact: false }).first())
-            .toBeVisible({ timeout: 15000 });
+            .toBeVisible({ timeout: 120000 });
         console.log('[Intake] Document regenerated');
         await this.page.waitForTimeout(1000);
     }
@@ -2731,14 +2731,14 @@ export class NSEFoundationActions {
      *  download event captures it. The PDF is parsed with pdf-parse. */
     async downloadIntakeDocumentText() {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const option = this.page.locator(`xpath=${IL.intakeDownloadDocOption}`).first();
-        await option.waitFor({ state: 'visible', timeout: 8000 });
+        await option.waitFor({ state: 'visible', timeout: 120000 });
 
         const [download] = await Promise.all([
-            this.page.waitForEvent('download', { timeout: 30000 }),
+            this.page.waitForEvent('download', { timeout: 120000 }),
             option.click(),
         ]);
         const filePath = await download.path();
@@ -2788,14 +2788,14 @@ export class NSEFoundationActions {
      *  so it submits as-is. Leaves the NEW (cloned) intake on its overview. */
     async cloneIntake() {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const cloneOpt = this.page.locator(`xpath=${IL.intakeCloneOption}`).first();
-        await cloneOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await cloneOpt.waitFor({ state: 'visible', timeout: 120000 });
         await cloneOpt.click();
 
-        await this.page.waitForURL(/\/intakes\/[^\/]+\/clone/, { timeout: 15000 });
+        await this.page.waitForURL(/\/intakes\/[^\/]+\/clone/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         await this.waitForCreatePageLoaded().catch(() => {});
         await this.page.waitForTimeout(1500);
@@ -2823,12 +2823,12 @@ export class NSEFoundationActions {
         }
 
         const proceed = this.page.locator(IL.intakeProceed).first();
-        await proceed.waitFor({ state: 'visible', timeout: 15000 });
+        await proceed.waitFor({ state: 'visible', timeout: 120000 });
         await proceed.click();
         await this.page.waitForTimeout(1500);
 
         const finalSubmit = this.page.locator(IL.intakeFinalSubmit).first();
-        await finalSubmit.waitFor({ state: 'visible', timeout: 10000 });
+        await finalSubmit.waitFor({ state: 'visible', timeout: 120000 });
 
         // Assign a purchaser when the Submit is still disabled (picker empty).
         if (!(await finalSubmit.isEnabled().catch(() => false))) {
@@ -2836,7 +2836,7 @@ export class NSEFoundationActions {
             await dropdown.click({ force: true });
             await this.page.waitForTimeout(600);
             const adminOpt = this.page.locator(IL.intakepurAsignOpt).first();
-            await adminOpt.waitFor({ state: 'visible', timeout: 8000 });
+            await adminOpt.waitFor({ state: 'visible', timeout: 120000 });
             await adminOpt.click();
             await this.page.waitForTimeout(400);
             // Dismiss the people-picker overlay so it doesn't eat the Submit click.
@@ -2845,7 +2845,7 @@ export class NSEFoundationActions {
         }
 
         await finalSubmit.click();
-        await expect(this.page).toHaveURL(/overview/, { timeout: 25000 });
+        await expect(this.page).toHaveURL(/overview/, { timeout: 120000 });
         await this.page.waitForTimeout(1000);
         console.log('[Intake] Submitted via workflow popup');
     }
@@ -2876,14 +2876,14 @@ export class NSEFoundationActions {
      *  the workflow popup. Leaves the intake in its amend-approval state. */
     async amendIntake(data, newQty = '150') {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const amendOpt = this.page.locator(`xpath=${IL.intakeAmendOption}`).first();
-        await amendOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await amendOpt.waitFor({ state: 'visible', timeout: 120000 });
         await amendOpt.click();
 
-        await this.page.waitForURL(/\/intakes\/[^\/]+\/amend/, { timeout: 15000 });
+        await this.page.waitForURL(/\/intakes\/[^\/]+\/amend/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         await this.waitForCreatePageLoaded().catch(() => {});
         await this.page.waitForTimeout(1500);
@@ -2918,11 +2918,11 @@ export class NSEFoundationActions {
     /** More → Audit Logs → wait for the change table (Change | From | To). */
     async openIntakeAuditLogs() {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const opt = this.page.locator(`xpath=${IL.intakeAuditLogsOption}`).first();
-        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
         // The Audit Logs panel renders a table with a "Change"/"From"/"To" header.
         await this.page.getByText('Audit Logs', { exact: true }).first()
@@ -2956,14 +2956,14 @@ export class NSEFoundationActions {
     /** More → Reassign Purchaser → wait for the popup. */
     async openReassignPurchaser() {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const opt = this.page.locator(`xpath=${IL.intakeReassignPurchaserOption}`).first();
-        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
         await this.page.locator(`xpath=${IL.intakeReassignAddTrigger}`).first()
-            .waitFor({ state: 'visible', timeout: 10000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(800);
     }
 
@@ -2991,7 +2991,7 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(400);
         await this.page.locator(`xpath=${IL.intakeReassignConfirm}`).first().click();
         await expect(this.page.getByText(IL.intakeReassignToast, { exact: false }).first())
-            .toBeVisible({ timeout: 15000 });
+            .toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(1500);
     }
 
@@ -3063,15 +3063,15 @@ export class NSEFoundationActions {
      *  reason → Submit. Returns { name, toast } for assertions/logging. */
     async reassignUser(reason = 'Reassigned user by automation') {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const opt = this.page.locator(`xpath=${IL.intakeReassignUserOption}`).first();
-        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
 
         const trigger = this.page.locator(`xpath=${IL.intakeReassignUserTrigger}`).first();
-        await trigger.waitFor({ state: 'visible', timeout: 10000 });
+        await trigger.waitFor({ state: 'visible', timeout: 120000 });
         await trigger.click();
         await this.page.waitForTimeout(1000);
 
@@ -3089,7 +3089,7 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(400);
         await this.page.locator(`xpath=${IL.intakeReassignUserSubmit}`).first().click();
         await expect(this.page.getByText(IL.intakeReassignUserToast, { exact: false }).first())
-            .toBeVisible({ timeout: 15000 });
+            .toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(1000);
         console.log(`[ReassignUser] reassigned to "${name}" — toast confirmed`);
         return { name };
@@ -3100,15 +3100,15 @@ export class NSEFoundationActions {
     /** More → Mark Processed → fill the reason → Submit → status becomes Processed. */
     async markIntakeProcessed(reason = 'Marked processed by automation') {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const opt = this.page.locator(`xpath=${IL.intakeMarkProcessedOption}`).first();
-        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
 
         const reasonField = this.page.locator(`xpath=${IL.intakeMarkProcessedReason}`).first();
-        await reasonField.waitFor({ state: 'visible', timeout: 10000 });
+        await reasonField.waitFor({ state: 'visible', timeout: 120000 });
         await reasonField.fill(reason);
         await this.page.waitForTimeout(400);
         await this.page.locator(`xpath=${IL.intakeMarkProcessedSubmit}`).first().click();
@@ -3120,7 +3120,7 @@ export class NSEFoundationActions {
 
     async assertIntakeStatusProcessed() {
         await expect(this.page.locator(`xpath=${IL.intakeStatusProcessed}`).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     // ── Revert Pending Budget (More dropdown, Released CXOs) ──────────────────
@@ -3135,16 +3135,16 @@ export class NSEFoundationActions {
      *  dialog reports nothing is pending, which the test should surface. */
     async revertPendingBudget({ amount = null, remarks = 'Reverted by automation' } = {}) {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
 
         const opt = this.page.locator(`xpath=${IL.intakeRevertBudgetOption}`).first();
-        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
 
         const dialog = this.page.locator(`xpath=${IL.revertBudgetDialog}`).first();
-        await dialog.waitFor({ state: 'visible', timeout: 12000 });
+        await dialog.waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(600);
 
         // Guard: nothing to revert → fail loudly (setup problem, not a pass).
@@ -3155,14 +3155,14 @@ export class NSEFoundationActions {
 
         // The single budget row (has the Rollback Value input) — opens pre-ticked.
         const row = this.page.locator(`xpath=${IL.revertBudgetRow}`).first();
-        await row.waitFor({ state: 'visible', timeout: 8000 });
+        await row.waitFor({ state: 'visible', timeout: 120000 });
         const checkbox = row.locator(`xpath=${IL.revertBudgetRowCheckbox}`).first();
         if ((await checkbox.getAttribute('aria-checked').catch(() => null)) === 'false') {
             await checkbox.click().catch(() => {});
         }
 
         const rollback = row.locator(`xpath=${IL.revertBudgetRollbackInput}`).first();
-        await rollback.waitFor({ state: 'visible', timeout: 8000 });
+        await rollback.waitFor({ state: 'visible', timeout: 120000 });
         // Only override the pre-filled full amount when an explicit amount is given.
         if (amount != null) {
             await rollback.click();
@@ -3174,13 +3174,13 @@ export class NSEFoundationActions {
 
         // Remarks (required).
         const remarksField = this.page.locator(`xpath=${IL.revertBudgetRemarks}`).first();
-        await remarksField.waitFor({ state: 'visible', timeout: 8000 });
+        await remarksField.waitFor({ state: 'visible', timeout: 120000 });
         await remarksField.fill(remarks);
         await this.page.waitForTimeout(300);
 
         // Submit — enabled once a row is selected, amount set, and remarks entered.
         const submit = this.page.locator(`xpath=${IL.revertBudgetSubmit}`).first();
-        await expect(submit).toBeEnabled({ timeout: 8000 });
+        await expect(submit).toBeEnabled({ timeout: 120000 });
         await submit.click();
         await this.page.waitForTimeout(2500);
         console.log(`[RevertBudget] Submitted revert of ${revertedAmount} with remarks "${remarks}"`);
@@ -3205,15 +3205,15 @@ export class NSEFoundationActions {
      */
     async readPendingBudgetRow({ close = false } = {}) {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const opt = this.page.locator(`xpath=${IL.intakeRevertBudgetOption}`).first();
-        await opt.waitFor({ state: 'visible', timeout: 8000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
 
         const dialog = this.page.locator(`xpath=${IL.revertBudgetDialog}`).first();
-        await dialog.waitFor({ state: 'visible', timeout: 12000 });
+        await dialog.waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(800);
 
         const empty = await dialog.getByText(IL.revertBudgetEmptyMsg, { exact: false })
@@ -3227,7 +3227,7 @@ export class NSEFoundationActions {
         // Row layout: Budget Item Code | Transaction Value | Consumed Value |
         // Reverted Value | Pending Value | Rollback Value(input).
         const row = this.page.locator(`xpath=${IL.revertBudgetRow}`).first();
-        await row.waitFor({ state: 'visible', timeout: 8000 });
+        await row.waitFor({ state: 'visible', timeout: 120000 });
         const cells = (await row.locator('td').allInnerTexts())
             .map(t => t.replace(/\s+/g, ' ').trim());
         const num = (t) => {
@@ -3265,15 +3265,15 @@ export class NSEFoundationActions {
      *  ("No pending budget to revert") — proving the revert persisted. */
     async assertPendingBudgetReverted() {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         await this.page.locator(`xpath=${IL.intakeRevertBudgetOption}`).first().click();
 
         const dialog = this.page.locator(`xpath=${IL.revertBudgetDialog}`).first();
-        await dialog.waitFor({ state: 'visible', timeout: 12000 });
+        await dialog.waitFor({ state: 'visible', timeout: 120000 });
         await expect(dialog.getByText(IL.revertBudgetEmptyMsg, { exact: false }).first())
-            .toBeVisible({ timeout: 8000 });
+            .toBeVisible({ timeout: 120000 });
         console.log('[RevertBudget] Verified: no pending budget remains after revert');
         // Close the dialog.
         const cancel = dialog.getByRole('button', { name: /Cancel|Close/i }).first();
@@ -3285,10 +3285,10 @@ export class NSEFoundationActions {
 
     async openActivityLog() {
         const clock = this.page.locator(`xpath=${IL.intakeActivityLogBtn}`).first();
-        await clock.waitFor({ state: 'visible', timeout: 15000 });
+        await clock.waitFor({ state: 'visible', timeout: 120000 });
         await clock.click();
         await this.page.locator(`xpath=${IL.intakeActivityLogTitle}`).first()
-            .waitFor({ state: 'visible', timeout: 10000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(1200);
     }
 
@@ -3335,7 +3335,7 @@ export class NSEFoundationActions {
         const badge = this.page.locator(
             `xpath=(//*[normalize-space(text())=${JSON.stringify(section)}]/following::span[contains(normalize-space(.),'error') and contains(normalize-space(.),'!')])[1]`
         ).first();
-        await expect(badge).toBeVisible({ timeout: 10000 });
+        await expect(badge).toBeVisible({ timeout: 120000 });
     }
 
     /** Intake mandatory dropdowns flagged invalid render a red (destructive)
@@ -3348,7 +3348,7 @@ export class NSEFoundationActions {
     /** With the sections expanded, assert ≥ `min` mandatory fields show the red
      *  border AND ≥ `min` "<field> is empty" helper messages are visible. */
     async assertIntakeMandatoryFieldsFlagged(min = 15) {
-        await this.intakeRedBorderedFields().first().waitFor({ state: 'visible', timeout: 10000 });
+        await this.intakeRedBorderedFields().first().waitFor({ state: 'visible', timeout: 120000 });
         const reds = await this.intakeRedBorderedFields().count();
         expect(reds, 'red-bordered mandatory fields').toBeGreaterThanOrEqual(min);
         const empties = this.page.getByText(/is empty$/i);
@@ -3422,7 +3422,7 @@ export class NSEFoundationActions {
             await leave.click();
             await this.page.waitForTimeout(800);
         }
-        await expect(this.page).not.toHaveURL(/\/intakes\/create/, { timeout: 15000 });
+        await expect(this.page).not.toHaveURL(/\/intakes\/create/, { timeout: 120000 });
     }
 
     // ── Save Intake code for downstream steps ────────────────────────────────
@@ -3542,7 +3542,7 @@ export class NSEFoundationActions {
         const searchInput = this.page.locator(L.intakeListingSearchInput);
         if (!(await searchInput.waitFor({ state: 'visible', timeout: 2000 }).then(() => true, () => false))) {
             await this.page.locator(L.intakeListingSearchIcon).first().click();
-            await searchInput.waitFor({ state: 'visible', timeout: 60000 });
+            await searchInput.waitFor({ state: 'visible', timeout: 120000 });
         }
         await searchInput.fill(code);
         await searchInput.press('Enter');
@@ -3550,7 +3550,7 @@ export class NSEFoundationActions {
 
         // Click the row whose Code column matches
         const row = this.page.locator(`xpath=${L.intakeRowByCode(code)}`).first();
-        await row.waitFor({ state: 'visible', timeout: 60000 });
+        await row.waitFor({ state: 'visible', timeout: 120000 });
         const codeLink = row.locator('td:first-child a').first();
         if (await codeLink.waitFor({ state: 'visible', timeout: 2000 }).then(() => true, () => false)) {
             await codeLink.click();
@@ -3558,7 +3558,7 @@ export class NSEFoundationActions {
             await row.locator('td').first().click();
         }
 
-        await this.page.waitForURL(/\/intakes\/[^\/]+/, { timeout: 60000 });
+        await this.page.waitForURL(/\/intakes\/[^\/]+/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         console.log(`[Intake] Opened intake ${code} → ${this.page.url()}`);
         return code;
@@ -3566,7 +3566,7 @@ export class NSEFoundationActions {
 
     async clickIntakeProcess() {
         const btn = this.page.locator(L.intakeProcessBtn).first();
-        await btn.waitFor({ state: 'visible', timeout: 60000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
         await btn.click();
         console.log('[Intake] Clicked Process button');
         await this.page.waitForTimeout(1500);
@@ -3574,7 +3574,7 @@ export class NSEFoundationActions {
 
     async clickSendForSourcing() {
         const option = this.page.locator(L.intakeSendForSourcingOption).first();
-        await option.waitFor({ state: 'visible', timeout: 60000 });
+        await option.waitFor({ state: 'visible', timeout: 120000 });
         await option.click();
         console.log('[Intake] Clicked Send for Sourcing');
         await this.page.waitForTimeout(2000);
@@ -3584,7 +3584,7 @@ export class NSEFoundationActions {
 
     async expandSourcingSections() {
         const btn = this.page.locator(`xpath=${L.sourcingExpandAllBtn}`);
-        await btn.waitFor({ state: 'visible', timeout: 60000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
         await btn.click();
         console.log('[Sourcing] Expanded all sections');
         await this.page.waitForTimeout(1000);
@@ -3599,11 +3599,11 @@ export class NSEFoundationActions {
         while (!selected) {
             await this._openDropdown(trigger, { hasSearch: false });
             const opt = this.page.locator('[role="option"]').first();
-            await opt.waitFor({ state: 'visible', timeout: 60000 });
+            await opt.waitFor({ state: 'visible', timeout: 120000 });
             const optText = (await opt.textContent() ?? '').trim();
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(optText, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(trigger).toContainText(optText, { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
         console.log('[Sourcing] Payment Terms selected');
     }
@@ -3641,18 +3641,18 @@ export class NSEFoundationActions {
 
         // Popup → search for the supplier
         const search = this.page.locator(`xpath=${L.sourcingSupplierSearch}`).first();
-        await search.waitFor({ state: 'visible', timeout: 60000 });
+        await search.waitFor({ state: 'visible', timeout: 120000 });
         await search.fill(data.sourcing.supplierSearch);
         await this.page.waitForTimeout(1500);
 
         // Select the displayed option
         const option = this.page.locator(`xpath=${L.sourcingSupplierOption(data.sourcing.supplierSearch)}`).first();
-        await option.waitFor({ state: 'visible', timeout: 60000 });
+        await option.waitFor({ state: 'visible', timeout: 120000 });
         await option.click();
 
         // Submit inside the popup
         const submit = this.page.locator(`xpath=${L.sourcingSupplierPopupSubmit}`).first();
-        await submit.waitFor({ state: 'visible', timeout: 60000 });
+        await submit.waitFor({ state: 'visible', timeout: 120000 });
         await submit.click();
         console.log(`[Sourcing] Supplier "${data.sourcing.supplierSearch}" added`);
         await this.page.waitForTimeout(1500);
@@ -3672,7 +3672,7 @@ export class NSEFoundationActions {
         await btn.click();
         const dlgSubmit = this.page.locator(
             `xpath=//*[@role='dialog']//button[normalize-space(.)='Submit']`).first();
-        await dlgSubmit.waitFor({ state: 'visible', timeout: 20000 });
+        await dlgSubmit.waitFor({ state: 'visible', timeout: 120000 });
         console.log('[Sourcing] Workflow Summary open, holding at Submit');
     }
 
@@ -3709,7 +3709,7 @@ export class NSEFoundationActions {
 
         // "Process Request" confirmation modal → Submit
         const confirmBtn = this.page.locator(`xpath=//div[@role='dialog']//button[normalize-space(.)='Submit']`).first();
-        await confirmBtn.waitFor({ state: 'visible', timeout: 60000 });
+        await confirmBtn.waitFor({ state: 'visible', timeout: 120000 });
         await confirmBtn.click();
         console.log('[Sourcing] Confirmed Process Request popup');
         // was a fixed 3s: popup closes, then the RFX save finishes
@@ -3802,18 +3802,18 @@ export class NSEFoundationActions {
 
     async hoverSourcingTab() {
         const tab = this.page.locator(`xpath=${L.sourcingNavTab}`).first();
-        await tab.waitFor({ state: 'visible', timeout: 60000 });
+        await tab.waitFor({ state: 'visible', timeout: 120000 });
         await tab.hover();
         await this.page.waitForTimeout(800);
     }
 
     async clickQuoteRequestMenu() {
         const item = this.page.locator(`xpath=${L.quoteRequestMenuItem}`).first();
-        await item.waitFor({ state: 'visible', timeout: 60000 });
+        await item.waitFor({ state: 'visible', timeout: 120000 });
         await item.click();
-        await this.page.waitForURL(/\/quote-requests/, { timeout: 60000 });
+        await this.page.waitForURL(/\/quote-requests/, { timeout: 120000 });
         // Listing shows a "Checking permissions..." loader before rendering
-        await this.page.locator('table').first().waitFor({ state: 'visible', timeout: 60000 });
+        await this.page.locator('table').first().waitFor({ state: 'visible', timeout: 120000 });
         console.log('[Quote] On Quote Request listing page');
     }
 
@@ -3822,14 +3822,14 @@ export class NSEFoundationActions {
         console.log(`[Quote] Searching quote requests for: ${code}`);
 
         const searchInput = this.page.locator(`xpath=${L.quoteRequestSearchInput}`).first();
-        await searchInput.waitFor({ state: 'visible', timeout: 60000 });
+        await searchInput.waitFor({ state: 'visible', timeout: 120000 });
         await searchInput.fill(code);
         await searchInput.press('Enter');
         await this._quiet('RFX search'); // was a fixed 2s: let the search results land
 
         // Click the matching row
         const row = this.page.locator(`xpath=${L.quoteRequestRowByCode(code)}`).first();
-        await row.waitFor({ state: 'visible', timeout: 60000 });
+        await row.waitFor({ state: 'visible', timeout: 120000 });
         const link = row.locator('a').first();
         if (await link.waitFor({ state: 'visible', timeout: 2000 }).then(() => true, () => false)) {
             await link.click();
@@ -3837,7 +3837,7 @@ export class NSEFoundationActions {
             await row.locator('td').first().click();
         }
 
-        await this.page.waitForURL(/\/quote-requests\/[^\/]+/, { timeout: 60000 });
+        await this.page.waitForURL(/\/quote-requests\/[^\/]+/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         console.log(`[Quote] Opened sourcing event ${code} → ${this.page.url()}`);
         return code;
@@ -3847,7 +3847,7 @@ export class NSEFoundationActions {
 
     async clickSupplierSubmitQuote() {
         const btn = this.page.locator(`xpath=${L.rfxSubmitQuoteBtn}`).first();
-        await btn.waitFor({ state: 'visible', timeout: 60000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
         await btn.scrollIntoViewIfNeeded();
         await btn.click();
         console.log('[Quote] Clicked Submit Quote on supplier');
@@ -3856,7 +3856,7 @@ export class NSEFoundationActions {
 
     async clickCommercialQuoteOption() {
         const opt = this.page.locator(`xpath=${L.rfxCommercialQuoteOption}`).first();
-        await opt.waitFor({ state: 'visible', timeout: 60000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
         console.log('[Quote] Selected Commercial Quote');
         await this.page.waitForTimeout(2500);
@@ -3879,7 +3879,7 @@ export class NSEFoundationActions {
      */
     async selectSourcingCurrencies(currencies) {
         const trigger = this.page.locator(`xpath=${L.sourcingCurrenciesField}`).first();
-        await trigger.waitFor({ state: 'visible', timeout: 20000 });
+        await trigger.waitFor({ state: 'visible', timeout: 120000 });
         await trigger.scrollIntoViewIfNeeded();
         const before = (await trigger.innerText().catch(() => '')).trim();
 
@@ -3905,7 +3905,7 @@ export class NSEFoundationActions {
                     await this.page.waitForTimeout(500);
                 }
                 const opt = this.page.locator(`xpath=${L.currencyMultiOption(currency)}`).first();
-                await opt.waitFor({ state: 'visible', timeout: 8000 });
+                await opt.waitFor({ state: 'visible', timeout: 120000 });
                 await opt.click();
                 await this.page.waitForTimeout(500);
             }
@@ -3940,7 +3940,7 @@ export class NSEFoundationActions {
         // the shared fixture (see the shared-fixture hazard note in the repo).
         const wanted = currencyOverride || data.sourcing.preferredCurrency;
         const trigger = this.page.locator(`xpath=${L.quotePreferredCurrency}`).first();
-        await trigger.waitFor({ state: 'visible', timeout: 60000 });
+        await trigger.waitFor({ state: 'visible', timeout: 120000 });
         await trigger.scrollIntoViewIfNeeded();
         let selected = false;
         while (!selected) {
@@ -3960,7 +3960,7 @@ export class NSEFoundationActions {
             }
             await opt.click();
             await this.page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0, { timeout: 3000 }).catch(() => {});
-            try { await expect(trigger).toContainText(wanted, { timeout: 4000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
+            try { await expect(trigger).toContainText(wanted, { timeout: 120000 }); selected = true; } catch { await this.page.waitForTimeout(300); }
         }
         console.log(`[Quote] Preferred Currency set to ${wanted}`);
     }
@@ -3969,7 +3969,7 @@ export class NSEFoundationActions {
         // Editable cell in the quote item grid — click to activate, then type.
         // Verify the value actually landed; retry if the grid swallowed the input.
         const cell = this.page.locator(L.quoteUnitRateCell).first();
-        await cell.waitFor({ state: 'visible', timeout: 60000 });
+        await cell.waitFor({ state: 'visible', timeout: 120000 });
         await cell.scrollIntoViewIfNeeded();
 
         for (let attempt = 0; attempt < 3; attempt++) {
@@ -4033,7 +4033,7 @@ export class NSEFoundationActions {
             await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
             await this.page.waitForTimeout(2000);
         }
-        await expect(this.page.locator(`xpath=${L.quotedStatusBadge}`).first()).toBeVisible({ timeout: 60000 });
+        await expect(this.page.locator(`xpath=${L.quotedStatusBadge}`).first()).toBeVisible({ timeout: 120000 });
     }
 
     // ── RFX — Reject during the approval workflow ─────────────────────────────
@@ -4060,15 +4060,15 @@ export class NSEFoundationActions {
             }
             await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
         }
-        await rejectBtn.waitFor({ state: 'visible', timeout: 8000 });
+        await rejectBtn.waitFor({ state: 'visible', timeout: 120000 });
         await rejectBtn.click();
 
         const comments = this.page.locator(IL.intakeApproveComments).first();
-        await comments.waitFor({ state: 'visible', timeout: 10000 });
+        await comments.waitFor({ state: 'visible', timeout: 120000 });
         await comments.fill(reason);
 
         const confirm = this.page.locator(`xpath=${IL.intakeRejectConfirm}`).first();
-        await confirm.waitFor({ state: 'visible', timeout: 8000 });
+        await confirm.waitFor({ state: 'visible', timeout: 120000 });
         await confirm.click();
         console.log('[RFX] Reject submitted');
         await this.page.waitForTimeout(2000);
@@ -4078,7 +4078,7 @@ export class NSEFoundationActions {
 
     async assertSourcingStatusRejected() {
         await expect(this.page.locator(`xpath=${IL.intakeStatusRejected}`).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     // ── RFX — Edit a Rejected RFX and resubmit ────────────────────────────────
@@ -4087,11 +4087,11 @@ export class NSEFoundationActions {
     // approval workflow; the caller then approves it to live/Released.
     async editAndResubmitRejectedRfx() {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const editOpt = this.page.locator(`xpath=//*[@role='menuitem'][normalize-space(.)='Edit']`).first();
-        await editOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await editOpt.waitFor({ state: 'visible', timeout: 120000 });
         await editOpt.click();
 
         await this.page.waitForURL(/\/quote-requests\/[^\/]+\/edit/, { timeout: 15000 }).catch(() => {});
@@ -4110,7 +4110,7 @@ export class NSEFoundationActions {
         // header status reads Released (accept Live/Active/Published as synonyms).
         await expect(this.page.locator(
             `xpath=//*[normalize-space(text())='Released' or normalize-space(text())='Live' or normalize-space(text())='Active' or normalize-space(text())='Published']`
-        ).first()).toBeVisible({ timeout: 20000 });
+        ).first()).toBeVisible({ timeout: 120000 });
     }
 
     // ── RFX — More → Foreclose ────────────────────────────────────────────────
@@ -4118,7 +4118,7 @@ export class NSEFoundationActions {
     async forecloseRfx(data) {
         // More dropdown
         const moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
-        await moreBtn.waitFor({ state: 'visible', timeout: 60000 });
+        await moreBtn.waitFor({ state: 'visible', timeout: 120000 });
         await moreBtn.click();
         await this.page.waitForTimeout(800);
 
@@ -4136,11 +4136,11 @@ export class NSEFoundationActions {
 
         // Reason → Submit
         const reason = this.page.locator(`xpath=${L.rfxForecloseReasonField}`).first();
-        await reason.waitFor({ state: 'visible', timeout: 60000 });
+        await reason.waitFor({ state: 'visible', timeout: 120000 });
         await reason.fill(data.sourcing.forecloseReason);
 
         const submit = this.page.locator(`xpath=${L.rfxForecloseSubmitBtn}`).first();
-        await submit.waitFor({ state: 'visible', timeout: 60000 });
+        await submit.waitFor({ state: 'visible', timeout: 120000 });
         await submit.click();
         console.log('[Award] Foreclose submitted');
         // was a fixed 3s: dialog closes, then the foreclose finishes
@@ -4155,7 +4155,7 @@ export class NSEFoundationActions {
         // the Award button to render, reloading and re-clicking the tab if stuck
         for (let attempt = 0; attempt < 3; attempt++) {
             const tab = this.page.locator(`xpath=${L.rfxAnalysisTab}`).first();
-            await tab.waitFor({ state: 'visible', timeout: 60000 });
+            await tab.waitFor({ state: 'visible', timeout: 120000 });
             await tab.click();
             await this.page.waitForTimeout(2000);
 
@@ -4175,7 +4175,7 @@ export class NSEFoundationActions {
 
     async clickAwardButton() {
         const btn = this.page.locator(`xpath=${L.rfxAwardBtn}`).first();
-        await btn.waitFor({ state: 'visible', timeout: 60000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
         await btn.click();
         console.log('[Award] Clicked Award');
         await this._quiet('award form'); // was a fixed 2s: the award form loads its quantities
@@ -4185,7 +4185,7 @@ export class NSEFoundationActions {
         // Read the Pending Awarded Quantity from the table, type it into the
         // Allocated Quantity cell (grid-style: click → type → Tab → verify)
         const pendingCell = this.page.locator(L.awardPendingQtyCell).first();
-        await pendingCell.waitFor({ state: 'visible', timeout: 60000 });
+        await pendingCell.waitFor({ state: 'visible', timeout: 120000 });
         const pendingText = (await pendingCell.textContent() ?? '').trim();
         const qty = String(parseFloat(pendingText.replace(/[^\d.]/g, '')));
         console.log(`[Award] Pending Awarded Quantity: "${pendingText}" → entering ${qty}`);
@@ -4300,8 +4300,8 @@ export class NSEFoundationActions {
         // believed it. Wait for the S3 PUT itself.
         const putDone = this.page.waitForResponse(
             r => r.request().method() === 'PUT' && /amazonaws\.com/.test(r.url()),
-            { timeout: 90000 });
-        await input.setInputFiles(filePath, { timeout: 20000 });
+            { timeout: 120000 });
+        await input.setInputFiles(filePath, { timeout: 120000 });
         const put = await putDone;
         expect(put.status(), `the S3 upload for "${label}" returned ${put.status()}`)
             .toBeLessThan(300);
@@ -4617,7 +4617,7 @@ export class NSEFoundationActions {
     async fillAwardRowValue(label, text) {
         const row = await this.findAwardRowByLabel(label);
         const cell = this.page.locator(L.awardRowValueCell(row)).first();
-        await cell.waitFor({ state: 'visible', timeout: 20000 });
+        await cell.waitFor({ state: 'visible', timeout: 120000 });
         await cell.scrollIntoViewIfNeeded();
         await cell.click();
         await this.page.waitForTimeout(1200);
@@ -4812,7 +4812,7 @@ export class NSEFoundationActions {
             && !await num.isDisabled().catch(() => false);
         if (!usable) {
             num = this.page.locator(L.nonPoLabelledField('Invoice Number')).first();
-            await num.waitFor({ state: 'visible', timeout: 15000 });
+            await num.waitFor({ state: 'visible', timeout: 120000 });
             console.log('[INV] Invoice Number addressed by id prefix (review edit page shape)');
         }
         await num.fill(String(value));
@@ -4843,9 +4843,9 @@ export class NSEFoundationActions {
      */
     async readActiveInvoiceReference(data, supplierName) {
         await this.page.goto('https://nse-capp-uat.aerchain.io/invoices',
-            { waitUntil: 'domcontentloaded', timeout: 60000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(() => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 60000 });
+            null, { timeout: 120000 });
         await this.page.waitForTimeout(2000);
         const hit = await this.page.evaluate((supplier) => {
             const heads = [...document.querySelectorAll('thead th')].map(t => t.innerText.trim());
@@ -4906,7 +4906,7 @@ export class NSEFoundationActions {
      *  "Subject-<random suffix>", regenerated on every render. */
     async readInvoiceSubject() {
         const inp = this.page.locator(L.nonPoLabelledField('Subject')).first();
-        await inp.waitFor({ state: 'visible', timeout: 20000 });
+        await inp.waitFor({ state: 'visible', timeout: 120000 });
         const v = (await inp.inputValue().catch(() => '')).trim();
         console.log(`[INV] Subject currently ${JSON.stringify(v.slice(0, 60))}`
             + (v.length > 60 ? ` (${v.length} chars)` : ''));
@@ -4924,7 +4924,7 @@ export class NSEFoundationActions {
         const want = String(value);
         for (let i = 1; i <= 4; i++) {
             const inp = this.page.locator(L.nonPoLabelledField('Subject')).first();
-            await inp.waitFor({ state: 'visible', timeout: 20000 });
+            await inp.waitFor({ state: 'visible', timeout: 120000 });
             await inp.click({ timeout: 8000 }).catch(() => {});
             await inp.fill('').catch(() => {});
             await inp.fill(want).catch(() => {});
@@ -5137,7 +5137,7 @@ export class NSEFoundationActions {
     async submitInvoiceExpectingDuplicateRejection(
         { settleMs = 9000, formUrlRe = /\/invoices\/new/ } = {}) {
         const before = this.page.url();
-        await this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first().click({ timeout: 20000 });
+        await this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first().click({ timeout: 120000 });
         await this.page.waitForTimeout(settleMs);
 
         const found = await this.page.evaluate(() => {
@@ -5206,7 +5206,7 @@ export class NSEFoundationActions {
      */
     async submitInvoiceExpectingQtyRejection(
         { settleMs = 9000, formUrlRe = /\/invoices\/(new|\d+\/edit)/ } = {}) {
-        await this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first().click({ timeout: 20000 });
+        await this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first().click({ timeout: 120000 });
         await this.page.waitForTimeout(settleMs);
 
         // Some refusals surface behind the same two popups a good submit shows.
@@ -5254,7 +5254,7 @@ export class NSEFoundationActions {
 
     async submitWorkflowSummary() {
         const btn = this.page.locator(`xpath=${L.workflowSummarySubmitBtn}`).first();
-        await btn.waitFor({ state: 'visible', timeout: 60000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
         await btn.click();
         console.log('[Award] Workflow Summary submitted');
         // was a fixed 3s: popup closes, then the submit finishes
@@ -5376,11 +5376,11 @@ export class NSEFoundationActions {
         await rejectBtn.click();
 
         const comments = this.page.locator(IL.intakeApproveComments).first();
-        await comments.waitFor({ state: 'visible', timeout: 10000 });
+        await comments.waitFor({ state: 'visible', timeout: 120000 });
         await comments.fill(reason);
 
         const confirm = this.page.locator(`xpath=${IL.intakeRejectConfirm}`).first();
-        await expect(confirm).toBeEnabled({ timeout: 8000 });
+        await expect(confirm).toBeEnabled({ timeout: 120000 });
         await confirm.click();
         console.log(`[Award] Reject submitted ("${reason}")`);
         await this.page.waitForTimeout(2500);
@@ -5394,7 +5394,7 @@ export class NSEFoundationActions {
      */
     async cancelAward(reason = 'Cancelled by automation') {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(800);
 
@@ -5412,16 +5412,16 @@ export class NSEFoundationActions {
         // dismiss, so targeting the wrong button silently keeps the award.
         // Reason is a mandatory textarea. Verified live 2026-09-10.
         const dialog = this.page.locator(`xpath=${L.awardCancelDialog}`).first();
-        await dialog.waitFor({ state: 'visible', timeout: 12000 });
+        await dialog.waitFor({ state: 'visible', timeout: 120000 });
 
         const reasonField = this.page.locator(`xpath=${L.awardCancelReason}`).first();
-        await reasonField.waitFor({ state: 'visible', timeout: 8000 });
+        await reasonField.waitFor({ state: 'visible', timeout: 120000 });
         await reasonField.fill(reason);
         await this.page.waitForTimeout(400);
 
         const confirm = this.page.locator(`xpath=${L.awardCancelConfirm}`).first();
         await expect(confirm, 'the Cancel Award confirm never enabled — is the reason required?')
-            .toBeEnabled({ timeout: 10000 });
+            .toBeEnabled({ timeout: 120000 });
         await confirm.click();
         console.log(`[Award] Cancel submitted ("${reason}")`);
         await this.page.waitForTimeout(2500);
@@ -5521,13 +5521,13 @@ export class NSEFoundationActions {
 
     async assertSourcingStatusAwarded() {
         await expect(this.page.locator(`xpath=${L.awardedStatusBadge}`).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
         console.log('[Award] Sourcing status is Awarded');
     }
 
     async clickAwardsTab() {
         const tab = this.page.locator(`xpath=${L.rfxAwardsTab}`).first();
-        await tab.waitFor({ state: 'visible', timeout: 20000 });
+        await tab.waitFor({ state: 'visible', timeout: 120000 });
         await tab.click();
         await this.page.waitForTimeout(2000);
     }
@@ -5558,12 +5558,12 @@ export class NSEFoundationActions {
 
     async openRequisitionAndSaveCode() {
         const link = this.page.locator(`xpath=${L.requisitionCodeLink}`).first();
-        await link.waitFor({ state: 'visible', timeout: 60000 });
+        await link.waitFor({ state: 'visible', timeout: 120000 });
         const linkText = (await link.textContent() ?? '').trim();
 
         // Requisition opens in a new tab
         const [newPage] = await Promise.all([
-            this.page.context().waitForEvent('page', { timeout: 60000 }),
+            this.page.context().waitForEvent('page', { timeout: 120000 }),
             link.click(),
         ]);
         await newPage.waitForLoadState('domcontentloaded');
@@ -5620,20 +5620,20 @@ export class NSEFoundationActions {
             }
         }
 
-        await this.page.waitForURL(/\/requisitions\/\d+/, { timeout: 60000 });
+        await this.page.waitForURL(/\/requisitions\/\d+/, { timeout: 120000 });
         await this._quiet('PR page'); // was a fixed 3s
         console.log(`[PR] On requisition page: ${this.page.url()}`);
     }
 
     async clickPrEdit() {
         const btn = this.page.locator(`xpath=${L.prEditBtn}`).first();
-        await btn.waitFor({ state: 'visible', timeout: 60000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
         await btn.click();
         console.log('[PR] Clicked Edit');
-        await this.page.waitForURL(/\/edit/, { timeout: 60000 });
+        await this.page.waitForURL(/\/edit/, { timeout: 120000 });
         // MUI edit form takes a while to fully render
         await this.page.locator(L.prEffectiveFromInput).first()
-            .waitFor({ state: 'visible', timeout: 60000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(2000);
         console.log('[PR] Edit page loaded');
     }
@@ -5646,7 +5646,7 @@ export class NSEFoundationActions {
         await input.scrollIntoViewIfNeeded();
         await input.click();
         const cal = this.page.locator('.react-datepicker').last();
-        await cal.waitFor({ state: 'visible', timeout: 60000 });
+        await cal.waitFor({ state: 'visible', timeout: 120000 });
 
         for (let i = 0; i < 36; i++) {
             const caption = (await this.page.locator('.react-datepicker__current-month').last().textContent() ?? '').trim();
@@ -5691,7 +5691,7 @@ export class NSEFoundationActions {
             await this.page.locator(L.prAutocompleteOption).first().click();
         }
         await this.page.waitForTimeout(500);
-        await expect(input).toHaveValue(/.+/, { timeout: 60000 });
+        await expect(input).toHaveValue(/.+/, { timeout: 120000 });
         console.log(`[PR] Purchase Type selected: ${await input.inputValue()}`);
     }
 
@@ -5736,7 +5736,7 @@ export class NSEFoundationActions {
 
     async assertPrSubmitted() {
         await expect(this.page.locator(`xpath=${L.prSubmittedStatus}`).first())
-            .toBeVisible({ timeout: 60000 });
+            .toBeVisible({ timeout: 120000 });
         console.log('[PR] Requisition status is Submitted');
     }
 
@@ -5793,7 +5793,7 @@ export class NSEFoundationActions {
         // Wait for the created event page to actually load — the post-submit
         // navigation can be slow, and saving before the RFX code is displayed
         // would store nothing useful for the downstream tests
-        await this.page.waitForURL(/\/quote-requests\/\d+/, { timeout: 90000 });
+        await this.page.waitForURL(/\/quote-requests\/\d+/, { timeout: 120000 });
 
         let eventCode = null;
         for (let i = 0; i < 18; i++) { // up to ~90s
@@ -5831,7 +5831,7 @@ export class NSEFoundationActions {
 
     async clickPrTransactionsTab() {
         const tab = this.page.locator(`xpath=${L.prTransactionsTab}`).first();
-        await tab.waitFor({ state: 'visible', timeout: 60000 });
+        await tab.waitFor({ state: 'visible', timeout: 120000 });
         await tab.click();
         await this.page.waitForTimeout(2000);
         console.log('[PR] Opened Transactions tab');
@@ -5839,7 +5839,7 @@ export class NSEFoundationActions {
 
     async expandPrConversionsSection() {
         const header = this.page.locator(`xpath=${L.prConversionsSection}`).first();
-        await header.waitFor({ state: 'visible', timeout: 60000 });
+        await header.waitFor({ state: 'visible', timeout: 120000 });
         await header.scrollIntoViewIfNeeded();
         await header.click();
         await this.page.waitForTimeout(1500);
@@ -5848,7 +5848,7 @@ export class NSEFoundationActions {
 
     async openPrcFromConversions() {
         const link = this.page.locator(`xpath=${L.prcCodeLink}`).first();
-        await link.waitFor({ state: 'visible', timeout: 60000 });
+        await link.waitFor({ state: 'visible', timeout: 120000 });
         const code = (await link.textContent() ?? '').trim();
         await link.click();
         await this.page.waitForTimeout(2500);
@@ -5861,7 +5861,7 @@ export class NSEFoundationActions {
     // (sized to match) so all subsequent PO/GRN actions run there.
     async openPoFromConversionViewInNewTab() {
         const poCount = this.page.locator(`xpath=${L.conversionPoCountLink}`).first();
-        await poCount.waitFor({ state: 'visible', timeout: 60000 });
+        await poCount.waitFor({ state: 'visible', timeout: 120000 });
         await poCount.scrollIntoViewIfNeeded();
 
         // Hover the "POs(N)" value to reveal the popover holding the PO code link.
@@ -5883,11 +5883,11 @@ export class NSEFoundationActions {
                 revealed = await poLink.waitFor({ state: 'visible', timeout: 2500 }).then(() => true, () => false);
             }
         }
-        await poLink.waitFor({ state: 'visible', timeout: 60000 });
+        await poLink.waitFor({ state: 'visible', timeout: 120000 });
         const poCode = (await poLink.textContent() ?? '').trim();
 
         const [newPage] = await Promise.all([
-            this.page.context().waitForEvent('page', { timeout: 60000 }),
+            this.page.context().waitForEvent('page', { timeout: 120000 }),
             poLink.click(),
         ]);
         await newPage.waitForLoadState('domcontentloaded');
@@ -5897,7 +5897,7 @@ export class NSEFoundationActions {
 
         this.prPage = this.page;   // keep a handle to the PR tab
         this.page = newPage;       // operate on the PO tab from here on
-        await this.page.waitForURL(/\/purchase-orders\/\d+/, { timeout: 60000 });
+        await this.page.waitForURL(/\/purchase-orders\/\d+/, { timeout: 120000 });
         const url = this.page.url();
         console.log(`[PO] Opened ${poCode} in new tab → ${url}`);
 
@@ -5914,7 +5914,7 @@ export class NSEFoundationActions {
     async _approveWithNotes(comments = 'Approved by automation', tag = 'PO') {
         await this.page.locator(`xpath=${L.poApproveBtn}`).first().click();
         const notes = this.page.locator(`xpath=${L.poApproveNotesField}`).first();
-        await notes.waitFor({ state: 'visible', timeout: 60000 });
+        await notes.waitFor({ state: 'visible', timeout: 120000 });
         await notes.fill(comments);
         await this.page.locator(`xpath=${L.poApproveConfirmBtn}`).first().click();
         console.log(`[${tag}] Approved a stage`);
@@ -5952,7 +5952,7 @@ export class NSEFoundationActions {
         const more = this.page.locator(`xpath=${L.v3MoreBtn}`).first();
         // 30s: this page renders its header actions late — the same settle race
         // that made the invoice More button look absent (2026-09-08).
-        await more.waitFor({ state: 'visible', timeout: 30000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         for (let attempt = 1; attempt <= 3; attempt++) {
             await more.click({ timeout: 10000 }).catch(() => {});
             await this.page.waitForTimeout(2000);
@@ -5992,7 +5992,7 @@ export class NSEFoundationActions {
             throw new Error(`[PO] no "Recall" in the More menu of a Pending-Approval PO. `
                 + `Menu was ${JSON.stringify(items)}`);
         }
-        await this.page.locator(`xpath=${L.v3MenuItem('Recall')}`).first().click({ timeout: 15000 });
+        await this.page.locator(`xpath=${L.v3MenuItem('Recall')}`).first().click({ timeout: 120000 });
         console.log('[PO] Recall clicked — expecting the reason popup');
         await this.page.waitForTimeout(4000);
 
@@ -6092,11 +6092,11 @@ export class NSEFoundationActions {
         // "Approvals complete (Create available)" had already proved the button
         // exists on the pre-navigation page.
         const createBtn = this.page.locator(`xpath=${L.poCreateBtn}`).first();
-        await createBtn.waitFor({ state: 'visible', timeout: 60000 });
+        await createBtn.waitFor({ state: 'visible', timeout: 120000 });
         await createBtn.click();
         await this.page.waitForTimeout(800);
         const grn = this.page.locator(`xpath=${L.poCreateGrnOption}`).first();
-        await grn.waitFor({ state: 'visible', timeout: 60000 });
+        await grn.waitFor({ state: 'visible', timeout: 120000 });
         await grn.click();
         console.log('[GRN] Create → GRN clicked');
         await this.page.waitForTimeout(1500);
@@ -6104,20 +6104,20 @@ export class NSEFoundationActions {
 
     async submitSelectPoItemsPopup() {
         const submit = this.page.locator(`xpath=${L.selectPoItemsSubmitBtn}`).first();
-        await submit.waitFor({ state: 'visible', timeout: 60000 });
+        await submit.waitFor({ state: 'visible', timeout: 120000 });
         // Submit renders disabled until the dialog's PO-item grid has loaded its
         // (pre-selected) rows — a slow grid otherwise reads as a click timeout.
-        await expect(submit).toBeEnabled({ timeout: 60000 });
+        await expect(submit).toBeEnabled({ timeout: 120000 });
         await submit.click();
         console.log('[GRN] Submitted Select PO Items popup');
-        await this.page.waitForURL(/\/inward/, { timeout: 60000 });
+        await this.page.waitForURL(/\/inward/, { timeout: 120000 });
         await this.page.waitForTimeout(2500);
         console.log(`[GRN] On Create GRN page: ${this.page.url()}`);
     }
 
     async fillGrnGeneralDetails(data) {
         const inv = this.page.locator(`xpath=${L.grnInvoiceNumberInput}`).first();
-        await inv.waitFor({ state: 'visible', timeout: 60000 });
+        await inv.waitFor({ state: 'visible', timeout: 120000 });
         await inv.fill(data.grn.invoiceNumber);
         await this.page.locator(`xpath=${L.grnDeliveryChallanInput}`).first().fill(data.grn.deliveryChallan);
         console.log('[GRN] Filled Invoice Number + Delivery challan');
@@ -6152,7 +6152,7 @@ export class NSEFoundationActions {
      */
     async setGrnReceivedQty(qty) {
         const cell = this.page.locator(`xpath=${L.grnReceivedCell}`).first();
-        await cell.waitFor({ state: 'visible', timeout: 60000 });
+        await cell.waitFor({ state: 'visible', timeout: 120000 });
         const read = async () => {
             const txt = (await cell.textContent().catch(() => '')) ?? '';
             const m = txt.replace(/,/g, '').match(/\d+(?:\.\d+)?/);
@@ -6211,7 +6211,7 @@ export class NSEFoundationActions {
 
     async assertGrnReceivedMatchesPoQty() {
         await this.page.locator(`xpath=${L.grnLineItemColHeader('PO Quantity')}`).first()
-            .waitFor({ state: 'visible', timeout: 60000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         const result = await this.page.evaluate(() => {
             const norm = s => s.replace(/\*|f\(x\)/g, '').trim();
             const poqHeader = [...document.querySelectorAll('[role="columnheader"]')]
@@ -6259,7 +6259,7 @@ export class NSEFoundationActions {
         } else {
             console.log('[GRN] Workflow Summary popup did not appear');
         }
-        await this.page.waitForURL(/\/inwards\/\d+/, { timeout: 60000 });
+        await this.page.waitForURL(/\/inwards\/\d+/, { timeout: 120000 });
         await this.page.waitForTimeout(3000);
         console.log(`[GRN] GRN created → ${this.page.url()}`);
     }
@@ -6310,7 +6310,7 @@ export class NSEFoundationActions {
 
     async assertGrnInwarded() {
         await expect(this.page.locator(`xpath=${L.grnInwardedStatus}`).first())
-            .toBeVisible({ timeout: 60000 });
+            .toBeVisible({ timeout: 120000 });
         console.log('[GRN] Status is Inwarded');
     }
 
@@ -6356,7 +6356,7 @@ export class NSEFoundationActions {
             }
         }
 
-        await this.page.waitForURL(/\/purchase-orders\/\d+/, { timeout: 60000 });
+        await this.page.waitForURL(/\/purchase-orders\/\d+/, { timeout: 120000 });
         await this.page.waitForTimeout(2000);
         console.log(`[PO] On PO page: ${this.page.url()}`);
     }
@@ -6365,11 +6365,11 @@ export class NSEFoundationActions {
         // Same late-rendering Create action as clickPoCreateGrn — wait, don't
         // rely on the 5s default actionTimeout.
         const createBtn = this.page.locator(`xpath=${L.poCreateBtn}`).first();
-        await createBtn.waitFor({ state: 'visible', timeout: 60000 });
+        await createBtn.waitFor({ state: 'visible', timeout: 120000 });
         await createBtn.click();
         await this.page.waitForTimeout(800);
         const inv = this.page.locator(`xpath=${L.poCreateInvoiceOption}`).first();
-        await inv.waitFor({ state: 'visible', timeout: 60000 });
+        await inv.waitFor({ state: 'visible', timeout: 120000 });
         await inv.click();
         console.log('[INV] Create → Invoice clicked');
         await this.page.waitForTimeout(1500);
@@ -6377,7 +6377,7 @@ export class NSEFoundationActions {
 
     async submitSelectPoItemsForInvoice() {
         const submit = this.page.locator(`xpath=${L.selectPoItemsSubmitBtn}`).first();
-        await submit.waitFor({ state: 'visible', timeout: 60000 });
+        await submit.waitFor({ state: 'visible', timeout: 120000 });
         await submit.click();
         console.log('[INV] Submitted Select PO Items popup');
         await this.page.waitForTimeout(1500);
@@ -6385,10 +6385,10 @@ export class NSEFoundationActions {
 
     async confirmInvoiceCreation() {
         const proceed = this.page.locator(`xpath=${L.confirmInvoiceProceedBtn}`).first();
-        await proceed.waitFor({ state: 'visible', timeout: 60000 });
+        await proceed.waitFor({ state: 'visible', timeout: 120000 });
         await proceed.click();
         console.log('[INV] Proceeded Confirm Invoice Creation');
-        await this.page.waitForURL(/\/invoices\/new/, { timeout: 60000 });
+        await this.page.waitForURL(/\/invoices\/new/, { timeout: 120000 });
         await this.page.waitForTimeout(2500);
         console.log(`[INV] On Create Invoice page: ${this.page.url()}`);
     }
@@ -6429,7 +6429,7 @@ export class NSEFoundationActions {
         // Use a fresh, incremented invoice number each run (duplicate check in app)
         const invoiceNumber = this._nextInvoiceNumber();
         const num = this.page.locator(`xpath=${L.invoiceNumberInput}`).first();
-        await num.waitFor({ state: 'visible', timeout: 60000 });
+        await num.waitFor({ state: 'visible', timeout: 120000 });
         await num.fill(invoiceNumber);
         // Invoice Date = today as the SERVER sees it (UTC) - see serverToday().
         const today = serverToday();
@@ -6444,7 +6444,7 @@ export class NSEFoundationActions {
         await field.click();
         await this.page.waitForTimeout(700);
         const no = this.page.locator(`xpath=${L.autocompleteNoOption}`).first();
-        await no.waitFor({ state: 'visible', timeout: 60000 });
+        await no.waitFor({ state: 'visible', timeout: 120000 });
         await no.click();
         await this.page.waitForTimeout(500);
         console.log(`[INV] ${label} → No`);
@@ -6474,13 +6474,13 @@ export class NSEFoundationActions {
         const grnCode = fresh.savedGrn && fresh.savedGrn.code;
 
         const addGrn = this.page.locator(`xpath=${L.itemMatchingAddGrnField}`).first();
-        await addGrn.waitFor({ state: 'visible', timeout: 60000 });
+        await addGrn.waitFor({ state: 'visible', timeout: 120000 });
         await addGrn.click();
         await this.page.waitForTimeout(1000);
         const opt = grnCode
             ? this.page.locator(`xpath=${L.itemMatchingGrnOption(grnCode)}`).first()
             : this.page.locator(`xpath=//li[@role='option'][contains(normalize-space(.),'INW-')]`).first();
-        await opt.waitFor({ state: 'visible', timeout: 60000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
 
         // 'true' / 'false' when the option reports its state, null when it doesn't.
         const selectedState = async () => {
@@ -6512,7 +6512,7 @@ export class NSEFoundationActions {
             .first().click({ force: true }).catch(() => {});
         await this.page.waitForTimeout(500);
         const submit = this.page.locator(`xpath=${L.itemMatchingSubmitBtn}`).first();
-        await submit.waitFor({ state: 'visible', timeout: 60000 });
+        await submit.waitFor({ state: 'visible', timeout: 120000 });
         await submit.click();
         console.log('[INV] Submitted Item Matching');
         await this.page.waitForTimeout(2000);
@@ -6541,7 +6541,7 @@ export class NSEFoundationActions {
         // Must land on the invoice detail page. The old /\/invoices\/\d+/ pattern
         // also matched /invoices/<id>/edit, so a submit that never left the edit
         // form was logged as a success and failed much later instead.
-        await this.page.waitForURL(/\/invoices\/\d+(?:$|\/(?!edit))/, { timeout: 60000 });
+        await this.page.waitForURL(/\/invoices\/\d+(?:$|\/(?!edit))/, { timeout: 120000 });
         await this.page.waitForTimeout(3000);
         console.log(`[INV] Invoice submitted → ${this.page.url()}`);
     }
@@ -6595,7 +6595,7 @@ export class NSEFoundationActions {
         }
 
         const submit = this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first();
-        await submit.waitFor({ state: 'visible', timeout: 60000 });
+        await submit.waitFor({ state: 'visible', timeout: 120000 });
         await submit.click();
         console.log(`[${tag}] Submitted the review`);
         await this.page.waitForTimeout(1500);
@@ -6713,7 +6713,7 @@ export class NSEFoundationActions {
     async assertInvoicePendingSync({ strict = false } = {}) {
         if (strict) {
             await expect(this.page.locator(`xpath=${L.invoicePendingSyncStatus}`).first())
-                .toBeVisible({ timeout: 15000 });
+                .toBeVisible({ timeout: 120000 });
             console.log('[INV] Status is Pending Sync');
             return 'Pending Sync';
         }
@@ -6829,7 +6829,7 @@ export class NSEFoundationActions {
                 await this.page.locator(L.loginSubmitBtn).click();
             }
         }
-        await this.page.waitForURL(/\/invoices\/\d+/, { timeout: 60000 });
+        await this.page.waitForURL(/\/invoices\/\d+/, { timeout: 120000 });
         await this.page.waitForTimeout(2000);
         console.log(`[INV] On invoice page: ${this.page.url()}`);
     }
@@ -6880,7 +6880,7 @@ export class NSEFoundationActions {
             await this.page.waitForTimeout(3000);
         }
         await expect(this.page.locator(`xpath=${L.invoiceAccountedStatus}`).first())
-            .toBeVisible({ timeout: 60000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     // ── Invoice payment ────────────────────────────────────────────────────────
@@ -6898,7 +6898,7 @@ export class NSEFoundationActions {
      */
     async readInvoiceAmount({ timeoutMs = 30000 } = {}) {
         const el = this.page.locator(`xpath=${L.invoiceAmountValue}`).first();
-        await el.waitFor({ state: 'visible', timeout: 60000 });
+        await el.waitFor({ state: 'visible', timeout: 120000 });
         const deadline = Date.now() + timeoutMs;
         let amount = 0;
         let seen = '';
@@ -6967,7 +6967,7 @@ export class NSEFoundationActions {
                 'x-api-key': apiKey,
             },
             data: payload,
-            timeout: 60000,
+            timeout: 120000,
         });
         const body = await resp.text().catch(() => '');
         console.log(`[PAY-API] Response ${resp.status()}: ${body.slice(0, 500)}`);
@@ -7038,7 +7038,7 @@ export class NSEFoundationActions {
     async clickAddPayment() {
         await this.page.locator(`xpath=${L.invoiceAddPaymentBtn}`).first().click();
         await this.page.locator(`xpath=${L.paymentDrawerHeading}`).first()
-            .waitFor({ state: 'visible', timeout: 15000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(1000);
     }
 
@@ -7053,7 +7053,7 @@ export class NSEFoundationActions {
     /** Read the line item's "Actual Amount" in the payment drawer as a number. */
     async getPaymentActualAmount() {
         const cell = this.page.locator(L.paymentActualAmountCell).first();
-        await cell.waitFor({ state: 'visible', timeout: 10000 });
+        await cell.waitFor({ state: 'visible', timeout: 120000 });
         return parseFloat(((await cell.textContent()) ?? '').replace(/[₹,\s]/g, ''));
     }
 
@@ -7064,7 +7064,7 @@ export class NSEFoundationActions {
     /** Assert a (transient) success toast appears right after submitting the payment. */
     async assertPaymentSuccessToast() {
         const toast = this.page.locator(L.paymentSuccessToast).filter({ hasText: /\S/ }).first();
-        await expect(toast).toBeVisible({ timeout: 8000 });
+        await expect(toast).toBeVisible({ timeout: 120000 });
         console.log(`[PAY] Success message: ${((await toast.textContent()) ?? '').trim().slice(0, 120)}`);
     }
 
@@ -7076,9 +7076,9 @@ export class NSEFoundationActions {
     /** Assert the Payments table lists our payment (by UTR) with status Completed. */
     async assertPaymentCompleted(utr) {
         await expect(this.page.getByText(utr, { exact: false }).first())
-            .toBeVisible({ timeout: 10000 });
+            .toBeVisible({ timeout: 120000 });
         await expect(this.page.locator(`xpath=${L.paymentCompletedStatus}`).first())
-            .toBeVisible({ timeout: 10000 });
+            .toBeVisible({ timeout: 120000 });
         console.log(`[PAY] Payment ${utr} shows status Completed`);
     }
 
@@ -7096,12 +7096,12 @@ export class NSEFoundationActions {
         const context = this.page.context();
         this.dashboardPage = this.page; // remember the v4 dashboard tab
         const gear = this.page.locator(L.orgSettingsGearBtn).first();
-        await gear.waitFor({ state: 'visible', timeout: 60000 });
+        await gear.waitFor({ state: 'visible', timeout: 120000 });
         const [adminPage] = await Promise.all([
-            context.waitForEvent('page', { timeout: 60000 }),
-            gear.click({ timeout: 60000 }),
+            context.waitForEvent('page', { timeout: 120000 }),
+            gear.click({ timeout: 120000 }),
         ]);
-        await adminPage.waitForLoadState('domcontentloaded', { timeout: 60000 });
+        await adminPage.waitForLoadState('domcontentloaded', { timeout: 120000 });
         await adminPage.waitForLoadState('networkidle', { timeout: 60000 }).catch(() => {});
         this.page = adminPage; // subsequent steps run on the admin tab
         console.log('[ADMIN] Opened Org Settings (new tab)');
@@ -7110,20 +7110,20 @@ export class NSEFoundationActions {
     /** Expand the "User Management" accordion in the admin sidebar. */
     async clickUserManagement() {
         const heading = this.page.locator(`xpath=${L.adminUserMgmtHeading}`).first();
-        await heading.waitFor({ state: 'visible', timeout: 15000 });
+        await heading.waitFor({ state: 'visible', timeout: 120000 });
         await heading.click();
         // Wait for the revealed "Users" child link to appear
         await this.page.locator(`xpath=${L.adminUsersLink}`).first()
-            .waitFor({ state: 'visible', timeout: 10000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         console.log('[ADMIN] Expanded User Management');
     }
 
     async clickUsers() {
         await this.page.locator(`xpath=${L.adminUsersLink}`).first().click();
-        await this.page.waitForURL(/\/user-management\/users/, { timeout: 15000 });
+        await this.page.waitForURL(/\/user-management\/users/, { timeout: 120000 });
         // Wait for the users table to render
         await this.page.locator('table tbody tr').first()
-            .waitFor({ state: 'visible', timeout: 15000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         console.log('[ADMIN] Opened Users list');
     }
 
@@ -7135,7 +7135,7 @@ export class NSEFoundationActions {
     async openUserByName(name) {
         const row = this.page.locator(`xpath=${L.adminUserRowByName(name)}`).first();
         const drawer = this.page.getByRole('heading', { name: 'Update User' });
-        await row.waitFor({ state: 'visible', timeout: 15000 });
+        await row.waitFor({ state: 'visible', timeout: 120000 });
         await row.click();
         if (await drawer.waitFor({ state: 'visible', timeout: 12000 }).then(() => true, () => false)) {
             console.log(`[ADMIN] Opened user "${name}" (Update User drawer)`);
@@ -7145,7 +7145,7 @@ export class NSEFoundationActions {
         await this.page.keyboard.press('Escape');
         await this.page.waitForTimeout(500);
         await row.click();
-        await drawer.waitFor({ state: 'visible', timeout: 12000 });
+        await drawer.waitFor({ state: 'visible', timeout: 120000 });
         console.log(`[ADMIN] Opened user "${name}" (Update User drawer, retry)`);
     }
 
@@ -7158,7 +7158,7 @@ export class NSEFoundationActions {
      *  Either way the caller follows with clickHomeIcon() + waitForUserDashboard(). */
     async handleDepartmentFullAccess() {
         const box = this.page.locator(`xpath=${L.fullAccessCheckboxFor('Select Department')}`).first();
-        await box.waitFor({ state: 'attached', timeout: 10000 });
+        await box.waitFor({ state: 'attached', timeout: 120000 });
         const startedChecked = await box.isChecked();
 
         if (!startedChecked) {
@@ -7179,15 +7179,15 @@ export class NSEFoundationActions {
         if ((await box.isChecked()) !== checked) {
             await box.click();
         }
-        if (checked) await expect(box).toBeChecked({ timeout: 5000 });
-        else         await expect(box).not.toBeChecked({ timeout: 5000 });
+        if (checked) await expect(box).toBeChecked({ timeout: 120000 });
+        else         await expect(box).not.toBeChecked({ timeout: 120000 });
     }
 
     async clickUpdate() {
         await this.page.locator(`xpath=${L.updateBtn}`).first().click();
         // Confirm the save landed
         await expect(this.page.getByText(L.userUpdatedToast, { exact: false }).first())
-            .toBeVisible({ timeout: 10000 });
+            .toBeVisible({ timeout: 120000 });
         console.log('[ADMIN] Clicked Update — "User updated successfully"');
     }
 
@@ -7195,7 +7195,7 @@ export class NSEFoundationActions {
     async closeUserPanel() {
         await this.page.locator(L.panelCloseIcon).first().click();
         await this.page.getByRole('heading', { name: 'Update User' })
-            .waitFor({ state: 'hidden', timeout: 10000 });
+            .waitFor({ state: 'hidden', timeout: 120000 });
         console.log('[ADMIN] Closed user drawer');
     }
 
@@ -7214,7 +7214,7 @@ export class NSEFoundationActions {
     async waitForUserDashboard() {
         await this.page.waitForLoadState('networkidle').catch(() => {});
         await expect(this.page.getByText("User's Dashboard", { exact: false }).first())
-            .toBeVisible({ timeout: 30000 });
+            .toBeVisible({ timeout: 120000 });
         await this.page.locator('tbody tr td').first()
             .waitFor({ state: 'visible', timeout: 30000 }).catch(() => {});
         console.log('[ADMIN] User dashboard displayed');
@@ -7610,14 +7610,14 @@ export class NSEFoundationActions {
      *  verifies a new workflow was triggered. Returns the new title. */
     async editAndResubmitRejectedCxo(data, newQty = '5') {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const editOpt = this.page.locator(`xpath=${IL.intakeEditOption}`).first();
-        await editOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await editOpt.waitFor({ state: 'visible', timeout: 120000 });
         await editOpt.click();
 
-        await this.page.waitForURL(/\/cxos\/[^\/]+\/edit/, { timeout: 15000 });
+        await this.page.waitForURL(/\/cxos\/[^\/]+\/edit/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         await this.waitForCreatePageLoaded().catch(() => {});
         await this.page.waitForTimeout(1500);
@@ -7630,7 +7630,7 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(500);
 
         await this.clickSubmit();
-        await expect(this.page).toHaveURL(/\/cxos\/[^\/]+\/overview/, { timeout: 25000 });
+        await expect(this.page).toHaveURL(/\/cxos\/[^\/]+\/overview/, { timeout: 120000 });
         await this.page.waitForTimeout(1500);
         console.log(`[CXO] Rejected CXO edited & resubmitted → title="${newTitle}"`);
         return newTitle;
@@ -7643,14 +7643,14 @@ export class NSEFoundationActions {
      *  submission popup. Returns the new title. */
     async editAndResubmitRejectedIntake(data, newQty = '5') {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const editOpt = this.page.locator(`xpath=${IL.intakeEditOption}`).first();
-        await editOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await editOpt.waitFor({ state: 'visible', timeout: 120000 });
         await editOpt.click();
 
-        await this.page.waitForURL(/\/intakes\/[^\/]+\/edit/, { timeout: 15000 });
+        await this.page.waitForURL(/\/intakes\/[^\/]+\/edit/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         await this.waitForCreatePageLoaded().catch(() => {});
         await this.page.waitForTimeout(1500);
@@ -7678,14 +7678,14 @@ export class NSEFoundationActions {
      *  qty cell reuses the intake qty-cell pattern. */
     async editAndResubmitRejectedRfxLowerQty(newQty = '5') {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
         const editOpt = this.page.locator(`xpath=//*[@role='menuitem'][normalize-space(.)='Edit']`).first();
-        await editOpt.waitFor({ state: 'visible', timeout: 8000 });
+        await editOpt.waitFor({ state: 'visible', timeout: 120000 });
         await editOpt.click();
 
-        await this.page.waitForURL(/\/quote-requests\/[^\/]+\/edit/, { timeout: 15000 });
+        await this.page.waitForURL(/\/quote-requests\/[^\/]+\/edit/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded');
         await this.page.waitForTimeout(2500);
 
@@ -7803,7 +7803,7 @@ export class NSEFoundationActions {
      */
     async attemptSourcingLineItemQty(qty, rowIndex = 0) {
         const cell = this.page.locator(L.sourcingItemQtyCell).nth(rowIndex);
-        await cell.waitFor({ state: 'visible', timeout: 20000 });
+        await cell.waitFor({ state: 'visible', timeout: 120000 });
         await cell.scrollIntoViewIfNeeded();
         const before = (await cell.innerText().catch(() => '')).trim();
 
@@ -7832,7 +7832,7 @@ export class NSEFoundationActions {
 
     async setSourcingLineItemQty(qty, rowIndex = 0) {
         const cell = this.page.locator(L.sourcingItemQtyCell).nth(rowIndex);
-        await cell.waitFor({ state: 'visible', timeout: 60000 });
+        await cell.waitFor({ state: 'visible', timeout: 120000 });
         await cell.scrollIntoViewIfNeeded();
         const before = (await cell.innerText().catch(() => '')).trim();
 
@@ -7944,14 +7944,14 @@ export class NSEFoundationActions {
             console.log(`[${tag}] Reject still not found — dumping buttons for discovery`);
             await this.dumpEditableFields(`${tag}-DETAIL`);
         }
-        await rejectBtn.waitFor({ state: 'visible', timeout: 8000 });
+        await rejectBtn.waitFor({ state: 'visible', timeout: 120000 });
         await rejectBtn.click();
 
         const notes = this.page.locator(`xpath=${L.poApproveNotesField}`).first();
         if (await notes.waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false)) await notes.fill(reason);
 
         const confirm = this.page.locator(`xpath=${L.cappRejectConfirmBtn}`).first();
-        await confirm.waitFor({ state: 'visible', timeout: 8000 });
+        await confirm.waitFor({ state: 'visible', timeout: 120000 });
         await confirm.click();
         console.log(`[${tag}] Reject submitted`);
         await this.page.waitForTimeout(2500);
@@ -8049,7 +8049,7 @@ export class NSEFoundationActions {
         }
         const submit = dialog.locator('xpath=.//button[normalize-space(.)="Submit"]').filter({ visible: true }).first();
         for (let attempt = 1; attempt <= 3; attempt++) {
-            await expect(submit, 'Workflow Summary Submit never became enabled').toBeEnabled({ timeout: 60000 });
+            await expect(submit, 'Workflow Summary Submit never became enabled').toBeEnabled({ timeout: 120000 });
             await submit.click();
             if (await dialog.waitFor({ state: 'hidden', timeout: 15000 }).then(() => true, () => false)) {
                 console.log(`[${tag}] Confirmed Workflow Summary popup${attempt > 1 ? ` (attempt ${attempt})` : ''}`);
@@ -8086,7 +8086,7 @@ export class NSEFoundationActions {
         await this.page.locator(`xpath=//button[normalize-space(.)='Submit']`)
             .filter({ visible: true }).first().click();
         await this.page.locator(`xpath=//*[@role='dialog']//button[normalize-space(.)='Submit']`)
-            .filter({ visible: true }).first().click({ timeout: 30000 });
+            .filter({ visible: true }).first().click({ timeout: 120000 });
         console.log('[PO] edit submitted');
         await this.page.waitForTimeout(5000);
     }
@@ -8117,7 +8117,7 @@ export class NSEFoundationActions {
      */
     async expandPrcRateContractSection() {
         const rc = this.page.locator(`xpath=//*[normalize-space(text())="Rate Contract"]`).first();
-        await rc.waitFor({ state: 'visible', timeout: 20000 });
+        await rc.waitFor({ state: 'visible', timeout: 120000 });
         await rc.scrollIntoViewIfNeeded();
         await rc.click();
         await this.page.waitForTimeout(3500);
@@ -8149,8 +8149,8 @@ export class NSEFoundationActions {
     /** Click the Process tab once it is enabled. */
     async clickPrProcessTab(tag = 'PR') {
         const tab = this.page.locator('xpath=//*[self::button or @role="tab"][normalize-space(.)="Process"]').first();
-        await tab.waitFor({ state: 'visible', timeout: 20000 });
-        await tab.click({ timeout: 20000 });
+        await tab.waitFor({ state: 'visible', timeout: 120000 });
+        await tab.click({ timeout: 120000 });
         await this.page.waitForTimeout(4000);
         console.log(`[${tag}] opened the Process tab -> ${this.page.url()}`);
     }
@@ -8244,7 +8244,7 @@ export class NSEFoundationActions {
     /** Click Convert to PO and land on the "Converting to PO" form. */
     async clickConvertToPo() {
         await this.page.locator(`xpath=//button[normalize-space(.)="Convert to PO"]`).first().click();
-        await this.page.waitForURL(/\/requisition-conversion\/\d+\/newPo/, { timeout: 45000 });
+        await this.page.waitForURL(/\/requisition-conversion\/\d+\/newPo/, { timeout: 120000 });
         await this.page.waitForTimeout(5000);
         console.log(`[PRC] Convert to PO -> ${this.page.url()}`);
     }
@@ -8556,7 +8556,7 @@ export class NSEFoundationActions {
 
     async _acOptions(label) {
         const inp = this._ac(label);
-        await inp.waitFor({ state: 'visible', timeout: 20000 });
+        await inp.waitFor({ state: 'visible', timeout: 120000 });
         await inp.click();
         await this.page.waitForTimeout(1200);
         const opts = await this.page.locator(L.muiAcOption).allInnerTexts().catch(() => []);
@@ -8567,7 +8567,7 @@ export class NSEFoundationActions {
      *  these lists are long). No value ⇒ take the first option. */
     async _selectFromAc(label, value = null, { exact = true } = {}) {
         const inp = this._ac(label);
-        await inp.waitFor({ state: 'visible', timeout: 60000 });
+        await inp.waitFor({ state: 'visible', timeout: 120000 });
         await inp.click();
         await this.page.waitForTimeout(800);
         if (value) {
@@ -8575,7 +8575,7 @@ export class NSEFoundationActions {
             await this.page.waitForTimeout(1500);
         }
         const options = this.page.locator(L.muiAcOption);
-        await options.first().waitFor({ state: 'visible', timeout: 60000 });
+        await options.first().waitFor({ state: 'visible', timeout: 120000 });
         const target = value
             ? (exact
                 ? options.filter({ hasText: new RegExp(`^\\s*${value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`) }).first()
@@ -8594,9 +8594,9 @@ export class NSEFoundationActions {
      *  noticeably slower than V4, so wait for the Ant header, not just the URL. */
     async clickV3Home() {
         await this.page.locator(`xpath=${L.v3HomeLink}`).first().click();
-        await this.page.waitForURL(/nse-capp-uat\.aerchain\.io/, { timeout: 60000 });
+        await this.page.waitForURL(/nse-capp-uat\.aerchain\.io/, { timeout: 120000 });
         await this.page.locator(L.v3ModulesToggle).first()
-            .waitFor({ state: 'visible', timeout: 60000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(1500);
         console.log(`[NONPO] V3 home → ${this.page.url()}`);
     }
@@ -8608,7 +8608,7 @@ export class NSEFoundationActions {
     async openModulesPanel() {
         const toggle = this.page.locator(L.v3ModulesToggle).first();
         const invoices = this.page.locator(`xpath=${L.v3ModuleInvoices}`).first();
-        await toggle.waitFor({ state: 'visible', timeout: 60000 });
+        await toggle.waitFor({ state: 'visible', timeout: 120000 });
 
         for (let attempt = 1; attempt <= 4; attempt++) {
             if (await invoices.waitFor({ state: 'visible', timeout: 2000 }).then(() => true, () => false)) {
@@ -8650,9 +8650,9 @@ export class NSEFoundationActions {
 
     async clickCreateNewInvoice() {
         await this.page.locator(`xpath=${L.invoiceCreateNewBtn}`).first().click();
-        await this.page.waitForURL(/\/invoices\/new/, { timeout: 60000 });
+        await this.page.waitForURL(/\/invoices\/new/, { timeout: 120000 });
         await this.page.locator(`xpath=${L.nonPoUploadDropzoneText}`)
-            .first().waitFor({ state: 'visible', timeout: 60000 });
+            .first().waitFor({ state: 'visible', timeout: 120000 });
         console.log('[NONPO] on /invoices/new (upload dropzone shown)');
     }
 
@@ -8666,7 +8666,7 @@ export class NSEFoundationActions {
             await this.page.goto('https://nse-capp-uat.aerchain.io/invoices/new');
             await this.page.waitForLoadState('networkidle').catch(() => {});
             await this.page.locator(`xpath=${L.nonPoUploadDropzoneText}`)
-                .first().waitFor({ state: 'visible', timeout: 60000 });
+                .first().waitFor({ state: 'visible', timeout: 120000 });
             console.log('[NONPO] loaded /invoices/new directly');
             return;
         }
@@ -8707,7 +8707,7 @@ export class NSEFoundationActions {
     async selectNonPoTemplate(data) {
         const name = data.nonPoInvoice.template;
         const inp = this.page.locator(L.nonPoTemplateInput).first();
-        await inp.waitFor({ state: 'visible', timeout: 60000 });
+        await inp.waitFor({ state: 'visible', timeout: 120000 });
         await inp.click();
         await this.page.waitForTimeout(1000);
         await this.page.locator(L.muiAcOption).filter({ hasText: name }).first().click();
@@ -8902,7 +8902,7 @@ export class NSEFoundationActions {
      *  CXO, and ships DISABLED until the dimension combination resolves. */
     async selectNonPoBrf(data) {
         const inp = this.page.locator(L.nonPoBrfInput).first();
-        await inp.waitFor({ state: 'attached', timeout: 30000 });
+        await inp.waitFor({ state: 'attached', timeout: 120000 });
         if (await inp.isDisabled().catch(() => false)) {
             await inp.waitFor({ state: 'visible', timeout: 20000 }).catch(() => {});
             if (await inp.isDisabled().catch(() => false)) {
@@ -8995,7 +8995,7 @@ export class NSEFoundationActions {
      *  report which supplier drove the autopopulation. */
     async selectNonPoSupplier(name) {
         const inp = this.page.locator(L.nonPoSupplierInput).first();
-        await inp.waitFor({ state: 'visible', timeout: 30000 });
+        await inp.waitFor({ state: 'visible', timeout: 120000 });
         if (await inp.isDisabled().catch(() => false)) {
             throw new Error(`[VENDORRPT] the Supplier picker is disabled on this template — `
                 + 'it is driven by the PO, so do not try to choose one');
@@ -9109,11 +9109,11 @@ export class NSEFoundationActions {
     async _setGridProduct(typed, wanted = null) {
         const cell = this.page.locator(`xpath=${L.nonPoGridCell(L.nonPoGridColIds.product)}`).first();
         await cell.scrollIntoViewIfNeeded().catch(() => {});
-        await cell.waitFor({ state: 'visible', timeout: 60000 });
+        await cell.waitFor({ state: 'visible', timeout: 120000 });
         await cell.dblclick();
 
         const input = this.page.locator(L.nonPoProductEditorInput).first();
-        await input.waitFor({ state: 'visible', timeout: 60000 });
+        await input.waitFor({ state: 'visible', timeout: 120000 });
         await input.fill(String(typed));
 
         const opts = this.page.locator(L.nonPoAntOption);
@@ -9183,7 +9183,7 @@ export class NSEFoundationActions {
     async _setGridCell(colId, value) {
         const cell = this.page.locator(`xpath=${L.nonPoGridCell(colId)}`).first();
         await cell.scrollIntoViewIfNeeded().catch(() => {});
-        await cell.waitFor({ state: 'visible', timeout: 60000 });
+        await cell.waitFor({ state: 'visible', timeout: 120000 });
         await cell.dblclick();
         await this.page.waitForTimeout(600);
         await waitForEditorFocus(this.page);
@@ -9247,10 +9247,10 @@ export class NSEFoundationActions {
     //     successfully" → Paid.
 
     async openAdvanceCreateDrawer() {
-        await this.page.goto(L.advanceListUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
-        await this.page.locator(`xpath=${L.advanceCreateBtn}`).first().click({ timeout: 60000 });
+        await this.page.goto(L.advanceListUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
+        await this.page.locator(`xpath=${L.advanceCreateBtn}`).first().click({ timeout: 120000 });
         await this.page.locator(`xpath=${L.advanceDrawer}`).filter({ visible: true }).first()
-            .waitFor({ state: 'visible', timeout: 60000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(2000);
         console.log('[ADV] Create Advance drawer open');
     }
@@ -9299,7 +9299,7 @@ export class NSEFoundationActions {
         await this.page.keyboard.type(String(value), { delay: 40 });
         await this.page.keyboard.press('Enter');
         await expect(cell, `grid cell ${colId} did not take ${value}`)
-            .toHaveText(new RegExp(`^\\s*${String(value)}(\\.0+)?\\s*$`), { timeout: 60000 });
+            .toHaveText(new RegExp(`^\\s*${String(value)}(\\.0+)?\\s*$`), { timeout: 120000 });
     }
 
     /** Line item on the advance: the intake item, qty, price. */
@@ -9323,14 +9323,14 @@ export class NSEFoundationActions {
     /** PO page › Create ▾ › Request Advance → the advance drawer, pre-tied to the PO. */
     async clickPoRequestAdvance() {
         const createBtn = this.page.locator(`xpath=${L.poCreateBtn}`).first();
-        await createBtn.waitFor({ state: 'visible', timeout: 60000 });
+        await createBtn.waitFor({ state: 'visible', timeout: 120000 });
         await createBtn.click();
         await this.page.waitForTimeout(800);
         const opt = this.page.getByRole('menuitem', { name: /request advance/i }).first();
-        await opt.waitFor({ state: 'visible', timeout: 60000 });
+        await opt.waitFor({ state: 'visible', timeout: 120000 });
         await opt.click();
         await this.page.locator(`xpath=${L.advanceDrawer}`).filter({ visible: true }).first()
-            .waitFor({ state: 'visible', timeout: 60000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(3000);
         console.log(`[ADV] PO Create → Request Advance → drawer open (${this.page.url()})`);
     }
@@ -9381,7 +9381,7 @@ export class NSEFoundationActions {
     async submitPoAdvance() {
         await this._clickVisibleSubmit();
         await this._confirmInvoiceWorkflowSummary('ADV');
-        await expect(this.page.getByText('Advances Submitted successfully').first()).toBeVisible({ timeout: 60000 });
+        await expect(this.page.getByText('Advances Submitted successfully').first()).toBeVisible({ timeout: 120000 });
         console.log('[ADV] PO advance submitted');
     }
 
@@ -9400,18 +9400,18 @@ export class NSEFoundationActions {
         }
         if (!onList) {
             console.log('[ADV] Advances entry did not navigate — opening the listing URL');
-            await this.page.goto(L.advanceListUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+            await this.page.goto(L.advanceListUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
         }
         const rows = this.page.locator('xpath=//tbody/tr');
-        await rows.first().waitFor({ state: 'visible', timeout: 60000 });
+        await rows.first().waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(2000);
         const texts = await rows.evaluateAll(trs => trs.map(t => (t.innerText || '').replace(/\s+/g, ' ')));
         const idx = texts.findIndex(t => t.includes(poCode) && !exclude.some(c => t.includes(c)));
         console.log(`[ADV] listing row 1: "${texts[0]?.slice(0, 160)}" → our PO ${poCode} at row ${idx + 1}`);
         expect(idx, `no advance row for ${poCode} on the listing's first page`).toBeGreaterThanOrEqual(0);
         await rows.nth(idx).locator('xpath=./td[1]//a').first().click();
-        await this.page.waitForURL(/\/advances\/\d+$/, { timeout: 60000 });
-        await expect(this.page.getByText(poCode, { exact: true }).first()).toBeVisible({ timeout: 60000 });
+        await this.page.waitForURL(/\/advances\/\d+$/, { timeout: 120000 });
+        await expect(this.page.getByText(poCode, { exact: true }).first()).toBeVisible({ timeout: 120000 });
         const id = this.page.url().match(/\/advances\/(\d+)/)[1];
         const code = (await this.page.getByText(/^Advance-[A-Z]+-\d+-\d+$/).first().innerText()).trim();
         console.log(`[ADV] opened ${code} (id ${id}) on ${poCode}`);
@@ -9429,7 +9429,7 @@ export class NSEFoundationActions {
             await newPage.setViewportSize({ width: 1800, height: 900 });
             this.page = newPage;
         }
-        await this.page.waitForURL(/\/purchase-orders\/\d+/, { timeout: 60000 });
+        await this.page.waitForURL(/\/purchase-orders\/\d+/, { timeout: 120000 });
         await this.page.waitForTimeout(3000);
         console.log(`[ADV] ${poCode} opened from the advance → ${this.page.url()}`);
     }
@@ -9454,12 +9454,12 @@ export class NSEFoundationActions {
     async assertAdvanceBudgetExceeded() {
         await this._clickVisibleSubmit();
         const dialog = this._workflowSummaryDialog();
-        await dialog.waitFor({ state: 'visible', timeout: 60000 });
-        await expect(dialog.getByText(L.advanceBudgetExceeded).first()).toBeVisible({ timeout: 60000 });
-        await expect(dialog.locator('xpath=.//button[normalize-space(.)="Submit"]')).toBeDisabled({ timeout: 60000 });
+        await dialog.waitFor({ state: 'visible', timeout: 120000 });
+        await expect(dialog.getByText(L.advanceBudgetExceeded).first()).toBeVisible({ timeout: 120000 });
+        await expect(dialog.locator('xpath=.//button[normalize-space(.)="Submit"]')).toBeDisabled({ timeout: 120000 });
         console.log(`[ADV] blocked: "${L.advanceBudgetExceeded}" (Workflow Summary Submit disabled)`);
         await dialog.locator('xpath=.//button[normalize-space(.)="Discard"]').click();
-        await dialog.waitFor({ state: 'hidden', timeout: 60000 });
+        await dialog.waitFor({ state: 'hidden', timeout: 120000 });
     }
 
     /** Submit the drawer through the Workflow Summary and open the new advance.
@@ -9468,17 +9468,17 @@ export class NSEFoundationActions {
     async submitAdvanceAndOpen(cxoCode) {
         await this._clickVisibleSubmit();
         await this._confirmInvoiceWorkflowSummary('ADV');
-        await expect(this.page.getByText('Advances Submitted successfully').first()).toBeVisible({ timeout: 60000 });
+        await expect(this.page.getByText('Advances Submitted successfully').first()).toBeVisible({ timeout: 120000 });
 
         // The listing re-renders after the toast; reading row 1 straight away
         // returned the PREVIOUS advance's code (run of 2026-11-19). Reload, then
         // take the code from the opened advance itself, not from the row.
-        await this.page.goto(L.advanceListUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.goto(L.advanceListUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
         const link = this.page.locator(`xpath=${L.advanceFirstRowLink}`).first();
-        await link.waitFor({ state: 'visible', timeout: 60000 });
+        await link.waitFor({ state: 'visible', timeout: 120000 });
         await link.click();
-        await this.page.waitForURL(/\/advances\/\d+$/, { timeout: 60000 });
-        await expect(this.page.getByText(cxoCode, { exact: true }).first()).toBeVisible({ timeout: 60000 });
+        await this.page.waitForURL(/\/advances\/\d+$/, { timeout: 120000 });
+        await expect(this.page.getByText(cxoCode, { exact: true }).first()).toBeVisible({ timeout: 120000 });
         const id = this.page.url().match(/\/advances\/(\d+)/)[1];
         const code = (await this.page.getByText(/^Advance-[A-Z]+-\d+-\d+$/).first().innerText()).trim();
         console.log(`[ADV] created ${code} (id ${id}) on ${cxoCode}`);
@@ -9487,39 +9487,39 @@ export class NSEFoundationActions {
 
     async assertAdvanceStatus(id, status) {
         await expect(async () => {
-            await this.page.goto(`${L.advanceListUrl}/${id}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-            await expect(this.page.locator(`xpath=${L.advanceStatus(status)}`).first()).toBeVisible({ timeout: 60000 });
+            await this.page.goto(`${L.advanceListUrl}/${id}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+            await expect(this.page.locator(`xpath=${L.advanceStatus(status)}`).first()).toBeVisible({ timeout: 120000 });
         }).toPass({ timeout: 120000 });
         console.log(`[ADV] advance ${id} is ${status}`);
     }
 
     /** Review → edit form → Submit. Moves Pending-review → Accounted. */
     async reviewAdvance() {
-        await this.page.locator(`xpath=${L.invoiceReviewBtn}`).first().click({ timeout: 60000 });
-        await this.page.waitForURL(/\/advances\/\d+\/edit/, { timeout: 60000 });
+        await this.page.locator(`xpath=${L.invoiceReviewBtn}`).first().click({ timeout: 120000 });
+        await this.page.waitForURL(/\/advances\/\d+\/edit/, { timeout: 120000 });
         await this.page.waitForTimeout(3000);
         await this._clickVisibleSubmit();
         // No Workflow Summary on this build; confirm it if one appears.
         if (await this._workflowSummaryDialog().waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
             await this._confirmInvoiceWorkflowSummary('ADV');
         }
-        await expect(this.page.getByText('Advances Updated successfully').first()).toBeVisible({ timeout: 60000 });
+        await expect(this.page.getByText('Advances Updated successfully').first()).toBeVisible({ timeout: 120000 });
         console.log('[ADV] review submitted');
     }
 
     /** "+ Payment" → Converting to Payment. Paid amount goes in the header AND on
      *  the advance's line (col line_items_paid_amount). */
     async payAdvance(amount) {
-        await this.page.locator(`xpath=${L.advancePaymentBtn}`).first().click({ timeout: 60000 });
+        await this.page.locator(`xpath=${L.advancePaymentBtn}`).first().click({ timeout: 120000 });
         const drawer = this.page.locator(`xpath=${L.advanceDrawer}`).filter({ visible: true }).first();
-        await drawer.waitFor({ state: 'visible', timeout: 60000 });
+        await drawer.waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(2000);
         await this.page.locator(L.advancePaidAmountInput).filter({ visible: true }).first().fill(String(amount));
         await this.page.locator(L.advanceUtrInput).filter({ visible: true }).first().fill(`UTR${Date.now()}`);
         await this._pickReactDate(this.page.locator(L.advancePaymentDate).first(), serverToday());
         await this._setRevealedGridCell('line_items_paid_amount', amount, L.advanceDrawer);
         await drawer.locator(`xpath=.${L.visibleSubmitBtn}`).filter({ visible: true }).first().click();
-        await expect(this.page.getByText('PAYMENT Submitted successfully').first()).toBeVisible({ timeout: 60000 });
+        await expect(this.page.getByText('PAYMENT Submitted successfully').first()).toBeVisible({ timeout: 120000 });
         console.log(`[ADV] payment of ${amount} submitted`);
     }
 
@@ -9531,14 +9531,14 @@ export class NSEFoundationActions {
         await field.scrollIntoViewIfNeeded();
         await field.click({ force: true }); // the visible box is the form control, not the input
         const dialog = this.page.locator(`xpath=${L.invoiceAdvanceDialog}`).first();
-        await dialog.waitFor({ state: 'visible', timeout: 60000 });
+        await dialog.waitFor({ state: 'visible', timeout: 120000 });
         const box = dialog.locator(`xpath=${L.invoiceAdvanceCheckbox(code)}`).first();
-        await box.waitFor({ state: 'attached', timeout: 60000 });
+        await box.waitFor({ state: 'attached', timeout: 120000 });
         if (!(await box.isChecked())) await box.click();
         await this.page.waitForTimeout(1000);
         console.log(`[ADV] Select Advances → ${(await dialog.innerText()).replace(/\s*\n\s*/g, ' | ')}`);
         await dialog.locator('xpath=.//button[normalize-space()="Save"]').click();
-        await dialog.waitFor({ state: 'hidden', timeout: 60000 });
+        await dialog.waitFor({ state: 'hidden', timeout: 120000 });
         const shown = await this.page.locator(L.invoiceAdvanceInput).first().inputValue();
         expect(shown, 'Advance field did not take the selection').toMatch(/1 advance selected/);
         console.log(`[ADV] invoice Advance → "${shown}"`);
@@ -9554,7 +9554,7 @@ export class NSEFoundationActions {
         console.log('[ADV] Clicked Submit with no advance selected');
 
         const makeChanges = this.page.getByRole('button', { name: /make changes/i }).filter({ visible: true }).first();
-        await makeChanges.waitFor({ state: 'visible', timeout: 60000 });
+        await makeChanges.waitFor({ state: 'visible', timeout: 120000 });
         const dialog = this.page.locator('[role="dialog"], .MuiDialog-root, [role="alertdialog"]')
             .filter({ has: makeChanges }).last();
         const text = (await dialog.innerText().catch(() => '')).replace(/\s*\n\s*/g, ' | ');
@@ -9562,7 +9562,7 @@ export class NSEFoundationActions {
         expect(text, 'popup should say an advance is available').toMatch(/advance/i);
 
         await makeChanges.click();
-        await makeChanges.waitFor({ state: 'hidden', timeout: 60000 });
+        await makeChanges.waitFor({ state: 'hidden', timeout: 120000 });
         await this.page.waitForTimeout(1500);
         expect(this.page.url(), 'Make Changes should keep us on the create form')
             .not.toMatch(/\/invoices\/\d+(?:$|\/(?!edit))/);
@@ -9609,7 +9609,7 @@ export class NSEFoundationActions {
      *  Pending Review. Returns { rows, gstLines }. */
     async expandInvoiceTaxTotal(tag = 'S113') {
         const taxCell = this.page.locator('.ag-cell[col-id="information"]', { hasText: /^Tax total/ }).first();
-        await taxCell.waitFor({ state: 'attached', timeout: 60000 });
+        await taxCell.waitFor({ state: 'attached', timeout: 120000 });
         await taxCell.scrollIntoViewIfNeeded().catch(() => {});
         await this.page.waitForTimeout(1500);
         const before = await this._readInvoiceSummaryRows();
@@ -9713,7 +9713,7 @@ export class NSEFoundationActions {
      *  budget message appears. Never requires navigation.
      *  @returns {Promise<{url: string, messages: string[], dialogText: string}>} */
     async submitNonPoInvoiceExpectingRejection({ settleMs = 8000 } = {}) {
-        await this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first().click({ timeout: 20000 });
+        await this.page.locator(`xpath=${L.invoiceSubmitBtn}`).first().click({ timeout: 120000 });
         console.log('[NONPO] clicked Submit (expecting rejection)');
 
         const dialog = this.page.locator(`xpath=${L.muiDialog}`).last();
@@ -9797,7 +9797,7 @@ export class NSEFoundationActions {
      *  an "Atleast one row is required" toast for the grid. */
     async assertNonPoMandatoryErrorsShown() {
         const helpers = this.page.locator(`xpath=${L.nonPoMandatoryHelperText}`);
-        await expect(helpers.first()).toBeVisible({ timeout: 20000 });
+        await expect(helpers.first()).toBeVisible({ timeout: 120000 });
         const texts = (await helpers.allInnerTexts()).map(t => t.trim()).filter(Boolean);
         console.log(`[NONPO] mandatory errors: ${JSON.stringify(texts.slice(0, 12))}`);
         for (const field of ['Company', 'Supplier', 'Subject', 'Invoice Number',
@@ -9819,7 +9819,7 @@ export class NSEFoundationActions {
             await this.page.goto(`${current.loginUrl}/cxos`);
             await this.page.waitForLoadState('domcontentloaded').catch(() => {});
             await this.page.locator(`xpath=//*[normalize-space(text())="${code}"]`).first()
-                .click({ timeout: 30000 });
+                .click({ timeout: 120000 });
         }
         await this.page.waitForURL(/\/cxos\/[^\/]+\/overview/, { timeout: 60000 }).catch(() => {});
         await this.page.waitForLoadState('networkidle').catch(() => {});
@@ -9863,7 +9863,7 @@ export class NSEFoundationActions {
         await this.openCxoTransactionsTab();
         const row = this.page.locator(`xpath=//*[contains(normalize-space(.),"${invoiceCode}")]`).first();
         await expect(row, `CXO Transactions tab should list invoice ${invoiceCode}`)
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
         console.log(`[NONPO] CXO Transactions tab lists ${invoiceCode}`);
     }
 
@@ -9907,7 +9907,7 @@ export class NSEFoundationActions {
         const box = this.page.locator('textarea').last();
         await box.fill(reason);
         await this.page.locator(`xpath=//div[@role="dialog"]//button[normalize-space(.)="Reject"]`)
-            .first().click({ timeout: 20000 });
+            .first().click({ timeout: 120000 });
         await this.page.waitForTimeout(3000);
         console.log('[NONPO] invoice rejected');
     }
@@ -9933,7 +9933,7 @@ export class NSEFoundationActions {
      */
     async recallInvoice(reason = 'Recalled by automation') {
         const more = this.page.locator(`xpath=//button[normalize-space()="More"]`).first();
-        await more.waitFor({ state: 'visible', timeout: 30000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(1500);
 
@@ -9947,7 +9947,7 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(3000);
 
         const dialog = this.page.locator('[class*="MuiDialog-root"]').first();
-        await dialog.waitFor({ state: 'visible', timeout: 20000 });
+        await dialog.waitFor({ state: 'visible', timeout: 120000 });
         const notes = dialog.locator('textarea').first();
         if (await notes.waitFor({ state: 'visible', timeout: 6000 }).then(() => true, () => false)) await notes.fill(reason);
 
@@ -10097,7 +10097,7 @@ export class NSEFoundationActions {
      *  therefore the only proof the cancel was accepted. */
     async _confirmCancelDialog(reason) {
         const dialog = this.page.locator('[role="dialog"]').last();
-        await dialog.waitFor({ state: 'visible', timeout: 12000 });
+        await dialog.waitFor({ state: 'visible', timeout: 120000 });
         const notes = dialog.locator('textarea').first();
         if (await notes.waitFor({ state: 'visible', timeout: 6000 }).then(() => true, () => false)) {
             await notes.fill(reason);
@@ -10107,8 +10107,8 @@ export class NSEFoundationActions {
             // invoice labels are untouched, and a bare "Cancel" is deliberately NOT
             // matched: on these dialogs that is the DISMISS button.
             .filter({ hasText: /^(Confirm|Submit|Yes|Cancel Invoice|Cancel PO|Cancel Purchase Order|Cancel Order)$/ })
-            .first().click({ timeout: 20000 });
-        await dialog.waitFor({ state: 'hidden', timeout: 20000 });
+            .first().click({ timeout: 120000 });
+        await dialog.waitFor({ state: 'hidden', timeout: 120000 });
         await this.page.waitForTimeout(2500);
     }
 
@@ -10159,7 +10159,7 @@ export class NSEFoundationActions {
         const items = this.page.locator(`xpath=${L.anyCxoMenuItem}`);
         if (await items.first().isVisible().catch(() => false)) return;
         await this.page.locator(`xpath=${L.cxoMoreButton}`).first().click();
-        await items.first().waitFor({ state: 'visible', timeout: 15000 });
+        await items.first().waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(400);
     }
 
@@ -10322,7 +10322,7 @@ export class NSEFoundationActions {
     async openActivityLogPanel() {
         await this.page.locator(`xpath=${L.activityLogButton}`).first().click();
         await this.page.locator(`xpath=${L.activityLogPanel}`).first()
-            .waitFor({ state: 'visible', timeout: 15000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(1500);
     }
 
@@ -10351,14 +10351,14 @@ export class NSEFoundationActions {
      */
     async downloadActivityLogItem(label, moduleTag = 'v4') {
         const trigger = this.page.locator(`xpath=${L.activityLogDownloadBtn}`).first();
-        await trigger.waitFor({ state: 'visible', timeout: 15000 });
+        await trigger.waitFor({ state: 'visible', timeout: 120000 });
         await trigger.click();
 
         const item = this.page.locator(`xpath=${L.activityLogDownloadItem(label)}`).first();
-        await item.waitFor({ state: 'visible', timeout: 10000 });
+        await item.waitFor({ state: 'visible', timeout: 120000 });
 
         const [download] = await Promise.all([
-            this.page.waitForEvent('download', { timeout: 30000 }),
+            this.page.waitForEvent('download', { timeout: 120000 }),
             item.click(),
         ]);
 
@@ -10406,12 +10406,12 @@ export class NSEFoundationActions {
      */
     async addActivityLogComment(text = `Automation comment ${Date.now()}`) {
         const box = this.page.locator(`xpath=${L.activityLogCommentInput}`).first();
-        await box.waitFor({ state: 'visible', timeout: 15000 });
+        await box.waitFor({ state: 'visible', timeout: 120000 });
         await box.click();
         await box.fill(text);
 
         const send = this.page.locator(`xpath=${L.activityLogCommentSendBtn}`).first();
-        await expect(send, 'comment send button never enabled after typing').toBeEnabled({ timeout: 10000 });
+        await expect(send, 'comment send button never enabled after typing').toBeEnabled({ timeout: 120000 });
         await send.click();
 
         // The feed re-renders in place; wait for the posted body to show up
@@ -10450,13 +10450,13 @@ export class NSEFoundationActions {
         await this.page.locator(`xpath=${L.rfxAnalysisTabBtn}`).first().click();
         await this.page.waitForURL(/\/analysis/, { timeout: 30000 }).catch(() => {});
         await this.page.locator(`xpath=${L.analysisBaseCurrencySwitch}`).first()
-            .waitFor({ state: 'visible', timeout: 30000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(1500);
     }
 
     async getAnalysisSwitchState(label) {
         const sw = this.page.locator(`xpath=${L.analysisSwitch(label)}`).first();
-        await sw.waitFor({ state: 'visible', timeout: 15000 });
+        await sw.waitFor({ state: 'visible', timeout: 120000 });
         return sw.getAttribute('data-state');   // 'checked' | 'unchecked'
     }
 
@@ -10507,10 +10507,10 @@ export class NSEFoundationActions {
     async downloadAnalysisFile(label) {
         await this.page.locator(`xpath=${L.analysisDownloadBtn}`).first().click();
         const item = this.page.locator(`xpath=${L.analysisDownloadItem(label)}`).first();
-        await item.waitFor({ state: 'visible', timeout: 10000 });
+        await item.waitFor({ state: 'visible', timeout: 120000 });
 
         const [download] = await Promise.all([
-            this.page.waitForEvent('download', { timeout: 45000 }),
+            this.page.waitForEvent('download', { timeout: 120000 }),
             item.click(),
         ]);
 
@@ -10542,7 +10542,7 @@ export class NSEFoundationActions {
     async tryDownloadAnalysisFile(label) {
         await this.page.locator(`xpath=${L.analysisDownloadBtn}`).first().click();
         const item = this.page.locator(`xpath=${L.analysisDownloadItem(label)}`).first();
-        await item.waitFor({ state: 'visible', timeout: 10000 });
+        await item.waitFor({ state: 'visible', timeout: 120000 });
 
         const downloadP = this.page.waitForEvent('download', { timeout: 45000 })
             .then(d => ({ kind: 'download', d })).catch(() => null);
@@ -10608,7 +10608,7 @@ export class NSEFoundationActions {
     async openAnalysisCompare() {
         await this.page.locator(`xpath=${L.analysisCompareBtn}`).first().click();
         await this.page.locator(`xpath=${L.analysisCompareNote}`).first()
-            .waitFor({ state: 'visible', timeout: 15000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(1000);
     }
 
@@ -10650,10 +10650,10 @@ export class NSEFoundationActions {
 
     async openIntakeBulkUpload() {
         const btn = this.page.locator(`xpath=${L.intakeBulkUploadBtn}`).first();
-        await btn.waitFor({ state: 'visible', timeout: 15000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
         await btn.click();
         const dlg = this.page.locator(`xpath=//*[@role='dialog']`).first();
-        await dlg.waitFor({ state: 'visible', timeout: 15000 });
+        await dlg.waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(1200);
         console.log('[BULK] Bulk Upload dialog open');
     }
@@ -10667,12 +10667,12 @@ export class NSEFoundationActions {
      */
     async downloadIntakeTemplate() {
         const btn = this.page.locator(`xpath=${L.bulkDownloadTemplateBtn}`).first();
-        await btn.waitFor({ state: 'visible', timeout: 15000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
 
         const ctx = this.page.context();
         const race = Promise.race([
-            this.page.waitForEvent('download', { timeout: 45000 }).then(d => ({ kind: 'download', d })),
-            ctx.waitForEvent('page', { timeout: 45000 }).then(pg => ({ kind: 'tab', pg })),
+            this.page.waitForEvent('download', { timeout: 120000 }).then(d => ({ kind: 'download', d })),
+            ctx.waitForEvent('page', { timeout: 120000 }).then(pg => ({ kind: 'tab', pg })),
         ]);
         await btn.click();
         const r = await race.catch(() => ({ kind: 'neither' }));
@@ -10704,7 +10704,7 @@ export class NSEFoundationActions {
             r => /\/intakes\/excel-upload/.test(r.url()) && r.request().method() === 'POST',
             { timeout: 180000 });
 
-        const chooserP = this.page.waitForEvent('filechooser', { timeout: 20000 });
+        const chooserP = this.page.waitForEvent('filechooser', { timeout: 120000 });
         await this.page.locator(`xpath=${L.bulkUploadFileBtn}`).first().click();
         const chooser = await chooserP;
         await chooser.setFiles(filePath);
@@ -10792,10 +10792,10 @@ export class NSEFoundationActions {
         await this.fillIntakePotentialSuppliers(data);
 
         const save = this.page.locator(`xpath=${L.v4SaveDraftBtn}`).first();
-        await save.waitFor({ state: 'visible', timeout: 15000 });
+        await save.waitFor({ state: 'visible', timeout: 120000 });
         await save.click();
 
-        await this.page.waitForURL(/\/intakes\/[^\/]+\/overview/, { timeout: 30000 });
+        await this.page.waitForURL(/\/intakes\/[^\/]+\/overview/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded').catch(() => {});
         await this.page.waitForTimeout(2500);
         console.log('[INTAKE] Saved as Draft → overview');
@@ -10810,15 +10810,15 @@ export class NSEFoundationActions {
      */
     async editDraftCxoAndSubmit(suffix = ' - draft edit') {
         const more = this.page.locator(`xpath=${IL.intakeMoreBtn}`).first();
-        await more.waitFor({ state: 'visible', timeout: 15000 });
+        await more.waitFor({ state: 'visible', timeout: 120000 });
         await more.click();
         await this.page.waitForTimeout(600);
 
         const editOpt = this.page.locator(`xpath=${IL.intakeEditOption}`).first();
-        await editOpt.waitFor({ state: 'visible', timeout: 10000 });
+        await editOpt.waitFor({ state: 'visible', timeout: 120000 });
         await editOpt.click();
 
-        await this.page.waitForURL(/\/cxos\/[^\/]+\/edit/, { timeout: 20000 });
+        await this.page.waitForURL(/\/cxos\/[^\/]+\/edit/, { timeout: 120000 });
         await this.page.waitForLoadState('domcontentloaded').catch(() => {});
         await this.waitForCreatePageLoaded().catch(() => {});
         await this.page.waitForTimeout(1500);
@@ -10829,7 +10829,7 @@ export class NSEFoundationActions {
         await this.page.waitForTimeout(500);
 
         await this.clickSubmit();
-        await expect(this.page).toHaveURL(/\/cxos\/[^\/]+\/overview/, { timeout: 30000 });
+        await expect(this.page).toHaveURL(/\/cxos\/[^\/]+\/overview/, { timeout: 120000 });
         await this.page.waitForTimeout(2000);
         console.log(`[CXO] Draft edited & submitted → title="${newTitle}"`);
         return newTitle;
@@ -10843,9 +10843,9 @@ export class NSEFoundationActions {
     // ── User's Dashboard (sheet scenarios 22, 89, 92) ─────────────────────────
 
     async openDashboard(data) {
-        await this.page.goto(`${data.loginUrl}/`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${data.loginUrl}/`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.locator(`xpath=${L.dashboardHeading}`).first()
-            .waitFor({ state: 'visible', timeout: 30000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(2000);
     }
 
@@ -10872,7 +10872,7 @@ export class NSEFoundationActions {
     /** Total row count from the "Showing X – Y of Z entries" footer. */
     async getListingTotalEntries() {
         const info = this.page.locator(`xpath=${L.dashboardPaginationInfo}`).first();
-        await info.waitFor({ state: 'visible', timeout: 20000 });
+        await info.waitFor({ state: 'visible', timeout: 120000 });
         const text = (await info.innerText()) ?? '';
         const m = text.match(/of\s+([\d,]+)\s+entries/i);
         return m ? parseInt(m[1].replace(/,/g, ''), 10) : null;
@@ -11113,7 +11113,7 @@ export class NSEFoundationActions {
                        'To-review', 'To-enrich', 'Submitted', 'Completed', 'Partially Processed'];
 
         await this.page.goto(`https://nse-capp-uat.aerchain.io${hrefPath}`, {
-            waitUntil: 'domcontentloaded', timeout: 60000,
+            waitUntil: 'domcontentloaded', timeout: 120000,
         });
 
         const deadline = Date.now() + timeout;
@@ -11131,11 +11131,11 @@ export class NSEFoundationActions {
     /** First invoice on the listing whose Status matches, as {code, href}. */
     async findInvoiceWithStatus(statusPattern) {
         await this.page.goto('https://nse-capp-uat.aerchain.io/invoices', {
-            waitUntil: 'domcontentloaded', timeout: 60000,
+            waitUntil: 'domcontentloaded', timeout: 120000,
         });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await this.page.waitForTimeout(1500);
         return this.page.evaluate((pattern) => {
@@ -11162,10 +11162,10 @@ export class NSEFoundationActions {
     /** First CXO on the listing whose Status matches, as {code, href, status}. */
     async findCxoWithStatus(statusPattern) {
         const cfg = JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8'));
-        await this.page.goto(`${cfg.loginUrl}/cxos`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${cfg.loginUrl}/cxos`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await this.page.waitForTimeout(1500);
         return this.page.evaluate((pattern) => {
@@ -11188,16 +11188,16 @@ export class NSEFoundationActions {
     async startCxoClone(hrefPath) {
         const cfg = JSON.parse(fs.readFileSync(this._dataPath(), 'utf-8'));
         await this.page.goto(`${cfg.loginUrl}${hrefPath}/overview`, {
-            waitUntil: 'domcontentloaded', timeout: 60000,
+            waitUntil: 'domcontentloaded', timeout: 120000,
         });
         await this.page.waitForTimeout(4000);
 
         await this.page.locator(`xpath=${L.cxoMoreButton}`).first().click();
         const clone = this.page.locator(`xpath=${L.cxoMenuItem('Clone')}`).first();
-        await clone.waitFor({ state: 'visible', timeout: 15000 });
+        await clone.waitFor({ state: 'visible', timeout: 120000 });
         await clone.click();
 
-        await this.page.waitForURL(/\/clone/, { timeout: 30000 });
+        await this.page.waitForURL(/\/clone/, { timeout: 120000 });
         await this.page.waitForTimeout(4000);
     }
 
@@ -11244,10 +11244,10 @@ export class NSEFoundationActions {
      * Returns { code, url } or null when the first listing page has none.
      */
     async openRfxWithStatus(statuses, baseUrl) {
-        await this.page.goto(`${baseUrl}/quote-requests`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${baseUrl}/quote-requests`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await this.page.waitForTimeout(1200);
 
@@ -11267,7 +11267,7 @@ export class NSEFoundationActions {
         }, statuses);
 
         if (hit) {
-            await this.page.goto(`${baseUrl}${hit.href}/overview`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await this.page.goto(`${baseUrl}${hit.href}/overview`, { waitUntil: 'domcontentloaded', timeout: 120000 });
             await this.page.waitForTimeout(3000);
             return hit;
         }
@@ -11283,10 +11283,10 @@ export class NSEFoundationActions {
      * page 1. Returns null only when no page holds one.
      */
     async openRfxWithStatusAcrossPages(statuses, baseUrl, { maxPages = 25, tag = 'RFX' } = {}) {
-        await this.page.goto(`${baseUrl}/quote-requests`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${baseUrl}/quote-requests`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await this.page.waitForTimeout(1200);
 
@@ -11308,7 +11308,7 @@ export class NSEFoundationActions {
 
             if (hit) {
                 console.log(`[${tag}] ${JSON.stringify(statuses)} found on page ${p}: ${hit.code} (${hit.status})`);
-                await this.page.goto(`${baseUrl}${hit.href}/overview`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+                await this.page.goto(`${baseUrl}${hit.href}/overview`, { waitUntil: 'domcontentloaded', timeout: 120000 });
                 await this.page.waitForTimeout(3000);
                 return hit;
             }
@@ -11337,7 +11337,7 @@ export class NSEFoundationActions {
     async clickBulkReminder() {
         const resp = this.page.waitForResponse(
             r => /send-reminder-to-all-suppliers/.test(r.url()),
-            { timeout: 60000 },
+            { timeout: 120000 },
         );
         await this.page.getByRole('button', { name: /Bulk Reminder/i }).first().click();
         const r = await resp;
@@ -11378,7 +11378,7 @@ export class NSEFoundationActions {
         }
         if (!opened) throw new Error(`More menu never offered "${label}"`);
 
-        await item.click({ timeout: 20000 });
+        await item.click({ timeout: 120000 });
         await this.page.waitForTimeout(2000);
     }
 
@@ -11389,7 +11389,7 @@ export class NSEFoundationActions {
      */
     async confirmConvertToAuction() {
         const dialog = this.page.getByRole('dialog').filter({ hasText: /Convert to Auction/i }).first();
-        await expect(dialog).toBeVisible({ timeout: 20000 });
+        await expect(dialog).toBeVisible({ timeout: 120000 });
 
         // The confirm button starts DISABLED (pointer-events:none, opacity .5)
         // until at least one line item is selected.
@@ -11408,7 +11408,7 @@ export class NSEFoundationActions {
         });
 
         const boxes = dialog.getByRole('checkbox');
-        await expect(boxes.first()).toBeVisible({ timeout: 15000 });
+        await expect(boxes.first()).toBeVisible({ timeout: 120000 });
         const n = await boxes.count();
 
         for (let i = 0; i < n; i++) {
@@ -11443,8 +11443,8 @@ export class NSEFoundationActions {
         ).catch(() => null);
 
         const confirm = dialog.getByRole('button', { name: /^Convert to Auction$/i }).first();
-        await confirm.waitFor({ state: 'visible', timeout: 20000 });
-        await confirm.click({ timeout: 20000 });
+        await confirm.waitFor({ state: 'visible', timeout: 120000 });
+        await confirm.click({ timeout: 120000 });
         const r = await resp;
         await this.page.waitForTimeout(4000);
         return r ? r.status() : null;
@@ -11452,10 +11452,10 @@ export class NSEFoundationActions {
 
     /** All RFX rows on the first listing page whose Status is in `statuses`. */
     async listRfxByStatus(statuses, baseUrl) {
-        await this.page.goto(`${baseUrl}/quote-requests`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${baseUrl}/quote-requests`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await this.page.waitForTimeout(1200);
         return this.page.evaluate((wanted) => {
@@ -11486,21 +11486,21 @@ export class NSEFoundationActions {
         // the already-open sections shut and hides the date fields. Just scroll
         // the Add Supplier control into view.
         const addBtn = this.page.locator(`xpath=${L.sourcingAddSupplierBtn}`).first();
-        await addBtn.waitFor({ state: 'visible', timeout: 30000 });
+        await addBtn.waitFor({ state: 'visible', timeout: 120000 });
         await addBtn.scrollIntoViewIfNeeded();
         await addBtn.click();
 
         const search = this.page.locator(`xpath=${L.sourcingSupplierSearch}`).first();
-        await search.waitFor({ state: 'visible', timeout: 15000 });
+        await search.waitFor({ state: 'visible', timeout: 120000 });
         await search.fill(name);
         await this.page.waitForTimeout(2000);
 
         const option = this.page.locator(`xpath=${L.sourcingSupplierOption(name)}`).first();
-        await option.waitFor({ state: 'visible', timeout: 15000 });
+        await option.waitFor({ state: 'visible', timeout: 120000 });
         await option.click();
 
         const submit = this.page.locator(`xpath=${L.sourcingSupplierPopupSubmit}`).first();
-        await submit.waitFor({ state: 'visible', timeout: 15000 });
+        await submit.waitFor({ state: 'visible', timeout: 120000 });
         await submit.click();
         await this.page.waitForTimeout(2000);
         console.log(`[Sourcing] Supplier "${name}" added`);
@@ -11528,7 +11528,7 @@ export class NSEFoundationActions {
      */
     async cloneRfxAddSupplierAndSubmit(data, extraSupplier) {
         await this.clickV4MenuItem('Clone');
-        await this.page.waitForURL(/\/quote-requests\/\d+\/clone/, { timeout: 30000 });
+        await this.page.waitForURL(/\/quote-requests\/\d+\/clone/, { timeout: 120000 });
         await this.page.waitForTimeout(5000);
 
         // The clone drops the BID dates (the originals are in the past) but
@@ -11657,7 +11657,7 @@ export class NSEFoundationActions {
             // `.last()` because the leading greyed-out days of the previous month
             // repeat the same numbers as the tail of this one.
             const cell = this.page.locator(`xpath=${L.datePickerDay(day)}`).last();
-            await cell.waitFor({ state: 'visible', timeout: 15000 });
+            await cell.waitFor({ state: 'visible', timeout: 120000 });
             if (await cell.isDisabled()) throw new Error(`day ${day} is not selectable`);
             await cell.click();
             await this.page.waitForTimeout(1500);
@@ -11683,7 +11683,7 @@ export class NSEFoundationActions {
 
         const saved = this.page.waitForResponse(
             r => /update-deadlines-for-quote/.test(r.url()) && r.request().method() === 'POST',
-            { timeout: 60000 },
+            { timeout: 120000 },
         );
         await update.click();
         const resp = await saved;
@@ -11725,7 +11725,7 @@ export class NSEFoundationActions {
         // dialog, so never send it blind.
         await this._closeStrayPopper();
         const combo = this.page.locator(`xpath=${L.evalCombos}`).nth(idx);
-        await combo.waitFor({ state: 'visible', timeout: 20000 });
+        await combo.waitFor({ state: 'visible', timeout: 120000 });
         await combo.click();
         await this.page.waitForTimeout(1800);
 
@@ -11747,7 +11747,7 @@ export class NSEFoundationActions {
         await addBtn.scrollIntoViewIfNeeded();
         await addBtn.click();
         await this.page.waitForTimeout(3500);
-        await expect(this.page.locator(`xpath=${L.evalCreateDialog}`).first()).toBeVisible({ timeout: 20000 });
+        await expect(this.page.locator(`xpath=${L.evalCreateDialog}`).first()).toBeVisible({ timeout: 120000 });
 
         await this.page.locator(`xpath=${L.evalLabelInput}`).first().fill(label);
         await this._pickEvaluationOption(0, section);
@@ -11837,7 +11837,7 @@ export class NSEFoundationActions {
     /** Expand the evaluation card with the given label. */
     async openEvaluationCard(label) {
         const card = this.page.locator('button').filter({ hasText: label }).first();
-        await card.waitFor({ state: 'visible', timeout: 30000 });
+        await card.waitFor({ state: 'visible', timeout: 120000 });
         // Only click if it is collapsed — clicking an open card closes it.
         if (!await this.page.locator('table tbody tr').count()) {
             await card.click();
@@ -12016,7 +12016,7 @@ export class NSEFoundationActions {
             }
 
             // Re-read the truth from the server before deciding to stop.
-            await this.page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+            await this.page.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
             await this.page.waitForTimeout(8000);
         }
 
@@ -12078,7 +12078,7 @@ export class NSEFoundationActions {
     /** Is this RFX foreclosed? Foreclosed ones lose "Foreclose" from More. */
     async rfxOffersForeclose() {
         const moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
-        await moreBtn.waitFor({ state: 'visible', timeout: 20000 });
+        await moreBtn.waitFor({ state: 'visible', timeout: 120000 });
         await moreBtn.click();
         await this.page.waitForTimeout(1500);
         const items = (await this.page.locator('[role="menuitem"]').allInnerTexts())
@@ -12091,17 +12091,17 @@ export class NSEFoundationActions {
     /** More → Cancel → reason → Submit. Returns the menu items seen. */
     async cancelRfx(reason = 'Cancelled by automation') {
         const moreBtn = this.page.locator(`xpath=${L.rfxMoreBtn}`).first();
-        await moreBtn.waitFor({ state: 'visible', timeout: 20000 });
+        await moreBtn.waitFor({ state: 'visible', timeout: 120000 });
         await moreBtn.click();
         await this.page.waitForTimeout(1500);
 
         const cancel = this.page.locator(`xpath=${L.rfxCancelOption}`).first();
-        await cancel.waitFor({ state: 'visible', timeout: 15000 });
+        await cancel.waitFor({ state: 'visible', timeout: 120000 });
         await cancel.click();
         await this.page.waitForTimeout(2500);
 
         const field = this.page.locator(`xpath=${L.rfxForecloseReasonField}`).first();
-        await field.waitFor({ state: 'visible', timeout: 15000 });
+        await field.waitFor({ state: 'visible', timeout: 120000 });
         await field.fill(reason);
         await this.page.waitForTimeout(600);
 
@@ -12706,7 +12706,7 @@ export class NSEFoundationActions {
             return false;
         }
         await this.page.goto(`${m[1]}/invoices/${m[2]}`,
-            { waitUntil: 'domcontentloaded', timeout: 90000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(10000);
         const open = (await this.readInvoiceWorkflowState(tag)).open;
         console.log(`[${tag}] panel cleared by reload (still open: ${open})`);

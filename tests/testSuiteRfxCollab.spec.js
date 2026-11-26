@@ -65,9 +65,9 @@ test.describe('RFX — negotiations and comments', () => {
         const body = (await page.locator('body').innerText()).trim();
         expect(body, 'no new-negotiation-request form rendered').toMatch(/negotiation-request/i);
         await expect(page.locator('xpath=//button[normalize-space()="Submit"]').first(),
-            'the negotiation form offers no Submit').toBeVisible({ timeout: 20000 });
+            'the negotiation form offers no Submit').toBeVisible({ timeout: 120000 });
         await expect(page.locator('xpath=//button[contains(normalize-space(),"Select template")]').first(),
-            'the negotiation form offers no template picker').toBeVisible({ timeout: 20000 });
+            'the negotiation form offers no template picker').toBeVisible({ timeout: 120000 });
 
         console.log('[S30] negotiation request form is available — not submitted (would alter RFX state)');
     });

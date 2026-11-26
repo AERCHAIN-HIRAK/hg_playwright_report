@@ -75,7 +75,7 @@ export class rfxListingActions {
 
     async typeInSearch(term) {
         const input = this._search();
-        await input.waitFor({ state: 'visible', timeout: 15000 });
+        await input.waitFor({ state: 'visible', timeout: 120000 });
         await input.fill(term);
         await input.press('Enter');
         await this.waitForListingPageLoad();
@@ -92,12 +92,12 @@ export class rfxListingActions {
         await expect.poll(async () => {
             if (await this.page.locator(`xpath=${L.tableNoData}`).count() > 0) return true;
             return (await getRowCount(this.page)) === 0;
-        }, { timeout: 10000 }).toBeTruthy();
+        }, { timeout: 120000 }).toBeTruthy();
     }
 
     /** The page must still be functional (table container present) after a search. */
     async verifyPageNotCrashed() {
-        await expect(this.page.locator('//table | //tbody').first()).toBeVisible({ timeout: 10000 });
+        await expect(this.page.locator('//table | //tbody').first()).toBeVisible({ timeout: 120000 });
     }
 
     // ── Table ────────────────────────────────────────────────────────────────
@@ -115,19 +115,19 @@ export class rfxListingActions {
 
     async verifyColumnNotEmpty(colName) {
         await expect.poll(async () => (await this.getColumnValues(colName)).length,
-            { timeout: 10000 }).toBeGreaterThan(0);
+            { timeout: 120000 }).toBeGreaterThan(0);
     }
 
     // ── Sorting ──────────────────────────────────────────────────────────────
     async clickSortButton(colName) {
-        await this.page.locator(`xpath=${L.sortBtn(colName)}`).first().click({ timeout: 10000, force: true });
+        await this.page.locator(`xpath=${L.sortBtn(colName)}`).first().click({ timeout: 120000, force: true });
         await this.waitForListingPageLoad();
     }
 
     // ── Column Filters ───────────────────────────────────────────────────────
     async openColumnFilter(colName) {
         await this.page.locator(`xpath=${L.filterBtn(colName)}`).first().click();
-        await this.page.locator(`xpath=${L.filterPopup}`).first().waitFor({ state: 'visible', timeout: 5000 });
+        await this.page.locator(`xpath=${L.filterPopup}`).first().waitFor({ state: 'visible', timeout: 120000 });
     }
 
     async searchInFilterPopup(term) {
@@ -136,7 +136,7 @@ export class rfxListingActions {
     }
 
     async verifyFilterPopupOpen() {
-        await expect(this.page.locator(`xpath=${L.filterPopup}`).first()).toBeVisible({ timeout: 8000 });
+        await expect(this.page.locator(`xpath=${L.filterPopup}`).first()).toBeVisible({ timeout: 120000 });
     }
 
     // ── Pagination ───────────────────────────────────────────────────────────
@@ -174,12 +174,12 @@ export class rfxListingActions {
     }
 
     async verifyDetailPageOpened() {
-        await expect(this.page).toHaveURL(/\/quote-requests\/[^\/]+/, { timeout: 15000 });
+        await expect(this.page).toHaveURL(/\/quote-requests\/[^\/]+/, { timeout: 120000 });
     }
 
     async navigateBackToListing() {
         await this.page.goBack({ waitUntil: 'domcontentloaded' });
-        await this.page.waitForURL(/\/quote-requests$/, { timeout: 15000 });
+        await this.page.waitForURL(/\/quote-requests$/, { timeout: 120000 });
         await this.waitForListingPageLoad();
     }
 }

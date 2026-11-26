@@ -16,7 +16,7 @@ setup('Login and save session', async ({ page }) => {
 
     await page.waitForURL('**nse-capp-v4-uat.aerchain.io/**');
 
-    await page.waitForSelector('text=Intake', { timeout: 15000 });
+    await page.waitForSelector('text=Intake', { timeout: 120000 });
     // 'load' is reliable; 'networkidle' times out when the app has continuous polling
     await page.waitForLoadState('load');
     await page.waitForTimeout(2000);

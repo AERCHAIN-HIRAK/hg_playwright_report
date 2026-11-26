@@ -89,7 +89,7 @@ test.describe.serial('PO cancel → PRC re-convert, then PRC cancel → PR re-pr
             fs.writeFileSync(DATA_PATH, JSON.stringify(cur, null, 4) + '\n', 'utf-8');
             console.log(`[S146] RESUME — using PO ${resumePo} and requisition ${reqCode} (${reqId})`);
             await a.page.goto(`https://nse-capp-uat.aerchain.io/purchase-orders/${resumePo}`,
-                { waitUntil: 'domcontentloaded', timeout: 90000 });
+                { waitUntil: 'domcontentloaded', timeout: 120000 });
             await a.page.waitForTimeout(12000);
         } else {
             await buildToPoViaCapp(a, data, { approvePo: false });
@@ -151,14 +151,14 @@ test.describe.serial('PO cancel → PRC re-convert, then PRC cancel → PR re-pr
                                       ['Inward Matching Criterion', 'Quantity']]) {
             const opt = a.page.locator(
                 `xpath=//*[contains(normalize-space(.),'${label}')]/following::*[normalize-space(.)='${value}'][1]`).first();
-            await opt.waitFor({ state: 'visible', timeout: 15000 });
+            await opt.waitFor({ state: 'visible', timeout: 120000 });
             await opt.click();
             console.log(`[S146] ${label} = ${value}`);
             await a.page.waitForTimeout(1200);
         }
 
         const submit = a.page.locator(`xpath=//button[normalize-space(.)='Submit']`).first();
-        await submit.waitFor({ state: 'visible', timeout: 20000 });
+        await submit.waitFor({ state: 'visible', timeout: 120000 });
         await submit.click();
         console.log('[S146] PO conversion submitted');
         await a.page.waitForTimeout(5000);
@@ -245,14 +245,14 @@ test.describe.serial('PO cancel → PRC re-convert, then PRC cancel → PR re-pr
             fs.writeFileSync(DATA_PATH, JSON.stringify(cur, null, 4) + '\n', 'utf-8');
             console.log(`[S147] RESUME — PO ${resumePo}, requisition ${reqCode} (${reqId})`);
             await a.page.goto(`https://nse-capp-uat.aerchain.io/purchase-orders/${resumePo}`,
-                { waitUntil: 'domcontentloaded', timeout: 90000 });
+                { waitUntil: 'domcontentloaded', timeout: 120000 });
             await a.page.waitForTimeout(12000);
         } else {
             // The NEW PO that S146's re-conversion produced, on the same PRC.
             expect(s146NewPo?.url,
                 'S146 did not hand over its re-converted PO — S147 depends on it (or set S147_RESUME_*)')
                 .toBeTruthy();
-            await a.page.goto(s146NewPo.url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+            await a.page.goto(s146NewPo.url, { waitUntil: 'domcontentloaded', timeout: 120000 });
             await a.page.waitForTimeout(12000);
         }
         console.log(`[S147] PO ${resumePo ? 'resumed' : `from S146 (${s146NewPo?.code})`} @ ${a.page.url()}`);

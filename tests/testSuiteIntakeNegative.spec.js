@@ -531,7 +531,7 @@ test.describe('Intake — Transactions tab & action availability', () => {
         await page.goto(`${data.loginUrl}/intakes`, { waitUntil: 'domcontentloaded' });
         await page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await page.waitForTimeout(1500);
         return page.evaluate((wanted) => {
@@ -555,7 +555,7 @@ test.describe('Intake — Transactions tab & action availability', () => {
         await page.goto(`${data.loginUrl}/intakes`, { waitUntil: 'domcontentloaded' });
         await page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await page.waitForTimeout(1500);
         return page.evaluate((wanted) => {

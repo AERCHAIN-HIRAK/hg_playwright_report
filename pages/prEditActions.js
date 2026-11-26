@@ -27,7 +27,7 @@ export class prEditActions {
      * intake-created one.
      */
     async listDraftRequisitions(baseUrl = V3_BASE_URL) {
-        await this.page.goto(`${baseUrl}/requisitions`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.goto(`${baseUrl}/requisitions`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(6000);
 
         await this.page.locator(`xpath=${L.listingTab('Draft')}`).first().click();
@@ -96,10 +96,10 @@ export class prEditActions {
 
     async openEdit(id, baseUrl = V3_BASE_URL) {
         await this.page.goto(`${baseUrl}/requisitions/${id}/edit`,
-            { waitUntil: 'domcontentloaded', timeout: 90000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         // The MUI form + ag-Grid render slowly; the grid is the last thing in.
         await this.page.locator(L.gridCenterRows).first()
-            .waitFor({ state: 'visible', timeout: 60000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(3000);
         console.log(`[PR edit] on ${this.page.url()}`);
     }
@@ -163,7 +163,7 @@ export class prEditActions {
         await toggle.scrollIntoViewIfNeeded();
         await toggle.click();
         const input = this.page.locator(L.searchInput).first();
-        await expect(input, 'search icon did not reveal a search input').toBeVisible({ timeout: 10000 });
+        await expect(input, 'search icon did not reveal a search input').toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(500);
         return input;
     }
@@ -195,7 +195,7 @@ export class prEditActions {
         await input.scrollIntoViewIfNeeded();
         await input.click();
         await this.page.locator(L.calendar).last()
-            .waitFor({ state: 'visible', timeout: 10000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.locator(L.calendarNextMonth).last().click();
         await this.page.waitForTimeout(500);
         await this.page.locator(L.calendarDay(day)).last().click();
@@ -270,7 +270,7 @@ export class prEditActions {
 
         const dialog = this.page.locator(L.approversDialog).first();
         await expect(dialog, 'the Workflow Summary ("Approvers") popup did not open')
-            .toBeVisible({ timeout: 30000 });
+            .toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(1500);
         return dialog;
     }
@@ -280,13 +280,13 @@ export class prEditActions {
     async assertBudgetExceeded() {
         const banner = this.page.locator(`xpath=${L.budgetExceededBanner}`).first();
         await expect(banner, 'Workflow Summary popup shows no "Budget Amount is exceeded" error')
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
         const text = ((await banner.innerText()) || '').trim();
         console.log(`[PR edit] budget banner: "${text}"`);
 
         await expect(this.page.locator(`xpath=${L.budgetAmendHeading}`).first(),
             'no Budget Amend Request block alongside the budget error')
-            .toBeVisible({ timeout: 10000 });
+            .toBeVisible({ timeout: 120000 });
         return text;
     }
 

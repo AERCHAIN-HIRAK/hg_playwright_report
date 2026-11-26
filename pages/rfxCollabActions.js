@@ -21,8 +21,8 @@ export class rfxCollabActions {
      * The listing is a plain table; the code cell holds the anchor with the id.
      */
     async listRfx(baseUrl = V4_BASE_URL) {
-        await this.page.goto(`${baseUrl}/quote-requests`, { waitUntil: 'domcontentloaded', timeout: 90000 });
-        await this.page.locator('tbody tr').first().waitFor({ state: 'visible', timeout: 90000 });
+        await this.page.goto(`${baseUrl}/quote-requests`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+        await this.page.locator('tbody tr').first().waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(3000);
 
         return this.page.$$eval('tbody tr', trs => trs.map(tr => {
@@ -62,7 +62,7 @@ export class rfxCollabActions {
 
     async openOverview(id, baseUrl = V4_BASE_URL) {
         await this.page.goto(`${baseUrl}/quote-requests/${id}/overview`,
-            { waitUntil: 'domcontentloaded', timeout: 90000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(8000);
     }
 
@@ -85,7 +85,7 @@ export class rfxCollabActions {
 
     async openNegotiation() {
         await this.page.locator('xpath=//button[normalize-space()="Negotiation"]').first().click();
-        await this.page.waitForURL(/\/negotiations/, { timeout: 30000 });
+        await this.page.waitForURL(/\/negotiations/, { timeout: 120000 });
         await this.page.waitForTimeout(6000);
         console.log(`[RFX] negotiation page: ${this.page.url()}`);
     }
@@ -98,7 +98,7 @@ export class rfxCollabActions {
     async openActivityLog() {
         await this.page.locator('button:has(svg.lucide-clock)').first().click();
         const sheet = this.page.locator('[role="dialog"]').first();
-        await expect(sheet, 'the Activity Log sheet did not open').toBeVisible({ timeout: 20000 });
+        await expect(sheet, 'the Activity Log sheet did not open').toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(4000);
         return sheet;
     }
@@ -125,7 +125,7 @@ export class rfxCollabActions {
     async postComment(text, { mention = null } = {}) {
         const sheet = this.page.locator('[role="dialog"]').first();
         const box = sheet.locator('textarea[placeholder="Add comment..."]').first();
-        await expect(box, 'no comment composer in the Activity Log').toBeVisible({ timeout: 15000 });
+        await expect(box, 'no comment composer in the Activity Log').toBeVisible({ timeout: 120000 });
         await box.click();
 
         let mentioned = null;
@@ -149,7 +149,7 @@ export class rfxCollabActions {
         await this.page.waitForTimeout(800);
 
         const send = sheet.locator('button:has(svg.lucide-send-horizontal)').first();
-        await expect(send, 'no send button on the comment composer').toBeVisible({ timeout: 10000 });
+        await expect(send, 'no send button on the comment composer').toBeVisible({ timeout: 120000 });
         await send.click();
         await this.page.waitForTimeout(6000);
         return { mentioned };

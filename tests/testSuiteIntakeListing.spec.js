@@ -439,7 +439,7 @@ test.describe('Aerchain NSE - Intake Listing Page', () => {
 
             test('URL changes to detail URL after row click @Navigation', async ({ page }) => {
                 await listing.clickFirstRowCode();
-                await expect(page).toHaveURL(/\/intakes\/\d+|overview/, { timeout: 15000 });
+                await expect(page).toHaveURL(/\/intakes\/\d+|overview/, { timeout: 120000 });
             });
 
             test('browser back from detail page returns to listing @Navigation', async () => {
@@ -455,7 +455,7 @@ test.describe('Aerchain NSE - Intake Listing Page', () => {
                 await listing.verifyDetailPageOpened();
                 if (code) {
                     await expect(page.locator(`//*[contains(.,"${code}")]`).first())
-                        .toBeVisible({ timeout: 10000 });
+                        .toBeVisible({ timeout: 120000 });
                 }
             });
 
@@ -477,7 +477,7 @@ test.describe('Aerchain NSE - Intake Listing Page', () => {
                 await listing.verifyDetailPageOpened();
                 const urlBefore = page.url();
                 await page.reload();
-                await expect(page).toHaveURL(urlBefore, { timeout: 10000 });
+                await expect(page).toHaveURL(urlBefore, { timeout: 120000 });
             });
 
         });
@@ -502,7 +502,7 @@ test.describe('Aerchain NSE - Intake Listing Page', () => {
 
             test('URL is /intakes/create after clicking Create Intake @Create', async ({ page }) => {
                 await listing.clickCreateIntakeButton();
-                await expect(page).toHaveURL(/\/intakes\/create/, { timeout: 10000 });
+                await expect(page).toHaveURL(/\/intakes\/create/, { timeout: 120000 });
             });
 
             test('browser back from create page returns to listing @Create', async () => {

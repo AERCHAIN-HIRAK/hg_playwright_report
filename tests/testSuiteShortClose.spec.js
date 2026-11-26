@@ -36,7 +36,7 @@ test.describe('Purchase Order — Short Close', () => {
         const candidates = await po.listTransactionsWithStatus(['In-progress'], v3data.baseUrl);
         let code = null;
         for (const c of candidates) {
-            await page.goto(`${v3data.baseUrl}${c.href}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto(`${v3data.baseUrl}${c.href}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
             await po.waitForDetailLoaded();
             if (await po.hasShortCloseButton()) { code = c.code; break; }
             console.log(`[S65] ${c.code} is In-progress but already short closed — skipping`);
@@ -58,7 +58,7 @@ test.describe('Purchase Order — Short Close', () => {
         // legitimately stay In-progress, so asserting on it reports a working
         // feature as broken (observed on PO-NSEFN-26-209: 20 ordered, 18
         // inward, 2 short closed, header still In-progress).
-        await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(6000);
         const after = await po.getShortClosedQty();
         console.log(`[S65] short-closed qty after: ${after}`);

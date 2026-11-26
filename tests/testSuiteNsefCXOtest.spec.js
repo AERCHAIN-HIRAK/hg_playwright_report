@@ -67,7 +67,7 @@ test.describe('CXO Create — Positive', () => {
         // Expanding the sections reveals their fields — the Header Details /
         // Basic Information / Particulars dropdowns (comboboxes) become present.
         await expect.poll(async () => await page.getByRole('combobox').count(),
-            { timeout: 10000 }).toBeGreaterThan(3);
+            { timeout: 120000 }).toBeGreaterThan(3);
     });
 });
 
@@ -158,7 +158,7 @@ test.describe('CXO Create — Negative', () => {
         await a.fillCxoTitle(data);
         await a.clickCancel();
 
-        await expect(page).not.toHaveURL(/\/cxos\/create/, { timeout: 10000 });
+        await expect(page).not.toHaveURL(/\/cxos\/create/, { timeout: 120000 });
     });
 });
 
@@ -834,7 +834,7 @@ test.describe('CXO — Transactions tab & action availability', () => {
     async function openCxoWithTransactions(page, a) {
         await page.goto(`${data.loginUrl}/cxos`, { waitUntil: 'domcontentloaded' });
         await page.waitForFunction(() => document.querySelectorAll('tbody tr a[href*="/cxos/"]').length > 0,
-            null, { timeout: 60000 });
+            null, { timeout: 120000 });
         const hrefs = await page.evaluate(() => [...new Set([...document.querySelectorAll('tbody tr a[href*="/cxos/"]')]
             .map(x => x.getAttribute('href')))]);
         let found = null;

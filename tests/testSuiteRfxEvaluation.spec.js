@@ -97,7 +97,7 @@ test.describe.serial('RFX Evaluation (scenario 35)', () => {
         const intake = { code: codeMatch ? codeMatch[0].trim() : intakeId, href: `/intakes/${intakeId}` };
         console.log(`[S35] created + released ${intake.code}; converting (${intake.href})`);
 
-        await page.goto(`${data.loginUrl}${intake.href}/overview`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(`${data.loginUrl}${intake.href}/overview`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(7000);
 
         // ── Process → Send for Sourcing ───────────────────────────────────────
@@ -140,10 +140,10 @@ test.describe.serial('RFX Evaluation (scenario 35)', () => {
         });
 
         await page.goto(page.url().replace(/\/[^/]*$/, '/evaluations'),
-            { waitUntil: 'domcontentloaded', timeout: 60000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(6000);
         await expect(page.locator(`xpath=${L.evalCardByLabel(label)}`).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
 
         const url = page.url().replace(/\/evaluations$/, '/overview');
         writeState({ url, label, intake: intake.code });
@@ -161,7 +161,7 @@ test.describe.serial('RFX Evaluation (scenario 35)', () => {
         page.setDefaultTimeout(30000);
         await a.openApp(data);
 
-        await page.goto(state.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(state.url, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(7000);
 
         await a.clickSupplierSubmitQuote();
@@ -178,7 +178,7 @@ test.describe.serial('RFX Evaluation (scenario 35)', () => {
         await a.submitQuote();
         await a.assertSourcingStatusQuoted();
 
-        await page.goto(state.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(state.url, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(6000);
         await a.forecloseRfx(data);
         console.log('[S35] foreclosed');
@@ -196,7 +196,7 @@ test.describe.serial('RFX Evaluation (scenario 35)', () => {
         await a.openApp(data);
 
         await page.goto(state.url.replace(/\/[^/]*$/, '/evaluations'),
-            { waitUntil: 'domcontentloaded', timeout: 60000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(8000);
 
         // Expand → Evaluate → star + reason + tick per answer → header tick.

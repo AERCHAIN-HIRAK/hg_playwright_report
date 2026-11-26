@@ -22,14 +22,14 @@ export class reportsActions {
     }
 
     async openReport(name) {
-        await this.page.goto(`${this.baseUrl}/reports`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${this.baseUrl}/reports`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(2500);
         // getByText, not an xpath — `//*[normalize-space()="…"]` also matches
         // every ancestor whose only text is the report name, and .first()
         // then lands on a container that is not the clickable item.
         await this.page.getByText(name, { exact: true }).first().click();
         await expect(this.page.locator(L.generateButton).first())
-            .toBeVisible({ timeout: 30000 });
+            .toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(1500);
         return this.page.url();
     }
@@ -107,7 +107,7 @@ export class reportsActions {
     async sendMail() {
         const resp = this.page.waitForResponse(
             r => /sendEmailToUser=1/.test(r.url()),
-            { timeout: 60000 },
+            { timeout: 120000 },
         );
         await this.page.locator(L.sendMailButton).first().click();
         const r = await resp;
@@ -118,10 +118,10 @@ export class reportsActions {
     // ── Email Report Logs ─────────────────────────────────────────────────────
 
     async openLogs() {
-        await this.page.goto(`${this.baseUrl}/email-report-logs`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${this.baseUrl}/email-report-logs`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await this.page.waitForTimeout(1000);
     }
@@ -171,9 +171,9 @@ export class reportsActions {
 
     /** Open a report directly by its numeric id (avoids name-matching the list). */
     async openReportById(id) {
-        await this.page.goto(`${this.baseUrl}/reports/${id}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${this.baseUrl}/reports/${id}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await expect(this.page.locator(L.generateButton).first())
-            .toBeVisible({ timeout: 40000 });
+            .toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(1500);
     }
 

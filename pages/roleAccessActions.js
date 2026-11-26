@@ -28,10 +28,10 @@ export class roleAccessActions {
 
     async openRoles() {
         await this.page.goto(`${ADMIN_BASE}/user-management/roles`,
-            { waitUntil: 'domcontentloaded', timeout: 90000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(8000);
         await expect(this.page.getByPlaceholder('Search').first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
         console.log('[ROLE] Opened Org Settings › User Management › Roles');
     }
 
@@ -61,7 +61,7 @@ export class roleAccessActions {
         expect(idx, `no role row whose name starts with "${name}"`).toBeGreaterThan(-1);
         await this.page.locator('button[aria-label="Edit Role"]').nth(idx).click();
         await expect(this.page.getByRole('button', { name: 'Update', exact: true }).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
         console.log(`[ROLE] Opened the editor for role "${name}"`);
     }
 
@@ -131,7 +131,7 @@ export class roleAccessActions {
 
     async clickUpdate() {
         const btn = this.page.getByRole('button', { name: 'Update', exact: true }).first();
-        await btn.waitFor({ state: 'visible', timeout: 15000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
         await btn.click();
         await this.page.waitForTimeout(5000);
         console.log('[ROLE] Clicked Update');

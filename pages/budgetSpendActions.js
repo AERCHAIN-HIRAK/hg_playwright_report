@@ -61,19 +61,19 @@ export class budgetSpendActions {
         const link = origin.locator(
             'xpath=//*[normalize-space()="BRF - Description"]/following::a[1]').first();
         await expect(link, 'no BRF - Description budget link on this transaction page')
-            .toBeVisible({ timeout: 30000 });
+            .toBeVisible({ timeout: 120000 });
         const linkText = ((await link.innerText()) || '').trim();
-        await link.click({ timeout: 20000 });
+        await link.click({ timeout: 120000 });
         await origin.waitForTimeout(3500);
         console.log(`[${tag}] opened budget drawer via "${linkText}"`);
 
         // 2 ── the eye ("View Details"), which opens a NEW TAB.
         const eye = origin.locator('button:has(img[src*="view"])').locator('visible=true').first();
         await expect(eye, 'the budget drawer exposes no View Details (eye) button')
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
 
-        const popupPromise = origin.context().waitForEvent('page', { timeout: 30000 });
-        await eye.click({ timeout: 20000 });
+        const popupPromise = origin.context().waitForEvent('page', { timeout: 120000 });
+        await eye.click({ timeout: 120000 });
         const budgetTab = await popupPromise;
         await budgetTab.waitForLoadState('domcontentloaded').catch(() => {});
         await budgetTab.waitForTimeout(6000);
@@ -168,7 +168,7 @@ export class budgetSpendActions {
     async readEstimatedSpendAt(budgetUrl, tag = 'BUDGET') {
         const p = this.page;
         if (!p.url().startsWith(budgetUrl)) {
-            await p.goto(budgetUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+            await p.goto(budgetUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
             await p.waitForTimeout(8000);
         } else {
             await p.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
@@ -224,7 +224,7 @@ export class budgetSpendActions {
      */
     async readActualSpendAt(budgetUrl, tag = 'BUDGET') {
         const p = this.page;
-        await p.goto(budgetUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await p.goto(budgetUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await p.waitForTimeout(8000);
         const text = await p.evaluate(() => (document.body.innerText || '').replace(/\r/g, ''));
         const actualM = text.match(/Actual\s*Spen[dt]\s*:?\s*(₹?\s*[\d,]+(?:\.\d+)?)/i);

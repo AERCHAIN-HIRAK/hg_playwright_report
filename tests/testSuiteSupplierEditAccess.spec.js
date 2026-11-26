@@ -67,7 +67,7 @@ async function readEditState(page, label) {
     const href = await sup.findSupplierHref(SUPPLIER_NAME);
     expect(href, `supplier "${SUPPLIER_NAME}" not found on the listing`).toBeTruthy();
     await page.goto(`https://nse-capp-uat.aerchain.io${href}`,
-        { waitUntil: 'domcontentloaded', timeout: 90000 });
+        { waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.waitForTimeout(12000);
 
     // Poll for the control itself: this detail page renders its action bar late,

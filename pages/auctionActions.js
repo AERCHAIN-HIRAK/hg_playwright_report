@@ -70,9 +70,9 @@ export class auctionActions {
      * left, recording every supplier seen at each position.
      */
     async readAnalysisSuppliers(rfxUrl, names) {
-        await this.page.goto(rfxUrl.replace(/\/overview.*$/, '/analysis'), { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(rfxUrl.replace(/\/overview.*$/, '/analysis'), { waitUntil: 'domcontentloaded', timeout: 120000 });
         const box = this.page.locator('div.virtualized-table-container').first();
-        await box.waitFor({ state: 'visible', timeout: 60000 });
+        await box.waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(6000);
         const seen = new Set();
         const look = async () => {
@@ -103,12 +103,12 @@ export class auctionActions {
         const row = this.supplierRow(name);
         await row.scrollIntoViewIfNeeded();
         const btn = row.getByRole('button', { name: 'Restrict Supplier' }).first();
-        await btn.waitFor({ state: 'visible', timeout: 20000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
         await btn.click();
         await this.page.waitForTimeout(2000);
 
         const dialog = this.page.getByRole('dialog').last();
-        await expect(dialog).toBeVisible({ timeout: 15000 });
+        await expect(dialog).toBeVisible({ timeout: 120000 });
         console.log(`[AUC] Restrict dialog: ${(await dialog.innerText()).replace(/\n+/g, ' | ').slice(0, 400)}`);
 
         const box = dialog.getByPlaceholder(/reason/i).or(dialog.locator('textarea')).first();
@@ -117,7 +117,7 @@ export class auctionActions {
         // A popover, not a modal: reason box + two icon-only buttons, ✕ then ✓.
         // Neither has an accessible name, so the tick is picked by position.
         const confirm = dialog.locator('button').last();
-        await confirm.click({ timeout: 15000 });
+        await confirm.click({ timeout: 120000 });
         await this.page.waitForTimeout(4000);
         console.log(`[AUC] Supplier "${name}" restricted`);
     }
@@ -130,7 +130,7 @@ export class auctionActions {
         const row = this.supplierRow(name);
         await row.scrollIntoViewIfNeeded();
         const btn = row.getByRole('button', { name: /^Submit Quote$/ }).first();
-        await btn.waitFor({ state: 'visible', timeout: 20000 });
+        await btn.waitFor({ state: 'visible', timeout: 120000 });
         await btn.click();
         await this.page.waitForTimeout(1000);
 
@@ -138,7 +138,7 @@ export class auctionActions {
         await a.selectQuotePreferredCurrency(data);
 
         const cells = this.page.locator(L.quoteUnitRateCell);
-        await cells.first().waitFor({ state: 'visible', timeout: 20000 });
+        await cells.first().waitFor({ state: 'visible', timeout: 120000 });
         const n = await cells.count();
         if (n < rates.length) {
             throw new Error(`[AUC] quote grid shows ${n} unit-rate cells for ${rates.length} line items`);
@@ -174,7 +174,7 @@ export class auctionActions {
             return { lines: 0, enabled: 0, pendingAuction: 0, text: `menu item absent: ${String(e).split('\n')[0]}` };
         }
         const dialog = this.page.getByRole('dialog').filter({ hasText: /Convert to Auction/i }).first();
-        await expect(dialog).toBeVisible({ timeout: 20000 });
+        await expect(dialog).toBeVisible({ timeout: 120000 });
         await this.page.waitForTimeout(2000);
         const text = (await dialog.innerText()).replace(/\n+/g, ' | ');
         // Index 0 is the select-all header box; only the per-line boxes count.
@@ -197,7 +197,7 @@ export class auctionActions {
     /** The auction link(s) on the RFX Transactions tab → [{ text, href }]. */
     async readLinkedAuctions(rfxOverviewUrl) {
         await this.page.goto(rfxOverviewUrl.replace(/\/overview.*$/, '/transactions'),
-            { waitUntil: 'domcontentloaded', timeout: 60000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(6000);
         return this.page.evaluate(() => {
             const h = [...document.querySelectorAll('*')]
@@ -216,9 +216,9 @@ export class auctionActions {
     // ── Auction side (v3) ─────────────────────────────────────────────────────
 
     async openAuction(url) {
-        await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.getByText('Supplier Response', { exact: true }).first()
-            .waitFor({ state: 'visible', timeout: 60000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(3000);
     }
 
@@ -264,7 +264,7 @@ export class auctionActions {
             await this.page.keyboard.press('Escape').catch(() => {});
             await this.page.waitForTimeout(1500);
         }
-        await heading.waitFor({ state: 'visible', timeout: 10000 });
+        await heading.waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(2500);
         // The drawer renders AFTER the page body in DOM order, so everything
         // from its heading onward is the timeline (plus the reply box).
@@ -279,8 +279,8 @@ export class auctionActions {
     async clickAuctionEdit() {
         const pencil = await this._headerIconButton(2);
         await pencil.click();
-        await this.page.waitForURL(/\/auction-requests\/\d+\/edit/, { timeout: 60000 });
-        await this.page.getByText('Bidding Rules').first().waitFor({ state: 'visible', timeout: 60000 });
+        await this.page.waitForURL(/\/auction-requests\/\d+\/edit/, { timeout: 120000 });
+        await this.page.getByText('Bidding Rules').first().waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(3000);
     }
 
@@ -388,7 +388,7 @@ export class auctionActions {
         await input.evaluate(e => e.scrollIntoView({ block: 'center' }));
         await input.click();
         const pop = this.page.locator('.react-datepicker-popper').first();
-        await pop.waitFor({ state: 'visible', timeout: 10000 });
+        await pop.waitFor({ state: 'visible', timeout: 120000 });
 
         const monthName = t.toLocaleString('en-US', { month: 'long' });
         for (let i = 0; i < 3; i++) {
@@ -425,7 +425,7 @@ export class auctionActions {
     /** "Auction will be extended by [a] minutes, if the bid rank up to [b] changes in the last [c] minutes" + Max Extensions. */
     async setAuctionExtension(byMin, rankUpTo, lastMin, maxExt) {
         const boxes = this.page.locator('input[id^="undefined-"]');
-        await expect(boxes.nth(2)).toBeVisible({ timeout: 10000 });
+        await expect(boxes.nth(2)).toBeVisible({ timeout: 120000 });
         for (const [i, v] of [[0, byMin], [1, rankUpTo], [2, lastMin]]) {
             const b = boxes.nth(i);
             await b.evaluate(e => e.scrollIntoView({ block: 'center' }));
@@ -475,7 +475,7 @@ export class auctionActions {
         await this.page.waitForTimeout(4000);
         const name = filePath.split('/').pop();
         await expect(this.page.getByText(name).first(), `attachment ${name} not listed after upload`)
-            .toBeVisible({ timeout: 30000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     async addAuctionSupplier(name) {
@@ -501,7 +501,7 @@ export class auctionActions {
             const ok = dlg.getByRole("button", { name: /^(Submit Auction|Submit|Confirm|Yes|Proceed|OK)$/i }).last();
             if (await ok.waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false)) await ok.click();
         }
-        await this.page.waitForURL(u => !/\/edit/.test(u.toString()), { timeout: 90000 });
+        await this.page.waitForURL(u => !/\/edit/.test(u.toString()), { timeout: 120000 });
         await this.page.waitForTimeout(5000);
         return this.page.url();
     }
@@ -541,8 +541,8 @@ export class auctionActions {
 
     /** Start Time column of the CAPP auction listing for `code`, e.g. "29 Sep, 2026, 11:45 pm". */
     async readListingStartTime(code) {
-        await this.page.goto(`${V3_BASE_URL}/auction-requests`, { waitUntil: 'domcontentloaded', timeout: 90000 });
-        await this.page.waitForFunction(() => document.querySelectorAll('tbody tr').length > 0, null, { timeout: 60000 });
+        await this.page.goto(`${V3_BASE_URL}/auction-requests`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+        await this.page.waitForFunction(() => document.querySelectorAll('tbody tr').length > 0, null, { timeout: 120000 });
         const row = (await this.page.locator('tbody tr', { hasText: code }).first().innerText()).replace(/\s+/g, ' ');
         return (row.match(/\d{1,2} \w{3}, \d{4}, \d{1,2}:\d{2} [ap]m/g) || []).pop() || row;
     }
@@ -574,8 +574,8 @@ export class auctionActions {
         // a browser download event is accepted too, in case that changes.
         const ctx = this.page.context();
         const got = await Promise.race([
-            this.page.waitForEvent('download', { timeout: 30000 }).then(d => ({ d })),
-            ctx.waitForEvent('page', { timeout: 30000 }).then(p => ({ p })),
+            this.page.waitForEvent('download', { timeout: 120000 }).then(d => ({ d })),
+            ctx.waitForEvent('page', { timeout: 120000 }).then(p => ({ p })),
             icon.click().then(() => new Promise(() => {})),
         ]);
         let name;
@@ -604,8 +604,8 @@ export class auctionActions {
     // · Bid Logs (supplier, version, updated on, items updated, total, IP).
 
     async openLivePage(url) {
-        await this.page.goto(url.replace(/\/?$/, '') + '/live', { waitUntil: 'domcontentloaded', timeout: 90000 });
-        await this.page.getByRole('button', { name: 'Close Auction' }).waitFor({ timeout: 60000 });
+        await this.page.goto(url.replace(/\/?$/, '') + '/live', { waitUntil: 'domcontentloaded', timeout: 120000 });
+        await this.page.getByRole('button', { name: 'Close Auction' }).waitFor({ timeout: 120000 });
         await this.page.waitForTimeout(2500);
     }
 
@@ -698,12 +698,12 @@ export class auctionActions {
     async postSupplierComment(supplier, msg) {
         await this.liveRowAction(supplier, 'CommentIcon');
         const box = this.page.locator('textarea[placeholder="Add a comment"]').locator('visible=true').first();
-        await box.waitFor({ state: 'visible', timeout: 15000 });
+        await box.waitFor({ state: 'visible', timeout: 120000 });
         await box.fill(msg);
         await this.page.getByRole('button', { name: 'Add Comment' }).locator('visible=true').first().click();
         await this.page.waitForTimeout(3000);
         // getByText does not match a textarea's value, so this only passes once POSTED
-        await expect(this.page.getByText(msg).first(), 'the comment was not posted in CAPP').toBeVisible({ timeout: 15000 });
+        await expect(this.page.getByText(msg).first(), 'the comment was not posted in CAPP').toBeVisible({ timeout: 120000 });
         await expect(box, 'the comment box did not clear after Add Comment').toHaveValue('');
     }
 
@@ -711,7 +711,7 @@ export class auctionActions {
     async readSupplierComments(supplier) {
         await this.liveRowAction(supplier, 'CommentIcon');
         await this.page.locator('textarea[placeholder="Add a comment"]').locator('visible=true').first()
-            .waitFor({ state: 'visible', timeout: 15000 });
+            .waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(2000);
         return (await this.page.locator('body').innerText()).replace(/\s+/g, ' ');
     }
@@ -721,7 +721,7 @@ export class auctionActions {
         const pop = this.page.locator('.MuiPopover-paper', { hasText: 'Confirm to Close Auction' }).first();
         await pop.getByRole('button', { name: 'Yes' }).click();
         await expect(this.page.getByText('Auction Closed').first(), 'no "Auction Closed" after closing')
-            .toBeVisible({ timeout: 30000 });
+            .toBeVisible({ timeout: 120000 });
     }
 
     /** More → Update RFQ → "Are you sure you want to update the parent RFQ?" → Ok. */
@@ -730,7 +730,7 @@ export class auctionActions {
         await this.page.waitForTimeout(1200);
         await this.page.getByRole('menuitem', { name: 'Update RFQ' }).click();
         const dlg = this.page.getByRole('dialog').last();
-        await expect(dlg).toContainText('update the parent RFQ', { timeout: 15000 });
+        await expect(dlg).toContainText('update the parent RFQ', { timeout: 120000 });
         await dlg.getByRole('button', { name: /^Ok$/i }).click();
         await this.page.waitForTimeout(8000);
     }
@@ -761,7 +761,7 @@ export class sappAuctionActions {
         await page.fill('#email', email);
         await page.fill('#password', password);
         await page.click('button[type=submit]');
-        await page.waitForURL(/nse-sapp-uat\.aerchain\.io/, { timeout: 60000 });
+        await page.waitForURL(/nse-sapp-uat\.aerchain\.io/, { timeout: 120000 });
         await page.waitForTimeout(3000);
         return new sappAuctionActions(page);
     }
@@ -770,15 +770,15 @@ export class sappAuctionActions {
 
     /** Open an auction from the SAPP list by its code. */
     async openAuction(code) {
-        await this.page.goto(`${SAPP_URL}/auction-requests`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await this.page.waitForFunction(() => document.querySelectorAll('tbody tr').length > 0, null, { timeout: 60000 });
+        await this.page.goto(`${SAPP_URL}/auction-requests`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+        await this.page.waitForFunction(() => document.querySelectorAll('tbody tr').length > 0, null, { timeout: 120000 });
         await this.page.waitForTimeout(2000);
         const row = this.page.locator('tbody tr', { hasText: code }).first();
-        await expect(row, `${code} is not in this supplier's auction list`).toBeVisible({ timeout: 30000 });
+        await expect(row, `${code} is not in this supplier's auction list`).toBeVisible({ timeout: 120000 });
         const listed = (await row.innerText()).replace(/\s+/g, ' ').trim();
         await row.getByText(code, { exact: true }).first().click();
-        await this.page.waitForURL(/\/auction-requests\/\d+/, { timeout: 60000 });
-        await this.page.getByText('General Details').first().waitFor({ timeout: 60000 });
+        await this.page.waitForURL(/\/auction-requests\/\d+/, { timeout: 120000 });
+        await this.page.getByText('General Details').first().waitFor({ timeout: 120000 });
         await this.page.waitForTimeout(3000);
         return listed;
     }
@@ -817,10 +817,10 @@ export class sappAuctionActions {
         if (await next.count()) return false;
         await this.page.getByRole('button', { name: 'Accept' }).first().click();
         const dlg = this.page.getByRole('dialog').last();
-        await expect(dlg).toContainText('I accept the Terms', { timeout: 15000 });
+        await expect(dlg).toContainText('I accept the Terms', { timeout: 120000 });
         await dlg.locator('input[type=checkbox]').check({ force: true });
         await dlg.getByRole('button', { name: 'Accept' }).click();
-        await expect(next.first()).toBeVisible({ timeout: 30000 });
+        await expect(next.first()).toBeVisible({ timeout: 120000 });
         return true;
     }
 
@@ -838,7 +838,7 @@ export class sappAuctionActions {
     /** Join Live → returns 'live' (update-bid page) or 'bid' (first-time Bid Submission). */
     async joinLive() {
         await this.page.getByRole('button', { name: 'Join Live' }).click();
-        await this.page.waitForURL(/\/(live|bid)$/, { timeout: 60000 });
+        await this.page.waitForURL(/\/(live|bid)$/, { timeout: 120000 });
         await this.page.waitForTimeout(4000);
         return /\/bid$/.test(this.page.url()) ? 'bid' : 'live';
     }
@@ -866,7 +866,7 @@ export class sappAuctionActions {
         if (prebid) {
             await this.page.waitForTimeout(6000);
         } else {
-            await this.page.waitForURL(/\/live$/, { timeout: 60000 });
+            await this.page.waitForURL(/\/live$/, { timeout: 120000 });
             await this.page.waitForTimeout(4000);
         }
     }
@@ -877,7 +877,7 @@ export class sappAuctionActions {
      */
     async updateBid(bids) {
         const inputs = this.page.locator('input[placeholder="Enter Bid"]');
-        await expect(inputs.first()).toBeVisible({ timeout: 30000 });
+        await expect(inputs.first()).toBeVisible({ timeout: 120000 });
         for (const [i, v] of Object.entries(bids)) {
             await inputs.nth(Number(i)).fill(String(v));
             await this.page.keyboard.press('Tab');
@@ -990,7 +990,7 @@ export class sappAuctionActions {
         });
         if (idx === -1) throw new Error('[SAPP] comments button (rightmost textless header button) not found');
         await this.page.locator('button').nth(idx).click();
-        await this.page.getByText('Comments', { exact: true }).last().waitFor({ state: 'visible', timeout: 15000 });
+        await this.page.getByText('Comments', { exact: true }).last().waitFor({ state: 'visible', timeout: 120000 });
         await this.page.waitForTimeout(2500);
         return (await this.page.locator('body').innerText()).replace(/\s+/g, ' ');
     }

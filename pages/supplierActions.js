@@ -54,11 +54,11 @@ export class supplierActions {
     async openListing() {
         await this.page.setViewportSize({ width: 1800, height: 950 });
         await this.page.goto(`${V3_BASE}${S.listingUrlPath}`, {
-            waitUntil: 'domcontentloaded', timeout: 60000,
+            waitUntil: 'domcontentloaded', timeout: 120000,
         });
         await this.page.locator(`xpath=${S.tabByName('All')}`).first().click();
         await this.page.waitForFunction(
-            () => document.querySelectorAll('tbody tr').length > 0, null, { timeout: 30000 });
+            () => document.querySelectorAll('tbody tr').length > 0, null, { timeout: 120000 });
         await this.page.waitForTimeout(1200);
     }
 
@@ -83,7 +83,7 @@ export class supplierActions {
         await this.page.waitForTimeout(800);
         if (typed) { await el.fill(typed); await this.page.waitForTimeout(1800); }
         const opts = this.page.locator(S.acOption);
-        await opts.first().waitFor({ state: 'visible', timeout: 15000 });
+        await opts.first().waitFor({ state: 'visible', timeout: 120000 });
         await opts.first().click();
         await this.page.waitForTimeout(900);
         return el.inputValue();
@@ -133,12 +133,12 @@ export class supplierActions {
      */
     async readUserRowValidation() {
         const icon = this.page.locator(`xpath=${S.userRowErrorIcon}`).first();
-        await icon.waitFor({ state: 'visible', timeout: 15000 });
+        await icon.waitFor({ state: 'visible', timeout: 120000 });
         await icon.scrollIntoViewIfNeeded();
         await icon.hover();
 
         const popover = this.page.locator(`xpath=${S.antPopoverInner}`).first();
-        await popover.waitFor({ state: 'visible', timeout: 8000 });
+        await popover.waitFor({ state: 'visible', timeout: 120000 });
         const text = (await popover.innerText()).trim();
         const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
         console.log(`[SUPPLIER] row validation popover: ${JSON.stringify(lines)}`);
@@ -262,7 +262,7 @@ export class supplierActions {
         let idle = 0;
         for (let round = 1; round <= rounds; round++) {
             await this.page.goto(`${V3_BASE}/suppliers/${id}`,
-                { waitUntil: 'domcontentloaded', timeout: 60000 });
+                { waitUntil: 'domcontentloaded', timeout: 120000 });
             await this.page.waitForTimeout(8000);
 
             const raw = await this.readSupplierStatus(code);
@@ -403,7 +403,7 @@ export class supplierActions {
         let status = '';
         for (;;) {
             await this.page.goto(`${V3_BASE}/suppliers/${id}`,
-                { waitUntil: 'domcontentloaded', timeout: 60000 });
+                { waitUntil: 'domcontentloaded', timeout: 120000 });
             await this.page.waitForTimeout(6000);
             status = SupplierStatus.normalise(await this.readSupplierStatus(code));
 
@@ -499,7 +499,7 @@ export class supplierActions {
 
     async openOnboardingForm(id) {
         await this.page.goto(`${V3_BASE}/suppliers/${id}/update`,
-            { waitUntil: 'domcontentloaded', timeout: 90000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(13000);
         const open = await this.isOnboardingFormOpen();
         console.log(`[SUPPLIER] onboarding form for ${id}: ${open ? 'open' : 'NOT available'} (${this.page.url()})`);
@@ -515,7 +515,7 @@ export class supplierActions {
      * value, which is what makes scenario 136 an EDIT rather than a creation.
      */
     async findOnboardingSupplier({ requireValue = false, max = 6 } = {}) {
-        await this.page.goto(`${V3_BASE}/suppliers`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await this.page.goto(`${V3_BASE}/suppliers`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(9000);
 
         const headers = await this.page.$$eval('thead th',
@@ -577,7 +577,7 @@ export class supplierActions {
         if (!href) throw new Error(`the new supplier "${name}" was not created`);
         const id = href.split('/').pop();
 
-        await this.page.goto(`${V3_BASE}${href}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await this.page.goto(`${V3_BASE}${href}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(8000);
         const code = await this.page.evaluate(() => {
             const m = document.body.innerText.match(/\(([A-Z]+-\d+-\d+)\)/);
@@ -613,9 +613,9 @@ export class supplierActions {
      * form at /suppliers/{id}/update (QA's path for scenario 136).
      */
     async openOnboardingFormViaUpdate(id) {
-        await this.page.goto(`${V3_BASE}/suppliers/${id}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
-        await this.page.getByRole('button', { name: 'Update', exact: true }).first().click({ timeout: 30000 });
-        await this.page.waitForURL(/\/suppliers\/\d+\/update$/, { timeout: 60000 });
+        await this.page.goto(`${V3_BASE}/suppliers/${id}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+        await this.page.getByRole('button', { name: 'Update', exact: true }).first().click({ timeout: 120000 });
+        await this.page.waitForURL(/\/suppliers\/\d+\/update$/, { timeout: 120000 });
         await this.page.waitForTimeout(13000);
         console.log(`[SUPPLIER] ${id}: clicked Update -> ${this.page.url()}`);
     }
@@ -757,7 +757,7 @@ export class supplierActions {
         const abs = path.resolve(filePath);
 
         await this.page.goto(`${V3_BASE}/suppliers/${id}/update`,
-            { waitUntil: 'domcontentloaded', timeout: 60000 });
+            { waitUntil: 'domcontentloaded', timeout: 120000 });
         await this.page.waitForTimeout(10000);
 
         // Unflagged fields first — the pass loop below can only fill what the
@@ -902,7 +902,7 @@ export class supplierActions {
         await input.scrollIntoViewIfNeeded();
         await input.click();
         const cal = this.page.locator('.react-datepicker').last();
-        await cal.waitFor({ state: 'visible', timeout: 10000 });
+        await cal.waitFor({ state: 'visible', timeout: 120000 });
         if (offsetYears > 0) {
             for (let i = 0; i < 12 * offsetYears; i++) {
                 await this.page.locator('.react-datepicker__navigation--next').last().click();

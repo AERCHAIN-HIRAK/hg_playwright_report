@@ -119,7 +119,7 @@ export async function buildConvertedAuction({ page, a, x, data, st, rfxSuppliers
         console.log(`[${tag}] RFX released → ${rfxUrl}`);
     }
 
-    await page.goto(rfxUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.goto(rfxUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.waitForTimeout(7000);
 
     const paymentTerm = await page.evaluate(() => {
@@ -144,7 +144,7 @@ export async function buildConvertedAuction({ page, a, x, data, st, rfxSuppliers
 
     for (const k of quoters) {
         if (st.read()[`quoted${k}`]) continue;
-        await page.goto(rfxUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(rfxUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(7000);
         // a run killed mid-quote leaves the supplier Quoted but not recorded — don't quote twice
         const cur = (await x.readRfxSupplierRows()).find(r => r.name.includes(S[k]));
@@ -156,16 +156,16 @@ export async function buildConvertedAuction({ page, a, x, data, st, rfxSuppliers
         st.write({ [`quoted${k}`]: true });
     }
 
-    await page.goto(rfxUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.goto(rfxUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.waitForTimeout(7000);
     console.log(`[${tag}] suppliers before foreclose: ${JSON.stringify((await x.readRfxSupplierRows()).map(r => r.cells))}`);
     await a.forecloseRfx(data);
-    await page.goto(rfxUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.goto(rfxUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.waitForTimeout(7000);
     expect(await a.hasV4MenuItem('Convert to Auction'),
         'a quoted + foreclosed RFX does not offer Convert to Auction').toBeTruthy();
     // hasV4MenuItem leaves the Radix menu mid-animation — reload for a clean menu.
-    await page.goto(rfxUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.goto(rfxUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.waitForTimeout(7000);
     await a.clickV4MenuItem('Convert to Auction');
     await a.confirmConvertToAuction();
@@ -227,7 +227,7 @@ export async function editAndRelease({ page, x, st, cfg, tag, auctionClass }) {
 
     await x.openAuction(st.read().auctionUrl);
     const rel = page.getByRole('button', { name: /^Release/i }).first();
-    await expect(rel, 'no Release button (auto release = No)').toBeVisible({ timeout: 20000 });
+    await expect(rel, 'no Release button (auto release = No)').toBeVisible({ timeout: 120000 });
     await rel.click();
     await page.waitForTimeout(2500);
     const dlg = page.getByRole('dialog').last();

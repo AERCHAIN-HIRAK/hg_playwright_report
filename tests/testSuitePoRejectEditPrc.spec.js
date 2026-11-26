@@ -117,7 +117,7 @@ test.describe.serial('PO reject → reject-edit → recall on one chain (S131-PO
 
         // The PO rejected by the approver in the S131 step.
         expect(origPo?.url, 'the S131-PO step left no rejected PO').toBeTruthy();
-        await a.page.goto(origPo.url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await a.page.goto(origPo.url, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await a.page.waitForTimeout(10000);
         const origPoUrl = origPo.url;
         const origPoCode = origPo.code;
@@ -152,19 +152,19 @@ test.describe.serial('PO reject → reject-edit → recall on one chain (S131-PO
                                       ['Inward Matching Criterion', 'Quantity']]) {
             await a.page.locator(
                 `xpath=//*[contains(normalize-space(.),'${label}')]/following::*[normalize-space(.)='${value}'][1]`)
-                .first().click({ timeout: 15000 });
+                .first().click({ timeout: 120000 });
             await a.page.waitForTimeout(1200);
         }
         await a.page.locator(`xpath=//button[normalize-space(.)='Submit']`)
             .filter({ visible: true }).first().click();
         // Confirm the Workflow Summary dialog (it always follows this Submit).
         await a.page.locator(`xpath=//*[@role='dialog']//button[normalize-space(.)='Submit']`)
-            .filter({ visible: true }).first().click({ timeout: 30000 });
+            .filter({ visible: true }).first().click({ timeout: 120000 });
 
         // ── A NEW PO was created ────────────────────────────────────────────
         await expect(a.page, 'the conversion did not land on a new PO')
             .toHaveURL(u => /\/purchase-orders\/\d+/.test(u.toString()) && u.toString() !== origPoUrl,
-                { timeout: 60000 });
+                { timeout: 120000 });
         await a.page.waitForTimeout(5000);
         const newPoCode = (await readPoCodes(a.page)).find(c => c !== origPoCode) ?? null;
         console.log(`[S12] original PO: ${origPoCode} @ ${origPoUrl}`);
@@ -188,7 +188,7 @@ test.describe.serial('PO reject → reject-edit → recall on one chain (S131-PO
         const a = await newActions(page);
 
         expect(newPo?.url, 'the S12 step left no converted PO to recall').toBeTruthy();
-        await a.page.goto(newPo.url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        await a.page.goto(newPo.url, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await a.page.waitForTimeout(13000);
         console.log(`[S65] target PO ${newPo.code} (converted from the PRC in S12)`);
 

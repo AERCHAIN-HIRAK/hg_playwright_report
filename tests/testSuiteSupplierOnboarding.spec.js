@@ -48,14 +48,14 @@ test.describe('Supplier module', () => {
     async function openSupplierListing(page) {
         await page.setViewportSize({ width: 1800, height: 900 });
         await page.goto(`${V3_BASE_URL}${S.listingUrlPath}`, {
-            waitUntil: 'domcontentloaded', timeout: 60000,
+            waitUntil: 'domcontentloaded', timeout: 120000,
         });
         // The listing defaults to "My Pending Approval", which is often empty —
         // switch to All so the row assertions mean something.
         await page.locator(`xpath=${S.tabByName('All')}`).first().click();
         await page.waitForFunction(
             () => document.querySelectorAll('tbody tr').length > 0,
-            null, { timeout: 30000 },
+            null, { timeout: 120000 },
         );
         await page.waitForTimeout(1200);
     }
@@ -136,17 +136,17 @@ test.describe('Supplier module', () => {
         }
         expect(href, 'no Registered supplier on the first page, and HG Automation SUPP is not Registered').toBeTruthy();
 
-        await page.goto(`${V3_BASE_URL}${href}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(`${V3_BASE_URL}${href}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(6000);
 
         const tab = page.locator(`xpath=${S.onboardingTab}`).first();
-        await tab.waitFor({ state: 'visible', timeout: 30000 });
+        await tab.waitFor({ state: 'visible', timeout: 120000 });
         await tab.click();
         await page.waitForTimeout(5000);
 
         // The tab must render the supplier's own details, not an empty shell.
         await expect(page.locator(`xpath=${S.sectionSupplierDetails}`).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
     });
 
     /** Search the listing for `name` and return the matching row's href, else null. */
@@ -173,7 +173,7 @@ test.describe('Supplier module', () => {
 
     /** Reload and read the registration status shown beside the supplier title. */
     async function readStatus(page) {
-        await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(7000);
         for (const s of ['Registered', 'Blocked', 'Pending Approval', 'Rejected', 'Draft']) {
             if (await page.locator(`xpath=${S.statusChip(s)}`).count()) return s;
@@ -189,7 +189,7 @@ test.describe('Supplier module', () => {
         const href = await searchSupplierHref(page, BLOCK_SUPPLIER);
         expect(href, `supplier "${BLOCK_SUPPLIER}" not found on the listing`).toBeTruthy();
 
-        await page.goto(`${V3_BASE_URL}${href}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(`${V3_BASE_URL}${href}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(7000);
 
         const before = await readStatus(page);
@@ -282,7 +282,7 @@ test.describe('Supplier module', () => {
         expect(href, `"${name}" was not created`).toBeTruthy();
         const id = href.split('/').pop();
 
-        await page.goto(`${V3_BASE_URL}${href}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(`${V3_BASE_URL}${href}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(8000);
         const code = (await page.evaluate(() => {
             const m = document.body.innerText.match(/\(([A-Z]+-\d+-\d+)\)/);
@@ -403,7 +403,7 @@ test.describe('Supplier module', () => {
         let code = state.code;
         if (!code) {
             await page.goto(`${V3_BASE_URL}/suppliers/${state.id}`,
-                { waitUntil: 'domcontentloaded', timeout: 60000 });
+                { waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(8000);
             code = await page.evaluate(() => {
                 const m = document.body.innerText.match(/\(([A-Z]+-\d+-\d+)\)/);

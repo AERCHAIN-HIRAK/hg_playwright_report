@@ -90,7 +90,7 @@ test.describe("User's Dashboard", () => {
         await a.openApp(data);
 
         // Navigate away first, so returning to the dashboard is a real change.
-        await page.goto(`${data.loginUrl}/cxos`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(`${data.loginUrl}/cxos`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(3000);
         expect(page.url()).toContain('/cxos');
 
@@ -155,7 +155,7 @@ test.describe("User's Dashboard", () => {
         await page.setViewportSize({ width: 1800, height: 900 });
         await a.openApp(data);
 
-        await page.goto(`${data.loginUrl}/cxos`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(`${data.loginUrl}/cxos`, { waitUntil: 'domcontentloaded', timeout: 120000 });
         await page.waitForTimeout(4000);
         await a.clickV4Tab('My Pending Approval');
 

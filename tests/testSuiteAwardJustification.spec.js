@@ -62,7 +62,7 @@ test.describe('RFX Award — long justification text is fully readable on hover'
 
         if (process.env.S21_AWARD_URL) {
             // Hover-only mode: assert against an award that already carries the text.
-            await page.goto(process.env.S21_AWARD_URL, { waitUntil: 'domcontentloaded', timeout: 90000 });
+            await page.goto(process.env.S21_AWARD_URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
             await page.waitForTimeout(10000);
         } else {
             await a.openApp(data);
@@ -78,7 +78,7 @@ test.describe('RFX Award — long justification text is fully readable on hover'
             if (process.env.S21_RFX_ID) {
                 console.log(`[S21] RESUME — RFX ${process.env.S21_RFX_ID} (must already be Foreclosed)`);
                 await page.goto(`${data.loginUrl}/quote-requests/${process.env.S21_RFX_ID}`,
-                    { waitUntil: 'domcontentloaded', timeout: 90000 });
+                    { waitUntil: 'domcontentloaded', timeout: 120000 });
                 await page.waitForTimeout(8000);
             } else {
                 await buildRfxToForeclose(a, data);

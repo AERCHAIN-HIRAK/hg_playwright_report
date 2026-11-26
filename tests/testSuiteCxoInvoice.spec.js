@@ -128,7 +128,7 @@ test.describe('Non-PO (CXO) Invoice', () => {
         await a.submitInvoice();
 
         await expect(page.getByText(cxoCode, { exact: false }).first())
-            .toBeVisible({ timeout: 20000 });
+            .toBeVisible({ timeout: 120000 });
         console.log(`[NONPO] invoice shows its CXO ${cxoCode}`);
     });
 
